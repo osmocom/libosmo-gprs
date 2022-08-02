@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: Osmocom CSN.1 Codec Library
+Description: C Utility Library
+Version: @VERSION@
+Libs: -L${libdir} -losmo-csn1
+Cflags: -I${includedir}/
