@@ -43,7 +43,7 @@ guint8 get_masked_bits8(struct bitvec *vector, unsigned *readIndex, gint bit_off
  * ================================================================================================
  */
 
-gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec *vector, unsigned *writeIndex, void* data)
+gint16 osmo_csn1_stream_encode(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec *vector, unsigned *writeIndex, void* data)
 {
   gint  remaining_bits_len = ar->remaining_bits_len;
   gint  bit_offset         = ar->bit_offset;
@@ -79,7 +79,7 @@ gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
         }
         else
         {
-          return ProcessError(writeIndex,"csnStreamEncoder", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
+          return ProcessError(writeIndex,"osmo_csn1_stream_encode", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
         }
 
         pDescr++;
@@ -120,7 +120,7 @@ gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
           }
           else
           {
-            return ProcessError(writeIndex,"csnStreamEncoder", CSN_ERROR_GENERAL, pDescr);
+            return ProcessError(writeIndex,"osmo_csn1_stream_encode", CSN_ERROR_GENERAL, pDescr);
           }
 
           remaining_bits_len -= no_of_bits;
@@ -132,7 +132,7 @@ gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
         }
         else
         {
-          return ProcessError(writeIndex,"csnStreamEncoder", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
+          return ProcessError(writeIndex,"osmo_csn1_stream_encode", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
         }
 
         pDescr++;
@@ -165,12 +165,12 @@ gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
           }
           else
           {
-            return ProcessError(writeIndex,"csnStreamEncoder", CSN_ERROR_GENERAL, pDescr);
+            return ProcessError(writeIndex,"osmo_csn1_stream_encode", CSN_ERROR_GENERAL, pDescr);
           }
         }
         else
         {
-          return ProcessError(writeIndex,"csnStreamEncoder", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
+          return ProcessError(writeIndex,"osmo_csn1_stream_encode", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
         }
 
         remaining_bits_len -= no_of_bits;
@@ -199,12 +199,12 @@ gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
           }
           else
           {/* Maybe we should support more than 8 bits ? */
-            return ProcessError(writeIndex,"csnStreamEncoder", CSN_ERROR_GENERAL, pDescr);
+            return ProcessError(writeIndex,"osmo_csn1_stream_encode", CSN_ERROR_GENERAL, pDescr);
           }
         }
         else
         {
-          return ProcessError(writeIndex,"csnStreamEncoder", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
+          return ProcessError(writeIndex,"osmo_csn1_stream_encode", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
         }
 
         remaining_bits_len -= no_of_bits;
@@ -239,20 +239,20 @@ gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
           }
           else if (no_of_bits <= 16)
           {
-            return ProcessError(writeIndex,"csnStreamEncoder NOTIMPLEMENTED", 999, pDescr);
+            return ProcessError(writeIndex,"osmo_csn1_stream_encode NOTIMPLEMENTED", 999, pDescr);
           }
           else if (no_of_bits <= 32)
           {
-            return ProcessError(writeIndex,"csnStreamEncoder NOTIMPLEMENTED", 999, pDescr);
+            return ProcessError(writeIndex,"osmo_csn1_stream_encode NOTIMPLEMENTED", 999, pDescr);
           }
           else
           {
-            return ProcessError(writeIndex,"csnStreamEncoder", CSN_ERROR_GENERAL, pDescr);
+            return ProcessError(writeIndex,"osmo_csn1_stream_encode", CSN_ERROR_GENERAL, pDescr);
           }
         }
         else
         {
-          return ProcessError(writeIndex,"csnStreamEncoder", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
+          return ProcessError(writeIndex,"osmo_csn1_stream_encode", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
         }
         pDescr++;
         break;
@@ -285,7 +285,7 @@ gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
 
           LOGPC(DLCSN1, LOGL_DEBUG, "%s : | ", pDescr->sz);
           csnStreamInit(&arT, bit_offset, remaining_bits_len);
-          Status = csnStreamEncoder(&arT, (const CSN_DESCR*)pDescr->descr.ptr, vector, writeIndex, pui8);
+          Status = osmo_csn1_stream_encode(&arT, (const CSN_DESCR*)pDescr->descr.ptr, vector, writeIndex, pui8);
           if (Status >= 0)
           {
             pui8    += nSize;
@@ -312,7 +312,7 @@ gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
         {
           if (no_of_bits > remaining_bits_len)
           {
-            return ProcessError(writeIndex, "csnStreamDecoder", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
+            return ProcessError(writeIndex, "osmo_csn1_stream_decode", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
           }
 
           if (no_of_bits <= 32)
@@ -335,7 +335,7 @@ gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
           }
           else
           {
-          	return ProcessError(writeIndex,"csnStreamEncoder NOT IMPLEMENTED", 999, pDescr);
+          	return ProcessError(writeIndex,"osmo_csn1_stream_encode NOT IMPLEMENTED", 999, pDescr);
           }
 
           remaining_bits_len -= no_of_bits;
@@ -353,7 +353,7 @@ gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
         csnStream_t arT = *ar;
         LOGPC(DLCSN1, LOGL_DEBUG, " : %s | ", pDescr->sz);
         csnStreamInit(&arT, bit_offset, remaining_bits_len);
-        Status = csnStreamEncoder(&arT, (const CSN_DESCR*)pDescr->descr.ptr, vector, writeIndex, pvDATA(data, pDescr->offset));
+        Status = osmo_csn1_stream_encode(&arT, (const CSN_DESCR*)pDescr->descr.ptr, vector, writeIndex, pvDATA(data, pDescr->offset));
         LOGPC(DLCSN1, LOGL_DEBUG, " : End %s | ", pDescr->sz);
         if (Status >= 0)
         {
@@ -364,7 +364,7 @@ gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
         }
         else
         {
-          /* Has already been processed: ProcessError("csnStreamEncoder", Status, pDescr);  */
+          /* Has already been processed: ProcessError("osmo_csn1_stream_encode", Status, pDescr);  */
           return Status;
         }
 
@@ -378,14 +378,14 @@ gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
 
         /* Make sure that the list of choice items is not empty */
         if (!count)
-          return ProcessError(writeIndex, "csnStreamEncoder", CSN_ERROR_IN_SCRIPT, pDescr);
+          return ProcessError(writeIndex, "osmo_csn1_stream_encode", CSN_ERROR_IN_SCRIPT, pDescr);
         else if (count > 255) /* We can handle up to 256 (UCHAR_MAX) selectors */
-          return ProcessError(writeIndex, "csnStreamEncoder", CSN_ERROR_IN_SCRIPT, pDescr);
+          return ProcessError(writeIndex, "osmo_csn1_stream_encode", CSN_ERROR_IN_SCRIPT, pDescr);
 
         /* Make sure that choice index is not out of range */
         pui8 = pui8DATA(data, pDescr->offset);
         if (*pui8 >= count)
-          return ProcessError(writeIndex, "csnStreamEncoder", CSN_ERROR_INVALID_UNION_INDEX, pDescr);
+          return ProcessError(writeIndex, "osmo_csn1_stream_encode", CSN_ERROR_INVALID_UNION_INDEX, pDescr);
 
         pChoice += *pui8;
         guint8 no_of_bits = pChoice->bits;
@@ -404,7 +404,7 @@ gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
         remaining_bits_len -= no_of_bits;
 
         csnStreamInit(&arT, bit_offset, remaining_bits_len);
-        Status = csnStreamEncoder(&arT, descr, vector, writeIndex, data);
+        Status = osmo_csn1_stream_encode(&arT, descr, vector, writeIndex, data);
 
         if (Status >= 0)
         {
@@ -466,7 +466,7 @@ gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
         pDescrNext += count + 1; /* now this is next after the union */
         if ((count <= 0) || (count > 16))
         {
-          return ProcessError(writeIndex,"csnStreamEncoder", CSN_ERROR_INVALID_UNION_INDEX, pDescr);
+          return ProcessError(writeIndex,"osmo_csn1_stream_encode", CSN_ERROR_INVALID_UNION_INDEX, pDescr);
         }
 
         /* Now get the bits to extract the index */
@@ -552,12 +552,12 @@ gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
               }
               else
               {
-                return ProcessError(writeIndex,"csnStreamEncoder", CSN_ERROR_GENERAL, pDescr);
+                return ProcessError(writeIndex,"osmo_csn1_stream_encode", CSN_ERROR_GENERAL, pDescr);
               }
             }
             else
             {
-              return ProcessError(writeIndex,"csnStreamEncoder", CSN_ERROR_GENERAL, pDescr);
+              return ProcessError(writeIndex,"osmo_csn1_stream_encode", CSN_ERROR_GENERAL, pDescr);
             }
 
             remaining_bits_len -= no_of_bits;
@@ -592,12 +592,12 @@ gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
               }
               else
               {
-                return ProcessError(writeIndex,"csnStreamEncoder", CSN_ERROR_GENERAL, pDescr);
+                return ProcessError(writeIndex,"osmo_csn1_stream_encode", CSN_ERROR_GENERAL, pDescr);
               }
             }
             else
             {
-              return ProcessError(writeIndex,"csnStreamEncoder", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
+              return ProcessError(writeIndex,"osmo_csn1_stream_encode", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
             }
 
             remaining_bits_len -= no_of_bits;
@@ -627,12 +627,12 @@ gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
               }
               else
               {/* Maybe we should support more than 8 bits ? */
-                return ProcessError(writeIndex,"csnStreamEncoder", CSN_ERROR_GENERAL, pDescr);
+                return ProcessError(writeIndex,"osmo_csn1_stream_encode", CSN_ERROR_GENERAL, pDescr);
               }
             }
             else
             {
-              return ProcessError(writeIndex,"csnStreamEncoder", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
+              return ProcessError(writeIndex,"osmo_csn1_stream_encode", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
             }
 
             remaining_bits_len -= no_of_bits;
@@ -667,20 +667,20 @@ gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
               }
               else if (no_of_bits <= 16)
               {
-                return ProcessError(writeIndex,"csnStreamEncoder NOTIMPLEMENTED", 999, pDescr);
+                return ProcessError(writeIndex,"osmo_csn1_stream_encode NOTIMPLEMENTED", 999, pDescr);
               }
               else if (no_of_bits <= 32)
               {
-                return ProcessError(writeIndex,"csnStreamEncoder NOTIMPLEMENTED", 999, pDescr);
+                return ProcessError(writeIndex,"osmo_csn1_stream_encode NOTIMPLEMENTED", 999, pDescr);
               }
               else
               {
-                return ProcessError(writeIndex,"csnStreamEncoder", CSN_ERROR_GENERAL, pDescr);
+                return ProcessError(writeIndex,"osmo_csn1_stream_encode", CSN_ERROR_GENERAL, pDescr);
               }
             }
             else
             {
-              return ProcessError(writeIndex,"csnStreamEncoder", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
+              return ProcessError(writeIndex,"osmo_csn1_stream_encode", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
             }
             pDescr++;
             break;
@@ -713,7 +713,7 @@ gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
 
               LOGPC(DLCSN1, LOGL_DEBUG, "%s : | ", pDescr->sz);
               csnStreamInit(&arT, bit_offset, remaining_bits_len);
-              Status = csnStreamEncoder(&arT, (const CSN_DESCR*)pDescr->descr.ptr, vector, writeIndex, pui8);
+              Status = osmo_csn1_stream_encode(&arT, (const CSN_DESCR*)pDescr->descr.ptr, vector, writeIndex, pui8);
               if (Status >= 0)
               {
                 pui8    += nSize;
@@ -739,7 +739,7 @@ gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
             {
               if (no_of_bits > remaining_bits_len)
               {
-                return ProcessError(writeIndex, "csnStreamDecoder", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
+                return ProcessError(writeIndex, "osmo_csn1_stream_decode", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
               }
 
               if (no_of_bits <= 32)
@@ -756,7 +756,7 @@ gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
               }
               else
               {
-              	return ProcessError(writeIndex,"csnStreamEncoder NOT IMPLEMENTED", 999, pDescr);
+              	return ProcessError(writeIndex,"osmo_csn1_stream_encode NOT IMPLEMENTED", 999, pDescr);
               }
 
               remaining_bits_len -= no_of_bits;
@@ -774,7 +774,7 @@ gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
             csnStream_t arT = *ar;
             LOGPC(DLCSN1, LOGL_DEBUG, " : %s | ", pDescr->sz);
             csnStreamInit(&arT, bit_offset, remaining_bits_len);
-            Status = csnStreamEncoder(&arT, (const CSN_DESCR*)pDescr->descr.ptr, vector, writeIndex, pvDATA(data, pDescr->offset));
+            Status = osmo_csn1_stream_encode(&arT, (const CSN_DESCR*)pDescr->descr.ptr, vector, writeIndex, pvDATA(data, pDescr->offset));
             LOGPC(DLCSN1, LOGL_DEBUG, " : End %s | ", pDescr->sz);
             if (Status >= 0)
             {
@@ -784,7 +784,7 @@ gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
             }
             else
             {
-              /* Has already been processed: ProcessError("csnStreamEncoder", Status, pDescr);  */
+              /* Has already been processed: ProcessError("osmo_csn1_stream_encode", Status, pDescr);  */
               return Status;
             }
 
@@ -793,7 +793,7 @@ gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
 
           default:
           { /* descriptions of union elements other than above are illegal */
-            return ProcessError(writeIndex,"csnStreamEncoder", CSN_ERROR_IN_SCRIPT, pDescr);
+            return ProcessError(writeIndex,"osmo_csn1_stream_encode", CSN_ERROR_IN_SCRIPT, pDescr);
           }
         }
 
@@ -927,7 +927,7 @@ gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
 
           if (remaining_bits_len < 0)
           {
-            return ProcessError(writeIndex,"csnStreamEncoder", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
+            return ProcessError(writeIndex,"osmo_csn1_stream_encode", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
           }
 
           { /* extract bits */
@@ -985,7 +985,7 @@ gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
 
           if (remaining_bits_len < 0)
           {
-            return ProcessError(writeIndex,"csnStreamEncoder", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
+            return ProcessError(writeIndex,"osmo_csn1_stream_encode", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
           }
 
           { /* extract bits */
@@ -1049,7 +1049,7 @@ gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
         }
         if (remaining_bits_len < 0)
         {
-          return ProcessError(writeIndex,"csnStreamEncoder", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
+          return ProcessError(writeIndex,"osmo_csn1_stream_encode", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
         }
 
         /* Padding was successfully extracted or it was empty */
@@ -1072,7 +1072,7 @@ gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
         {
           if (remaining_bits_len < 0)
           {
-            return ProcessError(writeIndex,"csnStreamEncoder", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
+            return ProcessError(writeIndex,"osmo_csn1_stream_encode", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
           }
 
           pui8 = pui8DATA(data, pDescr->offset);
@@ -1120,7 +1120,7 @@ gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
 
           if (remaining_bits_len < 0)
           {
-            return ProcessError(writeIndex,"csnStreamEncoder", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
+            return ProcessError(writeIndex,"osmo_csn1_stream_encode", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
           }
 
           bit_offset += no_of_bits;
@@ -1160,7 +1160,7 @@ gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
             csnStream_t arT = *ar;
             gint16      Status;
             csnStreamInit(&arT, bit_offset, remaining_bits_len);
-            Status = csnStreamEncoder(&arT, (const CSN_DESCR*)pDescr->descr.ptr, vector, writeIndex, pui8);
+            Status = osmo_csn1_stream_encode(&arT, (const CSN_DESCR*)pDescr->descr.ptr, vector, writeIndex, pui8);
 
             if (Status >= 0)
             { /* successful completion */
@@ -1176,7 +1176,7 @@ gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
 
           if (remaining_bits_len < 0)
           {
-            return ProcessError(writeIndex,"csnStreamEncoder", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
+            return ProcessError(writeIndex,"osmo_csn1_stream_encode", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
           }
         }
 
@@ -1226,7 +1226,7 @@ gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
           ElementCount--;
           LOGPC(DLCSN1, LOGL_DEBUG, "%s { | ", pDescr->sz);
           csnStreamInit(&arT, bit_offset, remaining_bits_len);
-          Status = csnStreamEncoder(&arT, (const CSN_DESCR*)pDescr->descr.ptr, vector, writeIndex, pui8);
+          Status = osmo_csn1_stream_encode(&arT, (const CSN_DESCR*)pDescr->descr.ptr, vector, writeIndex, pui8);
           LOGPC(DLCSN1, LOGL_DEBUG, "%s } | ", pDescr->sz);
           if (Status >= 0)
           { /* successful completion */
@@ -1241,7 +1241,7 @@ gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
 
           if (remaining_bits_len < 0)
           {
-            return ProcessError(writeIndex,"csnStreamEncoder", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
+            return ProcessError(writeIndex,"osmo_csn1_stream_encode", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
           }
 
         }
@@ -1278,7 +1278,7 @@ gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
 
       case CSN_TRAP_ERROR:
       {
-        return ProcessError(writeIndex,"csnStreamEncoder", pDescr->i, pDescr);
+        return ProcessError(writeIndex,"osmo_csn1_stream_encode", pDescr->i, pDescr);
       }
 
       case CSN_END:
@@ -1297,5 +1297,5 @@ gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
 
   } while (remaining_bits_len >= 0);
 
-  return ProcessError(writeIndex,"csnStreamEncoder", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
+  return ProcessError(writeIndex,"osmo_csn1_stream_encode", CSN_ERROR_NEED_MORE_BITS_TO_UNPACK, pDescr);
 }

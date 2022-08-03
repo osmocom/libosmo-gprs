@@ -196,7 +196,7 @@ typedef struct
 void csnStreamInit(csnStream_t* ar,gint BitOffset,gint BitCount);
 
 /******************************************************************************
-* FUNCTION:  csnStreamDecoder
+* FUNCTION:  osmo_csn1_stream_decode
 * DESCRIPTION:
 *            UnPacks data from bit stream. According to CSN description.
 * ARGS:
@@ -212,9 +212,9 @@ void csnStreamInit(csnStream_t* ar,gint BitOffset,gint BitCount);
 * RETURNS:  int  Number of bits left to be unpacked. Negative Error code if failed to unpack all bits
 ******************************************************************************/
 
-gint16 csnStreamDecoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec *vector, unsigned *readIndex, void* data);
+gint16 osmo_csn1_stream_decode(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec *vector, unsigned *readIndex, void* data);
 
-gint16 csnStreamEncoder(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec *vector, unsigned *writeIndex, void* data);
+gint16 osmo_csn1_stream_encode(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec *vector, unsigned *writeIndex, void* data);
 
 /* CSN struct macro's */
 #define  CSN_DESCR_BEGIN(_STRUCT)\
