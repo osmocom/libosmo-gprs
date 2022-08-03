@@ -68,8 +68,7 @@ get_masked_bits8(struct bitvec *vector, unsigned *readIndex, gint bit_offset,  c
  * set initial/start values in help data structure used for packing/unpacking operation
  * ================================================================================================
  */
-void
-csnStreamInit(csnStream_t* ar, gint bit_offset, gint remaining_bits_len)
+void osmo_csn1_stream_init(csnStream_t* ar, gint bit_offset, gint remaining_bits_len)
 {
   ar->remaining_bits_len  = remaining_bits_len;
   ar->bit_offset          = bit_offset;

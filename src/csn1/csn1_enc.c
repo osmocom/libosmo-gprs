@@ -284,7 +284,7 @@ gint16 osmo_csn1_stream_encode(csnStream_t* ar, const CSN_DESCR* pDescr, struct 
            */
 
           LOGPC(DLCSN1, LOGL_DEBUG, "%s : | ", pDescr->sz);
-          csnStreamInit(&arT, bit_offset, remaining_bits_len);
+          osmo_csn1_stream_init(&arT, bit_offset, remaining_bits_len);
           Status = osmo_csn1_stream_encode(&arT, (const CSN_DESCR*)pDescr->descr.ptr, vector, writeIndex, pui8);
           if (Status >= 0)
           {
@@ -352,7 +352,7 @@ gint16 osmo_csn1_stream_encode(csnStream_t* ar, const CSN_DESCR* pDescr, struct 
         gint16      Status;
         csnStream_t arT = *ar;
         LOGPC(DLCSN1, LOGL_DEBUG, " : %s | ", pDescr->sz);
-        csnStreamInit(&arT, bit_offset, remaining_bits_len);
+        osmo_csn1_stream_init(&arT, bit_offset, remaining_bits_len);
         Status = osmo_csn1_stream_encode(&arT, (const CSN_DESCR*)pDescr->descr.ptr, vector, writeIndex, pvDATA(data, pDescr->offset));
         LOGPC(DLCSN1, LOGL_DEBUG, " : End %s | ", pDescr->sz);
         if (Status >= 0)
@@ -403,7 +403,7 @@ gint16 osmo_csn1_stream_encode(csnStream_t* ar, const CSN_DESCR* pDescr, struct 
         bit_offset += no_of_bits;
         remaining_bits_len -= no_of_bits;
 
-        csnStreamInit(&arT, bit_offset, remaining_bits_len);
+        osmo_csn1_stream_init(&arT, bit_offset, remaining_bits_len);
         Status = osmo_csn1_stream_encode(&arT, descr, vector, writeIndex, data);
 
         if (Status >= 0)
@@ -434,7 +434,7 @@ gint16 osmo_csn1_stream_encode(csnStream_t* ar, const CSN_DESCR* pDescr, struct 
         bit_offset += length_len;
         remaining_bits_len -= length_len;
         arT.direction = 0;
-        csnStreamInit(&arT, bit_offset, remaining_bits_len);
+        osmo_csn1_stream_init(&arT, bit_offset, remaining_bits_len);
         Status = serialize(&arT, vector, writeIndex, pvDATA(data, pDescr->offset));
 
 	bitvec_write_field(vector, &lengthIndex, *writeIndex - lengthIndex - length_len, length_len);
@@ -712,7 +712,7 @@ gint16 osmo_csn1_stream_encode(csnStream_t* ar, const CSN_DESCR* pDescr, struct 
                */
 
               LOGPC(DLCSN1, LOGL_DEBUG, "%s : | ", pDescr->sz);
-              csnStreamInit(&arT, bit_offset, remaining_bits_len);
+              osmo_csn1_stream_init(&arT, bit_offset, remaining_bits_len);
               Status = osmo_csn1_stream_encode(&arT, (const CSN_DESCR*)pDescr->descr.ptr, vector, writeIndex, pui8);
               if (Status >= 0)
               {
@@ -773,7 +773,7 @@ gint16 osmo_csn1_stream_encode(csnStream_t* ar, const CSN_DESCR* pDescr, struct 
             gint16      Status;
             csnStream_t arT = *ar;
             LOGPC(DLCSN1, LOGL_DEBUG, " : %s | ", pDescr->sz);
-            csnStreamInit(&arT, bit_offset, remaining_bits_len);
+            osmo_csn1_stream_init(&arT, bit_offset, remaining_bits_len);
             Status = osmo_csn1_stream_encode(&arT, (const CSN_DESCR*)pDescr->descr.ptr, vector, writeIndex, pvDATA(data, pDescr->offset));
             LOGPC(DLCSN1, LOGL_DEBUG, " : End %s | ", pDescr->sz);
             if (Status >= 0)
@@ -1159,7 +1159,7 @@ gint16 osmo_csn1_stream_encode(csnStream_t* ar, const CSN_DESCR* pDescr, struct 
           { /* unpack the following data structure */
             csnStream_t arT = *ar;
             gint16      Status;
-            csnStreamInit(&arT, bit_offset, remaining_bits_len);
+            osmo_csn1_stream_init(&arT, bit_offset, remaining_bits_len);
             Status = osmo_csn1_stream_encode(&arT, (const CSN_DESCR*)pDescr->descr.ptr, vector, writeIndex, pui8);
 
             if (Status >= 0)
@@ -1225,7 +1225,7 @@ gint16 osmo_csn1_stream_encode(csnStream_t* ar, const CSN_DESCR* pDescr, struct 
           }
           ElementCount--;
           LOGPC(DLCSN1, LOGL_DEBUG, "%s { | ", pDescr->sz);
-          csnStreamInit(&arT, bit_offset, remaining_bits_len);
+          osmo_csn1_stream_init(&arT, bit_offset, remaining_bits_len);
           Status = osmo_csn1_stream_encode(&arT, (const CSN_DESCR*)pDescr->descr.ptr, vector, writeIndex, pui8);
           LOGPC(DLCSN1, LOGL_DEBUG, "%s } | ", pDescr->sz);
           if (Status >= 0)

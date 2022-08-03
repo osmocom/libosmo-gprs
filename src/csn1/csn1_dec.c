@@ -316,7 +316,7 @@ osmo_csn1_stream_decode(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
            */
 
           LOGPC(DLCSN1, LOGL_DEBUG, "%s | ", pDescr->sz);
-          csnStreamInit(&arT, bit_offset, remaining_bits_len);
+          osmo_csn1_stream_init(&arT, bit_offset, remaining_bits_len);
 	  Status = osmo_csn1_stream_decode(&arT, (const CSN_DESCR*)pDescr->descr.ptr, vector, readIndex, pui8);
           if (Status >= 0)
           {
@@ -389,7 +389,7 @@ osmo_csn1_stream_decode(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
           LOGPC(DLCSN1, LOGL_DEBUG, " : %s = NULL | ", pDescr->sz);
         } else {
           LOGPC(DLCSN1, LOGL_DEBUG, " : %s | ", pDescr->sz);
-          csnStreamInit(&arT, bit_offset, remaining_bits_len);
+          osmo_csn1_stream_init(&arT, bit_offset, remaining_bits_len);
 	  Status = osmo_csn1_stream_decode(&arT, (const CSN_DESCR*)pDescr->descr.ptr, vector, readIndex, pvDATA(data, pDescr->offset));
           LOGPC(DLCSN1, LOGL_DEBUG, ": End %s | ", pDescr->sz);
           if (Status >= 0)
@@ -440,7 +440,7 @@ osmo_csn1_stream_decode(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
               remaining_bits_len -= no_of_bits;
             }
 
-            csnStreamInit(&arT, bit_offset, remaining_bits_len);
+            osmo_csn1_stream_init(&arT, bit_offset, remaining_bits_len);
 	    Status = osmo_csn1_stream_decode(&arT, descr, vector, readIndex, data);
 
             if (Status >= 0)
@@ -482,7 +482,7 @@ osmo_csn1_stream_decode(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
         bit_offset += length_len;
         remaining_bits_len -= length_len;
 
-        csnStreamInit(&arT, bit_offset, length > 0 ? length : remaining_bits_len);
+        osmo_csn1_stream_init(&arT, bit_offset, length > 0 ? length : remaining_bits_len);
         arT.direction = 1;
         LOGPC(DLCSN1, LOGL_DEBUG, "offset = %u | ", pDescr->offset);
 	Status = serialize(&arT, vector, readIndex, pvDATA(data, pDescr->offset));
@@ -778,7 +778,7 @@ osmo_csn1_stream_decode(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
             while (nCount--)    /* Changed to handle length = 0.  */
             {
               LOGPC(DLCSN1, LOGL_DEBUG, "%s | ", pDescr->sz);
-              csnStreamInit(&arT, bit_offset, remaining_bits_len);
+              osmo_csn1_stream_init(&arT, bit_offset, remaining_bits_len);
 	      Status = osmo_csn1_stream_decode(&arT, (const CSN_DESCR*)pDescr->descr.ptr, vector, readIndex, pui8);
               if (Status >= 0)
               {
@@ -843,7 +843,7 @@ osmo_csn1_stream_decode(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
               LOGPC(DLCSN1, LOGL_DEBUG, " : %s = NULL | ", pDescr->sz);
             } else {
               LOGPC(DLCSN1, LOGL_DEBUG, " : %s | ", pDescr->sz);
-              csnStreamInit(&arT, bit_offset, remaining_bits_len);
+              osmo_csn1_stream_init(&arT, bit_offset, remaining_bits_len);
 	      Status = osmo_csn1_stream_decode(&arT, (const CSN_DESCR*)pDescr->descr.ptr, vector, readIndex, pvDATA(data, pDescr->offset));
               LOGPC(DLCSN1, LOGL_DEBUG, " : End %s | ", pDescr->sz);
               if (Status >= 0)
@@ -1257,7 +1257,7 @@ osmo_csn1_stream_decode(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
           { /* unpack the following data structure */
             csnStream_t arT = *ar;
             gint16      Status;
-            csnStreamInit(&arT, bit_offset, remaining_bits_len);
+            osmo_csn1_stream_init(&arT, bit_offset, remaining_bits_len);
 	    Status = osmo_csn1_stream_decode(&arT, (const CSN_DESCR*)pDescr->descr.ptr, vector, readIndex, pui8);
 
             if (Status >= 0)
@@ -1326,7 +1326,7 @@ osmo_csn1_stream_decode(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
 
           LOGPC(DLCSN1, LOGL_DEBUG, "%s { | ", pDescr->sz);
 
-          csnStreamInit(&arT, bit_offset, remaining_bits_len);
+          osmo_csn1_stream_init(&arT, bit_offset, remaining_bits_len);
 	  Status = osmo_csn1_stream_decode(&arT, (const CSN_DESCR*)pDescr->descr.ptr, vector, readIndex, pui8);
 
           if (Status >= 0)

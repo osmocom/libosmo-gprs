@@ -193,7 +193,7 @@ typedef struct
   CSN_DESCR descr;
 } CSN_ChoiceElement_t;
 
-void csnStreamInit(csnStream_t* ar,gint BitOffset,gint BitCount);
+void osmo_csn1_stream_init(csnStream_t* ar,gint BitOffset,gint BitCount);
 
 /******************************************************************************
 * FUNCTION:  osmo_csn1_stream_decode
