@@ -23,8 +23,8 @@ libosmo_csn1_la_SOURCES = \
 	csn1_dec.c \
 	$(NULL)
 
-# TODO: -export-symbols-regex '^osmo_'
 libosmo_csn1_la_LDFLAGS = \
+	-export-symbols-regex '^osmo_' \
 	-version-info $(LIBVERSION) \
 	-no-undefined \
 	$(NULL)
