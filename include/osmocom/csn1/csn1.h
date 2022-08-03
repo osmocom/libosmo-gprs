@@ -21,8 +21,7 @@
  * GNU General Public License for more details.
  */
 
-#ifndef _PACKET_CSN1_H_
-#define _PACKET_CSN1_H_
+#pragma once
 
 #include <osmocom/core/bitvec.h>
 #include "wireshark_compat.h"
@@ -611,5 +610,3 @@ gint16 ProcessError_impl(const char *file, int line, unsigned *readIndex,
                                 const char* sz, gint16 err, const CSN_DESCR* pDescr);
 #define ProcessError(readIndex, sz, err, pDescr) \
         ProcessError_impl(__FILE__, __LINE__, readIndex, sz, err, pDescr)
-
-#endif /*_PACKET_CSN1_H_*/
