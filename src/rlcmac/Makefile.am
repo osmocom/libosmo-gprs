@@ -25,8 +25,8 @@ libosmo_gprs_rlcmac_la_SOURCES = \
 	gprs_rlcmac.c \
 	$(NULL)
 
-# TODO: -export-symbols-regex '^osmo_'
 libosmo_gprs_rlcmac_la_LDFLAGS = \
+	-export-symbols-regex '^osmo_' \
 	-version-info $(LIBVERSION) \
 	-no-undefined \
 	$(NULL)
