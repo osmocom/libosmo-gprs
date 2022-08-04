@@ -185,7 +185,7 @@ CSN_DESCR_BEGIN   (EGPRS_AckNack_Desc_t)
 CSN_DESCR_END     (EGPRS_AckNack_Desc_t)
 
 /*< EGPRS Ack/Nack Description IE >*/
-gint16 Egprs_Ack_Nack_Desc_w_len_Dissector(csnStream_t* ar, struct bitvec *vector, unsigned *readIndex, void* data)
+static gint16 Egprs_Ack_Nack_Desc_w_len_Dissector(csnStream_t* ar, struct bitvec *vector, unsigned *readIndex, void* data)
 {
   if (ar->direction == 0)
   {
@@ -944,7 +944,7 @@ CSN_DESCR_BEGIN       (Content_t)
 
 CSN_DESCR_END         (Content_t)
 
-gint16 Content_Dissector(csnStream_t* ar, struct bitvec *vector, unsigned *readIndex, void* data)
+static gint16 Content_Dissector(csnStream_t* ar, struct bitvec *vector, unsigned *readIndex, void* data)
 {
   if (ar->direction == 0)
     {
@@ -2637,7 +2637,8 @@ CSN_DESCR_BEGIN(Cell_Selection_Params_With_FreqDiff_t)
   M_TYPE       (Cell_Selection_Params_With_FreqDiff_t, Cell_SelectionParams, Cell_Selection_t),
 CSN_DESCR_END  (Cell_Selection_Params_With_FreqDiff_t)
 
-CSN_CallBackStatus_t callback_init_Cell_Selection_Params_FREQUENCY_DIFF(struct bitvec *vector, unsigned *readIndex, void* param1, void* param2)
+static CSN_CallBackStatus_t
+callback_init_Cell_Selection_Params_FREQUENCY_DIFF(struct bitvec *vector, unsigned *readIndex, void* param1, void* param2)
 {
     guint  i;
     guint8 freq_diff_len = *(guint8*)param1;
@@ -2756,7 +2757,8 @@ static const CSN_DESCR_BEGIN(CellSelectionParamsWithFreqDiff_t)
   M_TYPE       (CellSelectionParamsWithFreqDiff_t, CellSelectionParams, Cell_Selection_2_t),
 CSN_DESCR_END  (CellSelectionParamsWithFreqDiff_t)
 
-CSN_CallBackStatus_t callback_init_Cell_Sel_Param_2_FREQUENCY_DIFF(struct bitvec *vector, unsigned *readIndex, void* param1, void* param2)
+static CSN_CallBackStatus_t
+callback_init_Cell_Sel_Param_2_FREQUENCY_DIFF(struct bitvec *vector, unsigned *readIndex, void* param1, void* param2)
 {
     guint  i;
     guint8 freq_diff_len = *(guint8*)param1;
@@ -3297,7 +3299,8 @@ CSN_DESCR_BEGIN(lu_ModeOnlyCellSelectionParamsWithFreqDiff_t)
   M_TYPE       (lu_ModeOnlyCellSelectionParamsWithFreqDiff_t, lu_ModeOnlyCellSelectionParams, lu_ModeOnlyCellSelection_t),
 CSN_DESCR_END  (lu_ModeOnlyCellSelectionParamsWithFreqDiff_t)
 
-CSN_CallBackStatus_t callback_init_luMode_Cell_Sel_Param_FREQUENCY_DIFF(struct bitvec *vector, unsigned *readIndex, void* param1, void* param2)
+static CSN_CallBackStatus_t
+callback_init_luMode_Cell_Sel_Param_FREQUENCY_DIFF(struct bitvec *vector, unsigned *readIndex, void* param1, void* param2)
 {
     guint  i;
     guint8 freq_diff_len = *(guint8*)param1;
@@ -4923,7 +4926,8 @@ CSN_DESCR_BEGIN(COMPACT_Neighbour_Cell_Param_Remaining_t)
   M_TYPE       (COMPACT_Neighbour_Cell_Param_Remaining_t,  COMPACT_Cell_Sel_Remain_Cells, COMPACT_Cell_Sel_t),
 CSN_DESCR_END  (COMPACT_Neighbour_Cell_Param_Remaining_t)
 
-CSN_CallBackStatus_t callback_init_COMP_Ncell_Param_FREQUENCY_DIFF(struct bitvec *vector, unsigned *readIndex, void* param1, void* param2)
+static CSN_CallBackStatus_t
+callback_init_COMP_Ncell_Param_FREQUENCY_DIFF(struct bitvec *vector, unsigned *readIndex, void* param1, void* param2)
 {
     guint  i;
     guint8 freq_diff_len = *(guint8*)param1;
