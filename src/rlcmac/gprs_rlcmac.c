@@ -4709,6 +4709,7 @@ CSN_DESCR_END         (Packet_Pause_t)
 
 
 /*< Packet System Information Type 1 message content >*/
+static const
 CSN_DESCR_BEGIN(PSI1_AdditionsR6_t)
   M_UINT       (PSI1_AdditionsR6_t, LB_MS_TXPWR_MAX_CCH, 5),
 CSN_DESCR_END  (PSI1_AdditionsR6_t)
@@ -5296,6 +5297,7 @@ CSN_ChoiceElement_t EGPRS_PacketChannelRequest_Choice[] =
   {6, 0x39, 0, M_TYPE(EGPRS_PacketChannelRequest_t, Content, PacketChannelRequest_RB5_t)},
 };
 
+static const
 CSN_DESCR_BEGIN  (EGPRS_PacketChannelRequest_t)
   M_CHOICE       (EGPRS_PacketChannelRequest_t, Type,
                   EGPRS_PacketChannelRequest_Choice, ElementsOf(EGPRS_PacketChannelRequest_Choice)),
