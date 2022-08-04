@@ -9,6 +9,7 @@ AM_CPPFLAGS = \
 SUBDIRS = \
 	include \
 	src \
+	tests \
 	$(NULL)
 
 pkgconfigdir = $(libdir)/pkgconfig

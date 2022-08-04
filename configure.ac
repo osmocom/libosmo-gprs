@@ -4,6 +4,7 @@ AC_INIT([libosmo-gprs],
 
 AC_CONFIG_AUX_DIR([.])
 AC_CONFIG_MACRO_DIRS([m4])
+AC_CONFIG_TESTDIR(tests)
 
 AM_INIT_AUTOMAKE([dist-bzip2])
 
@@ -84,5 +85,7 @@ AC_CONFIG_FILES([libosmo-csn1.pc
 		 src/Makefile
 		 src/csn1/Makefile
 		 src/rlcmac/Makefile
+		 tests/Makefile
+		 tests/rlcmac/Makefile
 		 Makefile])
 AC_OUTPUT

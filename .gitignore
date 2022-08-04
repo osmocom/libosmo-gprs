@@ -31,6 +31,15 @@ libtool
 ltmain.sh
 m4/*.m4
 
+# testsuite
+tests/atconfig
+tests/package.m4
+tests/testsuite.dir
+tests/testsuite.log
+tests/testsuite
+tests/*/*Test
+tests/*/*_test
+
 # git-version-gen magic
 .tarball-version
 .version

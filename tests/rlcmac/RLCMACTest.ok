@@ -1,0 +1,219 @@
+*** testRlcMacDownlink ***
+ DOWNLINK 
+vector1 = 4e082500e3f1a81d080820800b2b2b2b2b2b2b2b2b2b2b
+=========Start DECODE===========
++++++++++Finish DECODE (0)++++++++++
+=========Start ENCODE=============
++++++++++Finish ENCODE (0)+++++++++++
+vector1 = 4e 08 25 00 e3 f1 a8 1d 08 08 20 80 0b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 
+vector2 = 4e 08 25 00 e3 f1 a8 1d 08 08 20 80 0b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 
+vector1 == vector2 : TRUE
+vector1 = 48282407a6a07422720100032b2b2b2b2b2b2b2b2b2b2b
+=========Start DECODE===========
++++++++++Finish DECODE (0)++++++++++
+=========Start ENCODE=============
++++++++++Finish ENCODE (0)+++++++++++
+vector1 = 48 28 24 07 a6 a0 74 22 72 01 00 03 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 
+vector2 = 48 28 24 07 a6 a0 74 22 72 01 00 03 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 
+vector1 == vector2 : TRUE
+vector1 = 47240c00400000000000000079eb2ac9402b2b2b2b2b2b
+=========Start DECODE===========
++++++++++Finish DECODE (0)++++++++++
+=========Start ENCODE=============
++++++++++Finish ENCODE (0)+++++++++++
+vector1 = 47 24 0c 00 40 00 00 00 00 00 00 00 79 eb 2a c9 40 2b 2b 2b 2b 2b 2b 
+vector2 = 47 24 0c 00 40 00 00 00 00 00 00 00 79 eb 2a c9 40 2b 2b 2b 2b 2b 2b 
+vector1 == vector2 : TRUE
+vector1 = 47283c367513ba333004242b2b2b2b2b2b2b2b2b2b2b2b
+=========Start DECODE===========
++++++++++Finish DECODE (0)++++++++++
+=========Start ENCODE=============
++++++++++Finish ENCODE (0)+++++++++++
+vector1 = 47 28 3c 36 75 13 ba 33 30 04 24 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 
+vector2 = 47 28 3c 36 75 13 ba 33 30 04 24 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 
+vector1 == vector2 : TRUE
+vector1 = 400820001a3904df0680efb3300b2b2b2b2b2b2b2b2b2b
+=========Start DECODE===========
++++++++++Finish DECODE (0)++++++++++
+=========Start ENCODE=============
++++++++++Finish ENCODE (0)+++++++++++
+vector1 = 40 08 20 00 1a 39 04 df 06 80 ef b3 30 0b 2b 2b 2b 2b 2b 2b 2b 2b 2b 
+vector2 = 40 08 20 00 1a 39 04 df 06 80 ef b3 30 0b 2b 2b 2b 2b 2b 2b 2b 2b 2b 
+vector1 == vector2 : TRUE
+vector1 = 40284f0000001009810c826f4406809dcecb2b2b2b2b2b
+=========Start DECODE===========
++++++++++Finish DECODE (0)++++++++++
+=========Start ENCODE=============
++++++++++Finish ENCODE (0)+++++++++++
+vector1 = 40 28 4f 00 00 00 10 09 81 0c 82 6f 44 06 80 9d ce cb 2b 2b 2b 2b 2b 
+vector2 = 40 28 4f 00 00 00 10 09 81 0c 82 6f 44 06 80 9d ce cb 2b 2b 2b 2b 2b 
+vector1 == vector2 : TRUE
+vector1 = 4024030f2f0000000087b0042b2b2b2b2b2b2b2b2b2b2b
+=========Start DECODE===========
++++++++++Finish DECODE (0)++++++++++
+=========Start ENCODE=============
++++++++++Finish ENCODE (0)+++++++++++
+vector1 = 40 24 03 0f 2f 00 00 00 00 87 b0 04 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 
+vector2 = 40 24 03 0f 2f 00 00 00 00 87 b0 04 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 
+vector1 == vector2 : TRUE
+vector1 = 4913e00850884013a8048b2b2b2b2b2b2b2b2b2b2b2b2b
+=========Start DECODE===========
++++++++++Finish DECODE (-8)++++++++++
+=========Start ENCODE=============
++++++++++Finish ENCODE (0)+++++++++++
+vector1 = 49 13 e0 08 50 88 40 13 a8 04 8b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 
+vector2 = 49 13 00 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 
+vector1 == vector2 : FALSE
+vector1 = 412430007fffffffffffffffefd19c7ba12b2b2b2b2b2b
+=========Start DECODE===========
++++++++++Finish DECODE (0)++++++++++
+=========Start ENCODE=============
++++++++++Finish ENCODE (0)+++++++++++
+vector1 = 41 24 30 00 7f ff ff ff ff ff ff ff ef d1 9c 7b a1 2b 2b 2b 2b 2b 2b 
+vector2 = 41 24 30 00 7f ff ff ff ff ff ff ff ef d1 9c 7b a1 2b 2b 2b 2b 2b 2b 
+vector1 == vector2 : TRUE
+vector1 = 41942b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b
+=========Start DECODE===========
++++++++++Finish DECODE (0)++++++++++
+=========Start ENCODE=============
++++++++++Finish ENCODE (0)+++++++++++
+vector1 = 41 94 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 
+vector2 = 41 94 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 
+vector1 == vector2 : TRUE
+vector1 = 40883c1493120000000012002b2b2b2b2b2b2b2b2b2b2b
+=========Start DECODE===========
++++++++++Finish DECODE (0)++++++++++
+=========Start ENCODE=============
++++++++++Finish ENCODE (0)+++++++++++
+vector1 = 40 88 3c 14 93 12 00 00 00 00 12 00 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 
+vector2 = 40 88 3c 14 93 12 00 00 00 00 12 01 95 95 95 95 95 95 95 95 95 95 95 
+vector1 == vector2 : FALSE
+*** testRlcMacUplink ***
+ UPLINK 
+vector1 = 400e1e61d11d2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b
+=========Start DECODE===========
++++++++++Finish DECODE (0)++++++++++
+=========Start ENCODE=============
++++++++++Finish ENCODE (0)+++++++++++
+vector1 = 40 0e 1e 61 d1 1d 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 
+vector2 = 40 0e 1e 61 d1 1d 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 
+vector1 == vector2 : TRUE
+vector1 = 400b8020000000000000002480e0032b2b2b2b2b2b2b2b
+=========Start DECODE===========
++++++++++Finish DECODE (0)++++++++++
+=========Start ENCODE=============
++++++++++Finish ENCODE (0)+++++++++++
+vector1 = 40 0b 80 20 00 00 00 00 00 00 00 24 80 e0 03 2b 2b 2b 2b 2b 2b 2b 2b 
+vector2 = 40 0b 80 20 00 00 00 00 00 00 00 24 80 e0 03 2b 2b 2b 2b 2b 2b 2b 2b 
+vector1 == vector2 : TRUE
+vector1 = 4016713dc094270ca2ae57ef909006aa0fc0001f80222b
+=========Start DECODE===========
++++++++++Finish DECODE (0)++++++++++
+=========Start ENCODE=============
++++++++++Finish ENCODE (-5)+++++++++++
+vector1 = 40 16 71 3d c0 94 27 0c a2 ae 57 ef 90 90 06 aa 0f c0 00 1f 80 22 2b 
+vector2 = 40 16 71 3d c0 94 27 48 a2 ae 57 ef 90 90 06 aa 00 00 1f 80 00 3f 00 
+vector1 == vector2 : FALSE
+vector1 = 401673c87f24af2632b25964200600000091000b780080
+=========Start DECODE===========
++++++++++Finish DECODE (0)++++++++++
+=========Start ENCODE=============
++++++++++Finish ENCODE (0)+++++++++++
+vector1 = 40 16 73 c8 7f 24 af 26 32 b2 59 64 20 06 00 00 00 91 00 0b 78 00 80 
+vector2 = 40 16 73 c8 7f 24 af 0e 32 b2 59 64 20 06 00 00 24 40 02 de 00 20 2b 
+vector1 == vector2 : FALSE
+vector1 = 40200ffc0021ec010b2b2b2b2b2b2b2b2b2b2b2b2b2b2b
+=========Start DECODE===========
++++++++++Finish DECODE (0)++++++++++
+=========Start ENCODE=============
++++++++++Finish ENCODE (0)+++++++++++
+vector1 = 40 20 0f fc 00 21 ec 01 0b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 
+vector2 = 40 20 0f fc 00 21 ec 01 0b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 
+vector1 == vector2 : TRUE
+vector1 = 400a9020000000000000003010012a0800132b2b2b2b2b
+=========Start DECODE===========
++++++++++Finish DECODE (0)++++++++++
+=========Start ENCODE=============
++++++++++Finish ENCODE (0)+++++++++++
+vector1 = 40 0a 90 20 00 00 00 00 00 00 00 30 10 01 2a 08 00 13 2b 2b 2b 2b 2b 
+vector2 = 40 0a 90 20 00 00 00 00 00 00 00 30 10 01 2a 08 00 13 2b 2b 2b 2b 2b 
+vector1 == vector2 : TRUE
+vector1 = 4117ea1b903eaeb2686564b2330820078000102b2b2b2b
+=========Start DECODE===========
++++++++++Finish DECODE (0)++++++++++
+=========Start ENCODE=============
++++++++++Finish ENCODE (0)+++++++++++
+vector1 = 41 17 ea 1b 90 3e ae b2 68 65 64 b2 33 08 20 07 80 00 10 2b 2b 2b 2b 
+vector2 = 41 17 ea 1b 90 3e af 22 68 65 64 b2 33 00 00 00 00 82 00 78 00 01 01 
+vector1 == vector2 : FALSE
+vector1 = 40167e49f7f8ef2632b2596620060000806d00541c0080
+=========Start DECODE===========
++++++++++Finish DECODE (0)++++++++++
+=========Start ENCODE=============
++++++++++Finish ENCODE (0)+++++++++++
+vector1 = 40 16 7e 49 f7 f8 ef 26 32 b2 59 66 20 06 00 00 80 6d 00 54 1c 00 80 
+vector2 = 40 16 7e 49 f7 f8 ef 0e 32 b2 59 66 20 06 00 00 9b 40 15 07 00 20 2b 
+vector1 == vector2 : FALSE
+vector1 = 4017787174d92eba686564b2ccc30800a000040b2b2b2b
+=========Start DECODE===========
++++++++++Finish DECODE (0)++++++++++
+=========Start ENCODE=============
++++++++++Finish ENCODE (0)+++++++++++
+vector1 = 40 17 78 71 74 d9 2e ba 68 65 64 b2 cc c3 08 00 a0 00 04 0b 2b 2b 2b 
+vector2 = 40 17 78 71 74 d9 2f 2a 68 65 64 b2 cc c0 00 00 00 30 80 0a 00 00 40 
+vector1 == vector2 : FALSE
+vector1 = 4017e5b2cd5a2eca68655e44aec84880139300412b2b2b
+=========Start DECODE===========
++++++++++Finish DECODE (-5)++++++++++
+=========Start ENCODE=============
++++++++++Finish ENCODE (-5)+++++++++++
+vector1 = 40 17 e5 b2 cd 5a 2e ca 68 65 5e 44 ae c8 48 80 13 93 00 41 2b 2b 2b 
+vector2 = 40 17 e5 b2 cd 5a 2f 4a 68 65 5e 44 ae c8 00 00 00 00 48 80 13 93 00 
+vector1 == vector2 : FALSE
+*** testCsnLeftAlignedVarBmpBounds ***
+*** testRAcap ***
+=== Test decoding of MS RA Capability ===
+GPRS multislot class = 3
+EGPRS multislot class = 3
+=== Test encoding of MS RA Capability ===
+osmo_gprs_rlcmac_encode_ms_ra_cap() returns 0
+vector1 (len_ind=27) = 13 65 14 62 30 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+vector2 (len_ind=65) = 18 25 14 62 30 00 00 00 00 03 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 
+=== Test decoding of a malformed vector (short length indicator) ===
+osmo_gprs_rlcmac_decode_ms_ra_cap() returns -5
+*** testMalformedRAcap ***
+=== Test decoding of MS RA Capability ===
+osmo_gprs_rlcmac_decode_ms_ra_cap() returns 0
+*** testRAcap2 ***
+=== Test decoding of multi-band MS RA Capability ===
+osmo_gprs_rlcmac_decode_ms_ra_cap() returns 0
+GPRS multislot class = 12
+EGPRS multislot class = 12
+*** testRAcap3 ***
+=== Test decoding of MS RA Capability 3===
+osmo_gprs_rlcmac_decode_ms_ra_cap() returns 0
+GPRS multislot class = 12
+EGPRS multislot class = 12
+*** testEGPRSPktChReq ***
+osmo_gprs_rlcmac_decode_egprs_pkt_ch_req(0x2b5) returns 0
+ ==> One Phase Access
+osmo_gprs_rlcmac_decode_egprs_pkt_ch_req(0x14a) returns 0
+ ==> One Phase Access
+osmo_gprs_rlcmac_decode_egprs_pkt_ch_req(0x428) returns 0
+ ==> Short Access
+osmo_gprs_rlcmac_decode_egprs_pkt_ch_req(0x600) returns 0
+ ==> Two Phase Access
+osmo_gprs_rlcmac_decode_egprs_pkt_ch_req(0x61f) returns 0
+ ==> Two Phase Access
+osmo_gprs_rlcmac_decode_egprs_pkt_ch_req(0x675) returns 0
+ ==> Signalling
+osmo_gprs_rlcmac_decode_egprs_pkt_ch_req(0x671) returns 0
+ ==> Signalling
+osmo_gprs_rlcmac_decode_egprs_pkt_ch_req(0x6f9) returns 0
+ ==> Emergency call
+osmo_gprs_rlcmac_decode_egprs_pkt_ch_req(0x7ea) returns -8
+*** testRAcap4 ***
+=== Test decoding of MS RA Capability 4===
+osmo_gprs_rlcmac_decode_ms_ra_cap() returns 0
+GPRS multislot class = 12
+EGPRS multislot class = 12
