@@ -5366,11 +5366,11 @@ typedef enum {
 
 extern struct value_string egprs_pkt_ch_req_type_names[];
 
- int decode_gsm_rlcmac_uplink(struct bitvec *vector, RlcMacUplink_t *data);
- int decode_gsm_rlcmac_downlink(struct bitvec *vector, RlcMacDownlink_t *data);
- int encode_gsm_rlcmac_downlink(struct bitvec *vector, RlcMacDownlink_t *data);
- int encode_gsm_rlcmac_uplink(struct bitvec *vector, RlcMacUplink_t *data);
- void decode_gsm_rlcmac_uplink_data(struct bitvec *vector, RlcMacUplinkDataBlock_t * data);
- void encode_gsm_rlcmac_downlink_data(struct bitvec *vector, RlcMacDownlinkDataBlock_t * data);
- int decode_gsm_ra_cap(struct bitvec *vector, MS_Radio_Access_capability_t * data);
- int decode_egprs_pkt_ch_req(guint16 ra, EGPRS_PacketChannelRequest_t *data);
+ int osmo_gprs_rlcmac_decode_uplink(struct bitvec *vector, RlcMacUplink_t *data);
+ int osmo_gprs_rlcmac_decode_downlink(struct bitvec *vector, RlcMacDownlink_t *data);
+ int osmo_gprs_rlcmac_encode_downlink(struct bitvec *vector, RlcMacDownlink_t *data);
+ int osmo_gprs_rlcmac_encode_uplink(struct bitvec *vector, RlcMacUplink_t *data);
+ void osmo_gprs_rlcmac_decode_uplink_data(struct bitvec *vector, RlcMacUplinkDataBlock_t * data);
+ void osmo_gprs_rlcmac_encode_downlink_data(struct bitvec *vector, RlcMacDownlinkDataBlock_t * data);
+ int osmo_gprs_rlcmac_decode_ms_ra_cap(struct bitvec *vector, MS_Radio_Access_capability_t * data);
+ int osmo_gprs_rlcmac_decode_egprs_pkt_ch_req(guint16 ra, EGPRS_PacketChannelRequest_t *data);

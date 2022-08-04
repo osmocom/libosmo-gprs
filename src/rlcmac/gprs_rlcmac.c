@@ -5368,7 +5368,7 @@ static const struct value_string rlcmac_dl_msg_names[] = {
 };
 
 /* Returns 0 on success, negative on error. */
-int decode_gsm_rlcmac_uplink(struct bitvec *vector, RlcMacUplink_t * data)
+int osmo_gprs_rlcmac_decode_uplink(struct bitvec *vector, RlcMacUplink_t * data)
 {
   csnStream_t      ar;
   int ret;
@@ -5493,7 +5493,7 @@ int decode_gsm_rlcmac_uplink(struct bitvec *vector, RlcMacUplink_t * data)
 }
 
 /* Returns 0 on success, negative on error. */
-int decode_gsm_rlcmac_downlink(struct bitvec *vector, RlcMacDownlink_t * data)
+int osmo_gprs_rlcmac_decode_downlink(struct bitvec *vector, RlcMacDownlink_t * data)
 {
   csnStream_t  ar;
   /* See RLC/MAC downlink control block structure in TS 44.060 / 10.3.1 */
@@ -5705,7 +5705,7 @@ int decode_gsm_rlcmac_downlink(struct bitvec *vector, RlcMacDownlink_t * data)
 }
 
 /* Returns 0 on success, negative on error. */
-int encode_gsm_rlcmac_uplink(struct bitvec *vector, RlcMacUplink_t * data)
+int osmo_gprs_rlcmac_encode_uplink(struct bitvec *vector, RlcMacUplink_t * data)
 {
   csnStream_t      ar;
   unsigned writeIndex = 0;
@@ -5817,7 +5817,7 @@ int encode_gsm_rlcmac_uplink(struct bitvec *vector, RlcMacUplink_t * data)
 }
 
 /* Returns 0 on success, negative on error. */
-int encode_gsm_rlcmac_downlink(struct bitvec *vector, RlcMacDownlink_t * data)
+int osmo_gprs_rlcmac_encode_downlink(struct bitvec *vector, RlcMacDownlink_t * data)
 {
   csnStream_t  ar;
   int ret;
@@ -6026,7 +6026,7 @@ int encode_gsm_rlcmac_downlink(struct bitvec *vector, RlcMacDownlink_t * data)
   return ret;
 }
 
-void decode_gsm_rlcmac_uplink_data(struct bitvec *vector, RlcMacUplinkDataBlock_t * data)
+void osmo_gprs_rlcmac_decode_uplink_data(struct bitvec *vector, RlcMacUplinkDataBlock_t * data)
 {
   unsigned i;
   unsigned readIndex = 0;
@@ -6105,7 +6105,7 @@ void decode_gsm_rlcmac_uplink_data(struct bitvec *vector, RlcMacUplinkDataBlock_
   }
 }
 
-void encode_gsm_rlcmac_downlink_data(struct bitvec *vector, RlcMacDownlinkDataBlock_t * data)
+void osmo_gprs_rlcmac_encode_downlink_data(struct bitvec *vector, RlcMacDownlinkDataBlock_t * data)
 {
   unsigned i;
   unsigned writeIndex = 0;
@@ -6164,7 +6164,7 @@ void encode_gsm_rlcmac_downlink_data(struct bitvec *vector, RlcMacDownlinkDataBl
   }
 }
 
-int decode_gsm_ra_cap(struct bitvec *vector, MS_Radio_Access_capability_t *data)
+int osmo_gprs_rlcmac_decode_ms_ra_cap(struct bitvec *vector, MS_Radio_Access_capability_t *data)
 {
   csnStream_t      ar;
   int ret;
@@ -6190,7 +6190,7 @@ int decode_gsm_ra_cap(struct bitvec *vector, MS_Radio_Access_capability_t *data)
 /* This function is not actually used by osmo-pcu itself, and only needed for
  * the RLCMAC unit test. Having it here is better than making the internal
  * CSN.1 definitions (in particular, MS_Radio_Access_capability_t) non-static. */
-int encode_gsm_ra_cap(struct bitvec *vector, MS_Radio_Access_capability_t *data)
+int osmo_gprs_rlcmac_encode_ms_ra_cap(struct bitvec *vector, MS_Radio_Access_capability_t *data)
 {
   unsigned writeIndex = 0;
   csnStream_t ar;
@@ -6226,7 +6226,7 @@ struct value_string egprs_pkt_ch_req_type_names[] = {
   { 0, NULL }
 };
 
-int decode_egprs_pkt_ch_req(guint16 ra, EGPRS_PacketChannelRequest_t *req)
+int osmo_gprs_rlcmac_decode_egprs_pkt_ch_req(guint16 ra, EGPRS_PacketChannelRequest_t *req)
 {
   unsigned readIndex = 0;
   guint8 bv_data[2];
