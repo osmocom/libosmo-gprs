@@ -25,8 +25,7 @@
  * GNU General Public License for more details.
  */
 
-#ifndef __PACKET_GSM_RLCMAC_H__
-#define __PACKET_GSM_RLCMAC_H__
+#pragma once
 
 #include <osmocom/core/bitvec.h>
 #include <osmocom/csn1/wireshark_compat.h>
@@ -5375,5 +5374,3 @@ extern struct value_string egprs_pkt_ch_req_type_names[];
  void encode_gsm_rlcmac_downlink_data(struct bitvec *vector, RlcMacDownlinkDataBlock_t * data);
  int decode_gsm_ra_cap(struct bitvec *vector, MS_Radio_Access_capability_t * data);
  int decode_egprs_pkt_ch_req(guint16 ra, EGPRS_PacketChannelRequest_t *data);
-
-#endif /* __PACKET_GSM_RLCMAC_H__ */
