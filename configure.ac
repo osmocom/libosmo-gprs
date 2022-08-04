@@ -75,10 +75,14 @@ AC_MSG_RESULT([CPPFLAGS="$CPPFLAGS"])
 
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([libosmo-csn1.pc
+		 libosmo-gprs-rlcmac.pc
 		 include/Makefile
 		 include/osmocom/Makefile
 		 include/osmocom/csn1/Makefile
+		 include/osmocom/gprs/Makefile
+		 include/osmocom/gprs/rlcmac/Makefile
 		 src/Makefile
 		 src/csn1/Makefile
+		 src/rlcmac/Makefile
 		 Makefile])
 AC_OUTPUT

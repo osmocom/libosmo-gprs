@@ -1,4 +1,3 @@
 SUBDIRS = \
-	csn1 \
-	gprs \
+	rlcmac \
 	$(NULL)

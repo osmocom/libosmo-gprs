@@ -14,6 +14,7 @@ SUBDIRS = \
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = \
 	libosmo-csn1.pc \
+	libosmo-gprs-rlcmac.pc \
 	$(NULL)
 
 BUILT_SOURCES = $(top_srcdir)/.version
