@@ -5364,7 +5364,7 @@ typedef enum {
   EGPRS_PKT_CHAN_REQ_SIGNALLING_IPA,
 } EGPRS_PacketChannelRequestType_t;
 
-extern struct value_string egprs_pkt_ch_req_type_names[];
+extern const struct value_string osmo_gprs_rlcmac_egprs_pkt_ch_req_type_names[];
 
  int osmo_gprs_rlcmac_decode_uplink(struct bitvec *vector, RlcMacUplink_t *data);
  int osmo_gprs_rlcmac_decode_downlink(struct bitvec *vector, RlcMacDownlink_t *data);

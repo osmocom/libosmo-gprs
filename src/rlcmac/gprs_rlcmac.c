@@ -6209,7 +6209,7 @@ int osmo_gprs_rlcmac_encode_ms_ra_cap(struct bitvec *vector, MS_Radio_Access_cap
   return ret;
 }
 
-struct value_string egprs_pkt_ch_req_type_names[] = {
+const struct value_string osmo_gprs_rlcmac_egprs_pkt_ch_req_type_names[] = {
   { EGPRS_PKT_CHAN_REQ_ONE_PHASE,               "One Phase Access" },
   { EGPRS_PKT_CHAN_REQ_SHORT,                   "Short Access" },
   { EGPRS_PKT_CHAN_REQ_ONE_PHASE_RED_LATENCY,   "One Phase Access (Reduced Latency MS)" },
