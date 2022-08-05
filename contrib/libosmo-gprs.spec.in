@@ -1,0 +1,39 @@
+Name:           libosmo-gprs
+Version:        @VERSION@
+Release:        0
+Summary:        libosmo-gprs: Osmocom GPRS libraries (CSN.1, RLC/MAC)
+License:        GPL-2.0-or-later
+Group:          Hardware/Mobile
+URL:            https://osmocom.org/projects/libosmo-gprs
+Source:         %{name}-%{version}.tar.xz
+BuildRequires:  autoconf-archive
+BuildRequires:  automake >= 1.9
+BuildRequires:  libtool >= 2
+BuildRequires:  pkgconfig >= 0.20
+BuildRequires:  pkgconfig(libosmocore) >= 1.6.0
+BuildRequires:  pkgconfig(talloc)
+
+%description
+libosmo-gprs: Osmocom GPRS libraries (CSN.1, RLC/MAC)
+
+%prep
+%setup -q
+
+%build
+echo "%{version}" >.tarball-version
+autoreconf -fi
+%configure
+make %{?_smp_mflags}
+
+%install
+%make_install
+
+%check
+make %{?_smp_mflags} check || (find . -name testsuite.log -exec cat {} +)
+
+%files
+%license COPYING
+%doc README.md
+%{_bindir}/libosmo-gprs
+
+%changelog
