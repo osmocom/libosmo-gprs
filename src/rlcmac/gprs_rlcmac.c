@@ -6187,9 +6187,6 @@ int osmo_gprs_rlcmac_decode_ms_ra_cap(struct bitvec *vector, MS_Radio_Access_cap
   return ret;
 }
 
-/* This function is not actually used by osmo-pcu itself, and only needed for
- * the RLCMAC unit test. Having it here is better than making the internal
- * CSN.1 definitions (in particular, MS_Radio_Access_capability_t) non-static. */
 int osmo_gprs_rlcmac_encode_ms_ra_cap(struct bitvec *vector, MS_Radio_Access_capability_t *data)
 {
   unsigned writeIndex = 0;
