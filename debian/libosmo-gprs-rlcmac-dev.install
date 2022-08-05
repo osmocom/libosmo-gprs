@@ -1,0 +1,5 @@
+usr/include/osmocom/gprs/rlcmac
+usr/lib/*/libosmo-gprs-rlcmac*.a
+usr/lib/*/libosmo-gprs-rlcmac*.so
+usr/lib/*/libosmo-gprs-rlcmac*.la
+usr/lib/*/pkgconfig/libosmo-gprs-rlcmac.pc

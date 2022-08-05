@@ -1,0 +1,5 @@
+usr/include/osmocom/csn1
+usr/lib/*/libosmo-csn1*.a
+usr/lib/*/libosmo-csn1*.so
+usr/lib/*/libosmo-csn1*.la
+usr/lib/*/pkgconfig/libosmo-csn1.pc
