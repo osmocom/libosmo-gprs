@@ -22,6 +22,7 @@ BUILT_SOURCES = $(top_srcdir)/.version
 EXTRA_DIST = \
 	.version \
 	git-version-gen \
+	debian \
 	$(NULL)
 
 @RELMAKE@
