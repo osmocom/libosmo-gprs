@@ -10,7 +10,7 @@ VERSION := $(shell echo '$(DEBVERS)' | sed -e 's/[+-].*//' -e 's/~//g')
 
 # See https://www.debian.org/doc/manuals/developers-reference/best-pkging-practices.html#bpp-dbg
 override_dh_strip:
-	dh_strip -plibosmo-csn10 --dbg-package=libosmo-csn1-dbg
+	dh_strip -plibosmo-csn1-0 --dbg-package=libosmo-csn1-dbg
 	dh_strip -plibosmo-gprs-rlcmac0 --dbg-package=libosmo-gprs-rlcmac-dbg
 
 # Print test results in case of a failure
