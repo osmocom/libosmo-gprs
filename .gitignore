@@ -31,6 +31,14 @@ libtool
 ltmain.sh
 m4/*.m4
 
+# debian build products
+debian/libosmo-gprs-rlcmac*
+debian/libosmo-csn1*
+debian/autoreconf.*
+debian/.debhelper
+debian/files
+debian/tmp
+
 # testsuite
 tests/atconfig
 tests/package.m4
