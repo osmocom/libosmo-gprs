@@ -20,7 +20,8 @@ Section: libs
 Architecture: any
 Multi-Arch: same
 Pre-Depends: ${misc:Pre-Depends}
-Depends: ${misc:Depends}, ${shlibs:Depends}
+Depends: ${misc:Depends},
+	 ${shlibs:Depends}
 Description: Osmocom CSN.1 codec library and message definition helpers
   This is a shared library containing the CSN.1 (Concrete Syntax Notation 1)
   codec and API for message definition.  The implementation is based on the
@@ -30,14 +31,16 @@ Package: libosmo-csn1-dbg
 Architecture: any
 Section: debug
 Multi-Arch: same
-Depends: libosmo-csn1-0 (= ${binary:Version}) ${misc:Depends},
+Depends: libosmo-csn1-0 (= ${binary:Version}),
+	 ${misc:Depends}
 Description: Debug symbols for the Osmocom CSN.1 codec library
 
 Package: libosmo-csn1-dev
 Architecture: any
 Multi-Arch: same
 Section: libdevel
-Depends: libosmo-csn1-0 (= ${binary:Version}) ${misc:Depends},
+Depends: libosmo-csn1-0 (= ${binary:Version}),
+	 ${misc:Depends}
 Description: Development headers and libraries for the Osmocom CSN.1 codec
 
 Package: libosmo-gprs-rlcmac0
@@ -45,19 +48,22 @@ Section: libs
 Architecture: any
 Multi-Arch: same
 Pre-Depends: ${misc:Pre-Depends}
-Depends: ${misc:Depends}, ${shlibs:Depends}
+Depends: ${misc:Depends},
+	 ${shlibs:Depends}
 Description: Osmocom RLC/MAC codec and message definitions for GPRS and EGPRS
 
 Package: libosmo-gprs-rlcmac-dbg
 Architecture: any
 Section: debug
 Multi-Arch: same
-Depends: libosmo-gprs-rlcmac0 (= ${binary:Version}) ${misc:Depends},
+Depends: libosmo-gprs-rlcmac0 (= ${binary:Version}),
+	 ${misc:Depends}
 Description: Debug symbols for libosmo-gprs-rlcmac
 
 Package: libosmo-gprs-rlcmac-dev
 Architecture: any
 Multi-Arch: same
 Section: libdevel
-Depends: libosmo-gprs-rlcmac0 (= ${binary:Version}) ${misc:Depends},
+Depends: libosmo-gprs-rlcmac0 (= ${binary:Version}),
+	 ${misc:Depends}
 Description: Development headers and libraries for libosmo-gprs-rlcmac
