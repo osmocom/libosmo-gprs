@@ -17,7 +17,7 @@ GIT Repository
 
 You can clone from the official libosmo-gprs.git repository using
 
-	git clone git://git.osmocom.org/libosmo-gprs.git
+	git clone https://gitea.osmocom.org/osmocom/libosmo-gprs.git
 
 To submit patches, see "Contributing" below.
 

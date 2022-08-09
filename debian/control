@@ -11,8 +11,8 @@ Build-Depends: debhelper (>= 9),
                git,
                libosmocore-dev (>= 1.7.0)
 Standards-Version: 3.9.8
-Vcs-Git: git://git.osmocom.org/libosmo-gprs.git
-Vcs-Browser: http://git.osmocom.org/libosmo-gprs/
+Vcs-Git: https://gitea.osmocom.org/osmocom/libosmo-gprs
+Vcs-Browser: https://gitea.osmocom.org/osmocom/libosmo-gprs
 Homepage: https://projects.osmocom.org/projects/libosmo-gprs
 
 Package: libosmo-csn1-0
