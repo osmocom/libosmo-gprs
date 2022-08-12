@@ -5,6 +5,18 @@ Source: https://gitea.osmocom.org/osmocom/libosmo-gprs
 Files:     *
 Copyright: 2022 sysmocom - s.f.m.c. GmbH <info@sysmocom.de>
 License:   GPL-2.0+
+
+Files:     src/csn1/csn1.c
+           src/csn1/csn1_enc.c
+           src/csn1/csn1_dec.c
+           src/rlcmac/gprs_rlcmac.c
+           include/osmocom/csn1/csn1.h
+           include/osmocom/gprs/rlcmac/gprs_rlcmac.h
+Copyright: 2011 Vincent Helfre
+           2011 ST-Ericsson (Jari Sassi)
+License:   GPL-2.0+
+
+License:   GPL-2.0+
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU Affero General Public License as published by
  the Free Software Foundation; either version 3 of the License, or
