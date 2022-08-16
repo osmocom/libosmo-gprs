@@ -1,7 +1,7 @@
 Name:           libosmo-gprs
 Version:        @VERSION@
 Release:        0
-Summary:        libosmo-gprs: Osmocom GPRS libraries (CSN.1, RLC/MAC)
+Summary:        Osmocom GPRS libraries (CSN.1, RLC/MAC)
 License:        GPL-2.0-or-later
 Group:          Hardware/Mobile
 URL:            https://osmocom.org/projects/libosmo-gprs
@@ -10,11 +10,55 @@ BuildRequires:  autoconf-archive
 BuildRequires:  automake >= 1.9
 BuildRequires:  libtool >= 2
 BuildRequires:  pkgconfig >= 0.20
-BuildRequires:  pkgconfig(libosmocore) >= 1.6.0
+BuildRequires:  pkgconfig(libosmocore) >= 1.7.0
 BuildRequires:  pkgconfig(talloc)
 
 %description
-libosmo-gprs: Osmocom GPRS libraries (CSN.1, RLC/MAC)
+Osmocom GPRS libraries (CSN.1, RLC/MAC)
+
+This package provides Osmocom GPRS libraries used by osmocom-bb and
+osmo-pcu: libosmo-csn1, libosmo-gprs-rlcmac.
+
+%package -n libosmo-csn1-0
+Summary:        CSN.1 (Concrete Syntax Notation 1) codec
+License:        GPL-2.0-or-later
+Group:          System/Libraries
+
+%description -n libosmo-csn1-0
+This package provides facilities for encoding, decoding, and declarative
+definition of protocols using CSN.1 (Concrete Syntax Notation 1).  This
+implementation was originally developed by ST-Ericsson (Jari Sassi) and
+later adopted by Wireshark and osmo-pcu.
+
+%package -n libosmo-csn1-devel
+Summary:        Development files for libosmo-csn1
+License:        GPL-2.0-or-later
+Group:          Development/Libraries/C and C++
+Requires:       libosmo-csn1-0 = %{version}
+
+%description -n libosmo-csn1-devel
+This package provides development files for compiling a program using
+libosmo-csn1 - CSN.1 (Concrete Syntax Notation 1) codec.
+
+%package -n libosmo-gprs-rlcmac0
+Summary:        Osmocom GPRS RLC/MAC library
+License:        GPL-2.0-or-later
+Group:          System/Libraries
+
+%description -n libosmo-gprs-rlcmac0
+This package provides RLC/MAC protocol definitions for (E)GPRS.
+
+%package -n libosmo-gprs-rlcmac-devel
+Summary:        Development files for libosmo-gprs-rlcmac
+License:        GPL-2.0-or-later
+Group:          Development/Libraries/C and C++
+Requires:       libosmo-gprs-rlcmac0 = %{version}
+Requires:       libosmo-csn1-devel = %{version}
+
+%description -n libosmo-gprs-rlcmac-devel
+This package provides development files for compiling a program using
+libosmo-gprs-rlcmac - RLC/MAC protocol definitions for (E)GPRS.
+
 
 %prep
 %setup -q
@@ -22,18 +66,40 @@ libosmo-gprs: Osmocom GPRS libraries (CSN.1, RLC/MAC)
 %build
 echo "%{version}" >.tarball-version
 autoreconf -fi
-%configure
+%configure --disable-static --includedir="%_includedir/%name"
 make %{?_smp_mflags}
 
 %install
 %make_install
+find "%buildroot/%_libdir" -type f -name "*.la" -delete
 
 %check
 make %{?_smp_mflags} check || (find . -name testsuite.log -exec cat {} +)
 
-%files
-%license COPYING
-%doc README.md
-%{_bindir}/libosmo-gprs
+%post   -n libosmo-csn1-0 -p /sbin/ldconfig
+%postun -n libosmo-csn1-0 -p /sbin/ldconfig
+%post   -n libosmo-gprs-rlcmac0 -p /sbin/ldconfig
+%postun -n libosmo-gprs-rlcmac0 -p /sbin/ldconfig
+
+%files -n libosmo-csn1-0
+%_libdir/libosmo-csn1.so.0*
+
+%files -n libosmo-csn1-devel
+%dir %_includedir/%name
+%dir %_includedir/%name/osmocom
+%_includedir/%name/osmocom/csn1
+%_libdir/libosmo-csn1.so
+%_libdir/pkgconfig/libosmo-csn1.pc
+
+%files -n libosmo-gprs-rlcmac0
+%_libdir/libosmo-gprs-rlcmac.so.0*
+
+%files -n libosmo-gprs-rlcmac-devel
+%dir %_includedir/%name
+%dir %_includedir/%name/osmocom
+%dir %_includedir/%name/osmocom/gprs
+%_includedir/%name/osmocom/gprs/rlcmac
+%_libdir/libosmo-gprs-rlcmac.so
+%_libdir/pkgconfig/libosmo-gprs-rlcmac.pc
 
 %changelog
