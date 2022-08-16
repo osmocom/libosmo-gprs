@@ -13,8 +13,8 @@ check_PROGRAMS = \
 	$(NULL)
 
 EXTRA_DIST = \
-	rlcmac/RLCMACTest.ok \
-	rlcmac/RLCMACTest.err \
+	RLCMACTest.ok \
+	RLCMACTest.err \
 	$(NULL)
 
 RLCMACTest_SOURCES = RLCMACTest.c
