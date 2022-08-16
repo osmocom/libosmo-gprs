@@ -31,9 +31,6 @@ fi
 PKG_PROG_PKG_CONFIG([0.20])
 
 dnl checks for libraries
-AC_SEARCH_LIBS([dlopen], [dl dld], [LIBRARY_DL="$LIBS";LIBS=""])
-AC_SUBST(LIBRARY_DL)
-
 PKG_CHECK_MODULES(LIBOSMOCORE, libosmocore >= 1.7.0)
 
 dnl checks for header files
