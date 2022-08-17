@@ -54,3 +54,5 @@ tests/*/*_test
 
 tags
 /deps
+
+contrib/libosmo-gprs.spec
