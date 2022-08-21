@@ -225,6 +225,9 @@ gint16 osmo_csn1_stream_encode(csnStream_t* ar, const CSN_DESCR* pDescr, struct 
 #define CSN_DESCR_END(_STRUCT) \
 	{CSN_END, 0, {0}, 0, FALSE, "", 0, NULL} };
 
+#define CSN_DESCR_EXTERN(_STRUCT) \
+	extern const CSN_DESCR CSNDESCR_##_STRUCT[]
+
 /******************************************************************************
  * CSN_ERROR(Par1, Par2, Par3)
  * May be called at any time when an abort of packing or unpacking of a message
