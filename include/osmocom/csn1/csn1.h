@@ -219,11 +219,11 @@ gint16 osmo_csn1_stream_decode(csnStream_t* ar, const CSN_DESCR* pDescr, struct 
 gint16 osmo_csn1_stream_encode(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec *vector, unsigned *writeIndex, void* data);
 
 /* CSN struct macro's */
-#define  CSN_DESCR_BEGIN(_STRUCT)\
-        CSN_DESCR CSNDESCR_##_STRUCT[] = {
+#define CSN_DESCR_BEGIN(_STRUCT) \
+	CSN_DESCR CSNDESCR_##_STRUCT[] = {
 
-#define  CSN_DESCR_END(_STRUCT)\
-         {CSN_END, 0, {0}, 0, FALSE, "", 0, NULL} };
+#define CSN_DESCR_END(_STRUCT) \
+	{CSN_END, 0, {0}, 0, FALSE, "", 0, NULL} };
 
 /******************************************************************************
  * CSN_ERROR(Par1, Par2, Par3)
