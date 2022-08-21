@@ -30,6 +30,13 @@
 #include <osmocom/csn1/csn1.h>
 #include <osmocom/gprs/rlcmac/gprs_rlcmac.h>
 
+extern int g_log_cat;
+
+CSN_DESCR_EXTERN(GPRS_Mobile_Allocation_t);
+CSN_DESCR_EXTERN(PBCCH_Not_present_t);
+CSN_DESCR_EXTERN(PBCCH_present_t);
+CSN_DESCR_EXTERN(StartingTime_t);
+
 /*<P1 Rest Octets>*/
 /*<P2 Rest Octets>*/
 #if 0
@@ -392,34 +399,27 @@ CSN_DESCR_BEGIN(IA_PacketAssignment_t)
 CSN_DESCR_END  (IA_PacketAssignment_t)
 #endif
 
-#if 0
 static const
 CSN_DESCR_BEGIN(SI13_AdditionsR6)
   M_NEXT_EXIST (SI13_AdditionsR6, Exist_LB_MS_TXPWR_MAX_CCH, 1),
   M_UINT       (SI13_AdditionsR6,  LB_MS_TXPWR_MAX_CCH,  5),
   M_UINT       (SI13_AdditionsR6,  SI2n_SUPPORT,  2),
 CSN_DESCR_END  (SI13_AdditionsR6)
-#endif
 
-#if 0
 static const
 CSN_DESCR_BEGIN(SI13_AdditionsR4)
   M_UINT       (SI13_AdditionsR4,  SI_STATUS_IND,  1),
   M_NEXT_EXIST_OR_NULL_LH (SI13_AdditionsR4, Exist_AdditionsR6, 1),
   M_TYPE       (SI13_AdditionsR4,  AdditionsR6, SI13_AdditionsR6),
 CSN_DESCR_END  (SI13_AdditionsR4)
-#endif
 
-#if 0
 static const
 CSN_DESCR_BEGIN(SI13_AdditionR99)
   M_UINT       (SI13_AdditionR99,  SGSNR,  1),
   M_NEXT_EXIST_OR_NULL_LH (SI13_AdditionR99, Exist_AdditionsR4, 1),
   M_TYPE       (SI13_AdditionR99,  AdditionsR4, SI13_AdditionsR4),
 CSN_DESCR_END  (SI13_AdditionR99)
-#endif
 
-#if 0
 static const
 CSN_DESCR_BEGIN          (SI_13_t)
   M_THIS_EXIST_LH        (SI_13_t),
@@ -438,7 +438,6 @@ CSN_DESCR_BEGIN          (SI_13_t)
   M_NEXT_EXIST_OR_NULL_LH(SI_13_t, Exist_AdditionsR99, 1),
   M_TYPE                 (SI_13_t, AdditionsR99, SI13_AdditionR99),
 CSN_DESCR_END            (SI_13_t)
-#endif
 
 /* Enhanced Measurement Report */
 #if 0
@@ -607,3 +606,43 @@ CSN_DESCR_BEGIN   (EnhancedMeasurementReport_t)
   M_VAR_TARRAY    (EnhancedMeasurementReport_t, REPORTING_QUANTITY_Instances, REPORTING_QUANTITY_Instance_t, Count_REPORTING_QUANTITY_Instances),
 CSN_DESCR_END     (EnhancedMeasurementReport_t)
 #endif
+
+static int _osmo_gprs_rlcmac_decode(void *storage,
+				    const CSN_DESCR *descr,
+				    const char *descr_name,
+				    const uint8_t *data,
+				    size_t data_len)
+{
+	unsigned int readIndex = 0;
+	csnStream_t ar;
+	int ret;
+
+	osmo_csn1_stream_init(&ar, 0, 8 * data_len);
+
+	struct bitvec bv = {
+		.data = (uint8_t *)data,
+		.data_len = data_len,
+	};
+
+	LOGP(DLCSN1, LOGL_INFO, "osmo_csn1_stream_decode (%s): ", descr_name);
+	ret = osmo_csn1_stream_decode(&ar, descr, &bv, &readIndex, storage);
+	LOGPC(DLCSN1, LOGL_INFO, "\n");
+
+	if (ret > 0) {
+		LOGP(g_log_cat, LOGL_NOTICE,
+		     "%s: %d remaining bits unhandled by decoder\n",
+		     descr_name, ret);
+		ret = 0;
+	}
+
+	return ret;
+}
+
+int osmo_gprs_rlcmac_decode_si13ro(SI_13_t *storage,
+				   const uint8_t *data, size_t data_len)
+{
+	return _osmo_gprs_rlcmac_decode(storage,
+					CSNDESCR(SI_13_t),
+					"SI13 Rest Octets",
+					data, data_len);
+}

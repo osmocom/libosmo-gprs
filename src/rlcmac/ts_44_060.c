@@ -54,7 +54,7 @@ CSN_DESCR_BEGIN(PLMN_t)
   M_UINT       (PLMN_t,  MNC1,  4),
 CSN_DESCR_END  (PLMN_t)
 
-static const
+const
 CSN_DESCR_BEGIN(StartingTime_t)
   M_UINT       (StartingTime_t,  N32,  5),
   M_UINT       (StartingTime_t,  N51,  6),
@@ -242,7 +242,7 @@ CSN_DESCR_BEGIN(ARFCN_index_list_t)
   M_REC_ARRAY  (ARFCN_index_list_t, ARFCN_INDEX, ElementsOf_ARFCN_INDEX, 6),
 CSN_DESCR_END  (ARFCN_index_list_t)
 
-static const
+const
 CSN_DESCR_BEGIN(GPRS_Mobile_Allocation_t)
   M_UINT       (GPRS_Mobile_Allocation_t,  HSN,  6),
   M_REC_ARRAY  (GPRS_Mobile_Allocation_t, RFL_NUMBER, ElementsOf_RFL_NUMBER, 4),
@@ -277,7 +277,7 @@ CSN_DESCR_BEGIN(GPRS_Cell_Options_t)
   M_TYPE       (GPRS_Cell_Options_t, Extension_Bits, Extension_Bits_t),
 CSN_DESCR_END  (GPRS_Cell_Options_t)
 
-static const
+const
 CSN_DESCR_BEGIN(PBCCH_Not_present_t)
   M_UINT       (PBCCH_Not_present_t,  RAC,  8),
   M_UINT       (PBCCH_Not_present_t,  SPGC_CCCH_SUP, 1),
@@ -304,7 +304,7 @@ CSN_DESCR_BEGIN(PBCCH_Description_t)/*SI13*/
   M_CHOICE     (PBCCH_Description_t, UnionType, SI13_PBCCH_Description_Channel, ElementsOf(SI13_PBCCH_Description_Channel)),
 CSN_DESCR_END  (PBCCH_Description_t)
 
-static const
+const
 CSN_DESCR_BEGIN(PBCCH_present_t)
   M_UINT       (PBCCH_present_t,  PSI1_REPEAT_PERIOD,  4),
   M_TYPE       (PBCCH_present_t, PBCCH_Description, PBCCH_Description_t),

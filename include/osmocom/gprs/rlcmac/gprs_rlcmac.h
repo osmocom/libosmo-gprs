@@ -5377,4 +5377,7 @@ extern const struct value_string osmo_gprs_rlcmac_egprs_pkt_ch_req_type_names[];
  int osmo_gprs_rlcmac_encode_ms_ra_cap(struct bitvec *vector, MS_Radio_Access_capability_t * data);
  int osmo_gprs_rlcmac_decode_egprs_pkt_ch_req(guint16 ra, EGPRS_PacketChannelRequest_t *data);
 
+int osmo_gprs_rlcmac_decode_si13ro(SI_13_t *storage,
+				   const uint8_t *data, size_t data_len);
+
 void osmo_gprs_rlcmac_set_log_cat(int cat);

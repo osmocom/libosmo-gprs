@@ -1,0 +1,11 @@
+*** test_si13ro ***
+testData[0] = 9000185a6fc9f2b5304208eb2b2b2b2b2b2b2b2b
+osmo_gprs_rlcmac_decode_si13ro() returns 0
+testData[1] = a000185a6fc9f14608411b2b2b2b2b2b2b2b2b2b
+osmo_gprs_rlcmac_decode_si13ro() returns 0
+testData[2] = 90005847eb4a93e51a218a16ab2b2b2b2b2b2b2b
+osmo_gprs_rlcmac_decode_si13ro() returns 0
+testData[3] = 90005847eb4a93e50a218a162b2b2b2b2b2b2b2b
+osmo_gprs_rlcmac_decode_si13ro() returns 0
+testData[4] = b0005840654a92b53c2942db2b2b2b2b2b2b2b2b
+osmo_gprs_rlcmac_decode_si13ro() returns 0
