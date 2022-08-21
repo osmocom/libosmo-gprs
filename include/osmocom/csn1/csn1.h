@@ -23,6 +23,8 @@
 
 #pragma once
 
+#include <stddef.h>
+
 #include <osmocom/core/bitvec.h>
 #include "wireshark_compat.h"
 

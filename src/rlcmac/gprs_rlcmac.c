@@ -26,7 +26,6 @@
  */
 
 #include <assert.h>
-#include <stddef.h>
 #include <arpa/inet.h>
 
 #include <osmocom/core/utils.h>
