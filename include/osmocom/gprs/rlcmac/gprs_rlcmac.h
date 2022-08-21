@@ -27,6 +27,7 @@
 
 #pragma once
 
+#include <osmocom/core/utils.h>
 #include <osmocom/core/bitvec.h>
 #include <osmocom/csn1/wireshark_compat.h>
 
