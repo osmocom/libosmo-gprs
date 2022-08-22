@@ -437,6 +437,7 @@ CSN_DESCR_BEGIN          (SI_13_t)
 
   M_NEXT_EXIST_OR_NULL_LH(SI_13_t, Exist_AdditionsR99, 1),
   M_TYPE                 (SI_13_t, AdditionsR99, SI13_AdditionR99),
+  M_PADDING_BITS         (SI_13_t),
 CSN_DESCR_END            (SI_13_t)
 
 /* Enhanced Measurement Report */
