@@ -6,5 +6,6 @@ includedir=@includedir@
 Name: Osmocom CSN.1 Codec Library
 Description: C Utility Library
 Version: @VERSION@
+Requires: libosmocore
 Libs: -L${libdir} -losmo-csn1
 Cflags: -I${includedir}/
