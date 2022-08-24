@@ -23,6 +23,7 @@ lib_LTLIBRARIES = \
 
 libosmo_gprs_rlcmac_la_SOURCES = \
 	gprs_rlcmac.c \
+	misc.c \
 	$(NULL)
 
 libosmo_gprs_rlcmac_la_LDFLAGS = \
