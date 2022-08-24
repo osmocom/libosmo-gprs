@@ -83,7 +83,7 @@ AC_CONFIG_FILES([libosmo-csn1.pc
 		 src/csn1/Makefile
 		 src/rlcmac/Makefile
 		 tests/Makefile
-		 tests/rlcmac/Makefile
+		 tests/ts_44_060/Makefile
 		 Makefile
 		 contrib/libosmo-gprs.spec])
 AC_OUTPUT

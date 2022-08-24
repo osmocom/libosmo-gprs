@@ -1,9 +1,9 @@
 AT_INIT
 AT_BANNER([Regression tests])
 
-AT_SETUP([rlcmac])
-AT_KEYWORDS([rlcmac])
-cat $abs_srcdir/rlcmac/RLCMACTest.ok > expout
-cat $abs_srcdir/rlcmac/RLCMACTest.err > experr
-AT_CHECK([$abs_top_builddir/tests/rlcmac/RLCMACTest], [0], [expout], [experr])
+AT_SETUP([rlcmac/ts_44_060])
+AT_KEYWORDS([rlcmac ts_44_060])
+cat $abs_srcdir/ts_44_060/ts_44_060_test.ok > expout
+cat $abs_srcdir/ts_44_060/ts_44_060_test.err > experr
+AT_CHECK([$abs_top_builddir/tests/ts_44_060/ts_44_060_test], [0], [expout], [experr])
 AT_CLEANUP

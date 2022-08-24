@@ -9,16 +9,16 @@ AM_LDFLAGS = \
 	$(NULL)
 
 check_PROGRAMS = \
-	RLCMACTest \
+	ts_44_060_test \
 	$(NULL)
 
 EXTRA_DIST = \
-	RLCMACTest.ok \
-	RLCMACTest.err \
+	ts_44_060_test.ok \
+	ts_44_060_test.err \
 	$(NULL)
 
-RLCMACTest_SOURCES = RLCMACTest.c
-RLCMACTest_LDADD = \
+ts_44_060_test_SOURCES = ts_44_060_test.c
+ts_44_060_test_LDADD = \
 	$(LIBOSMOCORE_LIBS) \
 	$(top_builddir)/src/csn1/libosmo-csn1.la \
 	$(top_builddir)/src/rlcmac/libosmo-gprs-rlcmac.la \

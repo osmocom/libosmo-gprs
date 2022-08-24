@@ -22,7 +22,8 @@ lib_LTLIBRARIES = \
 	$(NULL)
 
 libosmo_gprs_rlcmac_la_SOURCES = \
-	gprs_rlcmac.c \
+	ts_44_018.c \
+	ts_44_060.c \
 	misc.c \
 	$(NULL)
 

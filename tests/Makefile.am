@@ -1,5 +1,5 @@
 SUBDIRS = \
-	rlcmac \
+	ts_44_060 \
 	$(NULL)
 
 # The `:;' works around a Bash 3.2 bug when the output is not writeable.
