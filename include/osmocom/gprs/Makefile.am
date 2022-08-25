@@ -1,3 +1,4 @@
 SUBDIRS = \
+	llc \
 	rlcmac \
 	$(NULL)

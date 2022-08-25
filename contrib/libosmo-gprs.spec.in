@@ -1,8 +1,8 @@
 Name:           libosmo-gprs
 Version:        @VERSION@
 Release:        0
-Summary:        Osmocom GPRS libraries (CSN.1, RLC/MAC)
-License:        GPL-2.0-or-later
+Summary:        Osmocom GPRS libraries (CSN.1, RLC/MAC, LLC)
+License:        GPL-2.0-or-later and AGPL-3.0-or-later
 Group:          Hardware/Mobile
 URL:            https://osmocom.org/projects/libosmo-gprs
 Source:         %{name}-%{version}.tar.xz
@@ -16,8 +16,8 @@ BuildRequires:  pkgconfig(talloc)
 %description
 Osmocom GPRS libraries (CSN.1, RLC/MAC)
 
-This package provides Osmocom GPRS libraries used by osmocom-bb and
-osmo-pcu: libosmo-csn1, libosmo-gprs-rlcmac.
+This package provides Osmocom GPRS libraries used by osmocom-bb, osmo-pcu,
+and osmo-sgsn: libosmo-csn1, libosmo-gprs-llc, libosmo-gprs-rlcmac.
 
 %package -n libosmo-csn1-0
 Summary:        CSN.1 (Concrete Syntax Notation 1) codec
@@ -39,6 +39,24 @@ Requires:       libosmo-csn1-0 = %{version}
 %description -n libosmo-csn1-devel
 This package provides development files for compiling a program using
 libosmo-csn1 - CSN.1 (Concrete Syntax Notation 1) codec.
+
+%package -n libosmo-gprs-llc0
+Summary:        Osmocom GPRS LLC library
+License:        AGPL-3.0-or-later
+Group:          System/Libraries
+
+%description -n libosmo-gprs-llc0
+This package provides LLC (Logical Link Control) layer for (E)GPRS.
+
+%package -n libosmo-gprs-llc-devel
+Summary:        Development files for libosmo-gprs-llc
+License:        AGPL-3.0-or-later
+Group:          Development/Libraries/C and C++
+Requires:       libosmo-gprs-llc0 = %{version}
+
+%description -n libosmo-gprs-llc-devel
+This package provides development files for compiling a program using
+libosmo-gprs-llc - LLC (Logical Link Control) layer for (E)GPRS.
 
 %package -n libosmo-gprs-rlcmac0
 Summary:        Osmocom GPRS RLC/MAC library
@@ -78,6 +96,8 @@ make %{?_smp_mflags} check || (find . -name testsuite.log -exec cat {} +)
 
 %post   -n libosmo-csn1-0 -p /sbin/ldconfig
 %postun -n libosmo-csn1-0 -p /sbin/ldconfig
+%post   -n libosmo-gprs-llc0 -p /sbin/ldconfig
+%postun -n libosmo-gprs-llc0 -p /sbin/ldconfig
 %post   -n libosmo-gprs-rlcmac0 -p /sbin/ldconfig
 %postun -n libosmo-gprs-rlcmac0 -p /sbin/ldconfig
 
@@ -90,6 +110,17 @@ make %{?_smp_mflags} check || (find . -name testsuite.log -exec cat {} +)
 %_includedir/%name/osmocom/csn1
 %_libdir/libosmo-csn1.so
 %_libdir/pkgconfig/libosmo-csn1.pc
+
+%files -n libosmo-gprs-llc0
+%_libdir/libosmo-gprs-llc.so.0*
+
+%files -n libosmo-gprs-llc-devel
+%dir %_includedir/%name
+%dir %_includedir/%name/osmocom
+%dir %_includedir/%name/osmocom/gprs
+%_includedir/%name/osmocom/gprs/llc
+%_libdir/libosmo-gprs-llc.so
+%_libdir/pkgconfig/libosmo-gprs-llc.pc
 
 %files -n libosmo-gprs-rlcmac0
 %_libdir/libosmo-gprs-rlcmac.so.0*

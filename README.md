@@ -4,6 +4,7 @@ libosmo-gprs - Osmocom GPRS libraries
 This project is a home for several libraries providing common GPRS routines:
 
 * libosmo-csn1 - CSN.1 (Concrete Syntax Notation 1) codec,
+* libosmo-gprs-llc - LLC (Logical Link Control) layer,
 * libosmo-gprs-rlcmac - RLC/MAC message definitions.
 
 Homepage

@@ -15,6 +15,7 @@ SUBDIRS = \
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = \
 	libosmo-csn1.pc \
+	libosmo-gprs-llc.pc \
 	libosmo-gprs-rlcmac.pc \
 	$(NULL)
 
