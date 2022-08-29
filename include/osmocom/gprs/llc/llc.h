@@ -55,6 +55,11 @@ enum osmo_gprs_llc_primitive {
 	OSMO_GPRS_LLC_LL_DATA,			/* Req/Ind/Cnf: TLLI, L3-PDU, Ref, QoS, Radio Prio */
 	OSMO_GPRS_LLC_LL_UNITDATA,		/* Req/Ind: TLLI, L3-PDU, QoS, Radio Prio, Ciph, ... */
 	OSMO_GPRS_LLC_LL_STATUS,		/* Ind: TLLI, Cause */
+	/* LLE <-> RLC/MAC (MS side) */
+	OSMO_GPRS_LLC_GRR_DATA,			/* Req/Ind: TLLI, LL-PDU, SAPI, Cause, QoS, Radio Prio */
+	OSMO_GPRS_LLC_GRR_UNITDATA,		/* Req/Ind: TLLI, LL-PDU, SAPI, QoS, Radio Prio */
+	/* LLE <-> BSSGP (SGSN side) */
+	OSMO_GPRS_LLC_BSSGP_UNITDATA,		/* Req/Ind: TLLI, LL-PDU, Cell Id, QoS, RLC Confirm, SAPI, ... */
 };
 
 /* Section 4.5.2 Logical Link States + Annex C.2 */
