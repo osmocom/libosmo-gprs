@@ -37,33 +37,21 @@ enum osmo_gprs_llc_xid_type {
 /* TS 04.65 Section 5.1.2 Table 2: Service primitives used by SNDCP */
 enum osmo_gprs_llc_primitive {
 	/* GMM <-> LLME */
-	OSMO_GPRS_LLC_LLGMM_ASSIGN_REQ,		/* GMM tells us new TLLI: TLLI old, TLLI new, Kc, CiphAlg */
-	OSMO_GPRS_LLC_LLGMM_RESET_REQ,		/* GMM tells us to perform XID negotiation: TLLI */
-	OSMO_GPRS_LLC_LLGMM_RESET_CNF,		/* LLC informs GMM that XID has completed: TLLI */
-	OSMO_GPRS_LLC_LLGMM_SUSPEND_REQ,	/* GMM tells us MS has suspended: TLLI, Page */
-	OSMO_GPRS_LLC_LLGMM_RESUME_REQ,		/* GMM tells us MS has resumed: TLLI */
-	OSMO_GPRS_LLC_LLGMM_PAGE_IND,		/* LLC asks GMM to page MS: TLLI */
-	OSMO_GPRS_LLC_LLGMM_IOV_REQ,		/* GMM tells us to perform XID: TLLI */
-	OSMO_GPRS_LLC_LLGMM_STATUS_IND,		/* LLC informs GMM about error: TLLI, Cause */
+	OSMO_GPRS_LLC_LLGMM_ASSIGN,		/* Req: TLLI old, TLLI new, Kc, CiphAlg */
+	OSMO_GPRS_LLC_LLGMM_RESET,		/* Req/Cnf: TLLI */
+	OSMO_GPRS_LLC_LLGMM_SUSPEND,		/* Req: TLLI, Page */
+	OSMO_GPRS_LLC_LLGMM_RESUME,		/* Req: TLLI */
+	OSMO_GPRS_LLC_LLGMM_PAGE,		/* Ind: TLLI */
+	OSMO_GPRS_LLC_LLGMM_IOV,		/* Req: TLLI */
+	OSMO_GPRS_LLC_LLGMM_STATUS,		/* Ind: TLLI, Cause */
 	/* LLE <-> (GMM/SNDCP/SMS/TOM) */
-	OSMO_GPRS_LLC_LL_RESET_IND,		/* TLLI */
-	OSMO_GPRS_LLC_LL_ESTABLISH_REQ,		/* TLLI, XID Req */
-	OSMO_GPRS_LLC_LL_ESTABLISH_IND,		/* TLLI, XID Req, N201-I, N201-U */
-	OSMO_GPRS_LLC_LL_ESTABLISH_RESP,	/* TLLI, XID Negotiated */
-	OSMO_GPRS_LLC_LL_ESTABLISH_CONF,	/* TLLI, XID Neg, N201-i, N201-U */
-	OSMO_GPRS_LLC_LL_RELEASE_REQ,		/* TLLI, Local */
-	OSMO_GPRS_LLC_LL_RELEASE_IND,		/* TLLI, Cause */
-	OSMO_GPRS_LLC_LL_RELEASE_CONF,		/* TLLI */
-	OSMO_GPRS_LLC_LL_XID_REQ,		/* TLLI, XID Requested */
-	OSMO_GPRS_LLC_LL_XID_IND,		/* TLLI, XID Req, N201-I, N201-U */
-	OSMO_GPRS_LLC_LL_XID_RESP,		/* TLLI, XID Negotiated */
-	OSMO_GPRS_LLC_LL_XID_CONF,		/* TLLI, XID Neg, N201-I, N201-U */
-	OSMO_GPRS_LLC_LL_DATA_REQ,		/* TLLI, SN-PDU, Ref, QoS, Radio Prio, Ciph */
-	OSMO_GPRS_LLC_LL_DATA_IND,		/* TLLI, SN-PDU */
-	OSMO_GPRS_LLC_LL_DATA_CONF,		/* TLLI, Ref */
-	OSMO_GPRS_LLC_LL_UNITDATA_REQ,		/* TLLI, SN-PDU, Ref, QoS, Radio Prio, Ciph */
-	OSMO_GPRS_LLC_LL_UNITDATA_IND,		/* TLLI, SN-PDU */
-	OSMO_GPRS_LLC_LL_STATUS_IND,		/* TLLI, Cause */
+	OSMO_GPRS_LLC_LL_RESET,			/* Ind: TLLI */
+	OSMO_GPRS_LLC_LL_ESTABLISH,		/* Req/Ind/Rsp/Cnf: TLLI, XID Req/Neg, N201-I, N201-U */
+	OSMO_GPRS_LLC_LL_RELEASE,		/* Req/Ind/Cnf: TLLI, Local, Cause */
+	OSMO_GPRS_LLC_LL_XID,			/* Req/Ind/Rsp/Cnf: TLLI, XID Req/Neg, N201-I, N201-U */
+	OSMO_GPRS_LLC_LL_DATA,			/* Req/Ind/Cnf: TLLI, L3-PDU, Ref, QoS, Radio Prio */
+	OSMO_GPRS_LLC_LL_UNITDATA,		/* Req/Ind: TLLI, L3-PDU, QoS, Radio Prio, Ciph, ... */
+	OSMO_GPRS_LLC_LL_STATUS,		/* Ind: TLLI, Cause */
 };
 
 /* Section 4.5.2 Logical Link States + Annex C.2 */
