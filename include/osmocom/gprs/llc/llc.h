@@ -39,11 +39,14 @@ enum osmo_gprs_llc_primitive {
 	/* GMM <-> LLME */
 	OSMO_GPRS_LLC_LLGMM_ASSIGN,		/* Req: TLLI old, TLLI new, Kc, CiphAlg */
 	OSMO_GPRS_LLC_LLGMM_RESET,		/* Req/Cnf: TLLI */
+	OSMO_GPRS_LLC_LLGMM_TRIGGER,		/* Req: TLLI, Cause */
 	OSMO_GPRS_LLC_LLGMM_SUSPEND,		/* Req: TLLI, Page */
 	OSMO_GPRS_LLC_LLGMM_RESUME,		/* Req: TLLI */
 	OSMO_GPRS_LLC_LLGMM_PAGE,		/* Ind: TLLI */
 	OSMO_GPRS_LLC_LLGMM_IOV,		/* Req: TLLI */
 	OSMO_GPRS_LLC_LLGMM_STATUS,		/* Ind: TLLI, Cause */
+	OSMO_GPRS_LLC_LLGMM_PSHO,		/* Req/Ind/Cnf: TLLI, Ciph, IOV-UI, Old XID */
+	OSMO_GPRS_LLC_LLGMM_ASSIGN_UP,		/* Req: TLLI */
 	/* LLE <-> (GMM/SNDCP/SMS/TOM) */
 	OSMO_GPRS_LLC_LL_RESET,			/* Ind: TLLI */
 	OSMO_GPRS_LLC_LL_ESTABLISH,		/* Req/Ind/Rsp/Cnf: TLLI, XID Req/Neg, N201-I, N201-U */
