@@ -22,6 +22,7 @@ lib_LTLIBRARIES = \
 	$(NULL)
 
 libosmo_gprs_llc_la_SOURCES = \
+	llc_pdu.c \
 	$(NULL)
 
 # TODO: -export-symbols-regex '^osmo_'

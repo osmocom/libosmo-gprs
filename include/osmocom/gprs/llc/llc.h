@@ -16,6 +16,44 @@ enum osmo_gprs_llc_sapi {
 	OSMO_GPRS_LLC_SAPI_SNDCP12	= 11,
 };
 
+/* Section 6.3.0 Control field formats */
+enum osmo_gprs_llc_frame_fmt {
+	OSMO_GPRS_LLC_FMT_I,			/* 6.3.1 Information transfer format - I */
+	OSMO_GPRS_LLC_FMT_S,			/* 6.3.2 Supervisory format - S */
+	OSMO_GPRS_LLC_FMT_UI,			/* 6.3.3 Unconfirmed Information format - UI */
+	OSMO_GPRS_LLC_FMT_U,			/* 6.3.4 Unnumbered format - U */
+};
+
+extern const struct value_string osmo_gprs_llc_frame_fmt_names[];
+
+#define osmo_gprs_llc_frame_fmt_name(val) \
+	get_value_string(osmo_gprs_llc_frame_fmt_names, val)
+
+/* Section 6.4 Commands and responses */
+enum osmo_gprs_llc_frame_func {
+	/* 6.4.1 Unnumbered (U) frames */
+	OSMO_GPRS_LLC_FUNC_SABM,		/* 6.4.1.1 */
+	OSMO_GPRS_LLC_FUNC_DISC,		/* 6.4.1.2 */
+	OSMO_GPRS_LLC_FUNC_UA,			/* 6.4.1.3 */
+	OSMO_GPRS_LLC_FUNC_DM,			/* 6.4.1.4 */
+	OSMO_GPRS_LLC_FUNC_FRMR,		/* 6.4.1.5 */
+	OSMO_GPRS_LLC_FUNC_XID,			/* 6.4.1.6 */
+	OSMO_GPRS_LLC_FUNC_NULL,		/* 6.4.1.7 */
+	/* 6.4.2 Unconfirmed Information (UI) frame */
+	OSMO_GPRS_LLC_FUNC_UI,			/* 6.4.2.1 */
+	OSMO_GPRS_LLC_FUNC_UI_DUMMY,		/* 6.4.2.2 */
+	/* 6.4.3 Combined Information (I) and Supervisory (S) frames */
+	OSMO_GPRS_LLC_FUNC_RR,			/* 6.4.3.1 */
+	OSMO_GPRS_LLC_FUNC_ACK,			/* 6.4.3.2 */
+	OSMO_GPRS_LLC_FUNC_SACK,		/* 6.4.3.3 */
+	OSMO_GPRS_LLC_FUNC_RNR,			/* 6.4.3.4 */
+};
+
+extern const struct value_string osmo_gprs_llc_frame_func_names[];
+
+#define osmo_gprs_llc_frame_func_name(val) \
+	get_value_string(osmo_gprs_llc_frame_func_names, val)
+
 /* Section 6.4.1.6 / Table 6 */
 enum osmo_gprs_llc_xid_type {
 	OSMO_GPRS_LLC_XID_T_VERSION	= 0,
