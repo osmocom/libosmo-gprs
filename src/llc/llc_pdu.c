@@ -51,3 +51,16 @@ const struct value_string osmo_gprs_llc_frame_func_names[] = {
 	{ OSMO_GPRS_LLC_FUNC_RNR,	"RNR" },
 	{ 0, NULL }
 };
+
+uint32_t crc24_calc(uint32_t fcs, const uint8_t *data, size_t len);
+
+uint32_t osmo_gprs_llc_fcs(const uint8_t *data, size_t len)
+{
+	uint32_t fcs_calc;
+
+	fcs_calc = crc24_calc(0xffffff, data, len);
+	fcs_calc = ~fcs_calc;
+	fcs_calc &= 0xffffff;
+
+	return fcs_calc;
+}

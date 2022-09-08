@@ -22,6 +22,7 @@ lib_LTLIBRARIES = \
 	$(NULL)
 
 libosmo_gprs_llc_la_SOURCES = \
+	crc24.c \
 	llc_pdu.c \
 	$(NULL)
 

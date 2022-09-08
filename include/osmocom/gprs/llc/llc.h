@@ -3,6 +3,7 @@
 /* LLC (Logical Link Control) definitions from 3GPP TS 44.064 */
 
 #include <stdint.h>
+#include <stddef.h>
 
 /* Section 6.2.3 Service Access Point Identifier (SAPI) */
 enum osmo_gprs_llc_sapi {
@@ -128,3 +129,5 @@ struct osmo_gprs_llc_params {
 	uint16_t kD;
 	uint16_t kU;
 };
+
+uint32_t osmo_gprs_llc_fcs(const uint8_t *data, size_t len);
