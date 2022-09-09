@@ -94,8 +94,8 @@ void osmo_gprs_llc_pdu_hdr_dump_buf(char *buf, size_t buf_size,
 {
 	struct osmo_strbuf sb = { .buf = buf, .len = buf_size };
 
-	OSMO_STRBUF_PRINTF(sb, "SAPI=%u, %s func=%s C/R=%c",
-			   pdu->sapi, /* TODO: print value_string */
+	OSMO_STRBUF_PRINTF(sb, "SAPI=%u (%s), %s func=%s C/R=%c",
+			   pdu->sapi, osmo_gprs_llc_sapi_name(pdu->sapi),
 			   osmo_gprs_llc_frame_fmt_name(pdu->fmt),
 			   osmo_gprs_llc_frame_func_name(pdu->func),
 			   pdu->flags & OSMO_GPRS_LLC_PDU_F_CMD_RSP ? '1' : '0');

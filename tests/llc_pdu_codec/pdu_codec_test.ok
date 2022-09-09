@@ -1,6 +1,6 @@
 test_pdu_dec_enc(): decoding testData[0] = 01c010080509afe633
   osmo_gprs_llc_pdu_decode() returns 0
-  osmo_gprs_llc_pdu_hdr_dump(): SAPI=1, UI func=UI C/R=0 PM=0 E=0 IP=0 N(U)=4 FCS=33e6af
+  osmo_gprs_llc_pdu_hdr_dump(): SAPI=1 (GMM), UI func=UI C/R=0 PM=0 E=0 IP=0 N(U)=4 FCS=33e6af
   hdr.data[] (len=3): 080509
 test_pdu_dec_enc(): encoding decoded testData[0]
   osmo_gprs_llc_pdu_encode() returns 0
@@ -8,7 +8,7 @@ test_pdu_dec_enc(): encoding decoded testData[0]
   memcmp() returns 0
 test_pdu_dec_enc(): decoding testData[1] = 41c001081502de8e9a
   osmo_gprs_llc_pdu_decode() returns 0
-  osmo_gprs_llc_pdu_hdr_dump(): SAPI=1, UI func=UI C/R=1 PM=1 E=0 IP=0 N(U)=0 FCS=9a8ede
+  osmo_gprs_llc_pdu_hdr_dump(): SAPI=1 (GMM), UI func=UI C/R=1 PM=1 E=0 IP=0 N(U)=0 FCS=9a8ede
   hdr.data[] (len=3): 081502
 test_pdu_dec_enc(): encoding decoded testData[1]
   osmo_gprs_llc_pdu_encode() returns 0
@@ -16,14 +16,14 @@ test_pdu_dec_enc(): encoding decoded testData[1]
   memcmp() returns 0
 test_pdu_dec_enc(): decoding testData[2] = 01e01ca2b3
   osmo_gprs_llc_pdu_decode() returns 0
-  osmo_gprs_llc_pdu_hdr_dump(): SAPI=1, U func=NULL C/R=0 P/F=0 FCS=b3a21c
+  osmo_gprs_llc_pdu_hdr_dump(): SAPI=1 (GMM), U func=NULL C/R=0 P/F=0 FCS=b3a21c
 test_pdu_dec_enc(): encoding decoded testData[2]
   osmo_gprs_llc_pdu_encode() returns 0
   osmo_gprs_llc_pdu_encode(): 01e01ca2b3
   memcmp() returns 0
 test_pdu_dec_enc(): decoding testData[3] = 43fb01001601f41a05df8c7c4e
   osmo_gprs_llc_pdu_decode() returns 0
-  osmo_gprs_llc_pdu_hdr_dump(): SAPI=3, U func=XID C/R=1 P/F=1 FCS=4e7c8c
+  osmo_gprs_llc_pdu_hdr_dump(): SAPI=3 (SNDCP3), U func=XID C/R=1 P/F=1 FCS=4e7c8c
   hdr.data[] (len=8): 01001601f41a05df
 test_pdu_dec_enc(): encoding decoded testData[3]
   osmo_gprs_llc_pdu_encode() returns 0
@@ -31,7 +31,7 @@ test_pdu_dec_enc(): encoding decoded testData[3]
   memcmp() returns 0
 test_pdu_dec_enc(): decoding testData[4] = 03fb1604d216f984
   osmo_gprs_llc_pdu_decode() returns 0
-  osmo_gprs_llc_pdu_hdr_dump(): SAPI=3, U func=XID C/R=0 P/F=1 FCS=84f916
+  osmo_gprs_llc_pdu_hdr_dump(): SAPI=3 (SNDCP3), U func=XID C/R=0 P/F=1 FCS=84f916
   hdr.data[] (len=3): 1604d2
 test_pdu_dec_enc(): encoding decoded testData[4]
   osmo_gprs_llc_pdu_encode() returns 0
