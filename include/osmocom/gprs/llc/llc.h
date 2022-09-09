@@ -17,6 +17,13 @@ enum osmo_gprs_llc_sapi {
 	OSMO_GPRS_LLC_SAPI_SNDCP12	= 11,
 };
 
+extern const struct value_string osmo_gprs_llc_sapi_names[];
+
+static inline const char *osmo_gprs_llc_sapi_name(enum osmo_gprs_llc_sapi val)
+{
+	return get_value_string(osmo_gprs_llc_sapi_names, val);
+}
+
 /* Section 6.3.0 Control field formats */
 enum osmo_gprs_llc_frame_fmt {
 	OSMO_GPRS_LLC_FMT_I,			/* 6.3.1 Information transfer format - I */

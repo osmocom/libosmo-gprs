@@ -36,6 +36,18 @@
 #define N202		4
 #define CRC24_LENGTH	3
 
+const struct value_string osmo_gprs_llc_sapi_names[] = {
+	{ OSMO_GPRS_LLC_SAPI_GMM,	"GMM" },
+	{ OSMO_GPRS_LLC_SAPI_TOM2,	"TOM2" },
+	{ OSMO_GPRS_LLC_SAPI_SNDCP3,	"SNDCP3" },
+	{ OSMO_GPRS_LLC_SAPI_SNDCP5,	"SNDCP5" },
+	{ OSMO_GPRS_LLC_SAPI_SMS,	"SMS" },
+	{ OSMO_GPRS_LLC_SAPI_TOM8,	"TOM8" },
+	{ OSMO_GPRS_LLC_SAPI_SNDCP9,	"SNDCP9" },
+	{ OSMO_GPRS_LLC_SAPI_SNDCP12,	"SNDCP12" },
+	{ 0, NULL }
+};
+
 const struct value_string osmo_gprs_llc_frame_fmt_names[] = {
 	{ OSMO_GPRS_LLC_FMT_I,		"I" },
 	{ OSMO_GPRS_LLC_FMT_S,		"U" },
