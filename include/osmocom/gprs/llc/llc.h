@@ -130,4 +130,36 @@ struct osmo_gprs_llc_params {
 	uint16_t kU;
 };
 
+#define OSMO_GPRS_LLC_PDU_F_CMD_RSP	(1 << 0)	/* 6.2.2 Commmand/Response bit (C/R) */
+#define OSMO_GPRS_LLC_PDU_F_FOLL_FIN	(1 << 1)	/* 6.3.5.1 Poll/Final bit (P/F) */
+#define OSMO_GPRS_LLC_PDU_F_ACK_REQ	(1 << 2)	/* 6.3.5.2 Acknowledgement request bit (A) */
+#define OSMO_GPRS_LLC_PDU_F_MAC_PRES	(1 << 3)	/* 6.3.5.2a Integrity Protection bit (IP) */
+#define OSMO_GPRS_LLC_PDU_F_ENC_MODE	(1 << 4)	/* 6.3.5.5.1 Encryption mode bit (E) */
+#define OSMO_GPRS_LLC_PDU_F_PROT_MODE	(1 << 5)	/* 6.3.5.5.2 Protected Mode bit (PM) */
+
+struct osmo_gprs_llc_pdu_decoded {
+	enum osmo_gprs_llc_sapi sapi;
+	enum osmo_gprs_llc_frame_fmt fmt;
+	enum osmo_gprs_llc_frame_func func;
+	uint32_t flags; /* see OSMO_GPRS_LLC_PDU_F_* above */
+	uint32_t seq_rx; /* 6.3.5.4.5 Receive sequence number N(R) */
+	uint32_t seq_tx; /* 6.3.5.4.3 Send sequence number N(S) */
+	uint32_t fcs; /* 5.5 Frame Check Sequence (FCS) field */
+	uint32_t mac; /* 5.5a Message Authentication Code (MAC) field */
+	struct {
+		uint8_t len; /* Indicates the number of octets in the bitmap */
+		uint8_t r[32]; /* The R(n) bitmap */
+	} sack; /* 6.3.5.4.6 SACK bitmap R(n) */
+	size_t data_len;
+	const uint8_t *data;
+};
+
+void osmo_gprs_llc_pdu_hdr_dump_buf(char *buf, size_t buf_size,
+				    const struct osmo_gprs_llc_pdu_decoded *pdu);
+const char *osmo_gprs_llc_pdu_hdr_dump(const struct osmo_gprs_llc_pdu_decoded *pdu);
+
+int osmo_gprs_llc_pdu_decode(struct osmo_gprs_llc_pdu_decoded *pdu,
+			     const uint8_t *data, size_t data_len);
+int osmo_gprs_llc_pdu_encode(struct msgb *msg, const struct osmo_gprs_llc_pdu_decoded *pdu);
+
 uint32_t osmo_gprs_llc_fcs(const uint8_t *data, size_t len);

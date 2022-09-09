@@ -1,4 +1,5 @@
 SUBDIRS = \
+	llc_pdu_codec \
 	ts_44_018 \
 	ts_44_060 \
 	$(NULL)
