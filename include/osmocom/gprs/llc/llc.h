@@ -4,7 +4,7 @@
 
 #include <stdint.h>
 
-/* Section 4.7 LLC Layer Structure */
+/* Section 6.2.3 Service Access Point Identifier (SAPI) */
 enum osmo_gprs_llc_sapi {
 	OSMO_GPRS_LLC_SAPI_GMM		= 1,
 	OSMO_GPRS_LLC_SAPI_TOM2		= 2,
