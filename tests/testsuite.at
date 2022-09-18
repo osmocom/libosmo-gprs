@@ -3,21 +3,21 @@ AT_BANNER([Regression tests])
 
 AT_SETUP([llc/pdu_codec])
 AT_KEYWORDS([llc pdu codec])
-cat $abs_srcdir/llc_pdu_codec/pdu_codec_test.ok > expout
-cat $abs_srcdir/llc_pdu_codec/pdu_codec_test.err > experr
-AT_CHECK([$abs_top_builddir/tests/llc_pdu_codec/pdu_codec_test], [0], [expout], [experr])
+cat $abs_srcdir/llc/pdu_codec_test.ok > expout
+cat $abs_srcdir/llc/pdu_codec_test.err > experr
+AT_CHECK([$abs_top_builddir/tests/llc/pdu_codec_test], [0], [expout], [experr])
 AT_CLEANUP
 
 AT_SETUP([rlcmac/ts_44_018])
 AT_KEYWORDS([rlcmac ts_44_018])
-cat $abs_srcdir/ts_44_018/ts_44_018_test.ok > expout
-cat $abs_srcdir/ts_44_018/ts_44_018_test.err > experr
-AT_CHECK([$abs_top_builddir/tests/ts_44_018/ts_44_018_test], [0], [expout], [experr])
+cat $abs_srcdir/rlcmac/ts_44_018_test.ok > expout
+cat $abs_srcdir/rlcmac/ts_44_018_test.err > experr
+AT_CHECK([$abs_top_builddir/tests/rlcmac/ts_44_018_test], [0], [expout], [experr])
 AT_CLEANUP
 
 AT_SETUP([rlcmac/ts_44_060])
 AT_KEYWORDS([rlcmac ts_44_060])
-cat $abs_srcdir/ts_44_060/ts_44_060_test.ok > expout
-cat $abs_srcdir/ts_44_060/ts_44_060_test.err > experr
-AT_CHECK([$abs_top_builddir/tests/ts_44_060/ts_44_060_test], [0], [expout], [experr])
+cat $abs_srcdir/rlcmac/ts_44_060_test.ok > expout
+cat $abs_srcdir/rlcmac/ts_44_060_test.err > experr
+AT_CHECK([$abs_top_builddir/tests/rlcmac/ts_44_060_test], [0], [expout], [experr])
 AT_CLEANUP

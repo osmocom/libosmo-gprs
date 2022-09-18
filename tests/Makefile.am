@@ -1,7 +1,6 @@
 SUBDIRS = \
-	llc_pdu_codec \
-	ts_44_018 \
-	ts_44_060 \
+	llc \
+	rlcmac \
 	$(NULL)
 
 # The `:;' works around a Bash 3.2 bug when the output is not writeable.
