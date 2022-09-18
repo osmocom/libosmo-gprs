@@ -2,7 +2,7 @@
 
 /* TS 04.64 Section 7.1.2 Table 7: LLC layer primitives (GMM/SNDCP/SMS/TOM) */
 /* TS 04.65 Section 5.1.2 Table 2: Service primitives used by SNDCP */
-enum osmo_gprs_llc_primitive {
+enum osmo_gprs_llc_prim_type {
 	/* GMM <-> LLME */
 	OSMO_GPRS_LLC_LLGMM_ASSIGN,		/* Req: TLLI old, TLLI new, Kc, CiphAlg */
 	OSMO_GPRS_LLC_LLGMM_RESET,		/* Req/Cnf: TLLI */
