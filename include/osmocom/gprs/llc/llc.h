@@ -145,3 +145,5 @@ int osmo_gprs_llc_pdu_decode(struct osmo_gprs_llc_pdu_decoded *pdu,
 int osmo_gprs_llc_pdu_encode(struct msgb *msg, const struct osmo_gprs_llc_pdu_decoded *pdu);
 
 uint32_t osmo_gprs_llc_fcs(const uint8_t *data, size_t len);
+
+void osmo_gprs_llc_set_log_cat(int cat);

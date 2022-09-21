@@ -29,12 +29,11 @@
 
 #include <osmocom/gprs/llc/llc.h>
 
-/* TODO: make logging category configurable */
-#define DLLC DLGLOBAL
-
 #define UI_HDR_LEN	3
 #define N202		4
 #define CRC24_LENGTH	3
+
+extern int g_log_cat;
 
 const struct value_string osmo_gprs_llc_sapi_names[] = {
 	{ OSMO_GPRS_LLC_SAPI_GMM,	"GMM" },
@@ -254,7 +253,7 @@ int osmo_gprs_llc_pdu_encode(struct msgb *msg, const struct osmo_gprs_llc_pdu_de
 			ctrl[0] |= GPRS_LLC_U_XID;
 			break;
 		default:
-			LOGP(DLLC, LOGL_ERROR,
+			LOGP(g_log_cat, LOGL_ERROR,
 			     "Unknown UI func=0x%02x\n", pdu->func);
 			return -EINVAL;
 		}
@@ -269,7 +268,7 @@ int osmo_gprs_llc_pdu_encode(struct msgb *msg, const struct osmo_gprs_llc_pdu_de
 	/* 5.5a Message Authentication Code (MAC) field */
 	if (pdu->flags & OSMO_GPRS_LLC_PDU_F_MAC_PRES) {
 		/* TODO: calculate MAC (see 3GPP TS 43.020) */
-		LOGP(DLLC, LOGL_ERROR,
+		LOGP(g_log_cat, LOGL_ERROR,
 		     "Message Authentication Code (MAC) is not implemented\n");
 		return -ENOTSUP;
 	}
@@ -296,7 +295,7 @@ int osmo_gprs_llc_pdu_decode(struct osmo_gprs_llc_pdu_decoded *pdu,
 #define check_len(len, text) \
 	do { \
 		if (data_len < (len)) { \
-			LOGP(DLLC, LOGL_ERROR, "Failed to parse LLC PDU: %s\n", text); \
+			LOGP(g_log_cat, LOGL_ERROR, "Failed to parse LLC PDU: %s\n", text); \
 			return -EINVAL; \
 		} \
 	} while (0)
@@ -317,7 +316,7 @@ int osmo_gprs_llc_pdu_decode(struct osmo_gprs_llc_pdu_decoded *pdu,
 
 	/* 6.2.1 Protocol Discriminator bit (PD): shall be 0 */
 	if (*addr & 0x80) {
-		LOGP(DLLC, LOGL_ERROR, "Protocol Discriminator shall be 0\n");
+		LOGP(g_log_cat, LOGL_ERROR, "Protocol Discriminator shall be 0\n");
 		return -EINVAL;
 	}
 
@@ -337,7 +336,7 @@ int osmo_gprs_llc_pdu_decode(struct osmo_gprs_llc_pdu_decoded *pdu,
 	case 0x0c:
 	case 0x0d:
 	case 0x0f:
-		LOGP(DLLC, LOGL_ERROR, "Unknown SAPI=%u\n", pdu->sapi);
+		LOGP(g_log_cat, LOGL_ERROR, "Unknown SAPI=%u\n", pdu->sapi);
 		return -EINVAL;
 	}
 
@@ -486,7 +485,7 @@ int osmo_gprs_llc_pdu_decode(struct osmo_gprs_llc_pdu_decoded *pdu,
 			pdu->data_len = data_len;
 			break;
 		default:
-			LOGP(DLLC, LOGL_ERROR, "Unknown U func=0x%02x\n", ctrl[0] & 0x0f);
+			LOGP(g_log_cat, LOGL_ERROR, "Unknown U func=0x%02x\n", ctrl[0] & 0x0f);
 			return -ENOTSUP;
 		}
 	}
