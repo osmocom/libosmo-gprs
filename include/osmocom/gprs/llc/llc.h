@@ -27,8 +27,10 @@ enum osmo_gprs_llc_frame_fmt {
 
 extern const struct value_string osmo_gprs_llc_frame_fmt_names[];
 
-#define osmo_gprs_llc_frame_fmt_name(val) \
-	get_value_string(osmo_gprs_llc_frame_fmt_names, val)
+static inline const char *osmo_gprs_llc_frame_fmt_name(enum osmo_gprs_llc_frame_fmt val)
+{
+	return get_value_string(osmo_gprs_llc_frame_fmt_names, val);
+}
 
 /* Section 6.4 Commands and responses */
 enum osmo_gprs_llc_frame_func {
@@ -52,8 +54,10 @@ enum osmo_gprs_llc_frame_func {
 
 extern const struct value_string osmo_gprs_llc_frame_func_names[];
 
-#define osmo_gprs_llc_frame_func_name(val) \
-	get_value_string(osmo_gprs_llc_frame_func_names, val)
+static inline const char *osmo_gprs_llc_frame_func_name(enum osmo_gprs_llc_frame_func val)
+{
+	return get_value_string(osmo_gprs_llc_frame_func_names, val);
+}
 
 /* Section 6.4.1.6 / Table 6 */
 enum osmo_gprs_llc_xid_type {
