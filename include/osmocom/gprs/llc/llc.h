@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include <osmocom/core/msgb.h>
+
 /* Section 6.2.3 Service Access Point Identifier (SAPI) */
 enum osmo_gprs_llc_sapi {
 	OSMO_GPRS_LLC_SAPI_GMM		= 1,
