@@ -83,6 +83,9 @@ enum osmo_gprs_llc_xid_type {
 	OSMO_GPRS_LLC_XID_T_kU		= 10,
 	OSMO_GPRS_LLC_XID_T_L3_PAR	= 11,
 	OSMO_GPRS_LLC_XID_T_RESET	= 12,
+	OSMO_GPRS_LLC_XID_T_IIOV_UI	= 13,
+	OSMO_GPRS_LLC_XID_T_IIOV_UI_CNT	= 14,
+	OSMO_GPRS_LLC_XID_T_MAC_IOV_UI	= 15,
 };
 
 extern const struct value_string osmo_gprs_llc_xid_type_names[];

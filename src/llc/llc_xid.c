@@ -38,5 +38,8 @@ const struct value_string osmo_gprs_llc_xid_type_names[] = {
 	{ OSMO_GPRS_LLC_XID_T_kU,		"kU" },
 	{ OSMO_GPRS_LLC_XID_T_L3_PAR,		"L3-Params" },
 	{ OSMO_GPRS_LLC_XID_T_RESET,		"Reset" },
+	{ OSMO_GPRS_LLC_XID_T_IIOV_UI,		"i-IOV-UI" },
+	{ OSMO_GPRS_LLC_XID_T_IIOV_UI_CNT,	"i-IOV-UI-cnt" },
+	{ OSMO_GPRS_LLC_XID_T_MAC_IOV_UI,	"MAC-IOV-UI" },
 	{ 0, NULL }
 };
