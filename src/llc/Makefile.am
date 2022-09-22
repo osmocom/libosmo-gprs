@@ -24,6 +24,7 @@ lib_LTLIBRARIES = \
 libosmo_gprs_llc_la_SOURCES = \
 	crc24.c \
 	llc_pdu.c \
+	llc_xid.c \
 	misc.c \
 	$(NULL)
 

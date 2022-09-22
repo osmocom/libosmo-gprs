@@ -85,6 +85,13 @@ enum osmo_gprs_llc_xid_type {
 	OSMO_GPRS_LLC_XID_T_RESET	= 12,
 };
 
+extern const struct value_string osmo_gprs_llc_xid_type_names[];
+
+static inline const char *osmo_gprs_llc_xid_type_name(enum osmo_gprs_llc_xid_type val)
+{
+	return get_value_string(osmo_gprs_llc_xid_type_names, val);
+}
+
 /* Section 4.5.2 Logical Link States + Annex C.2 */
 enum osmo_gprs_llc_lle_state {
 	OSMO_GPRS_LLC_LLES_UNASSIGNED	= 1,	/* No TLLI yet */
