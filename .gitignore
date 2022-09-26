@@ -33,6 +33,7 @@ m4/*.m4
 
 # debian build products
 debian/libosmo-gprs-rlcmac*
+debian/libosmo-gprs-llc*
 debian/libosmo-csn1*
 debian/autoreconf.*
 debian/.debhelper
