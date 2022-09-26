@@ -38,3 +38,66 @@ test_pdu_dec_enc(): encoding decoded testData[4]
   osmo_gprs_llc_pdu_encode(): 03fb1604d216f984
   memcmp() returns 0
 
+test_xid_dec_enc(): decoding testData[0] = 25401602082c
+  osmo_gprs_llc_xid_decode() returns 3
+  field[00]: type=0x09 (kD) val=64
+  field[01]: type=0x05 (N201-U) val=520
+  field[02]: type=0x0b (L3-Params) data[] (len=0): 
+test_xid_dec_enc(): encoding decoded testData[0]
+  osmo_gprs_llc_xid_encode() returns 0
+  osmo_gprs_llc_xid_encode(): 25401602082c
+  memcmp() returns 0
+test_xid_dec_enc(): decoding testData[1] = 16020825402c
+  osmo_gprs_llc_xid_decode() returns 3
+  field[00]: type=0x05 (N201-U) val=520
+  field[01]: type=0x09 (kD) val=64
+  field[02]: type=0x0b (L3-Params) data[] (len=0): 
+test_xid_dec_enc(): encoding decoded testData[1]
+  osmo_gprs_llc_xid_encode() returns 0
+  osmo_gprs_llc_xid_encode(): 16020825402c
+  memcmp() returns 0
+test_xid_dec_enc(): decoding testData[2] = 01001601f41a05df
+  osmo_gprs_llc_xid_decode() returns 3
+  field[00]: type=0x00 (LLC-Version) val=0
+  field[01]: type=0x05 (N201-U) val=500
+  field[02]: type=0x06 (N201-I) val=1503
+test_xid_dec_enc(): encoding decoded testData[2]
+  osmo_gprs_llc_xid_encode() returns 0
+  osmo_gprs_llc_xid_encode(): 01001601f41a05df
+  memcmp() returns 0
+test_xid_dec_enc(): decoding testData[3] = 01001605f01a05f0ac18112233445566
+  osmo_gprs_llc_xid_decode() returns 4
+  field[00]: type=0x00 (LLC-Version) val=0
+  field[01]: type=0x05 (N201-U) val=1520
+  field[02]: type=0x06 (N201-I) val=1520
+  field[03]: type=0x0b (L3-Params) data[] (len=6): 112233445566
+test_xid_dec_enc(): encoding decoded testData[3]
+  osmo_gprs_llc_xid_encode() returns 0
+  osmo_gprs_llc_xid_encode(): 01001605f01a05f0ac18112233445566
+  memcmp() returns 0
+test_xid_dec_enc(): decoding testData[4] = 01001601f41a02081e00002200002908
+  osmo_gprs_llc_xid_decode() returns 6
+  field[00]: type=0x00 (LLC-Version) val=0
+  field[01]: type=0x05 (N201-U) val=500
+  field[02]: type=0x06 (N201-I) val=520
+  field[03]: type=0x07 (mD) val=0
+  field[04]: type=0x08 (mU) val=0
+  field[05]: type=0x0a (kU) val=8
+test_xid_dec_enc(): encoding decoded testData[4]
+  osmo_gprs_llc_xid_encode() returns 0
+  osmo_gprs_llc_xid_encode(): 01001601f41a02081e00002200002908
+  memcmp() returns 0
+
+test_xid_enc_dec(): encoding hand-crafted testData
+  osmo_gprs_llc_xid_encode() returns 0
+  osmo_gprs_llc_xid_encode(): 01000e0fff110a8810424242428410deadbeefac1811223344556630
+test_xid_enc_dec(): decoding encoded hand-crafted testData
+  osmo_gprs_llc_xid_decode() returns 7
+  field[00]: type=0x00 (LLC-Version) val=0
+  field[01]: type=0x03 (T200) val=4095
+  field[02]: type=0x04 (N200) val=10
+  field[03]: type=0x02 (IOV-I) val=1111638594
+  field[04]: type=0x01 (IOV-UI) val=3735928559
+  field[05]: type=0x0b (L3-Params) data[] (len=6): 112233445566
+  field[06]: type=0x0c (Reset) val=0
+

@@ -95,6 +95,17 @@ static inline const char *osmo_gprs_llc_xid_type_name(enum osmo_gprs_llc_xid_typ
 	return get_value_string(osmo_gprs_llc_xid_type_names, val);
 }
 
+struct osmo_gprs_llc_xid_field {
+	enum osmo_gprs_llc_xid_type type;
+	/* Fixed-length value */
+	uint32_t val;
+	/* Variable-length value */
+	struct {
+		const uint8_t *val;
+		uint8_t val_len;
+	} var;
+};
+
 /* Section 4.5.2 Logical Link States + Annex C.2 */
 enum osmo_gprs_llc_lle_state {
 	OSMO_GPRS_LLC_LLES_UNASSIGNED	= 1,	/* No TLLI yet */
@@ -157,5 +168,13 @@ int osmo_gprs_llc_pdu_decode(struct osmo_gprs_llc_pdu_decoded *pdu,
 int osmo_gprs_llc_pdu_encode(struct msgb *msg, const struct osmo_gprs_llc_pdu_decoded *pdu);
 
 uint32_t osmo_gprs_llc_fcs(const uint8_t *data, size_t len);
+
+bool osmo_gprs_llc_xid_field_is_valid(const struct osmo_gprs_llc_xid_field *field);
+int osmo_gprs_llc_xid_decode(struct osmo_gprs_llc_xid_field *fields,
+			     unsigned int max_fields,
+			     const uint8_t *data, size_t data_len);
+int osmo_gprs_llc_xid_encode(struct msgb *msg,
+			     const struct osmo_gprs_llc_xid_field *fields,
+			     unsigned int num_fields);
 
 void osmo_gprs_llc_set_log_cat(int cat);
