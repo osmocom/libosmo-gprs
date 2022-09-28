@@ -28,7 +28,7 @@ static void *tall_ctx = NULL;
 
 static void test_pdu_dec_enc(void)
 {
-	static const char *testData[] = {
+	static const char * const testData[] = {
 		/* SAPI=1 (GMM), UI func=UI C/R=0 PM=0 N(U)=4 */
 		"01c010080509afe633",
 		/* SAPI=1 (GMM), UI func=UI C/R=1 PM=1 N(U)=0 */
