@@ -23,7 +23,6 @@
 #include <osmocom/core/msgb.h>
 
 #include <osmocom/csn1/csn1.h>
-#include <osmocom/gsm/protocol/gsm_04_08.h>
 #include <osmocom/gprs/rlcmac/gprs_rlcmac.h>
 
 static void *tall_ctx = NULL;
@@ -41,7 +40,7 @@ static void test_si13ro(void)
 	};
 
 	for (unsigned int i = 0; i < ARRAY_SIZE(testData); i++) {
-		uint8_t buf[GSM_MACBLOCK_LEN - 3];
+		uint8_t buf[20]; /* GSM_MACBLOCK_LEN - 3 */
 		SI_13_t si13ro = { 0 };
 		int rc;
 
