@@ -39,7 +39,7 @@ set -x
 
 cd "$base"
 autoreconf --install --force
-./configure --enable-sanitize $CONFIG
+./configure --enable-sanitize --enable-werror $CONFIG
 $MAKE $PARALLEL_MAKE
 LD_LIBRARY_PATH="$inst/lib" $MAKE check \
   || cat-testlogs.sh
