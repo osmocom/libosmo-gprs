@@ -1,0 +1,9 @@
+==== test_llc_prim_ms() [start] ====
+==== test_llc_prim_ms() [end] ====
+==== test_llc_prim_sgsn() [start] ====
+test_llc_prim_up_cb(): Rx LL-UNITDATA.indication TLLI=0xe1c5d364 SAPI=GMM l3=[08 01 01 d5 71 00 00 08 29 26 24 00 00 00 00 71 62 f2 24 6c 84 44 04 11 e5 10 00 ]
+test_llc_prim_down_cb(): Rx BSSGP-DL-UNITDATA.request TLLI=0xe1c5d364 l3=[41 c0 01 08 15 02 de 8e 9a ]
+test_llc_prim_down_cb(): Rx BSSGP-DL-UNITDATA.request TLLI=0xe1c5d364 l3=[41 fb 30 84 10 2b 2b 2b 2b c7 82 c2 ]
+test_llc_prim_down_cb(): Rx BSSGP-DL-UNITDATA.request TLLI=0xe1c5d364 l3=[43 fb 01 00 16 01 f4 1a 05 df ac 50 78 69 64 2d 6c 33 2d 64 75 6d 6d 79 2d 62 75 66 66 65 72 00 3c dd fe ]
+test_llc_prim_down_cb(): Rx BSSGP-DL-UNITDATA.request TLLI=0xe1c5d364 l3=[43 c0 01 73 6f 6d 65 2d 73 6e 64 63 70 2d 64 61 74 61 00 8b cc cf ]
+==== test_llc_prim_sgsn() [end] ====

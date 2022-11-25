@@ -7,6 +7,8 @@
 
 #include <osmocom/core/prim.h>
 #include <osmocom/core/utils.h>
+#include <osmocom/gsm/gsm0808_utils.h>
+#include <osmocom/gprs/llc/llc.h>
 
 /* Section 7.1.0 */
 enum osmo_gprs_llc_prim_sap {
@@ -39,6 +41,12 @@ enum osmo_gprs_llc_llgmm_prim_type {
 	OSMO_GPRS_LLC_LLGMM_ASSIGN_UP,	/* Req: TLLI */
 };
 
+extern const struct value_string osmo_gprs_llc_llgmm_prim_type_names[];
+static inline const char *osmo_gprs_llc_llgmm_prim_type_name(enum osmo_gprs_llc_llgmm_prim_type val)
+{
+	return get_value_string(osmo_gprs_llc_llgmm_prim_type_names, val);
+}
+
 /* TS 04.65 Section 7.2.2 "Layer 3 - LLE primitives" */
 enum osmo_gprs_llc_ll_prim_type {
 	OSMO_GPRS_LLC_LL_RESET,		/* Ind: TLLI */
@@ -50,17 +58,36 @@ enum osmo_gprs_llc_ll_prim_type {
 	OSMO_GPRS_LLC_LL_STATUS,	/* Ind: TLLI, Cause */
 };
 
+extern const struct value_string osmo_gprs_llc_ll_prim_type_names[];
+static inline const char *osmo_gprs_llc_ll_prim_type_name(enum osmo_gprs_llc_ll_prim_type val)
+{
+	return get_value_string(osmo_gprs_llc_ll_prim_type_names, val);
+}
+
 /* TS 04.65 Section 7.2.3 "LLE - RLC/MAC primitives" (MS side) */
 enum osmo_gprs_llc_grr_prim_type {
 	OSMO_GPRS_LLC_GRR_DATA,		/* Req/Ind: TLLI, LL-PDU, SAPI, Cause, QoS, Radio Prio */
 	OSMO_GPRS_LLC_GRR_UNITDATA,	/* Req/Ind: TLLI, LL-PDU, SAPI, QoS, Radio Prio */
 };
 
+extern const struct value_string osmo_gprs_llc_grr_prim_type_names[];
+static inline const char *osmo_gprs_llc_grr_prim_type_name(enum osmo_gprs_llc_grr_prim_type val)
+{
+	return get_value_string(osmo_gprs_llc_grr_prim_type_names, val);
+}
+
 /* TS 04.65 Section 7.2.4 "LLE - BSSGP primitives" (SGSN side) */
 enum osmo_gprs_llc_bssgp_prim_type {
 	OSMO_GPRS_LLC_BSSGP_DL_UNITDATA,	/* Req: TLLI, LL-PDU, Cell Id, QoS, RLC Confirm, SAPI, ... */
 	OSMO_GPRS_LLC_BSSGP_UL_UNITDATA,	/* Ind: TLLI, LL-PDU, Cell Id, edirect attempt, IMSI, V(U) for redirect, ... */
 };
+
+extern const struct value_string osmo_gprs_llc_bssgp_prim_type_names[];
+static inline const char *osmo_gprs_llc_bssgp_prim_type_name(enum osmo_gprs_llc_bssgp_prim_type val)
+{
+	return get_value_string(osmo_gprs_llc_bssgp_prim_type_names, val);
+}
+
 
 /* Parameters for OSMO_GPRS_LLC_LLGMM_* prims */
 struct osmo_gprs_llc_llgmm_prim {
@@ -108,7 +135,8 @@ struct osmo_gprs_llc_llgmm_prim {
 struct osmo_gprs_llc_ll_prim {
 	/* Common fields */
 	uint32_t tlli;
-	/* OSMO_GPRS_LLC_LL_[UNIT]DATA */
+	enum osmo_gprs_llc_sapi sapi;
+	/* OSMO_GPRS_LLC_LL_[UNIT]DATA, OSMO_GPRS_LLC_LL_XID */
 	uint8_t *l3_pdu;
 	size_t l3_pdu_len;
 	/* Specific fields */
@@ -133,7 +161,7 @@ struct osmo_gprs_llc_ll_prim {
 		} release_ind;
 		/* OSMO_GPRS_LLC_LL_XID | { Req, Ind, Rsp, Cnf } */
 		struct {
-			/* TODO: XID Req/Neg */
+			/* XID Req/Neg are encoded as buffer in l3_pdu + l3_pdu_len */
 			uint16_t n201_i; /* only for Ind & Cnf */
 			uint16_t n201_u; /* only for Ind & Cnf */
 		} xid;
@@ -194,7 +222,7 @@ struct osmo_gprs_llc_bssgp_prim {
 	size_t ll_pdu_len;
 	/* Specific fields */
 	union {
-		/* OSMO_GPRS_LLC_BSSGP_UNITDATA | Req */
+		/* OSMO_GPRS_LLC_BSSGP_DL_UNITDATA | Req */
 		struct {
 			uint8_t qos_params[3];
 			bool rlc_confirm;
@@ -205,15 +233,15 @@ struct osmo_gprs_llc_bssgp_prim {
 			 * - GMM cause
 			 * - V(U) for redirect
 			 * - Redirect complete */
-		} unitdata_req;
-		/* OSMO_GPRS_LLC_BSSGP_UNITDATA | Ind */
+		} dl_unitdata_req;
+		/* OSMO_GPRS_LLC_BSSGP_UL_UNITDATA | Ind */
 		struct {
-			uint16_t cell_id;
+			struct gsm0808_cell_id cell_id;
 			/* TODO: MOCN specific parameters:
 			 * - Redirect attempt
 			 * - IMSI
 			 * - V(U) for redirect */
-		} unitdata_ind;
+		} ul_unitdata_ind;
 	};
 };
 
@@ -226,3 +254,30 @@ struct osmo_gprs_llc_prim {
 		struct osmo_gprs_llc_bssgp_prim bssgp;
 	};
 };
+
+typedef int (*osmo_gprs_llc_prim_up_cb)(struct osmo_gprs_llc_prim *llc_prim, void *up_user_data);
+void osmo_gprs_llc_prim_set_up_cb(osmo_gprs_llc_prim_up_cb up_cb, void *up_user_data);
+
+typedef int (*osmo_gprs_llc_prim_down_cb)(struct osmo_gprs_llc_prim *llc_prim, void *down_user_data);
+void osmo_gprs_llc_prim_set_down_cb(osmo_gprs_llc_prim_down_cb down_cb, void *down_user_data);
+
+int osmo_gprs_llc_prim_upper_down(struct osmo_gprs_llc_prim *llc_prim);
+int osmo_gprs_llc_prim_lower_up(struct osmo_gprs_llc_prim *llc_prim);
+
+const char *osmo_gprs_llc_prim_name(const struct osmo_gprs_llc_prim *llc_prim);
+
+/* Alloc primitive for LLGMM SAP: */
+struct osmo_gprs_llc_prim *osmo_gprs_llc_prim_alloc_llgm_assign_req(uint32_t tlli);
+struct osmo_gprs_llc_prim *osmo_gprs_llc_prim_alloc_llgm_reset_req(uint32_t tlli);
+
+/* Alloc primitive for LL SAP: */
+struct osmo_gprs_llc_prim *osmo_gprs_llc_prim_alloc_ll_xid_req(uint32_t tlli, enum osmo_gprs_llc_sapi ll_sapi,
+							       uint8_t *l3_par, unsigned int l3_par_len);
+struct osmo_gprs_llc_prim *osmo_gprs_llc_prim_alloc_ll_xid_resp(uint32_t tlli, enum osmo_gprs_llc_sapi ll_sapi,
+								uint8_t *l3_par, unsigned int l3_par_len);
+struct osmo_gprs_llc_prim *osmo_gprs_llc_prim_alloc_ll_unitdata_req(uint32_t tlli, enum osmo_gprs_llc_sapi ll_sapi,
+								    uint8_t *l3_pdu, size_t l3_pdu_len);
+
+/* Alloc primitive for BSSGP SAP: */
+struct osmo_gprs_llc_prim *osmo_gprs_llc_prim_alloc_bssgp_ul_unitdata_ind(
+				uint32_t tlli, uint8_t *ll_pdu, size_t ll_pdu_len);

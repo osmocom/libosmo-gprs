@@ -1,0 +1,13 @@
+DLGLOBAL INFO Rx from lower layers: BSSGP-UL-UNITDATA.indication
+DLGLOBAL DEBUG Rx BSSGP-UL-UNITDATA.indication: SAPI=1 (GMM), UI func=UI C/R=0 PM=0 E=0 IP=0 N(U)=0 FCS=f218e2
+DLGLOBAL NOTICE LLME(ffffffff/e1c5d364){UNASSIGNED} LLC RX: unknown TLLI 0xe1c5d364, creating LLME on the fly
+DLGLOBAL DEBUG LLE(ffffffff/e1c5d364,GMM){UNASSIGNED} Rx SAPI=1 (GMM), UI func=UI C/R=0 PM=0 E=0 IP=0 N(U)=0 FCS=f218e2
+DLGLOBAL INFO Rx from upper layers: LL-UNITDATA.request
+DLGLOBAL INFO Rx from upper layers: LLGM-ASSIGN.request
+DLGLOBAL NOTICE LLME(ffffffff/e1c5d364){UNASSIGNED} LLGM Assign pre (e1c5d364 => e1c5d364)
+DLGLOBAL NOTICE LLME(e1c5d364/e1c5d364){ASSIGNED} LLGM Assign post (e1c5d364 => e1c5d364)
+DLGLOBAL INFO Rx from upper layers: LLGM-RESET.request
+DLGLOBAL INFO LLME(e1c5d364/e1c5d364){ASSIGNED} LLGM-RESET.request
+DLGLOBAL INFO Rx from upper layers: LL-XID.request
+DLGLOBAL NOTICE LLE(e1c5d364/e1c5d364,SNDCP3){UNASSIGNED} Sending XID type L3-Params (30 bytes) request to MS...
+DLGLOBAL INFO Rx from upper layers: LL-UNITDATA.request

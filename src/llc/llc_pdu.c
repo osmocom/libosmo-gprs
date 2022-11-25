@@ -28,12 +28,7 @@
 #include <osmocom/core/logging.h>
 
 #include <osmocom/gprs/llc/llc.h>
-
-#define UI_HDR_LEN	3
-#define N202		4
-#define CRC24_LENGTH	3
-
-extern int g_log_cat;
+#include <osmocom/gprs/llc/llc_private.h>
 
 const struct value_string osmo_gprs_llc_sapi_names[] = {
 	{ OSMO_GPRS_LLC_SAPI_GMM,	"GMM" },
@@ -47,7 +42,7 @@ const struct value_string osmo_gprs_llc_sapi_names[] = {
 	{ 0, NULL }
 };
 
-const struct value_string osmo_gprs_llc_frame_fmt_names[] = {
+const struct value_string gprs_llc_frame_fmt_names[] = {
 	{ OSMO_GPRS_LLC_FMT_I,		"I" },
 	{ OSMO_GPRS_LLC_FMT_S,		"U" },
 	{ OSMO_GPRS_LLC_FMT_UI,		"UI" },
@@ -55,7 +50,7 @@ const struct value_string osmo_gprs_llc_frame_fmt_names[] = {
 	{ 0, NULL }
 };
 
-const struct value_string osmo_gprs_llc_frame_func_names[] = {
+const struct value_string gprs_llc_frame_func_names[] = {
 	/* 6.4.1 Unnumbered (U) frames */
 	{ OSMO_GPRS_LLC_FUNC_SABM,	"SABM" },
 	{ OSMO_GPRS_LLC_FUNC_DISC,	"DISC" },
@@ -77,7 +72,7 @@ const struct value_string osmo_gprs_llc_frame_func_names[] = {
 
 uint32_t crc24_calc(uint32_t fcs, const uint8_t *data, size_t len);
 
-uint32_t osmo_gprs_llc_fcs(const uint8_t *data, size_t len)
+uint32_t gprs_llc_fcs(const uint8_t *data, size_t len)
 {
 	uint32_t fcs_calc;
 
@@ -88,15 +83,15 @@ uint32_t osmo_gprs_llc_fcs(const uint8_t *data, size_t len)
 	return fcs_calc;
 }
 
-void osmo_gprs_llc_pdu_hdr_dump_buf(char *buf, size_t buf_size,
-				    const struct osmo_gprs_llc_pdu_decoded *pdu)
+void gprs_llc_pdu_hdr_dump_buf(char *buf, size_t buf_size,
+			       const struct gprs_llc_pdu_decoded *pdu)
 {
 	struct osmo_strbuf sb = { .buf = buf, .len = buf_size };
 
 	OSMO_STRBUF_PRINTF(sb, "SAPI=%u (%s), %s func=%s C/R=%c",
 			   pdu->sapi, osmo_gprs_llc_sapi_name(pdu->sapi),
-			   osmo_gprs_llc_frame_fmt_name(pdu->fmt),
-			   osmo_gprs_llc_frame_func_name(pdu->func),
+			   gprs_llc_frame_fmt_name(pdu->fmt),
+			   gprs_llc_frame_func_name(pdu->func),
 			   pdu->flags & OSMO_GPRS_LLC_PDU_F_CMD_RSP ? '1' : '0');
 
 	switch (pdu->fmt) {
@@ -128,10 +123,10 @@ void osmo_gprs_llc_pdu_hdr_dump_buf(char *buf, size_t buf_size,
 	OSMO_STRBUF_PRINTF(sb, " FCS=%06x", pdu->fcs);
 }
 
-const char *osmo_gprs_llc_pdu_hdr_dump(const struct osmo_gprs_llc_pdu_decoded *pdu)
+const char *gprs_llc_pdu_hdr_dump(const struct gprs_llc_pdu_decoded *pdu)
 {
 	static __thread char buf[256];
-	osmo_gprs_llc_pdu_hdr_dump_buf(&buf[0], sizeof(buf), pdu);
+	gprs_llc_pdu_hdr_dump_buf(&buf[0], sizeof(buf), pdu);
 	return buf;
 }
 
@@ -144,7 +139,7 @@ const char *osmo_gprs_llc_pdu_hdr_dump(const struct osmo_gprs_llc_pdu_decoded *p
 #define GPRS_LLC_U_FRMR_RESP		0x08
 #define GPRS_LLC_U_XID			0x0b
 
-int osmo_gprs_llc_pdu_encode(struct msgb *msg, const struct osmo_gprs_llc_pdu_decoded *pdu)
+int gprs_llc_pdu_encode(struct msgb *msg, const struct gprs_llc_pdu_decoded *pdu)
 {
 	uint8_t *addr = msgb_put(msg, 1);
 	uint8_t *ctrl = NULL;
@@ -275,7 +270,7 @@ int osmo_gprs_llc_pdu_encode(struct msgb *msg, const struct osmo_gprs_llc_pdu_de
 	crc_len = msg->tail - addr;
 	if (~pdu->flags & OSMO_GPRS_LLC_PDU_F_PROT_MODE)
 		crc_len = OSMO_MIN(crc_len, UI_HDR_LEN + N202);
-	fcs = osmo_gprs_llc_fcs(addr, crc_len);
+	fcs = gprs_llc_fcs(addr, crc_len);
 
 	msgb_put_u8(msg, fcs & 0xff);
 	msgb_put_u8(msg, (fcs >> 8) & 0xff);
@@ -284,11 +279,11 @@ int osmo_gprs_llc_pdu_encode(struct msgb *msg, const struct osmo_gprs_llc_pdu_de
 	return 0;
 }
 
-int osmo_gprs_llc_pdu_decode(struct osmo_gprs_llc_pdu_decoded *pdu,
-			     const uint8_t *data, size_t data_len)
+int gprs_llc_pdu_decode(struct gprs_llc_pdu_decoded *pdu,
+			uint8_t *data, size_t data_len)
 {
-	const uint8_t *addr = &data[0];
-	const uint8_t *ctrl = &data[1];
+	uint8_t *addr = &data[0];
+	uint8_t *ctrl = &data[1];
 
 #define check_len(len, text) \
 	do { \

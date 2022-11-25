@@ -28,8 +28,9 @@
 #include <osmocom/core/logging.h>
 
 #include <osmocom/gprs/llc/llc.h>
+#include <osmocom/gprs/llc/llc_private.h>
 
-const struct value_string osmo_gprs_llc_xid_type_names[] = {
+const struct value_string gprs_llc_xid_type_names[] = {
 	{ OSMO_GPRS_LLC_XID_T_VERSION,		"LLC-Version" },
 	{ OSMO_GPRS_LLC_XID_T_IOV_UI,		"IOV-UI" },
 	{ OSMO_GPRS_LLC_XID_T_IOV_I,		"IOV-I" },
@@ -75,7 +76,7 @@ static const struct {
 	[OSMO_GPRS_LLC_XID_T_MAC_IOV_UI] = { .len = 4, .min = 0, .max = UINT32_MAX },
 };
 
-bool osmo_gprs_llc_xid_field_is_valid(const struct osmo_gprs_llc_xid_field *field)
+bool gprs_llc_xid_field_is_valid(const struct gprs_llc_xid_field *field)
 {
 	if (field->type >= ARRAY_SIZE(gprs_llc_xid_desc)) {
 		LOGLLC(LOGL_ERROR,
@@ -86,6 +87,14 @@ bool osmo_gprs_llc_xid_field_is_valid(const struct osmo_gprs_llc_xid_field *fiel
 	if (gprs_llc_xid_desc[field->type].var_len)
 		return true;
 
+	if (field->var.val_len > 0) {
+		LOGLLC(LOGL_ERROR,
+		     "XID field %s unexpected var.val_len %u > 0, check your code!\n",
+		     gprs_llc_xid_type_name(field->type),
+		     field->var.val_len);
+		return false;
+	}
+
 	/* For mU and mD, the value range (9 .. 24320) also includes 0 */
 	if (gprs_llc_xid_desc[field->type].allow_zero && field->val == 0)
 		return true;
@@ -93,7 +102,7 @@ bool osmo_gprs_llc_xid_field_is_valid(const struct osmo_gprs_llc_xid_field *fiel
 	if (field->val < gprs_llc_xid_desc[field->type].min) {
 		LOGLLC(LOGL_ERROR,
 		       "XID field %s value=%u < min=%u\n",
-		       osmo_gprs_llc_xid_type_name(field->type),
+		       gprs_llc_xid_type_name(field->type),
 		       field->val, gprs_llc_xid_desc[field->type].min);
 		return false;
 	}
@@ -101,7 +110,7 @@ bool osmo_gprs_llc_xid_field_is_valid(const struct osmo_gprs_llc_xid_field *fiel
 	if (field->val > gprs_llc_xid_desc[field->type].max) {
 		LOGLLC(LOGL_ERROR,
 		       "XID field %s value=%u > max=%u\n",
-		       osmo_gprs_llc_xid_type_name(field->type),
+		       gprs_llc_xid_type_name(field->type),
 		       field->val, gprs_llc_xid_desc[field->type].max);
 		return false;
 	}
@@ -109,19 +118,24 @@ bool osmo_gprs_llc_xid_field_is_valid(const struct osmo_gprs_llc_xid_field *fiel
 	return true;
 }
 
-int osmo_gprs_llc_xid_encode(struct msgb *msg,
-			     const struct osmo_gprs_llc_xid_field *fields,
+int gprs_llc_xid_encode(uint8_t *data, size_t data_len,
+			     const struct gprs_llc_xid_field *fields,
 			     unsigned int num_fields)
 {
+	uint8_t *wptr = data;
+	OSMO_ASSERT(data);
+
 	for (unsigned int i = 0; i < num_fields; i++) {
-		const struct osmo_gprs_llc_xid_field *field = &fields[i];
+		const struct gprs_llc_xid_field *field = &fields[i];
 		uint8_t *hdr, len;
 
-		if (!osmo_gprs_llc_xid_field_is_valid(field))
+		if (!gprs_llc_xid_field_is_valid(field))
 			return -EINVAL;
 
 		/* XID field type */
-		hdr = msgb_put(msg, 1);
+		if (wptr - data >= data_len)
+			return -EINVAL;
+		hdr = wptr++;
 		hdr[0] = (field->type & 0x1f) << 2;
 
 		/* XID field length */
@@ -135,7 +149,9 @@ int osmo_gprs_llc_xid_encode(struct msgb *msg,
 		if (len < 4) {
 			hdr[0] |= len;
 		} else {
-			msgb_put(msg, 1);
+			if (wptr - data >= data_len)
+				return -EINVAL;
+			wptr++;
 			hdr[0] |= (1 << 7); /* XL=1 */
 			hdr[0] |= (len >> 6) & 0x03;
 			hdr[1]  = (len << 2) & 0xff;
@@ -143,17 +159,25 @@ int osmo_gprs_llc_xid_encode(struct msgb *msg,
 
 		/* XID field value (variable length) */
 		if (gprs_llc_xid_desc[field->type].var_len) {
-			memcpy(msgb_put(msg, len), field->var.val, len);
+			if (wptr + len - data > data_len)
+				return -EINVAL;
+			memcpy(wptr, field->var.val, len);
+			wptr += len;
 		} else {
+			if (wptr + len - data > data_len)
+				return -EINVAL;
 			switch (len) {
 			case 1:
-				msgb_put_u8(msg, field->val);
+				*wptr = field->val;
+				wptr++;
 				break;
 			case 2:
-				osmo_store16be(field->val, msgb_put(msg, 2));
+				osmo_store16be(field->val, wptr);
+				wptr += 2;
 				break;
 			case 4:
-				osmo_store32be(field->val, msgb_put(msg, 4));
+				osmo_store32be(field->val, wptr);
+				wptr += 4;
 				break;
 			default:
 				/* Shall not happen */
@@ -162,14 +186,15 @@ int osmo_gprs_llc_xid_encode(struct msgb *msg,
 		}
 	}
 
-	return 0;
+	return wptr - data;
 }
 
-int osmo_gprs_llc_xid_decode(struct osmo_gprs_llc_xid_field *fields,
-			     unsigned int max_fields,
-			     const uint8_t *data, size_t data_len)
+/* returns number of decoded XID fields, negative on error. */
+int gprs_llc_xid_decode(struct gprs_llc_xid_field *fields,
+			unsigned int max_fields,
+			uint8_t *data, size_t data_len)
 {
-	const uint8_t *ptr = &data[0];
+	uint8_t *ptr = &data[0];
 	unsigned int num_fields = 0;
 
 #define check_len(len, text) \
@@ -181,7 +206,7 @@ int osmo_gprs_llc_xid_decode(struct osmo_gprs_llc_xid_field *fields,
 	} while (0)
 
 	while (data_len > 0) {
-		struct osmo_gprs_llc_xid_field *field = &fields[num_fields++];
+		struct gprs_llc_xid_field *field = &fields[num_fields++];
 		uint8_t len;
 
 		if (num_fields > max_fields) {
@@ -222,7 +247,7 @@ int osmo_gprs_llc_xid_decode(struct osmo_gprs_llc_xid_field *fields,
 			if (len != gprs_llc_xid_desc[field->type].len) {
 				LOGLLC(LOGL_NOTICE,
 				       "XID field %s has unusual length=%u (expected %u)\n",
-				       osmo_gprs_llc_xid_type_name(field->type),
+				       gprs_llc_xid_type_name(field->type),
 				       len, gprs_llc_xid_desc[field->type].len);
 			}
 
@@ -242,11 +267,11 @@ int osmo_gprs_llc_xid_decode(struct osmo_gprs_llc_xid_field *fields,
 			default:
 				LOGLLC(LOGL_ERROR,
 				       "Failed to parse XID: unsupported field (%s) length=%u\n",
-				       osmo_gprs_llc_xid_type_name(field->type), len);
+				       gprs_llc_xid_type_name(field->type), len);
 				return -EINVAL;
 			}
 
-			if (!osmo_gprs_llc_xid_field_is_valid(field))
+			if (!gprs_llc_xid_field_is_valid(field))
 				return -EINVAL;
 		}
 
@@ -256,4 +281,27 @@ int osmo_gprs_llc_xid_decode(struct osmo_gprs_llc_xid_field *fields,
 #undef check_len
 
 	return num_fields;
+}
+
+/* Return Deep copy of a xid_field array allocated using talloc ctx. */
+struct gprs_llc_xid_field *gprs_llc_xid_deepcopy(void *ctx,
+						      const struct gprs_llc_xid_field *src_xid,
+						      size_t src_xid_len)
+{
+	size_t bytes_len = sizeof(*src_xid) * src_xid_len;
+	struct gprs_llc_xid_field *dst_xid;
+	unsigned int i;
+
+	dst_xid = (struct gprs_llc_xid_field *) talloc_size(ctx, bytes_len);
+	memcpy(dst_xid, src_xid, bytes_len);
+
+	for (i = 0; i < src_xid_len; i++) {
+		uint8_t *val;
+		if (dst_xid[i].var.val_len == 0 || dst_xid[i].var.val == NULL)
+			continue;
+		val = talloc_size(dst_xid, dst_xid[i].var.val_len);
+		memcpy(val, dst_xid[i].var.val, dst_xid[i].var.val_len);
+		dst_xid[i].var.val = val;
+	}
+	return dst_xid;
 }

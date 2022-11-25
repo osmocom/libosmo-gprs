@@ -25,6 +25,11 @@ lib_LTLIBRARIES = \
 
 libosmo_gprs_llc_la_SOURCES = \
 	crc24.c \
+	llc.c \
+	llc_bssgp.c \
+	llc_ll.c \
+	llc_llgmm.c \
+	llc_grr.c \
 	llc_pdu.c \
 	llc_prim.c \
 	llc_xid.c \
