@@ -35,3 +35,22 @@ cat $abs_srcdir/rlcmac/ts_44_060_test.ok > expout
 cat $abs_srcdir/rlcmac/ts_44_060_test.err > experr
 AT_CHECK([$abs_top_builddir/tests/rlcmac/ts_44_060_test], [0], [expout], [experr])
 AT_CLEANUP
+
+AT_SETUP([sndcp/sndcp_prim])
+AT_KEYWORDS([sndcp sndcp_prim])
+cat $abs_srcdir/sndcp/sndcp_prim_test.ok > expout
+cat $abs_srcdir/sndcp/sndcp_prim_test.err > experr
+AT_CHECK([$abs_top_builddir/tests/sndcp/sndcp_prim_test], [0], [expout], [experr])
+AT_CLEANUP
+
+AT_SETUP([sndcp/sndcp_xid])
+AT_KEYWORDS([sndcp sndcp_xid])
+cat $abs_srcdir/sndcp/sndcp_xid_test.ok > expout
+AT_CHECK([$abs_top_builddir/tests/sndcp/sndcp_xid_test], [], [expout], [ignore])
+AT_CLEANUP
+
+AT_SETUP([sndcp/slhc])
+AT_KEYWORDS([sndcp slhc])
+cat $abs_srcdir/sndcp/slhc_test.ok > expout
+AT_CHECK([$abs_top_builddir/tests/sndcp/slhc_test], [], [expout], [ignore])
+AT_CLEANUP

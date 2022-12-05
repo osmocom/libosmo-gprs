@@ -1,0 +1,185 @@
+DLGLOBAL INFO Rx from SNDCP SM sublayer: SNSM-ACTIVATE.indication
+DLGLOBAL INFO SNSM-ACTIVATE.ind (TLLI=e1c5d364, SAPI=3, NSAPI=5)
+DLGLOBAL INFO Rx from upper layers: SN-XID.request
+DLGLOBAL DEBUG SNE(e1c5d364,SNDCP3,5) SN-XID.req comp_fields:
+DLGLOBAL DEBUG SNDCP-XID:
+DLGLOBAL DEBUG struct gprs_sndcp_comp_field {
+DLGLOBAL DEBUG    entity=0;
+DLGLOBAL DEBUG    algo=0;
+DLGLOBAL DEBUG    comp_len=2;
+DLGLOBAL DEBUG    comp[0]=1;
+DLGLOBAL DEBUG    comp[1]=2;
+DLGLOBAL DEBUG    gprs_sndcp_pcomp_rfc1144_params {
+DLGLOBAL DEBUG       nsapi_len=1;
+DLGLOBAL DEBUG       nsapi[0]=5;
+DLGLOBAL DEBUG       s01=7;
+DLGLOBAL DEBUG    }
+DLGLOBAL DEBUG }
+DLGLOBAL INFO Rx from lower layers: LL-XID.confirm
+DLGLOBAL DEBUG SNE(e1c5d364,SNDCP3,5) LL-XID.cnf: Found SNE SAPI=3
+DLGLOBAL DEBUG LL-XID.cnf response comp_fields:
+DLGLOBAL DEBUG SNDCP-XID:
+DLGLOBAL DEBUG struct gprs_sndcp_comp_field {
+DLGLOBAL DEBUG    entity=0;
+DLGLOBAL DEBUG    algo=0;
+DLGLOBAL DEBUG    comp_len=2;
+DLGLOBAL DEBUG    comp[0]=1;
+DLGLOBAL DEBUG    comp[1]=2;
+DLGLOBAL DEBUG    gprs_sndcp_pcomp_rfc1144_params {
+DLGLOBAL DEBUG       nsapi_len=1;
+DLGLOBAL DEBUG       nsapi[0]=6;
+DLGLOBAL DEBUG       s01=7;
+DLGLOBAL DEBUG    }
+DLGLOBAL DEBUG }
+DLGLOBAL DEBUG SNDCP-XID:
+DLGLOBAL DEBUG struct gprs_sndcp_comp_field {
+DLGLOBAL DEBUG    entity=2;
+DLGLOBAL DEBUG    algo=2;
+DLGLOBAL DEBUG    comp_len=2;
+DLGLOBAL DEBUG    comp[0]=8;
+DLGLOBAL DEBUG    comp[1]=9;
+DLGLOBAL DEBUG    gprs_sndcp_pcomp_rohc_params {
+DLGLOBAL DEBUG       nsapi_len=11;
+DLGLOBAL DEBUG       nsapi[0]=5;
+DLGLOBAL DEBUG       nsapi[1]=6;
+DLGLOBAL DEBUG       nsapi[2]=7;
+DLGLOBAL DEBUG       nsapi[3]=8;
+DLGLOBAL DEBUG       nsapi[4]=9;
+DLGLOBAL DEBUG       nsapi[5]=10;
+DLGLOBAL DEBUG       nsapi[6]=11;
+DLGLOBAL DEBUG       nsapi[7]=12;
+DLGLOBAL DEBUG       nsapi[8]=13;
+DLGLOBAL DEBUG       nsapi[9]=14;
+DLGLOBAL DEBUG       nsapi[10]=15;
+DLGLOBAL DEBUG       max_cid=15;
+DLGLOBAL DEBUG       max_header=168;
+DLGLOBAL DEBUG       profile_len=16;
+DLGLOBAL DEBUG       profile[0]=0000;
+DLGLOBAL DEBUG       profile[1]=0001;
+DLGLOBAL DEBUG       profile[2]=0101;
+DLGLOBAL DEBUG       profile[3]=0002;
+DLGLOBAL DEBUG       profile[4]=0102;
+DLGLOBAL DEBUG       profile[5]=0003;
+DLGLOBAL DEBUG       profile[6]=0103;
+DLGLOBAL DEBUG       profile[7]=0004;
+DLGLOBAL DEBUG       profile[8]=0104;
+DLGLOBAL DEBUG       profile[9]=0005;
+DLGLOBAL DEBUG       profile[10]=0105;
+DLGLOBAL DEBUG       profile[11]=0006;
+DLGLOBAL DEBUG       profile[12]=0007;
+DLGLOBAL DEBUG       profile[13]=0107;
+DLGLOBAL DEBUG       profile[14]=0008;
+DLGLOBAL DEBUG       profile[15]=0108;
+DLGLOBAL DEBUG    }
+DLGLOBAL DEBUG }
+DLGLOBAL DEBUG SNME(e1c5d364) Rejecting RFC1144 header compression...
+DLGLOBAL DEBUG SNME(e1c5d364) Rejecting ROHC header compression...
+DLGLOBAL INFO Rx from lower layers: LL-XID.indication
+DLGLOBAL DEBUG SNME(e1c5d364) LL-XID.cnf requested comp_fields:
+DLGLOBAL DEBUG SNDCP-XID:
+DLGLOBAL DEBUG struct gprs_sndcp_comp_field {
+DLGLOBAL DEBUG    entity=0;
+DLGLOBAL DEBUG    algo=0;
+DLGLOBAL DEBUG    comp_len=2;
+DLGLOBAL DEBUG    comp[0]=1;
+DLGLOBAL DEBUG    comp[1]=2;
+DLGLOBAL DEBUG    gprs_sndcp_pcomp_rfc1144_params {
+DLGLOBAL DEBUG       nsapi_len=1;
+DLGLOBAL DEBUG       nsapi[0]=6;
+DLGLOBAL DEBUG       s01=7;
+DLGLOBAL DEBUG    }
+DLGLOBAL DEBUG }
+DLGLOBAL DEBUG SNDCP-XID:
+DLGLOBAL DEBUG struct gprs_sndcp_comp_field {
+DLGLOBAL DEBUG    entity=2;
+DLGLOBAL DEBUG    algo=2;
+DLGLOBAL DEBUG    comp_len=2;
+DLGLOBAL DEBUG    comp[0]=8;
+DLGLOBAL DEBUG    comp[1]=9;
+DLGLOBAL DEBUG    gprs_sndcp_pcomp_rohc_params {
+DLGLOBAL DEBUG       nsapi_len=11;
+DLGLOBAL DEBUG       nsapi[0]=5;
+DLGLOBAL DEBUG       nsapi[1]=6;
+DLGLOBAL DEBUG       nsapi[2]=7;
+DLGLOBAL DEBUG       nsapi[3]=8;
+DLGLOBAL DEBUG       nsapi[4]=9;
+DLGLOBAL DEBUG       nsapi[5]=10;
+DLGLOBAL DEBUG       nsapi[6]=11;
+DLGLOBAL DEBUG       nsapi[7]=12;
+DLGLOBAL DEBUG       nsapi[8]=13;
+DLGLOBAL DEBUG       nsapi[9]=14;
+DLGLOBAL DEBUG       nsapi[10]=15;
+DLGLOBAL DEBUG       max_cid=15;
+DLGLOBAL DEBUG       max_header=168;
+DLGLOBAL DEBUG       profile_len=16;
+DLGLOBAL DEBUG       profile[0]=0000;
+DLGLOBAL DEBUG       profile[1]=0001;
+DLGLOBAL DEBUG       profile[2]=0101;
+DLGLOBAL DEBUG       profile[3]=0002;
+DLGLOBAL DEBUG       profile[4]=0102;
+DLGLOBAL DEBUG       profile[5]=0003;
+DLGLOBAL DEBUG       profile[6]=0103;
+DLGLOBAL DEBUG       profile[7]=0004;
+DLGLOBAL DEBUG       profile[8]=0104;
+DLGLOBAL DEBUG       profile[9]=0005;
+DLGLOBAL DEBUG       profile[10]=0105;
+DLGLOBAL DEBUG       profile[11]=0006;
+DLGLOBAL DEBUG       profile[12]=0007;
+DLGLOBAL DEBUG       profile[13]=0107;
+DLGLOBAL DEBUG       profile[14]=0008;
+DLGLOBAL DEBUG       profile[15]=0108;
+DLGLOBAL DEBUG    }
+DLGLOBAL DEBUG }
+DLGLOBAL DEBUG SNME(e1c5d364) Rejecting RFC1144 header compression...
+DLGLOBAL DEBUG SNME(e1c5d364) Rejecting ROHC header compression...
+DLGLOBAL DEBUG SNME(e1c5d364) SN-XID.rsp comp_fields:
+DLGLOBAL DEBUG SNDCP-XID:
+DLGLOBAL DEBUG struct gprs_sndcp_comp_field {
+DLGLOBAL DEBUG    entity=0;
+DLGLOBAL DEBUG    algo=0;
+DLGLOBAL DEBUG    comp_len=2;
+DLGLOBAL DEBUG    comp[0]=1;
+DLGLOBAL DEBUG    comp[1]=2;
+DLGLOBAL DEBUG    gprs_sndcp_pcomp_rfc1144_params {
+DLGLOBAL DEBUG       nsapi_len=0;
+DLGLOBAL DEBUG       nsapi[] = NULL;
+DLGLOBAL DEBUG       s01=7;
+DLGLOBAL DEBUG    }
+DLGLOBAL DEBUG }
+DLGLOBAL DEBUG SNDCP-XID:
+DLGLOBAL DEBUG struct gprs_sndcp_comp_field {
+DLGLOBAL DEBUG    entity=2;
+DLGLOBAL DEBUG    algo=2;
+DLGLOBAL DEBUG    comp_len=2;
+DLGLOBAL DEBUG    comp[0]=8;
+DLGLOBAL DEBUG    comp[1]=9;
+DLGLOBAL DEBUG    gprs_sndcp_pcomp_rohc_params {
+DLGLOBAL DEBUG       nsapi_len=0;
+DLGLOBAL DEBUG       nsapi[] = NULL;
+DLGLOBAL DEBUG       max_cid=15;
+DLGLOBAL DEBUG       max_header=168;
+DLGLOBAL DEBUG       profile_len=16;
+DLGLOBAL DEBUG       profile[0]=0000;
+DLGLOBAL DEBUG       profile[1]=0001;
+DLGLOBAL DEBUG       profile[2]=0101;
+DLGLOBAL DEBUG       profile[3]=0002;
+DLGLOBAL DEBUG       profile[4]=0102;
+DLGLOBAL DEBUG       profile[5]=0003;
+DLGLOBAL DEBUG       profile[6]=0103;
+DLGLOBAL DEBUG       profile[7]=0004;
+DLGLOBAL DEBUG       profile[8]=0104;
+DLGLOBAL DEBUG       profile[9]=0005;
+DLGLOBAL DEBUG       profile[10]=0105;
+DLGLOBAL DEBUG       profile[11]=0006;
+DLGLOBAL DEBUG       profile[12]=0007;
+DLGLOBAL DEBUG       profile[13]=0107;
+DLGLOBAL DEBUG       profile[14]=0008;
+DLGLOBAL DEBUG       profile[15]=0108;
+DLGLOBAL DEBUG    }
+DLGLOBAL DEBUG }
+DLGLOBAL INFO Rx from lower layers: LL-UNITDATA.indication
+DLGLOBAL INFO Rx from upper layers: SN-UNITDATA.request
+DLGLOBAL INFO Rx from SNDCP SM sublayer: SNSM-DEACTIVATE.indication
+DLGLOBAL DEBUG SNE(e1c5d364,SNDCP3,5) free()
+DLGLOBAL DEBUG SNME(e1c5d364) No SNDCP Entities left activate, freeing SNME
+DLGLOBAL DEBUG SNME(e1c5d364) free()

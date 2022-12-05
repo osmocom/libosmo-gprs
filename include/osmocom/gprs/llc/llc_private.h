@@ -252,15 +252,6 @@ struct gprs_llc_llme {
 	uint16_t nsei;
 	struct gprs_llc_lle lle[NUM_SAPIS];
 
-	/* Compression entities */
-	struct {
-		/* In these two list_heads we will store the
-		 * data and protocol compression entities,
-		 * together with their compression states */
-		struct llist_head *proto;
-		struct llist_head *data;
-	} comp;
-
 	/* Internal management */
 	uint32_t age_timestamp;
 };

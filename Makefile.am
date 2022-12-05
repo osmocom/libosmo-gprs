@@ -17,6 +17,7 @@ pkgconfig_DATA = \
 	libosmo-csn1.pc \
 	libosmo-gprs-llc.pc \
 	libosmo-gprs-rlcmac.pc \
+	libosmo-gprs-sndcp.pc \
 	$(NULL)
 
 BUILT_SOURCES = $(top_srcdir)/.version

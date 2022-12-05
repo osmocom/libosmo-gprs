@@ -77,19 +77,23 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([libosmo-csn1.pc
 		 libosmo-gprs-llc.pc
 		 libosmo-gprs-rlcmac.pc
+		 libosmo-gprs-sndcp.pc
 		 include/Makefile
 		 include/osmocom/Makefile
 		 include/osmocom/csn1/Makefile
 		 include/osmocom/gprs/Makefile
 		 include/osmocom/gprs/llc/Makefile
 		 include/osmocom/gprs/rlcmac/Makefile
+		 include/osmocom/gprs/sndcp/Makefile
 		 src/Makefile
 		 src/csn1/Makefile
 		 src/llc/Makefile
 		 src/rlcmac/Makefile
+		 src/sndcp/Makefile
 		 tests/Makefile
 		 tests/llc/Makefile
 		 tests/rlcmac/Makefile
+		 tests/sndcp/Makefile
 		 Makefile
 		 contrib/libosmo-gprs.spec])
 AC_OUTPUT
