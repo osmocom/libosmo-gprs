@@ -184,4 +184,14 @@ int osmo_gprs_llc_xid_encode(struct msgb *msg,
 			     const struct osmo_gprs_llc_xid_field *fields,
 			     unsigned int num_fields);
 
-void osmo_gprs_llc_set_log_cat(int cat);
+enum osmo_gprs_llc_log_cat {
+	OSMO_GPRS_LLC_LOGC_LLC,
+	_OSMO_GPRS_LLC_LOGC_MAX,
+};
+
+void osmo_gprs_llc_set_log_cat(enum osmo_gprs_llc_log_cat logc, int logc_num);
+
+/* TODO: move to llc_private.h */
+extern int g_llc_log_cat[_OSMO_GPRS_LLC_LOGC_MAX];
+
+#define LOGLLC(lvl, fmt, args...) LOGP(g_llc_log_cat[OSMO_GPRS_LLC_LOGC_LLC], lvl, fmt, ## args)

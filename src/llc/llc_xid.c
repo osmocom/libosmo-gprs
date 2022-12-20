@@ -29,8 +29,6 @@
 
 #include <osmocom/gprs/llc/llc.h>
 
-extern int g_log_cat;
-
 const struct value_string osmo_gprs_llc_xid_type_names[] = {
 	{ OSMO_GPRS_LLC_XID_T_VERSION,		"LLC-Version" },
 	{ OSMO_GPRS_LLC_XID_T_IOV_UI,		"IOV-UI" },
@@ -80,8 +78,8 @@ static const struct {
 bool osmo_gprs_llc_xid_field_is_valid(const struct osmo_gprs_llc_xid_field *field)
 {
 	if (field->type >= ARRAY_SIZE(gprs_llc_xid_desc)) {
-		LOGP(g_log_cat, LOGL_ERROR,
-		     "Unknown XID field type 0x%02x\n", field->type);
+		LOGLLC(LOGL_ERROR,
+		       "Unknown XID field type 0x%02x\n", field->type);
 		return false;
 	}
 
@@ -93,18 +91,18 @@ bool osmo_gprs_llc_xid_field_is_valid(const struct osmo_gprs_llc_xid_field *fiel
 		return true;
 
 	if (field->val < gprs_llc_xid_desc[field->type].min) {
-		LOGP(g_log_cat, LOGL_ERROR,
-		     "XID field %s value=%u < min=%u\n",
-		     osmo_gprs_llc_xid_type_name(field->type),
-		     field->val, gprs_llc_xid_desc[field->type].min);
+		LOGLLC(LOGL_ERROR,
+		       "XID field %s value=%u < min=%u\n",
+		       osmo_gprs_llc_xid_type_name(field->type),
+		       field->val, gprs_llc_xid_desc[field->type].min);
 		return false;
 	}
 
 	if (field->val > gprs_llc_xid_desc[field->type].max) {
-		LOGP(g_log_cat, LOGL_ERROR,
-		     "XID field %s value=%u > max=%u\n",
-		     osmo_gprs_llc_xid_type_name(field->type),
-		     field->val, gprs_llc_xid_desc[field->type].max);
+		LOGLLC(LOGL_ERROR,
+		       "XID field %s value=%u > max=%u\n",
+		       osmo_gprs_llc_xid_type_name(field->type),
+		       field->val, gprs_llc_xid_desc[field->type].max);
 		return false;
 	}
 
@@ -177,7 +175,7 @@ int osmo_gprs_llc_xid_decode(struct osmo_gprs_llc_xid_field *fields,
 #define check_len(len, text) \
 	do { \
 		if (data_len < (len)) { \
-			LOGP(g_log_cat, LOGL_ERROR, "Failed to parse XID: %s\n", text); \
+			LOGLLC(LOGL_ERROR, "Failed to parse XID: %s\n", text); \
 			return -EINVAL; \
 		} \
 	} while (0)
@@ -187,8 +185,8 @@ int osmo_gprs_llc_xid_decode(struct osmo_gprs_llc_xid_field *fields,
 		uint8_t len;
 
 		if (num_fields > max_fields) {
-			LOGP(g_log_cat, LOGL_ERROR,
-			     "Failed to parse XID: too many fields\n");
+			LOGLLC(LOGL_ERROR,
+			       "Failed to parse XID: too many fields\n");
 			return -ENOMEM;
 		}
 
@@ -198,8 +196,8 @@ int osmo_gprs_llc_xid_decode(struct osmo_gprs_llc_xid_field *fields,
 		/* XID field type */
 		field->type = (*ptr >> 2) & 0x1f;
 		if (field->type >= ARRAY_SIZE(gprs_llc_xid_desc)) {
-			LOGP(g_log_cat, LOGL_ERROR,
-			     "Failed to parse XID: unknown field type 0x%02x\n", field->type);
+			LOGLLC(LOGL_ERROR,
+			       "Failed to parse XID: unknown field type 0x%02x\n", field->type);
 			return -EINVAL;
 		}
 
@@ -222,10 +220,10 @@ int osmo_gprs_llc_xid_decode(struct osmo_gprs_llc_xid_field *fields,
 			field->var.val_len = len;
 		} else {
 			if (len != gprs_llc_xid_desc[field->type].len) {
-				LOGP(g_log_cat, LOGL_NOTICE,
-				     "XID field %s has unusual length=%u (expected %u)\n",
-				     osmo_gprs_llc_xid_type_name(field->type),
-				     len, gprs_llc_xid_desc[field->type].len);
+				LOGLLC(LOGL_NOTICE,
+				       "XID field %s has unusual length=%u (expected %u)\n",
+				       osmo_gprs_llc_xid_type_name(field->type),
+				       len, gprs_llc_xid_desc[field->type].len);
 			}
 
 			switch (len) {
@@ -242,9 +240,9 @@ int osmo_gprs_llc_xid_decode(struct osmo_gprs_llc_xid_field *fields,
 				field->val = osmo_load32be(ptr);
 				break;
 			default:
-				LOGP(g_log_cat, LOGL_ERROR,
-				     "Failed to parse XID: unsupported field (%s) length=%u\n",
-				     osmo_gprs_llc_xid_type_name(field->type), len);
+				LOGLLC(LOGL_ERROR,
+				       "Failed to parse XID: unsupported field (%s) length=%u\n",
+				       osmo_gprs_llc_xid_type_name(field->type), len);
 				return -EINVAL;
 			}
 

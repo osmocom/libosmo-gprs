@@ -16,10 +16,14 @@
  */
 
 #include <osmocom/core/logging.h>
+#include <osmocom/gprs/llc/llc.h>
 
-int g_log_cat = DLGLOBAL;
+int g_llc_log_cat[_OSMO_GPRS_LLC_LOGC_MAX] = {
+	[0 ... _OSMO_GPRS_LLC_LOGC_MAX - 1] = DLGLOBAL
+};
 
-void osmo_gprs_llc_set_log_cat(int cat)
+void osmo_gprs_llc_set_log_cat(enum osmo_gprs_llc_log_cat logc, int logc_num)
 {
-	g_log_cat = cat;
+	OSMO_ASSERT(logc < _OSMO_GPRS_LLC_LOGC_MAX);
+	g_llc_log_cat[logc] = logc_num;
 }
