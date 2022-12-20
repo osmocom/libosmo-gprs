@@ -7,6 +7,13 @@
 
 #include <osmocom/core/msgb.h>
 
+/* Section 7.1.2 LLC layer service primitives */
+enum osmo_gprs_llc_location {
+	OSMO_GPRS_LLC_LOCATION_UNSET,
+	OSMO_GPRS_LLC_LOCATION_MS,
+	OSMO_GPRS_LLC_LOCATION_SGSN,
+};
+
 /* Section 6.2.3 Service Access Point Identifier (SAPI) */
 enum osmo_gprs_llc_sapi {
 	OSMO_GPRS_LLC_SAPI_GMM		= 1,

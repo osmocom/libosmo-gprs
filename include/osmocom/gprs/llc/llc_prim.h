@@ -6,6 +6,21 @@
 #include <stddef.h>
 
 #include <osmocom/core/prim.h>
+#include <osmocom/core/utils.h>
+
+/* Section 7.1.0 */
+enum osmo_gprs_llc_prim_sap {
+	OSMO_GPRS_LLC_SAP_LLGM,
+	OSMO_GPRS_LLC_SAP_LL,
+	OSMO_GPRS_LLC_SAP_GRR,
+	OSMO_GPRS_LLC_SAP_BSSGP,
+};
+
+extern const struct value_string osmo_gprs_llc_prim_sap_names[];
+static inline const char *osmo_gprs_llc_prim_sap_name(enum osmo_gprs_llc_prim_sap val)
+{
+	return get_value_string(osmo_gprs_llc_prim_sap_names, val);
+}
 
 /* TS 04.64 Section 7.1.2 Table 7: LLC layer primitives (GMM/SNDCP/SMS/TOM) */
 /* TS 04.65 Section 5.1.2 Table 2: Service primitives used by SNDCP */
