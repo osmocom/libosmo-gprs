@@ -32,6 +32,7 @@ PKG_PROG_PKG_CONFIG([0.20])
 
 dnl checks for libraries
 PKG_CHECK_MODULES(LIBOSMOCORE, libosmocore >= 1.7.0)
+PKG_CHECK_MODULES(LIBOSMOGSM, libosmogsm >= 1.7.0)
 
 dnl checks for header files
 AC_HEADER_STDC

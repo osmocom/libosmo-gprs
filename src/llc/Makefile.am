@@ -11,10 +11,12 @@ AM_CPPFLAGS = \
 AM_CFLAGS = \
 	-Wall \
 	$(LIBOSMOCORE_CFLAGS) \
+	$(LIBOSMOGSM_CFLAGS) \
 	$(NULL)
 
 AM_LDFLAGS = \
 	$(LIBOSMOCORE_LIBS) \
+	$(LIBOSMOGSM_LIBS) \
 	$(NULL)
 
 lib_LTLIBRARIES = \
@@ -36,4 +38,5 @@ libosmo_gprs_llc_la_LDFLAGS = \
 
 libosmo_gprs_llc_la_LIBADD = \
 	$(LIBOSMOCORE_LIBS) \
+	$(LIBOSMOGSM_LIBS) \
 	$(NULL)

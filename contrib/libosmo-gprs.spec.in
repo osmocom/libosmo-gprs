@@ -11,6 +11,7 @@ BuildRequires:  automake >= 1.9
 BuildRequires:  libtool >= 2
 BuildRequires:  pkgconfig >= 0.20
 BuildRequires:  pkgconfig(libosmocore) >= 1.7.0
+BuildRequires:  pkgconfig(libosmogsm) >= 1.7.0
 BuildRequires:  pkgconfig(talloc)
 
 %description
