@@ -43,7 +43,7 @@ const struct value_string osmo_gprs_llc_sapi_names[] = {
 	{ OSMO_GPRS_LLC_SAPI_SMS,	"SMS" },
 	{ OSMO_GPRS_LLC_SAPI_TOM8,	"TOM8" },
 	{ OSMO_GPRS_LLC_SAPI_SNDCP9,	"SNDCP9" },
-	{ OSMO_GPRS_LLC_SAPI_SNDCP12,	"SNDCP12" },
+	{ OSMO_GPRS_LLC_SAPI_SNDCP11,	"SNDCP11" },
 	{ 0, NULL }
 };
 

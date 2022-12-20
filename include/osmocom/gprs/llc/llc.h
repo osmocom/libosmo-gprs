@@ -16,7 +16,7 @@ enum osmo_gprs_llc_sapi {
 	OSMO_GPRS_LLC_SAPI_SMS		= 7,
 	OSMO_GPRS_LLC_SAPI_TOM8		= 8,
 	OSMO_GPRS_LLC_SAPI_SNDCP9	= 9,
-	OSMO_GPRS_LLC_SAPI_SNDCP12	= 11,
+	OSMO_GPRS_LLC_SAPI_SNDCP11	= 11,
 };
 
 extern const struct value_string osmo_gprs_llc_sapi_names[];
