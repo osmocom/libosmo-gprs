@@ -86,7 +86,7 @@ static void test_llc_prim_ms(void)
 
 	printf("==== %s() [start] ====\n", __func__);
 
-	rc = osmo_gprs_llc_init(OSMO_GPRS_LLC_LOCATION_MS);
+	rc = osmo_gprs_llc_init(OSMO_GPRS_LLC_LOCATION_MS, NULL);
 	OSMO_ASSERT(rc == 0);
 
 	osmo_gprs_llc_prim_set_up_cb(test_llc_prim_up_cb, NULL);
@@ -156,7 +156,7 @@ static void test_llc_prim_sgsn(void)
 
 	printf("==== %s() [start] ====\n", __func__);
 
-	rc = osmo_gprs_llc_init(OSMO_GPRS_LLC_LOCATION_SGSN);
+	rc = osmo_gprs_llc_init(OSMO_GPRS_LLC_LOCATION_SGSN, NULL);
 	OSMO_ASSERT(rc == 0);
 
 	osmo_gprs_llc_prim_set_up_cb(test_llc_prim_up_cb, NULL);

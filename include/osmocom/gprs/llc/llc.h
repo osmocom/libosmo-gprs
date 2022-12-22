@@ -33,7 +33,7 @@ static inline const char *osmo_gprs_llc_sapi_name(enum osmo_gprs_llc_sapi val)
 	return get_value_string(osmo_gprs_llc_sapi_names, val);
 }
 
-int osmo_gprs_llc_init(enum osmo_gprs_llc_location location);
+int osmo_gprs_llc_init(enum osmo_gprs_llc_location location, const char *cipher_plugin_path);
 
 enum osmo_gprs_llc_log_cat {
 	OSMO_GPRS_LLC_LOGC_LLC,

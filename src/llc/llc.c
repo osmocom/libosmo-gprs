@@ -121,9 +121,13 @@ static const struct gprs_llc_params llc_default_params[NUM_SAPIS] = {
 	},
 };
 
-int osmo_gprs_llc_init(enum osmo_gprs_llc_location location)
+int osmo_gprs_llc_init(enum osmo_gprs_llc_location location, const char *cipher_plugin_path)
 {
+	int rc;
 	OSMO_ASSERT(location == OSMO_GPRS_LLC_LOCATION_MS || location == OSMO_GPRS_LLC_LOCATION_SGSN)
+
+	if ((rc = gprs_cipher_load(cipher_plugin_path)) != 0)
+		return rc;
 
 	if (g_ctx)
 		talloc_free(g_ctx);
