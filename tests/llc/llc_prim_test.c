@@ -144,14 +144,15 @@ static void test_llc_prim_sgsn(void)
 	struct osmo_gprs_llc_prim *llc_prim;
 	const uint32_t tlli = 0xe1c5d364;
 	int rc;
-	struct gsm0808_cell_id cell_id = {
-		.id_discr = CELL_IDENT_LAC_AND_CI,
-		.id = {
-			.lac_and_ci = {
-				.lac = 0x0304,
-				.ci = 0x9876,
-			},
+	struct osmo_gprs_llc_bssgp_prim_cell_id cell_id = {
+		.rai = {
+			.mcc = 901,
+			.mnc = 70,
+			.mnc_3_digits = false,
+			.lac = 0x0304,
+			.rac = 0x01,
 		},
+		.ci = 0x9876,
 	};
 
 	printf("==== %s() [start] ====\n", __func__);

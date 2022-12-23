@@ -7,7 +7,7 @@
 
 #include <osmocom/core/prim.h>
 #include <osmocom/core/utils.h>
-#include <osmocom/gsm/gsm0808_utils.h>
+#include <osmocom/gsm/gsm48.h>
 #include <osmocom/gprs/llc/llc.h>
 
 /* Section 7.1.0 */
@@ -214,6 +214,11 @@ struct osmo_gprs_llc_grr_prim {
 	};
 };
 
+struct osmo_gprs_llc_bssgp_prim_cell_id {
+	struct gprs_ra_id rai;
+	uint16_t ci;
+};
+
 /* Parameters for OSMO_GPRS_LLC_BSSGP_* prims */
 struct osmo_gprs_llc_bssgp_prim {
 	/* Common fields */
@@ -236,7 +241,7 @@ struct osmo_gprs_llc_bssgp_prim {
 		} dl_unitdata_req;
 		/* OSMO_GPRS_LLC_BSSGP_UL_UNITDATA | Ind */
 		struct {
-			struct gsm0808_cell_id cell_id;
+			struct osmo_gprs_llc_bssgp_prim_cell_id cell_id;
 			/* TODO: MOCN specific parameters:
 			 * - Redirect attempt
 			 * - IMSI
