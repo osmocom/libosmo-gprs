@@ -227,6 +227,21 @@ CSN_DESCR_BEGIN(IA_EGPRS_PktUlAss_t)
   M_TYPE       (IA_EGPRS_PktUlAss_t, Access.OnePhaseAccess, EGPRS_OnePhaseAccess_t),
 CSN_DESCR_END  (IA_EGPRS_PktUlAss_t)
 
+/* < Multiple Blocks Packet Downlink Assignment > */
+static const
+CSN_DESCR_BEGIN(IA_MultiBlock_PktDlAss_t)
+  M_TYPE       (IA_MultiBlock_PktDlAss_t, TBF_STARTING_TIME, StartingTime_t),
+  M_UINT       (IA_MultiBlock_PktDlAss_t, NOF_BLOCKS, 4),
+
+#if 1 /* TODO: 0 -- Reserved for future use */
+  M_FIXED      (IA_MultiBlock_PktDlAss_t, 1, 0x00),
+#else /* | 1 ... */
+  M_UNION      (IA_MultiBlock_PktDlAss_t, 2),
+  M_TYPE       (IA_MultiBlock_PktDlAss_t, u.Distribution, ),
+  M_TYPE       (IA_MultiBlock_PktDlAss_t, u.NonDistribution),
+#endif
+CSN_DESCR_END  (IA_MultiBlock_PktDlAss_t)
+
 static const
 CSN_DESCR_BEGIN(IA_FreqParamsBeforeTime_t)
   M_UINT       (IA_FreqParamsBeforeTime_t,  Length,  6),
@@ -358,7 +373,7 @@ static const
 CSN_DESCR_BEGIN    (IA_RestOctetsLH0x_t)
   M_UNION          (IA_RestOctetsLH0x_t, 2),
   M_TYPE           (IA_RestOctetsLH0x_t, u.EGPRS_PktUlAss, IA_EGPRS_PktUlAss_t),
-  CSN_ERROR        (IA_RestOctetsLH0x_t, "01 <Multiple Blocks Packet Downlink Assignment>", CSN_ERROR_STREAM_NOT_SUPPORTED),
+  M_TYPE           (IA_RestOctetsLH0x_t, u.MultiBlock_PktDlAss, IA_MultiBlock_PktDlAss_t),
 CSN_DESCR_END      (IA_RestOctetsLH0x_t)
 
 static const

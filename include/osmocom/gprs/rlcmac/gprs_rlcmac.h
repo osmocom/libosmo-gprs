@@ -677,6 +677,12 @@ typedef struct
 
 typedef struct
 {
+  StartingTime_t TBF_STARTING_TIME;
+  guint8         NOF_BLOCKS;
+} IA_MultiBlock_PktDlAss_t;
+
+typedef struct
+{
   guint8 Length;
   guint8 MAIO;
   guint8 MobileAllocation[62];
@@ -817,7 +823,7 @@ typedef struct
   guint8 UnionType;
   union {
     IA_EGPRS_PktUlAss_t EGPRS_PktUlAss;
-    /* TODO: <Multiple Blocks Packet Downlink Assignment> */
+    IA_MultiBlock_PktDlAss_t MultiBlock_PktDlAss;
   } u;
 } IA_RestOctetsLH0x_t;
 
