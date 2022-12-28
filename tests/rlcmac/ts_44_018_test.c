@@ -52,6 +52,38 @@ static void test_si13ro(void)
 		rc = osmo_gprs_rlcmac_decode_si13ro(&si13ro, &buf[0], sizeof(buf));
 		printf("osmo_gprs_rlcmac_decode_si13ro() returns %d\n", rc);
 	}
+
+	printf("\n");
+}
+
+static void test_imm_ass_ro(void)
+{
+	printf("*** %s ***\n", __func__);
+
+	static const char *testData[] = {
+		"c8c2859f032b2b2b2b2b",		// HH, Packet Uplink Assignment
+		"c1ebb26b2b2b2b2b2b2b",		// HH, Packet Uplink Assignment (single block)
+		"dd6e1ae5a8c7841b2b2b",		// HH, Packet Downlink Assignment
+		"464269c616b21b032b2b2b",	// LH, EGPRS Packet Uplink Assignment (one phase)
+		"444261b4b40b2b2b2b2b2b",	// LH, EGPRS Packet Uplink Assignment (two phase)
+		/* TODO: add more samples (LL and HL) */
+	};
+
+	for (unsigned int i = 0; i < ARRAY_SIZE(testData); i++) {
+		uint8_t buf[11]; /* up to 11 octets as per 10.5.2.16 */
+		IA_RestOctets_t iaro = { 0 };
+		int rc;
+
+		printf("testData[%d] = %s\n", i, testData[i]);
+
+		rc = osmo_hexparse(testData[i], &buf[0], sizeof(buf));
+		OSMO_ASSERT(rc == (strlen(testData[i]) / 2));
+
+		rc = osmo_gprs_rlcmac_decode_imm_ass_ro(&iaro, &buf[0], sizeof(buf));
+		printf("osmo_gprs_rlcmac_decode_imm_ass_ro() returns %d\n", rc);
+	}
+
+	printf("\n");
 }
 
 static const struct log_info_cat test_log_categories[] = { };
@@ -74,6 +106,7 @@ int main(int argc, char *argv[])
 	log_set_use_color(osmo_stderr_target, 0);
 
 	test_si13ro();
+	test_imm_ass_ro();
 
 	talloc_free(tall_ctx);
 }

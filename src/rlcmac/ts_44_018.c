@@ -160,12 +160,6 @@ CSN_DESCR_BEGIN  (P2_Rest_Octets_t)
 CSN_DESCR_END    (P2_Rest_Octets_t)
 #endif
 
-/* <IA Rest Octets>
- * Note!!
- * - first two bits skipped and frequencyparameters skipped
- * - additions for R99 and EGPRS added
- */
-#if 0
 static const
 CSN_DESCR_BEGIN(DynamicAllocation_t)
   M_UINT       (DynamicAllocation_t,  USF,  3),
@@ -175,9 +169,7 @@ CSN_DESCR_BEGIN(DynamicAllocation_t)
   M_UINT       (DynamicAllocation_t,  P0,  4),
   M_UINT       (DynamicAllocation_t,  PR_MODE,  1),
 CSN_DESCR_END  (DynamicAllocation_t)
-#endif
 
-#if 0
 static const
 CSN_DESCR_BEGIN(EGPRS_TwoPhaseAccess_t)
   M_NEXT_EXIST (EGPRS_TwoPhaseAccess_t, Exist_ALPHA, 1),
@@ -189,12 +181,10 @@ CSN_DESCR_BEGIN(EGPRS_TwoPhaseAccess_t)
 
   M_NEXT_EXIST (EGPRS_TwoPhaseAccess_t, Exist_P0_BTS_PWR_CTRL_PR_MODE, 3),
   M_UINT       (EGPRS_TwoPhaseAccess_t,  P0,  4),
-  M_UINT       (EGPRS_TwoPhaseAccess_t,  BTS_PWR_CTRL_MODE,  1),
+  M_UINT       (EGPRS_TwoPhaseAccess_t,  BTS_PWR_CTRL_MODE,  1), /* shall be 0 */
   M_UINT       (EGPRS_TwoPhaseAccess_t,  PR_MODE,  1),
 CSN_DESCR_END  (EGPRS_TwoPhaseAccess_t)
-#endif
 
-#if 0
 static const
 CSN_DESCR_BEGIN(EGPRS_OnePhaseAccess_t)
   M_UINT       (EGPRS_OnePhaseAccess_t,  TFI_ASSIGNMENT,  5),
@@ -224,9 +214,8 @@ CSN_DESCR_BEGIN(EGPRS_OnePhaseAccess_t)
   M_NEXT_EXIST (EGPRS_OnePhaseAccess_t, Exist_TBF_STARTING_TIME, 1),
   M_TYPE       (EGPRS_OnePhaseAccess_t, TBF_STARTING_TIME, StartingTime_t),
 CSN_DESCR_END  (EGPRS_OnePhaseAccess_t)
-#endif
 
-#if 0
+/* < EGPRS Packet Uplink Assignment > */
 static const
 CSN_DESCR_BEGIN(IA_EGPRS_00_t)
   M_UINT       (IA_EGPRS_00_t,  ExtendedRA,  5),
@@ -237,23 +226,19 @@ CSN_DESCR_BEGIN(IA_EGPRS_00_t)
   M_TYPE       (IA_EGPRS_00_t, Access.TwoPhaseAccess, EGPRS_TwoPhaseAccess_t),
   M_TYPE       (IA_EGPRS_00_t, Access.OnePhaseAccess, EGPRS_OnePhaseAccess_t),
 CSN_DESCR_END  (IA_EGPRS_00_t)
-#endif
 
-#if 0
 static const
 CSN_ChoiceElement_t IA_EGPRS_Choice[] =
 {
   {2, 0x00, 0, M_TYPE   (IA_EGPRS_t, u.IA_EGPRS_PUA, IA_EGPRS_00_t)},
-  {2, 0x01, 0, CSN_ERROR(IA_EGPRS_t, "01 <IA_EGPRS>", CSN_ERROR_STREAM_NOT_SUPPORTED)},
-  {1, 0x01, 0, CSN_ERROR(IA_EGPRS_t, "1 <IA_EGPRS>", CSN_ERROR_STREAM_NOT_SUPPORTED)}
+  {2, 0x01, 0, CSN_ERROR(IA_EGPRS_t, "01 <Packet Downlink Assignment>", CSN_ERROR_STREAM_NOT_SUPPORTED)},
+  {1, 0x01, 0, CSN_ERROR(IA_EGPRS_t, "1  <Second Part Packet Assignment>", CSN_ERROR_STREAM_NOT_SUPPORTED)},
 };
-#endif
 
 /* Please observe the double usage of UnionType element.
  * First, it is used to store the second bit of LL/LH identification of EGPRS contents.
  * Thereafter, UnionType will be used to store the index to detected choice.
  */
-#if 0
 static const
 CSN_DESCR_BEGIN(IA_EGPRS_t)
   M_UINT       (IA_EGPRS_t,  UnionType ,  1 ),
@@ -266,9 +251,7 @@ CSN_DESCR_BEGIN(IA_FreqParamsBeforeTime_t)
   M_UINT       (IA_FreqParamsBeforeTime_t,  MAIO,  6),
   M_VAR_ARRAY  (IA_FreqParamsBeforeTime_t, MobileAllocation, Length, 8),
 CSN_DESCR_END  (IA_FreqParamsBeforeTime_t)
-#endif
 
-#if 0
 static const
 CSN_DESCR_BEGIN  (GPRS_SingleBlockAllocation_t)
   M_NEXT_EXIST   (GPRS_SingleBlockAllocation_t, Exist_ALPHA, 1),
@@ -280,12 +263,10 @@ CSN_DESCR_BEGIN  (GPRS_SingleBlockAllocation_t)
 
   M_NEXT_EXIST_LH(GPRS_SingleBlockAllocation_t, Exist_P0_BTS_PWR_CTRL_PR_MODE, 3),
   M_UINT         (GPRS_SingleBlockAllocation_t,  P0,  4),
-  M_UINT         (GPRS_SingleBlockAllocation_t,  BTS_PWR_CTRL_MODE,  1),
+  M_UINT         (GPRS_SingleBlockAllocation_t,  BTS_PWR_CTRL_MODE,  1), /* shall be 0 */
   M_UINT         (GPRS_SingleBlockAllocation_t,  PR_MODE,  1),
 CSN_DESCR_END    (GPRS_SingleBlockAllocation_t)
-#endif
 
-#if 0
 static const
 CSN_DESCR_BEGIN  (GPRS_DynamicOrFixedAllocation_t)
   M_UINT         (GPRS_DynamicOrFixedAllocation_t,  TFI_ASSIGNMENT,  5),
@@ -309,17 +290,13 @@ CSN_DESCR_BEGIN  (GPRS_DynamicOrFixedAllocation_t)
   M_NEXT_EXIST   (GPRS_DynamicOrFixedAllocation_t, Exist_TBF_STARTING_TIME, 1),
   M_TYPE         (GPRS_DynamicOrFixedAllocation_t, TBF_STARTING_TIME, StartingTime_t),
 CSN_DESCR_END    (GPRS_DynamicOrFixedAllocation_t)
-#endif
 
-#if 0
 static const
 CSN_DESCR_BEGIN(PU_IA_AdditionsR99_t)
   M_NEXT_EXIST (PU_IA_AdditionsR99_t, Exist_ExtendedRA, 1),
   M_UINT       (PU_IA_AdditionsR99_t,  ExtendedRA,  5),
 CSN_DESCR_END  (PU_IA_AdditionsR99_t)
-#endif
 
-#if 0
 static const
 CSN_DESCR_BEGIN          (Packet_Uplink_ImmAssignment_t)
   M_UNION                (Packet_Uplink_ImmAssignment_t, 2),
@@ -329,9 +306,7 @@ CSN_DESCR_BEGIN          (Packet_Uplink_ImmAssignment_t)
   M_NEXT_EXIST_OR_NULL_LH(Packet_Uplink_ImmAssignment_t, Exist_AdditionsR99, 1),
   M_TYPE                 (Packet_Uplink_ImmAssignment_t, AdditionsR99, PU_IA_AdditionsR99_t),
 CSN_DESCR_END            (Packet_Uplink_ImmAssignment_t)
-#endif
 
-#if 0
 static const
 CSN_DESCR_BEGIN(PD_IA_AdditionsR99_t)
   M_UINT       (PD_IA_AdditionsR99_t,  EGPRS_WindowSize,  5),
@@ -340,9 +315,7 @@ CSN_DESCR_BEGIN(PD_IA_AdditionsR99_t)
   M_NEXT_EXIST (PD_IA_AdditionsR99_t, Exist_BEP_PERIOD2, 1),
   M_UINT       (PD_IA_AdditionsR99_t,  BEP_PERIOD2,  4),
 CSN_DESCR_END  (PD_IA_AdditionsR99_t)
-#endif
 
-#if 0
 static const
 CSN_DESCR_BEGIN(Packet_Downlink_ImmAssignment_t)
   M_UINT       (Packet_Downlink_ImmAssignment_t,  TLLI,  32),
@@ -364,40 +337,81 @@ CSN_DESCR_BEGIN(Packet_Downlink_ImmAssignment_t)
 
   M_NEXT_EXIST (Packet_Downlink_ImmAssignment_t, Exist_P0_PR_MODE, 3),
   M_UINT       (Packet_Downlink_ImmAssignment_t,  P0,  4),
-  M_UINT       (Packet_Downlink_ImmAssignment_t,  BTS_PWR_CTRL_MODE,  1),
+  M_UINT       (Packet_Downlink_ImmAssignment_t,  BTS_PWR_CTRL_MODE,  1), /* shall be 0 */
   M_UINT       (Packet_Downlink_ImmAssignment_t,  PR_MODE,  1),
 
   M_NEXT_EXIST_OR_NULL_LH(Packet_Downlink_ImmAssignment_t, Exist_AdditionsR99, 1),
   M_TYPE       (Packet_Downlink_ImmAssignment_t, AdditionsR99, PD_IA_AdditionsR99_t),
 CSN_DESCR_END  (Packet_Downlink_ImmAssignment_t)
-#endif
 
-#if 0
 static const
 CSN_DESCR_BEGIN          (Second_Part_Packet_Assignment_t)
   M_NEXT_EXIST_OR_NULL_LH(Second_Part_Packet_Assignment_t, Exist_SecondPart, 2),
   M_NEXT_EXIST           (Second_Part_Packet_Assignment_t, Exist_ExtendedRA, 1),
   M_UINT                 (Second_Part_Packet_Assignment_t,  ExtendedRA,  5),
 CSN_DESCR_END            (Second_Part_Packet_Assignment_t)
-#endif
 
-#if 0
 static const
 CSN_DESCR_BEGIN(IA_PacketAssignment_UL_DL_t)
   M_UNION      (IA_PacketAssignment_UL_DL_t, 2),
   M_TYPE       (IA_PacketAssignment_UL_DL_t, ul_dl.Packet_Uplink_ImmAssignment, Packet_Uplink_ImmAssignment_t),
   M_TYPE       (IA_PacketAssignment_UL_DL_t, ul_dl.Packet_Downlink_ImmAssignment, Packet_Downlink_ImmAssignment_t),
 CSN_DESCR_END  (IA_PacketAssignment_UL_DL_t)
-#endif
 
-#if 0
 static const
-CSN_DESCR_BEGIN(IA_PacketAssignment_t)
-  M_UNION      (IA_PacketAssignment_t, 2),
-  M_TYPE       (IA_PacketAssignment_t, u.UplinkDownlinkAssignment, IA_PacketAssignment_UL_DL_t),
-  M_TYPE       (IA_PacketAssignment_t, u.UplinkDownlinkAssignment, Second_Part_Packet_Assignment_t),
-CSN_DESCR_END  (IA_PacketAssignment_t)
-#endif
+CSN_DESCR_BEGIN    (IA_AdditionsR13_t)
+  M_NEXT_EXIST_LH  (IA_AdditionsR13_t, Exist_AdditionsR13, 3),
+  M_UINT           (IA_AdditionsR13_t, ImplicitRejectPS, 1),
+  M_UINT           (IA_AdditionsR13_t, PEO_BCCH_CHANGE_MARK, 2),
+  M_UINT           (IA_AdditionsR13_t, RCC, 3),
+CSN_DESCR_END      (IA_AdditionsR13_t)
+
+static const
+CSN_DESCR_BEGIN    (IA_RestOctetsLL_t)
+  M_UINT_LH        (IA_RestOctetsLL_t, Compressed_Inter_RAT_HO_INFO_IND, 1),
+  M_TYPE_OR_NULL   (IA_RestOctetsLL_t, AdditionsR13, IA_AdditionsR13_t),
+CSN_DESCR_END      (IA_RestOctetsLL_t)
+
+static const
+CSN_DESCR_BEGIN    (IA_RestOctetsLH_t)
+  M_TYPE           (IA_RestOctetsLH_t, EGPRS, IA_EGPRS_t),
+  M_TYPE_OR_NULL   (IA_RestOctetsLH_t, AdditionsR13, IA_AdditionsR13_t),
+CSN_DESCR_END      (IA_RestOctetsLH_t)
+
+static const
+CSN_DESCR_BEGIN    (IA_RestOctetsHL_t)
+  M_TYPE           (IA_RestOctetsHL_t, IA_FrequencyParams, IA_FreqParamsBeforeTime_t),
+  M_UINT_LH        (IA_RestOctetsHL_t, Compressed_Inter_RAT_HO_INFO_IND, 1),
+  M_TYPE_OR_NULL   (IA_RestOctetsHL_t, AdditionsR13, IA_AdditionsR13_t),
+CSN_DESCR_END      (IA_RestOctetsHL_t)
+
+static const
+CSN_DESCR_BEGIN           (IA_RestOctetsHH_t)
+  M_UNION                 (IA_RestOctetsHH_t, 2),
+  M_TYPE                  (IA_RestOctetsHH_t, u.UplinkDownlinkAssignment, IA_PacketAssignment_UL_DL_t),
+  M_TYPE                  (IA_RestOctetsHH_t, u.SecondPartPacketAssignment, Second_Part_Packet_Assignment_t),
+
+  M_NEXT_EXIST_OR_NULL_LH (IA_RestOctetsHH_t, Exist_AdditionsR10, 2),
+  M_UINT                  (IA_RestOctetsHH_t, ImplicitRejectCS, 1),
+  M_UINT                  (IA_RestOctetsHH_t, ImplicitRejectPS, 1),
+
+  M_NEXT_EXIST_OR_NULL_LH (IA_RestOctetsHH_t, Exist_AdditionsR13, 2),
+  M_UINT                  (IA_RestOctetsHH_t, PEO_BCCH_CHANGE_MARK, 2),
+  M_UINT                  (IA_RestOctetsHH_t, RCC, 3),
+CSN_DESCR_END             (IA_RestOctetsHH_t)
+
+/* 10.5.2.16 IA Rest Octets */
+static const
+CSN_DESCR_BEGIN  (IA_RestOctets_t)
+  M_UNION_LH     (IA_RestOctets_t, 4),
+  M_TYPE         (IA_RestOctets_t, u.ll, IA_RestOctetsLL_t),
+  M_TYPE         (IA_RestOctets_t, u.lh, IA_RestOctetsLH_t),
+  M_TYPE         (IA_RestOctets_t, u.hl, IA_RestOctetsHL_t),
+  M_TYPE         (IA_RestOctets_t, u.hh, IA_RestOctetsHH_t),
+
+  /* TODO: Additions for Rel-14 and Rel-15 */
+  M_PADDING_BITS (IA_RestOctets_t),
+CSN_DESCR_END    (IA_RestOctets_t)
 
 static const
 CSN_DESCR_BEGIN(SI13_AdditionsR6)
@@ -645,5 +659,14 @@ int osmo_gprs_rlcmac_decode_si13ro(SI_13_t *storage,
 	return _osmo_gprs_rlcmac_decode(storage,
 					CSNDESCR(SI_13_t),
 					"SI13 Rest Octets",
+					data, data_len);
+}
+
+int osmo_gprs_rlcmac_decode_imm_ass_ro(IA_RestOctets_t *storage,
+				       const uint8_t *data, size_t data_len)
+{
+	return _osmo_gprs_rlcmac_decode(storage,
+					CSNDESCR(IA_RestOctets_t),
+					"IA Rest Octets",
 					data, data_len);
 }

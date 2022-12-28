@@ -811,13 +811,59 @@ typedef struct
 
 typedef struct
 {
+  gboolean Exist_AdditionsR13;
+  guint8 ImplicitRejectPS;
+  guint8 PEO_BCCH_CHANGE_MARK;
+  guint8 RCC;
+} IA_AdditionsR13_t;
+
+typedef struct
+{
+  guint8 Compressed_Inter_RAT_HO_INFO_IND;
+  IA_AdditionsR13_t AdditionsR13;
+} IA_RestOctetsLL_t;
+
+typedef struct
+{
+  IA_EGPRS_t EGPRS;
+  IA_AdditionsR13_t AdditionsR13;
+} IA_RestOctetsLH_t;
+
+typedef struct
+{
+  IA_FreqParamsBeforeTime_t IA_FrequencyParams;
+  guint8 Compressed_Inter_RAT_HO_INFO_IND;
+  IA_AdditionsR13_t AdditionsR13;
+} IA_RestOctetsHL_t;
+
+typedef struct
+{
+  guint8 UnionType;
+  union {
+    IA_PacketAssignment_UL_DL_t     UplinkDownlinkAssignment;
+    Second_Part_Packet_Assignment_t SecondPartPacketAssignment;
+  } u;
+
+  gboolean Exist_AdditionsR10;
+  guint8   ImplicitRejectCS;
+  guint8   ImplicitRejectPS;
+
+  gboolean Exist_AdditionsR13;
+  guint8   PEO_BCCH_CHANGE_MARK;
+  guint8   RCC;
+} IA_RestOctetsHH_t;
+
+typedef struct
+{
   guint8 UnionType;
   union
   {
-    IA_PacketAssignment_UL_DL_t     UplinkDownlinkAssignment;
-    Second_Part_Packet_Assignment_t Second_Part_Packet_Assignment;
+    IA_RestOctetsLL_t     ll;
+    IA_RestOctetsLH_t     lh;
+    IA_RestOctetsHL_t     hl;
+    IA_RestOctetsHH_t     hh;
   } u;
-} IA_PacketAssignment_t;
+} IA_RestOctets_t;
 
 #if 0
 typedef struct
@@ -5379,5 +5425,7 @@ extern const struct value_string osmo_gprs_rlcmac_egprs_pkt_ch_req_type_names[];
 
 int osmo_gprs_rlcmac_decode_si13ro(SI_13_t *storage,
 				   const uint8_t *data, size_t data_len);
+int osmo_gprs_rlcmac_decode_imm_ass_ro(IA_RestOctets_t *storage,
+                                       const uint8_t *data, size_t data_len);
 
 void osmo_gprs_rlcmac_set_log_cat(int cat);

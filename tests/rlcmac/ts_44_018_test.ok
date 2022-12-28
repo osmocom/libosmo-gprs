@@ -9,3 +9,16 @@ testData[3] = 90005847eb4a93e50a218a162b2b2b2b2b2b2b2b
 osmo_gprs_rlcmac_decode_si13ro() returns 0
 testData[4] = b0005840654a92b53c2942db2b2b2b2b2b2b2b2b
 osmo_gprs_rlcmac_decode_si13ro() returns 0
+
+*** test_imm_ass_ro ***
+testData[0] = c8c2859f032b2b2b2b2b
+osmo_gprs_rlcmac_decode_imm_ass_ro() returns 0
+testData[1] = c1ebb26b2b2b2b2b2b2b
+osmo_gprs_rlcmac_decode_imm_ass_ro() returns 0
+testData[2] = dd6e1ae5a8c7841b2b2b
+osmo_gprs_rlcmac_decode_imm_ass_ro() returns 0
+testData[3] = 464269c616b21b032b2b2b
+osmo_gprs_rlcmac_decode_imm_ass_ro() returns 0
+testData[4] = 444261b4b40b2b2b2b2b2b
+osmo_gprs_rlcmac_decode_imm_ass_ro() returns 0
+
