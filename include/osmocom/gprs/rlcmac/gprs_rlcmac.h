@@ -677,17 +677,6 @@ typedef struct
 
 typedef struct
 {
-  guint8           UnionType;
-  union
-  {
-    IA_EGPRS_00_t IA_EGPRS_PUA; /* 00 < EGPRS Packet Uplink Assignment >*/
-    guint8         IA_EGPRS_01;  /* 01 reserved for future use */
-    guint8         IA_EGPRS_1;   /* 1  reserved for future use */
-  } u;
-} IA_EGPRS_t;
-
-typedef struct
-{
   guint8 Length;
   guint8 MAIO;
   guint8 MobileAllocation[62];
@@ -825,7 +814,18 @@ typedef struct
 
 typedef struct
 {
-  IA_EGPRS_t EGPRS;
+  guint8 UnionType;
+  union {
+    IA_EGPRS_00_t IA_EGPRS_PUA;
+    /* TODO: <Multiple Blocks Packet Downlink Assignment> */
+  } u;
+} IA_RestOctetsLH0x_t;
+
+typedef struct
+{
+  guint8 UnionType; /* only one variant: lh0x */
+  IA_RestOctetsLH0x_t lh0x;
+
   IA_AdditionsR13_t AdditionsR13;
 } IA_RestOctetsLH_t;
 

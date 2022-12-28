@@ -228,24 +228,6 @@ CSN_DESCR_BEGIN(IA_EGPRS_00_t)
 CSN_DESCR_END  (IA_EGPRS_00_t)
 
 static const
-CSN_ChoiceElement_t IA_EGPRS_Choice[] =
-{
-  {2, 0x00, 0, M_TYPE   (IA_EGPRS_t, u.IA_EGPRS_PUA, IA_EGPRS_00_t)},
-  {2, 0x01, 0, CSN_ERROR(IA_EGPRS_t, "01 <Packet Downlink Assignment>", CSN_ERROR_STREAM_NOT_SUPPORTED)},
-  {1, 0x01, 0, CSN_ERROR(IA_EGPRS_t, "1  <Second Part Packet Assignment>", CSN_ERROR_STREAM_NOT_SUPPORTED)},
-};
-
-/* Please observe the double usage of UnionType element.
- * First, it is used to store the second bit of LL/LH identification of EGPRS contents.
- * Thereafter, UnionType will be used to store the index to detected choice.
- */
-static const
-CSN_DESCR_BEGIN(IA_EGPRS_t)
-  M_UINT       (IA_EGPRS_t,  UnionType ,  1 ),
-  M_CHOICE     (IA_EGPRS_t, UnionType, IA_EGPRS_Choice, ElementsOf(IA_EGPRS_Choice)),
-CSN_DESCR_END  (IA_EGPRS_t)
-
-static const
 CSN_DESCR_BEGIN(IA_FreqParamsBeforeTime_t)
   M_UINT       (IA_FreqParamsBeforeTime_t,  Length,  6),
   M_UINT       (IA_FreqParamsBeforeTime_t,  MAIO,  6),
@@ -373,8 +355,18 @@ CSN_DESCR_BEGIN    (IA_RestOctetsLL_t)
 CSN_DESCR_END      (IA_RestOctetsLL_t)
 
 static const
+CSN_DESCR_BEGIN    (IA_RestOctetsLH0x_t)
+  M_UNION          (IA_RestOctetsLH0x_t, 2),
+  M_TYPE           (IA_RestOctetsLH0x_t, u.IA_EGPRS_PUA, IA_EGPRS_00_t),
+  CSN_ERROR        (IA_RestOctetsLH0x_t, "01 <Multiple Blocks Packet Downlink Assignment>", CSN_ERROR_STREAM_NOT_SUPPORTED),
+CSN_DESCR_END      (IA_RestOctetsLH0x_t)
+
+static const
 CSN_DESCR_BEGIN    (IA_RestOctetsLH_t)
-  M_TYPE           (IA_RestOctetsLH_t, EGPRS, IA_EGPRS_t),
+  M_UNION          (IA_RestOctetsLH_t, 2),
+  M_TYPE           (IA_RestOctetsLH_t, lh0x, IA_RestOctetsLH0x_t),
+  CSN_ERROR        (IA_RestOctetsLH_t, "1 -- reserved for future use", CSN_ERROR_STREAM_NOT_SUPPORTED),
+
   M_TYPE_OR_NULL   (IA_RestOctetsLH_t, AdditionsR13, IA_AdditionsR13_t),
 CSN_DESCR_END      (IA_RestOctetsLH_t)
 
