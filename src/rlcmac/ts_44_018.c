@@ -217,15 +217,15 @@ CSN_DESCR_END  (EGPRS_OnePhaseAccess_t)
 
 /* < EGPRS Packet Uplink Assignment > */
 static const
-CSN_DESCR_BEGIN(IA_EGPRS_00_t)
-  M_UINT       (IA_EGPRS_00_t,  ExtendedRA,  5),
+CSN_DESCR_BEGIN(IA_EGPRS_PktUlAss_t)
+  M_UINT       (IA_EGPRS_PktUlAss_t,  ExtendedRA,  5),
 
-  M_REC_ARRAY  (IA_EGPRS_00_t, AccessTechnologyType, NrOfAccessTechnologies, 4),
+  M_REC_ARRAY  (IA_EGPRS_PktUlAss_t, AccessTechnologyType, NrOfAccessTechnologies, 4),
 
-  M_UNION      (IA_EGPRS_00_t, 2),
-  M_TYPE       (IA_EGPRS_00_t, Access.TwoPhaseAccess, EGPRS_TwoPhaseAccess_t),
-  M_TYPE       (IA_EGPRS_00_t, Access.OnePhaseAccess, EGPRS_OnePhaseAccess_t),
-CSN_DESCR_END  (IA_EGPRS_00_t)
+  M_UNION      (IA_EGPRS_PktUlAss_t, 2),
+  M_TYPE       (IA_EGPRS_PktUlAss_t, Access.TwoPhaseAccess, EGPRS_TwoPhaseAccess_t),
+  M_TYPE       (IA_EGPRS_PktUlAss_t, Access.OnePhaseAccess, EGPRS_OnePhaseAccess_t),
+CSN_DESCR_END  (IA_EGPRS_PktUlAss_t)
 
 static const
 CSN_DESCR_BEGIN(IA_FreqParamsBeforeTime_t)
@@ -357,7 +357,7 @@ CSN_DESCR_END      (IA_RestOctetsLL_t)
 static const
 CSN_DESCR_BEGIN    (IA_RestOctetsLH0x_t)
   M_UNION          (IA_RestOctetsLH0x_t, 2),
-  M_TYPE           (IA_RestOctetsLH0x_t, u.IA_EGPRS_PUA, IA_EGPRS_00_t),
+  M_TYPE           (IA_RestOctetsLH0x_t, u.EGPRS_PktUlAss, IA_EGPRS_PktUlAss_t),
   CSN_ERROR        (IA_RestOctetsLH0x_t, "01 <Multiple Blocks Packet Downlink Assignment>", CSN_ERROR_STREAM_NOT_SUPPORTED),
 CSN_DESCR_END      (IA_RestOctetsLH0x_t)
 

@@ -673,7 +673,7 @@ typedef struct
     EGPRS_TwoPhaseAccess_t TwoPhaseAccess; /* 04.18/10.5.2.16 Multiblock allocation */
     EGPRS_OnePhaseAccess_t OnePhaseAccess; /* 04.60/10.5.2.16 TFI using Dynamic or Fixed Allocation */
   } Access;
-} IA_EGPRS_00_t;
+} IA_EGPRS_PktUlAss_t;
 
 typedef struct
 {
@@ -816,7 +816,7 @@ typedef struct
 {
   guint8 UnionType;
   union {
-    IA_EGPRS_00_t IA_EGPRS_PUA;
+    IA_EGPRS_PktUlAss_t EGPRS_PktUlAss;
     /* TODO: <Multiple Blocks Packet Downlink Assignment> */
   } u;
 } IA_RestOctetsLH0x_t;
