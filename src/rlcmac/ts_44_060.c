@@ -22,7 +22,6 @@
  * GNU General Public License for more details.
  */
 
-#include <assert.h>
 #include <arpa/inet.h>
 
 #include <osmocom/core/utils.h>
@@ -5189,7 +5188,7 @@ void osmo_gprs_rlcmac_decode_uplink_data(struct bitvec *vector, RlcMacUplinkData
     }
     unsigned dataLen = 23 - readIndex/8;
     LOGPC(g_log_cat, LOGL_NOTICE, "DATA[%u] = ", dataLen);
-    assert(dataLen <= 20);
+    OSMO_ASSERT(dataLen <= 20);
     for (i = 0; i < dataLen; i++)
     {
       data->RLC_DATA[i] = bitvec_read_field(vector, &readIndex, 8);
@@ -5253,7 +5252,7 @@ void osmo_gprs_rlcmac_encode_downlink_data(struct bitvec *vector, RlcMacDownlink
     }
     unsigned dataNumOctets = 23 - writeIndex/8;
     LOGPC(g_log_cat, LOGL_NOTICE, "DATA[%u] = ", dataNumOctets);
-    assert(dataNumOctets <= 20);
+    OSMO_ASSERT(dataNumOctets <= 20);
     for (i = 0; i < dataNumOctets; i++)
     {
       bitvec_write_field(vector, &writeIndex, data->RLC_DATA[i], 8);
