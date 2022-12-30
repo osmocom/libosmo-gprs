@@ -3229,8 +3229,8 @@ typedef struct
   PSI13_AdditionR99     AdditionsR99;
 } PSI13_t;
 
-/* SI_13_t is combined in the PSI13 structure */
-typedef PSI13_t SI_13_t;
+/* SI13_RestOctets_t is combined in the PSI13 structure */
+typedef PSI13_t SI13_RestOctets_t;
 
 /* < Packet PRACH Parameters message content > */
 typedef struct
@@ -5429,7 +5429,7 @@ extern const struct value_string osmo_gprs_rlcmac_egprs_pkt_ch_req_type_names[];
  int osmo_gprs_rlcmac_encode_ms_ra_cap(struct bitvec *vector, MS_Radio_Access_capability_t * data);
  int osmo_gprs_rlcmac_decode_egprs_pkt_ch_req(guint16 ra, EGPRS_PacketChannelRequest_t *data);
 
-int osmo_gprs_rlcmac_decode_si13ro(SI_13_t *storage,
+int osmo_gprs_rlcmac_decode_si13ro(SI13_RestOctets_t *storage,
 				   const uint8_t *data, size_t data_len);
 int osmo_gprs_rlcmac_decode_imm_ass_ro(IA_RestOctets_t *storage,
                                        const uint8_t *data, size_t data_len);

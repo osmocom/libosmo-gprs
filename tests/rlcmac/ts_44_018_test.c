@@ -41,7 +41,7 @@ static void test_si13ro(void)
 
 	for (unsigned int i = 0; i < ARRAY_SIZE(testData); i++) {
 		uint8_t buf[20]; /* GSM_MACBLOCK_LEN - 3 */
-		SI_13_t si13ro = { 0 };
+		SI13_RestOctets_t si13ro = { 0 };
 		int rc;
 
 		printf("testData[%d] = %s\n", i, testData[i]);

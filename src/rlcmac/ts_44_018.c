@@ -439,24 +439,24 @@ CSN_DESCR_BEGIN(SI13_AdditionR99)
 CSN_DESCR_END  (SI13_AdditionR99)
 
 static const
-CSN_DESCR_BEGIN          (SI_13_t)
-  M_THIS_EXIST_LH        (SI_13_t),
+CSN_DESCR_BEGIN          (SI13_RestOctets_t)
+  M_THIS_EXIST_LH        (SI13_RestOctets_t),
 
-  M_UINT                 (SI_13_t,  BCCH_CHANGE_MARK,  3),
-  M_UINT                 (SI_13_t,  SI_CHANGE_FIELD,  4),
+  M_UINT                 (SI13_RestOctets_t,  BCCH_CHANGE_MARK,  3),
+  M_UINT                 (SI13_RestOctets_t,  SI_CHANGE_FIELD,  4),
 
-  M_NEXT_EXIST           (SI_13_t, Exist_MA, 2),
-  M_UINT                 (SI_13_t,  SI13_CHANGE_MARK,  2),
-  M_TYPE                 (SI_13_t, GPRS_Mobile_Allocation, GPRS_Mobile_Allocation_t),
+  M_NEXT_EXIST           (SI13_RestOctets_t, Exist_MA, 2),
+  M_UINT                 (SI13_RestOctets_t,  SI13_CHANGE_MARK,  2),
+  M_TYPE                 (SI13_RestOctets_t, GPRS_Mobile_Allocation, GPRS_Mobile_Allocation_t),
 
-  M_UNION                (SI_13_t, 2),
-  M_TYPE                 (SI_13_t, u.PBCCH_Not_present, PBCCH_Not_present_t),
-  M_TYPE                 (SI_13_t, u.PBCCH_present, PBCCH_present_t),
+  M_UNION                (SI13_RestOctets_t, 2),
+  M_TYPE                 (SI13_RestOctets_t, u.PBCCH_Not_present, PBCCH_Not_present_t),
+  M_TYPE                 (SI13_RestOctets_t, u.PBCCH_present, PBCCH_present_t),
 
-  M_NEXT_EXIST_OR_NULL_LH(SI_13_t, Exist_AdditionsR99, 1),
-  M_TYPE                 (SI_13_t, AdditionsR99, SI13_AdditionR99),
-  M_PADDING_BITS         (SI_13_t),
-CSN_DESCR_END            (SI_13_t)
+  M_NEXT_EXIST_OR_NULL_LH(SI13_RestOctets_t, Exist_AdditionsR99, 1),
+  M_TYPE                 (SI13_RestOctets_t, AdditionsR99, SI13_AdditionR99),
+  M_PADDING_BITS         (SI13_RestOctets_t),
+CSN_DESCR_END            (SI13_RestOctets_t)
 
 /* Enhanced Measurement Report */
 #if 0
@@ -657,11 +657,11 @@ static int _osmo_gprs_rlcmac_decode(void *storage,
 	return ret;
 }
 
-int osmo_gprs_rlcmac_decode_si13ro(SI_13_t *storage,
+int osmo_gprs_rlcmac_decode_si13ro(SI13_RestOctets_t *storage,
 				   const uint8_t *data, size_t data_len)
 {
 	return _osmo_gprs_rlcmac_decode(storage,
-					CSNDESCR(SI_13_t),
+					CSNDESCR(SI13_RestOctets_t),
 					"SI13 Rest Octets",
 					data, data_len);
 }
