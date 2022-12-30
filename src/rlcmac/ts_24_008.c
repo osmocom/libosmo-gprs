@@ -20,9 +20,6 @@
  * GNU General Public License for more details.
  */
 
-#include <assert.h>
-#include <arpa/inet.h>
-
 #include <osmocom/core/utils.h>
 #include <osmocom/core/bitvec.h>
 #include <osmocom/core/logging.h>
