@@ -31,7 +31,7 @@ static void test_si13ro(void)
 {
 	printf("*** %s ***\n", __func__);
 
-	static const char *testData[] = {
+	static const char * const testData[] = {
 		"9000185a6fc9f2b5304208eb2b2b2b2b2b2b2b2b", // osmo-pcu, with EGPRS
 		"a000185a6fc9f14608411b2b2b2b2b2b2b2b2b2b", // osmo-pcu, without EGPRS
 		"90005847eb4a93e51a218a16ab2b2b2b2b2b2b2b", // real network (Iran, Tehran)
@@ -60,7 +60,7 @@ static void test_imm_ass_ro(void)
 {
 	printf("*** %s ***\n", __func__);
 
-	static const char *testData[] = {
+	static const char * const testData[] = {
 		"c8c2859f032b2b2b2b2b",		// HH, Packet Uplink Assignment
 		"c1ebb26b2b2b2b2b2b2b",		// HH, Packet Uplink Assignment (single block)
 		"dd6e1ae5a8c7841b2b2b",		// HH, Packet Downlink Assignment
