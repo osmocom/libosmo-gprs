@@ -1,6 +1,13 @@
 AT_INIT
 AT_BANNER([Regression tests])
 
+AT_SETUP([llc/llc])
+AT_KEYWORDS([llc llc])
+cat $abs_srcdir/llc/llc_test.ok > expout
+cat $abs_srcdir/llc/llc_test.err > experr
+AT_CHECK([$abs_top_builddir/tests/llc/llc_test], [0], [expout], [experr])
+AT_CLEANUP
+
 AT_SETUP([llc/llc_prim])
 AT_KEYWORDS([llc llc_prim])
 cat $abs_srcdir/llc/llc_prim_test.ok > expout

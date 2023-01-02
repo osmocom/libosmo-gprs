@@ -10,18 +10,28 @@ AM_LDFLAGS = \
 	$(NULL)
 
 check_PROGRAMS = \
+	llc_test \
 	llc_prim_test \
 	pdu_codec_test \
 	xid_codec_test \
 	$(NULL)
 
 EXTRA_DIST = \
+	llc_test.err \
+	llc_test.ok \
 	llc_prim_test.err \
 	llc_prim_test.ok \
 	pdu_codec_test.ok \
 	pdu_codec_test.err \
 	xid_codec_test.ok \
 	xid_codec_test.err \
+	$(NULL)
+
+llc_test_SOURCES = llc_test.c
+llc_test_LDADD = \
+	$(LIBOSMOCORE_LIBS) \
+	$(LIBOSMOGSM_LIBS) \
+	$(top_builddir)/src/llc/libosmo-gprs-llc.la \
 	$(NULL)
 
 llc_prim_test_SOURCES = llc_prim_test.c
