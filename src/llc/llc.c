@@ -126,8 +126,10 @@ int osmo_gprs_llc_init(enum osmo_gprs_llc_location location, const char *cipher_
 	int rc;
 	OSMO_ASSERT(location == OSMO_GPRS_LLC_LOCATION_MS || location == OSMO_GPRS_LLC_LOCATION_SGSN)
 
-	if ((rc = gprs_cipher_load(cipher_plugin_path)) != 0)
+	if ((rc = gprs_cipher_load(cipher_plugin_path)) != 0) {
+		LOGLLC(LOGL_NOTICE, "Failed loading GPRS cipher plugins from %s\n", cipher_plugin_path);
 		return rc;
+	}
 
 	if (g_ctx)
 		talloc_free(g_ctx);
