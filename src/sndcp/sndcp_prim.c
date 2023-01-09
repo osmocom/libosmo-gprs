@@ -348,7 +348,7 @@ static int gprs_sndcp_prim_handle_sndcp_sn_xid_req(struct osmo_gprs_sndcp_prim *
 		LOGSNDCP(LOGL_ERROR, "Message for non-existing SNDCP Entity "
 			 "(TLLI=%08x, SAPI=%u, NSAPI=%u)\n",
 			 sndcp_prim->sn.tlli, sndcp_prim->sn.sapi,
-			 sndcp_prim->sn.unitdata_req.nsapi);
+			 sndcp_prim->sn.xid_req.nsapi);
 		rc = -EIO;
 		goto ret_free;
 	}
