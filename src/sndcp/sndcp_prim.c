@@ -206,6 +206,17 @@ struct osmo_gprs_sndcp_prim *osmo_gprs_sndcp_prim_alloc_sn_xid_req(uint32_t tlli
 	return sndcp_prim;
 }
 
+/* 5.1.1.5 SN-XID.indication */
+struct osmo_gprs_sndcp_prim *gprs_sndcp_prim_alloc_sn_xid_ind(uint32_t tlli, uint8_t sapi, uint8_t nsapi)
+{
+	struct osmo_gprs_sndcp_prim *sndcp_prim;
+	sndcp_prim = sndcp_prim_sn_alloc(OSMO_GPRS_SNDCP_SN_XID, PRIM_OP_INDICATION, 0);
+	sndcp_prim->sn.tlli = tlli;
+	sndcp_prim->sn.sapi = sapi;
+	sndcp_prim->sn.xid_ind.nsapi = nsapi;
+	return sndcp_prim;
+}
+
 /* 5.1.1.7 SN-XID.response */
 struct osmo_gprs_sndcp_prim *osmo_gprs_sndcp_prim_alloc_sn_xid_rsp(uint32_t tlli, uint8_t sapi, uint8_t nsapi)
 {
@@ -358,6 +369,28 @@ ret_free:
 	return rc;
 }
 
+/* 5.1.1.7 SN-XID.response:*/
+static int gprs_sndcp_prim_handle_sndcp_sn_xid_rsp(struct osmo_gprs_sndcp_prim *sndcp_prim)
+{
+	int rc;
+	struct gprs_sndcp_entity *sne;
+
+	sne = gprs_sndcp_sne_by_dlci_nsapi(sndcp_prim->sn.tlli, sndcp_prim->sn.sapi,
+					   sndcp_prim->sn.xid_rsp.nsapi);
+	if (!sne) {
+		LOGSNDCP(LOGL_ERROR, "Message for non-existing SNDCP Entity "
+			 "(TLLI=%08x, SAPI=%u, NSAPI=%u)\n",
+			 sndcp_prim->sn.tlli, sndcp_prim->sn.sapi,
+			 sndcp_prim->sn.xid_rsp.nsapi);
+		rc = -EIO;
+		goto ret_free;
+	}
+	rc = gprs_sndcp_sne_handle_sn_xid_rsp(sne, sndcp_prim);
+ret_free:
+	msgb_free(sndcp_prim->oph.msg);
+	return rc;
+}
+
 /* SNDCP higher layers push SNDCP primitive down to SNDCP layer: */
 int osmo_gprs_sndcp_prim_upper_down(struct osmo_gprs_sndcp_prim *sndcp_prim)
 {
@@ -378,6 +411,9 @@ int osmo_gprs_sndcp_prim_upper_down(struct osmo_gprs_sndcp_prim *sndcp_prim)
 		break;
 	case OSMO_PRIM(OSMO_GPRS_SNDCP_SN_XID, PRIM_OP_REQUEST):
 		rc = gprs_sndcp_prim_handle_sndcp_sn_xid_req(sndcp_prim);
+		break;
+	case OSMO_PRIM(OSMO_GPRS_SNDCP_SN_XID, PRIM_OP_RESPONSE):
+		rc = gprs_sndcp_prim_handle_sndcp_sn_xid_rsp(sndcp_prim);
 		break;
 	default:
 		rc = gprs_sndcp_prim_handle_unsupported(sndcp_prim);

@@ -137,7 +137,7 @@ static void test_sndcp_prim(void)
 	rc = osmo_gprs_sndcp_prim_dispatch_snsm(sndcp_prim);
 	OSMO_ASSERT(rc == 0);
 
-	/* SN-XID.Req: */
+	/* Submit SN-XID.Req, triggers rx of LL-XID.Req: */
 	sndcp_prim = osmo_gprs_sndcp_prim_alloc_sn_xid_req(tlli, ll_sapi, nsapi);
 	OSMO_ASSERT(sndcp_prim);
 	sndcp_prim->sn.xid_req.pcomp_rfc1144.active = true;
@@ -145,16 +145,22 @@ static void test_sndcp_prim(void)
 	rc = osmo_gprs_sndcp_prim_upper_down(sndcp_prim);
 	OSMO_ASSERT(rc == 0);
 
-	/* SN-XID.Cnf: */
+	/* Submit LL-XID.Cnf, triggers rx of LL-XID.cnf */
 	llc_prim = gprs_llc_prim_alloc_ll_xid_cnf(tlli, ll_sapi, (uint8_t *)sndcp_xid, sizeof(sndcp_xid));
 	OSMO_ASSERT(llc_prim);
 	rc = osmo_gprs_sndcp_prim_lower_up(llc_prim);
 	OSMO_ASSERT(rc == 0);
 
-	/* SN-XID.Ind: */
+	/* Submit LL-XID.Ind, triggers rx of SN-XID.Ind: */
 	llc_prim = gprs_llc_prim_alloc_ll_xid_ind(tlli, ll_sapi, (uint8_t *)sndcp_xid, sizeof(sndcp_xid));
 	OSMO_ASSERT(llc_prim);
 	rc = osmo_gprs_sndcp_prim_lower_up(llc_prim);
+	OSMO_ASSERT(rc == 0);
+
+	/* Submit SN-XID.Rsp, triggers rx of LL-XID.Rsp */
+	sndcp_prim = osmo_gprs_sndcp_prim_alloc_sn_xid_rsp(tlli, ll_sapi, nsapi);
+	OSMO_ASSERT(sndcp_prim);
+	rc = osmo_gprs_sndcp_prim_upper_down(sndcp_prim);
 	OSMO_ASSERT(rc == 0);
 
 	OSMO_ASSERT(osmo_hexparse(sndcp_data_hex, sndcp_data, sizeof(sndcp_data)) > 0);

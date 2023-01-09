@@ -75,6 +75,7 @@ DLGLOBAL DEBUG }
 DLGLOBAL DEBUG SNME(e1c5d364) Rejecting RFC1144 header compression...
 DLGLOBAL DEBUG SNME(e1c5d364) Rejecting ROHC header compression...
 DLGLOBAL INFO Rx from lower layers: LL-XID.indication
+DLGLOBAL DEBUG SNE(e1c5d364,SNDCP3,5) LL-XID.ind: Found SNE SAPI=3
 DLGLOBAL DEBUG SNME(e1c5d364) LL-XID.cnf requested comp_fields:
 DLGLOBAL DEBUG SNDCP-XID:
 DLGLOBAL DEBUG struct gprs_sndcp_comp_field {
@@ -132,7 +133,8 @@ DLGLOBAL DEBUG    }
 DLGLOBAL DEBUG }
 DLGLOBAL DEBUG SNME(e1c5d364) Rejecting RFC1144 header compression...
 DLGLOBAL DEBUG SNME(e1c5d364) Rejecting ROHC header compression...
-DLGLOBAL DEBUG SNME(e1c5d364) SN-XID.rsp comp_fields:
+DLGLOBAL INFO Rx from upper layers: SN-XID.response
+DLGLOBAL DEBUG SNE(e1c5d364,SNDCP3,5) SN-XID.rsp comp_fields:
 DLGLOBAL DEBUG SNDCP-XID:
 DLGLOBAL DEBUG struct gprs_sndcp_comp_field {
 DLGLOBAL DEBUG    entity=0;

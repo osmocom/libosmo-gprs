@@ -721,24 +721,30 @@ int gprs_sndcp_sne_handle_sn_xid_req(struct gprs_sndcp_entity *sne, const struct
 }
 
 /* 5.1.1.7 SN-XID.response */
-/* FIXME: This is currently called directly from gprs_sndcp_snme_handle_llc_ll_xid_ind(). It should go async over SNDCP user instead */
-static int gprs_sndcp_sne_handle_sn_xid_rsp(struct gprs_sndcp_mgmt_entity *snme, uint8_t sapi, const struct llist_head *comp_fields)
+/* FIXME: This is currently uses comp_fields stored from gprs_sndcp_snme_handle_llc_ll_xid_ind().
+* It should use info provided by upper layers in the prim instead */
+int gprs_sndcp_sne_handle_sn_xid_rsp(struct gprs_sndcp_entity *sne, const struct osmo_gprs_sndcp_prim *sndcp_prim)
 {
 	struct osmo_gprs_llc_prim *llc_prim_tx;
 	struct msgb *msg;
 	int rc;
 
-	LOGSNME(snme, LOGL_DEBUG, "SN-XID.rsp comp_fields:\n");
-	gprs_sndcp_dump_comp_fields(comp_fields, LOGL_DEBUG);
+	if (!sne->l3_xid_comp_fields_req_from_peer) {
+		LOGSNE(sne, LOGL_DEBUG, "SN-XID.rsp origianted comp_fields not found!\n");
+		return -EINVAL;
+	}
 
-	llc_prim_tx = osmo_gprs_llc_prim_alloc_ll_xid_resp(snme->tlli, sapi, NULL, 256);
+	LOGSNE(sne, LOGL_DEBUG, "SN-XID.rsp comp_fields:\n");
+	gprs_sndcp_dump_comp_fields(sne->l3_xid_comp_fields_req_from_peer, LOGL_DEBUG);
+
+	llc_prim_tx = osmo_gprs_llc_prim_alloc_ll_xid_resp(sne->snme->tlli, sne->llc_sapi, NULL, 256);
 	OSMO_ASSERT(llc_prim_tx);
 	msg = llc_prim_tx->oph.msg;
 	llc_prim_tx->ll.l3_pdu = msg->tail;
 	/* Compile modified SNDCP-XID bytes */
 	rc = gprs_sndcp_compile_xid(msg->tail,
 				    msgb_tailroom(msg),
-				    comp_fields, 0);
+				    sne->l3_xid_comp_fields_req_from_peer, 0);
 	if (rc < 0) {
 		msgb_free(msg);
 		return -EINVAL;
@@ -913,6 +919,24 @@ int gprs_sndcp_snme_handle_llc_ll_xid_ind(struct gprs_sndcp_mgmt_entity *snme, u
 	int version;
 	struct llist_head *comp_fields;
 	struct gprs_sndcp_comp_field *comp_field;
+	struct gprs_sndcp_entity *sne = NULL;
+	struct osmo_gprs_sndcp_prim *sndcp_prim_tx;
+	unsigned int i;
+
+	for (i = 0; i < ARRAY_SIZE(snme->sne); i++) {
+		struct gprs_sndcp_entity *sne_i = snme->sne[i];
+		if (!sne_i)
+			continue;
+		if (sne_i->llc_sapi != sapi)
+			continue;
+		LOGSNE(sne_i, LOGL_DEBUG, "LL-XID.ind: Found SNE SAPI=%u\n", sapi);
+		sne = sne_i;
+		break;
+	}
+	if (!sne) {
+		LOGSNME(snme, LOGL_ERROR, "LL-XID.ind: No SNDCP entity found having sent a LL-XID.ind (SAPI=%u)\n", sapi);
+		return -EINVAL;
+	}
 
 	/* Some phones send zero byte length SNDCP frames
 	 * and do require a confirmation response. */
@@ -923,7 +947,7 @@ int gprs_sndcp_snme_handle_llc_ll_xid_ind(struct gprs_sndcp_mgmt_entity *snme, u
 
 
 	/* Parse SNDCP-CID XID-Field */
-	comp_fields = gprs_sndcp_parse_xid(&version, g_ctx,
+	comp_fields = gprs_sndcp_parse_xid(&version, sne,
 					   l3params,
 					   l3params_len,
 					   NULL);
@@ -954,9 +978,12 @@ int gprs_sndcp_snme_handle_llc_ll_xid_ind(struct gprs_sndcp_mgmt_entity *snme, u
 		}
 	}
 
-	/* FIXME: push SN-XID.ind up to SGSN/MS here, and below should be part of handling SN-XID.rsp from SGSN/MS. */
-	rc = gprs_sndcp_sne_handle_sn_xid_rsp(snme, sapi, comp_fields);
-	talloc_free(comp_fields);
+	TALLOC_FREE(sne->l3_xid_comp_fields_req_from_peer);
+	sne->l3_xid_comp_fields_req_from_peer = comp_fields;
+
+	/* Trigger SN-XID.ind to upper layers: */
+	sndcp_prim_tx = gprs_sndcp_prim_alloc_sn_xid_ind(sne->snme->tlli, sne->llc_sapi, sne->nsapi);
+	rc = gprs_sndcp_prim_call_up_cb(sndcp_prim_tx);
 	return rc;
 }
 
@@ -965,7 +992,7 @@ int gprs_sndcp_snme_handle_llc_ll_xid_ind(struct gprs_sndcp_mgmt_entity *snme, u
  */
 int gprs_sndcp_snme_handle_llc_ll_xid_cnf(struct gprs_sndcp_mgmt_entity *snme, uint32_t sapi, uint8_t *l3params, unsigned int l3params_len)
 {
-	/* Note: This function handles an incoming SNDCP-XID confirmiation.
+	/* Note: This function handles an incoming SNDCP-XID confirmation.
 	 * Since the confirmation fields may lack important parameters we
 	 * will reconstruct these missing fields using the original request
 	 * we have sent. After that we will create (or delete) the

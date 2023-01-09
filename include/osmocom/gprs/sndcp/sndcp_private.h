@@ -161,6 +161,10 @@ struct gprs_sndcp_entity {
 	uint8_t *l3xid_req;
 	unsigned int l3xid_req_len;
 
+	/* Copy of the requested XID fields array we have received with the last
+	 * originated XID-Request from peer. NULL if not existing (and l3xid_req_len = 0) */
+	struct llist_head *l3_xid_comp_fields_req_from_peer;
+
 	/* TODO: taken from lle.params and not yet set ever in code! */
 	uint16_t n201_u;
 	uint16_t n201_i;
@@ -190,6 +194,7 @@ static inline struct gprs_sndcp_entity *gprs_sndcp_snme_get_sne(struct gprs_sndc
 
 /* sndcp_prim.c: */
 struct osmo_gprs_sndcp_prim *gprs_sndcp_prim_alloc_sn_unitdata_ind(uint32_t tlli, uint8_t sapi, uint8_t nsapi, uint8_t *npdu, size_t npdu_len);
+struct osmo_gprs_sndcp_prim *gprs_sndcp_prim_alloc_sn_xid_ind(uint32_t tlli, uint8_t sapi, uint8_t nsapi);
 struct osmo_gprs_sndcp_prim *gprs_sndcp_prim_alloc_snsm_activate_rsp(uint32_t tlli, uint8_t nsapi);
 int gprs_sndcp_prim_call_up_cb(struct osmo_gprs_sndcp_prim *sndcp_prim);
 int gprs_sndcp_prim_call_down_cb(struct osmo_gprs_llc_prim *llc_prim);
@@ -206,6 +211,7 @@ int gprs_sndcp_snme_handle_llc_ll_xid_ind(struct gprs_sndcp_mgmt_entity *snme, u
 int gprs_sndcp_snme_handle_llc_ll_xid_cnf(struct gprs_sndcp_mgmt_entity *snme, uint32_t sapi, uint8_t *l3params, unsigned int l3params_len);
 int gprs_sndcp_sne_handle_sn_unitdata_req(struct gprs_sndcp_entity *sne, uint8_t *npdu, unsigned int npdu_len);
 int gprs_sndcp_sne_handle_sn_xid_req(struct gprs_sndcp_entity *sne, const struct osmo_gprs_sndcp_prim *sndcp_prim);
+int gprs_sndcp_sne_handle_sn_xid_rsp(struct gprs_sndcp_entity *sne, const struct osmo_gprs_sndcp_prim *sndcp_prim);
 
 #define LOGSNME(snme, level, fmt, args...) \
 	LOGSNDCP(level, "SNME(%08x) " fmt, \

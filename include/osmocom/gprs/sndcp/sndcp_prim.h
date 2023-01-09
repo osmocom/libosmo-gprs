@@ -99,7 +99,8 @@ struct osmo_gprs_sndcp_sn_prim {
 		} xid_req;
 		/* OSMO_GPRS_SNDCP_SN_XID | Ind */
 		struct {
-			uint8_t *req_xid;
+			uint8_t nsapi;
+			uint8_t *req_xid; /* TODO: theses need to be passed already decoded as in xid_req above */
 			uint32_t req_xid_len;
 		} xid_ind;
 		/* OSMO_GPRS_SNDCP_SN_XID | Rsp */
