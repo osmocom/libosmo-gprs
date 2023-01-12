@@ -210,7 +210,7 @@ struct osmo_gprs_sndcp_prim *osmo_gprs_sndcp_prim_alloc_sn_xid_req(uint32_t tlli
 struct osmo_gprs_sndcp_prim *osmo_gprs_sndcp_prim_alloc_sn_xid_rsp(uint32_t tlli, uint8_t sapi, uint8_t nsapi)
 {
 	struct osmo_gprs_sndcp_prim *sndcp_prim;
-	sndcp_prim = sndcp_prim_sn_alloc(OSMO_GPRS_SNDCP_SN_XID, PRIM_OP_REQUEST, 0);
+	sndcp_prim = sndcp_prim_sn_alloc(OSMO_GPRS_SNDCP_SN_XID, PRIM_OP_RESPONSE, 0);
 	sndcp_prim->sn.tlli = tlli;
 	sndcp_prim->sn.sapi = sapi;
 	sndcp_prim->sn.xid_rsp.nsapi = nsapi;
