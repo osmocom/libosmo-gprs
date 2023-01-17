@@ -44,4 +44,5 @@ libosmo_gprs_sndcp_la_LDFLAGS = \
 libosmo_gprs_sndcp_la_LIBADD = \
 	$(LIBOSMOCORE_LIBS) \
 	$(LIBOSMOGSM_LIBS) \
+	-lm \
 	$(NULL)
