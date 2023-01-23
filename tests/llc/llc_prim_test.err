@@ -1,3 +1,8 @@
+DLGLOBAL INFO Rx from upper layers: LL-UNITDATA.request
+DLGLOBAL NOTICE Rx LL-UNITDATA.request: unknown TLLI 0xf43cec71, creating LLME on the fly
+DLGLOBAL INFO Rx from lower layers: GRR-UNITDATA.indication
+DLGLOBAL DEBUG Rx GRR-UNITDATA.indication: SAPI=1 (GMM), UI func=UI C/R=0 PM=0 E=0 IP=0 N(U)=0 FCS=f218e2
+DLGLOBAL DEBUG LLE(ffffffff/f43cec71,GMM){UNASSIGNED} Rx SAPI=1 (GMM), UI func=UI C/R=0 PM=0 E=0 IP=0 N(U)=0 FCS=f218e2
 DLGLOBAL INFO Rx from lower layers: BSSGP-UL-UNITDATA.indication
 DLGLOBAL DEBUG Rx BSSGP-UL-UNITDATA.indication: SAPI=1 (GMM), UI func=UI C/R=0 PM=0 E=0 IP=0 N(U)=0 FCS=f218e2
 DLGLOBAL NOTICE LLME(ffffffff/e1c5d364){UNASSIGNED} LLC RX: unknown TLLI 0xe1c5d364, creating LLME on the fly

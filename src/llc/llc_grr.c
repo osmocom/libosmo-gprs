@@ -1,6 +1,6 @@
-/* GPRS LLC LLGM SAP as per 3GPP TS 44.064 7.2.3 */
+/* GPRS LLC GRR SAP as per 3GPP TS 44.064 7.2.3, 3GPP TS 24.007 */
 /*
- * (C) 2022 by sysmocom - s.f.m.c. GmbH <info@sysmocom.de>
+ * (C) 2022-2023 by sysmocom - s.f.m.c. GmbH <info@sysmocom.de>
  *
  * All Rights Reserved
  *
@@ -38,6 +38,42 @@ const struct value_string osmo_gprs_llc_grr_prim_type_names[] = {
 	{ 0, NULL }
 };
 
+/********************************
+ * Primitive allocation:
+ ********************************/
+
+static inline struct osmo_gprs_llc_prim *llc_prim_grr_alloc(enum osmo_gprs_llc_grr_prim_type type,
+							    enum osmo_prim_operation operation,
+							    unsigned int l3_len)
+{
+	return gprs_llc_prim_alloc(OSMO_GPRS_LLC_SAP_GRR, type, operation, l3_len);
+}
+
+/* 7.2.3.2 GRR-UNITDATA.ind (MS):*/
+struct osmo_gprs_llc_prim *osmo_gprs_llc_prim_alloc_grr_unitdata_ind(
+					uint32_t tlli, uint8_t *ll_pdu,
+					size_t ll_pdu_len)
+{
+	struct osmo_gprs_llc_prim *llc_prim;
+	llc_prim = llc_prim_grr_alloc(OSMO_GPRS_LLC_GRR_UNITDATA, PRIM_OP_INDICATION, ll_pdu_len);
+	llc_prim->grr.tlli = tlli;
+	llc_prim->grr.ll_pdu = ll_pdu;
+	llc_prim->grr.ll_pdu_len = ll_pdu_len;
+	return llc_prim;
+}
+
+/* 7.2.3.2 GRR-UL-UNITDATA.req (MS):*/
+struct osmo_gprs_llc_prim *gprs_llc_prim_alloc_grr_unitdata_req(
+				uint32_t tlli, uint8_t *ll_pdu, size_t ll_pdu_len)
+{
+	struct osmo_gprs_llc_prim *llc_prim;
+	llc_prim = llc_prim_grr_alloc(OSMO_GPRS_LLC_GRR_UNITDATA, PRIM_OP_REQUEST, ll_pdu_len);
+	llc_prim->grr.tlli = tlli;
+	llc_prim->grr.ll_pdu = ll_pdu;
+	llc_prim->grr.ll_pdu_len = ll_pdu_len;
+	return llc_prim;
+}
+
 static int llc_prim_handle_grr_data_ind(struct osmo_gprs_llc_prim *llc_prim)
 {
 	int rc = gprs_llc_prim_handle_unsupported(llc_prim);
@@ -46,7 +82,50 @@ static int llc_prim_handle_grr_data_ind(struct osmo_gprs_llc_prim *llc_prim)
 
 static int llc_prim_handle_grr_unitdata_ind(struct osmo_gprs_llc_prim *llc_prim)
 {
-	int rc = gprs_llc_prim_handle_unsupported(llc_prim);
+	int rc;
+	struct gprs_llc_pdu_decoded pdu_dec = {0};
+	const char *llc_pdu_name = NULL;
+	struct gprs_llc_lle *lle = NULL;
+
+	rc = gprs_llc_pdu_decode(&pdu_dec, llc_prim->grr.ll_pdu, llc_prim->grr.ll_pdu_len);
+	if (rc < 0) {
+		LOGLLC(LOGL_ERROR, "%s: Error parsing LLC header\n", osmo_gprs_llc_prim_name(llc_prim));
+		return rc;
+	}
+	llc_pdu_name = gprs_llc_pdu_hdr_dump(&pdu_dec);
+
+	LOGLLC(LOGL_DEBUG, "Rx %s: %s\n", osmo_gprs_llc_prim_name(llc_prim), llc_pdu_name);
+
+	switch (gprs_tlli_type(llc_prim->bssgp.tlli)) {
+	case TLLI_LOCAL:
+	case TLLI_FOREIGN:
+	case TLLI_RANDOM:
+	case TLLI_AUXILIARY:
+		break;
+	default:
+		LOGLLC(LOGL_ERROR, "%s: Discarding frame with strange TLLI type\n", llc_pdu_name);
+		return -EINVAL;
+	}
+
+	lle = gprs_llc_lle_for_rx_by_tlli_sapi(llc_prim->grr.tlli, pdu_dec.sapi, pdu_dec.func);
+	if (!lle) {
+		switch (pdu_dec.sapi) {
+		case OSMO_GPRS_LLC_SAPI_SNDCP3:
+		case OSMO_GPRS_LLC_SAPI_SNDCP5:
+		case OSMO_GPRS_LLC_SAPI_SNDCP9:
+		case OSMO_GPRS_LLC_SAPI_SNDCP11:
+#if 0
+/* TODO: probaby send some primitive to the upper layers (GMM) */
+			/* Ask an upper layer for help. */
+			return gsm0408_gprs_force_reattach_oldmsg(msg, NULL);
+#endif
+		default:
+			break;
+		}
+		return 0;
+	}
+	rc = gprs_llc_lle_rx_unitdata_ind(lle, llc_prim->grr.ll_pdu, llc_prim->grr.ll_pdu_len, &pdu_dec);
+
 	return rc;
 }
 

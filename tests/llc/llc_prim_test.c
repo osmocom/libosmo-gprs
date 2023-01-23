@@ -65,7 +65,8 @@ int test_llc_prim_down_cb(struct osmo_gprs_llc_prim *llc_prim, void *user_data)
 
 	switch (llc_prim->oph.sap) {
 	case OSMO_GPRS_LLC_SAP_GRR:
-				printf("%s(): Rx %s l3=[%s]\n", __func__, pdu_name, osmo_hexdump(llc_prim->grr.ll_pdu, llc_prim->grr.ll_pdu_len));
+		printf("%s(): Rx %s l3=[%s]\n", __func__, pdu_name,
+		       osmo_hexdump(llc_prim->grr.ll_pdu, llc_prim->grr.ll_pdu_len));
 		break;
 	case OSMO_GPRS_LLC_SAP_BSSGP:
 		printf("%s(): Rx %s TLLI=0x%08x l3=[%s]\n", __func__, pdu_name,
@@ -78,27 +79,39 @@ int test_llc_prim_down_cb(struct osmo_gprs_llc_prim *llc_prim, void *user_data)
 	return 0;
 }
 
-static void test_llc_prim_ms(void)
-{
-	//struct osmo_gprs_llc_prim *llc_prim;
-	//uint32_t tlli = 0x11223344;
-	int rc;
-
-	printf("==== %s() [start] ====\n", __func__);
-
-	rc = osmo_gprs_llc_init(OSMO_GPRS_LLC_LOCATION_MS, NULL);
-	OSMO_ASSERT(rc == 0);
-
-	osmo_gprs_llc_prim_set_up_cb(test_llc_prim_up_cb, NULL);
-	osmo_gprs_llc_prim_set_down_cb(test_llc_prim_down_cb, NULL);
-
-	//llc_prim = osmo_gprs_llc_prim_alloc_llgm_reset_req(tlli);
-	//OSMO_ASSERT(llc_prim);
-	//rc = osmo_gprs_llc_prim_upper_down(llc_prim);
-	//OSMO_ASSERT(rc == 0);
-
-	printf("==== %s() [end] ====\n", __func__);
-}
+/*
+GSM A-I/F DTAP - Attach Request
+ Protocol Discriminator: GPRS mobility management messages (8)
+ DTAP GPRS Mobility Management Message Type: Attach Request (0x01)
+ MS Network Capability
+  Length: 2
+  1... .... = GEA/1: Encryption algorithm available
+  .1.. .... = SM capabilities via dedicated channels: Mobile station supports mobile terminated point to point SMS via dedicated signalling channels
+  ..1. .... = SM capabilities via GPRS channels: Mobile station supports mobile terminated point to point SMS via GPRS packet data channels
+  ...0 .... = UCS2 support: The ME has a preference for the default alphabet (defined in 3GPP TS 23.038 [8b]) over UCS2
+  .... 01.. = SS Screening Indicator: capability of handling of ellipsis notation and phase 2 error handling (0x1)
+  .... ..0. = SoLSA Capability: The ME does not support SoLSA
+  .... ...1 = Revision level indicator: Used by a mobile station supporting R99 or later versions of the protocol
+  1... .... = PFC feature mode: Mobile station does support BSS packet flow procedures
+  .110 000. = Extended GEA bits: 0x30
+  .... ...0 = LCS VA capability: LCS value added location request notification capability not supported
+ Attach Type
+ Ciphering Key Sequence Number
+ DRX Parameter
+ Mobile Identity - TMSI/P-TMSI (0xf43cec71)
+ Routing Area Identification - Old routing area identification - RAI: 234-70-5-0
+ MS Radio Access Capability
+ GPRS Timer - Ready Timer
+  Element ID: 0x17
+  GPRS Timer: 10 sec
+   000. .... = Unit: value is incremented in multiples of 2 seconds (0)
+   ...0 0101 = Timer value: 5
+*/
+static uint8_t pdu_gmmm_attach_req[] =  {
+	0x08, 0x01, 0x02, 0xe5, 0xe0, 0x01, 0x0a, 0x00, 0x05, 0xf4, 0xf4, 0x3c, 0xec, 0x71, 0x32, 0xf4,
+	0x07, 0x00, 0x05, 0x00, 0x17, 0x19, 0x33, 0x43, 0x2b, 0x37, 0x15, 0x9e, 0xf9, 0x88, 0x79, 0xcb,
+	0xa2, 0x8c, 0x66, 0x21, 0xe7, 0x26, 0x88, 0xb1, 0x98, 0x87, 0x9c, 0x00, 0x17, 0x05
+};
 
 /**
 MS-SGSN LLC (Mobile Station - Serving GPRS Support Node Logical Link Control)  SAPI: GPRS Mobility Management
@@ -138,6 +151,36 @@ GSM A-I/F DTAP - Identity Request
  Force to Standby
 */
 static uint8_t pdu_gmm_id_req[] = { 0x08, 0x15, 0x02 };
+
+static void test_llc_prim_ms(void)
+{
+	struct osmo_gprs_llc_prim *llc_prim;
+	uint32_t tlli = 0xf43cec71;
+	int rc;
+
+	printf("==== %s() [start] ====\n", __func__);
+
+	rc = osmo_gprs_llc_init(OSMO_GPRS_LLC_LOCATION_MS, NULL);
+	OSMO_ASSERT(rc == 0);
+
+	osmo_gprs_llc_prim_set_up_cb(test_llc_prim_up_cb, NULL);
+	osmo_gprs_llc_prim_set_down_cb(test_llc_prim_down_cb, NULL);
+
+	/* Tx GMM Attach Request */
+	llc_prim = osmo_gprs_llc_prim_alloc_ll_unitdata_req(tlli, OSMO_GPRS_LLC_SAPI_GMM, (uint8_t *)pdu_gmmm_attach_req, sizeof(pdu_gmmm_attach_req));
+	OSMO_ASSERT(llc_prim);
+	rc = osmo_gprs_llc_prim_upper_down(llc_prim);
+	OSMO_ASSERT(rc == 0);
+
+	/* Rx LLC-GMM-Attach-Req at MS from SGSN (should be a response message
+	 * but we don't care about upper layers here): */
+	llc_prim = osmo_gprs_llc_prim_alloc_grr_unitdata_ind(tlli, pdu_llc_gmm_att_req, sizeof(pdu_llc_gmm_att_req));
+	OSMO_ASSERT(llc_prim);
+	rc = osmo_gprs_llc_prim_lower_up(llc_prim);
+	OSMO_ASSERT(rc == 0);
+
+	printf("==== %s() [end] ====\n", __func__);
+}
 
 static void test_llc_prim_sgsn(void)
 {

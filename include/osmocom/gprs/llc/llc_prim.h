@@ -204,13 +204,20 @@ struct osmo_gprs_llc_grr_prim {
 	size_t ll_pdu_len;
 	/* Specific fields */
 	union {
-		/* OSMO_GPRS_LLC_GRR_[UNIT]DATA | Req */
+		/* OSMO_GPRS_LLC_GRR_DATA | Req */
 		struct {
-			uint8_t qos_params[3];
-			uint8_t radio_prio;
-			uint8_t cause; /* only for OSMO_GPRS_LLC_GRR_UNITDATA | Req */
 			uint8_t sapi;
+			uint8_t radio_prio;
+			uint8_t qos_params[3];
+
 		} data_req;
+		/* OSMO_GPRS_LLC_GRR_UNITDATA| Req */
+		struct {
+			uint8_t sapi;
+			uint8_t radio_prio;
+			uint8_t qos_params[3];
+			uint8_t cause;
+		} unitdata_req;
 	};
 };
 
@@ -285,4 +292,8 @@ struct osmo_gprs_llc_prim *osmo_gprs_llc_prim_alloc_ll_unitdata_req(uint32_t tll
 
 /* Alloc primitive for BSSGP SAP: */
 struct osmo_gprs_llc_prim *osmo_gprs_llc_prim_alloc_bssgp_ul_unitdata_ind(
+				uint32_t tlli, uint8_t *ll_pdu, size_t ll_pdu_len);
+
+/* Alloc primitive for GRR SAP: */
+struct osmo_gprs_llc_prim *osmo_gprs_llc_prim_alloc_grr_unitdata_ind(
 				uint32_t tlli, uint8_t *ll_pdu, size_t ll_pdu_len);
