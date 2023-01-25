@@ -27,7 +27,7 @@ static inline const char *osmo_gprs_llc_prim_sap_name(enum osmo_gprs_llc_prim_sa
 /* TS 04.64 Section 7.1.2 Table 7: LLC layer primitives (GMM/SNDCP/SMS/TOM) */
 /* TS 04.65 Section 5.1.2 Table 2: Service primitives used by SNDCP */
 
-/* TS 04.65 Section 7.2.1 GMM - LLME primitives */
+/* TS 04.64 Section 7.2.1 GMM - LLME primitives */
 enum osmo_gprs_llc_llgmm_prim_type {
 	OSMO_GPRS_LLC_LLGMM_ASSIGN,	/* Req: TLLI old, TLLI new, Kc, CiphAlg */
 	OSMO_GPRS_LLC_LLGMM_RESET,	/* Req/Cnf: TLLI */
@@ -47,7 +47,7 @@ static inline const char *osmo_gprs_llc_llgmm_prim_type_name(enum osmo_gprs_llc_
 	return get_value_string(osmo_gprs_llc_llgmm_prim_type_names, val);
 }
 
-/* TS 04.65 Section 7.2.2 "Layer 3 - LLE primitives" */
+/* TS 04.64 Section 7.2.2 "Layer 3 - LLE primitives" */
 enum osmo_gprs_llc_ll_prim_type {
 	OSMO_GPRS_LLC_LL_RESET,		/* Ind: TLLI */
 	OSMO_GPRS_LLC_LL_ESTABLISH,	/* Req/Ind/Rsp/Cnf: TLLI, XID Req/Neg, N201-I, N201-U */
@@ -64,7 +64,7 @@ static inline const char *osmo_gprs_llc_ll_prim_type_name(enum osmo_gprs_llc_ll_
 	return get_value_string(osmo_gprs_llc_ll_prim_type_names, val);
 }
 
-/* TS 04.65 Section 7.2.3 "LLE - RLC/MAC primitives" (MS side) */
+/* TS 04.64 Section 7.2.3 "LLE - RLC/MAC primitives" (MS side) */
 enum osmo_gprs_llc_grr_prim_type {
 	OSMO_GPRS_LLC_GRR_DATA,		/* Req/Ind: TLLI, LL-PDU, SAPI, Cause, QoS, Radio Prio */
 	OSMO_GPRS_LLC_GRR_UNITDATA,	/* Req/Ind: TLLI, LL-PDU, SAPI, QoS, Radio Prio */
@@ -76,7 +76,7 @@ static inline const char *osmo_gprs_llc_grr_prim_type_name(enum osmo_gprs_llc_gr
 	return get_value_string(osmo_gprs_llc_grr_prim_type_names, val);
 }
 
-/* TS 04.65 Section 7.2.4 "LLE - BSSGP primitives" (SGSN side) */
+/* TS 04.64 Section 7.2.4 "LLE - BSSGP primitives" (SGSN side) */
 enum osmo_gprs_llc_bssgp_prim_type {
 	OSMO_GPRS_LLC_BSSGP_DL_UNITDATA,	/* Req: TLLI, LL-PDU, Cell Id, QoS, RLC Confirm, SAPI, ... */
 	OSMO_GPRS_LLC_BSSGP_UL_UNITDATA,	/* Ind: TLLI, LL-PDU, Cell Id, edirect attempt, IMSI, V(U) for redirect, ... */
