@@ -5433,5 +5433,3 @@ int osmo_gprs_rlcmac_decode_si13ro(SI13_RestOctets_t *storage,
 				   const uint8_t *data, size_t data_len);
 int osmo_gprs_rlcmac_decode_imm_ass_ro(IA_RestOctets_t *storage,
                                        const uint8_t *data, size_t data_len);
-
-void osmo_gprs_rlcmac_set_log_cat(int cat);

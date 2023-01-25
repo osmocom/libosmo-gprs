@@ -30,8 +30,7 @@
 
 #include <osmocom/csn1/csn1.h>
 #include <osmocom/gprs/rlcmac/gprs_rlcmac.h>
-
-extern int g_log_cat;
+#include <osmocom/gprs/rlcmac/rlcmac_private.h>
 
 /* Payload type as defined in TS 44.060 / 10.4.7 */
 #define PAYLOAD_TYPE_DATA              0
@@ -4476,12 +4475,12 @@ int osmo_gprs_rlcmac_decode_uplink(struct bitvec *vector, RlcMacUplink_t * data)
 
   if (payload_type == PAYLOAD_TYPE_DATA)
   {
-    LOGP(g_log_cat, LOGL_NOTICE, "Payload Type: DATA (0), not implemented\n");
+    LOGRLCMAC(LOGL_NOTICE, "Payload Type: DATA (0), not implemented\n");
     return CSN_ERROR_GENERAL;
   }
   else if (payload_type == PAYLOAD_TYPE_RESERVED)
   {
-    LOGP(g_log_cat, LOGL_NOTICE, "Payload Type: RESERVED (3)\n");
+    LOGRLCMAC(LOGL_NOTICE, "Payload Type: RESERVED (3)\n");
     return CSN_ERROR_GENERAL;
   }
 
@@ -4583,7 +4582,7 @@ int osmo_gprs_rlcmac_decode_uplink(struct bitvec *vector, RlcMacUplink_t * data)
   LOGPC(DLCSN1, LOGL_INFO, "\n");
 
   if (ret > 0) {
-    LOGP(g_log_cat, LOGL_NOTICE, "%s: Got %d remaining bits unhandled by decoder at the end of bitvec\n", msg_type_name, ret);
+    LOGRLCMAC(LOGL_NOTICE, "%s: Got %d remaining bits unhandled by decoder at the end of bitvec\n", msg_type_name, ret);
     ret = 0;
   }
 
@@ -4608,12 +4607,12 @@ int osmo_gprs_rlcmac_decode_downlink(struct bitvec *vector, RlcMacDownlink_t * d
 
   if (data->PAYLOAD_TYPE == PAYLOAD_TYPE_DATA)
   {
-    LOGP(g_log_cat, LOGL_NOTICE, "Payload Type: DATA (0), not implemented\n");
+    LOGRLCMAC(LOGL_NOTICE, "Payload Type: DATA (0), not implemented\n");
     return CSN_ERROR_GENERAL;
   }
   else if (data->PAYLOAD_TYPE == PAYLOAD_TYPE_RESERVED)
   {
-    LOGP(g_log_cat, LOGL_NOTICE, "Payload Type: RESERVED (3)\n");
+    LOGRLCMAC(LOGL_NOTICE, "Payload Type: RESERVED (3)\n");
     return CSN_ERROR_GENERAL;
   }
   /* We can decode the message */
@@ -4795,7 +4794,7 @@ int osmo_gprs_rlcmac_decode_downlink(struct bitvec *vector, RlcMacDownlink_t * d
   LOGPC(DLCSN1, LOGL_INFO, "\n");
 
   if (ret > 0) {
-    LOGP(g_log_cat, LOGL_NOTICE, "%s: Got %d remaining bits unhandled by decoder at the end of bitvec\n", msg_type_name, ret);
+    LOGRLCMAC(LOGL_NOTICE, "%s: Got %d remaining bits unhandled by decoder at the end of bitvec\n", msg_type_name, ret);
     ret = 0;
   }
 
@@ -4906,8 +4905,8 @@ int osmo_gprs_rlcmac_encode_uplink(struct bitvec *vector, RlcMacUplink_t * data)
   LOGPC(DLCSN1, LOGL_INFO, "\n");
 
   if (ret > 0 || ret == CSN_ERROR_NEED_MORE_BITS_TO_UNPACK) {
-    LOGP(g_log_cat, LOGL_ERROR, "Failed to encode an Uplink block: not enough bits "
-                                "in the output buffer (rc=%d)\n", ret);
+    LOGRLCMAC(LOGL_ERROR, "Failed to encode an Uplink block: not enough bits "
+                          "in the output buffer (rc=%d)\n", ret);
     ret = CSN_ERROR_NEED_MORE_BITS_TO_UNPACK;
   }
 
@@ -4927,12 +4926,12 @@ int osmo_gprs_rlcmac_encode_downlink(struct bitvec *vector, RlcMacDownlink_t * d
 
   if (data->PAYLOAD_TYPE == PAYLOAD_TYPE_DATA)
   {
-    LOGP(g_log_cat, LOGL_NOTICE, "Payload Type: DATA (0), not implemented\n");
+    LOGRLCMAC(LOGL_NOTICE, "Payload Type: DATA (0), not implemented\n");
     return CSN_ERROR_GENERAL;
   }
   else if (data->PAYLOAD_TYPE == PAYLOAD_TYPE_RESERVED)
   {
-    LOGP(g_log_cat, LOGL_NOTICE, "Payload Type: RESERVED (3)\n");
+    LOGRLCMAC(LOGL_NOTICE, "Payload Type: RESERVED (3)\n");
     return CSN_ERROR_GENERAL;
   }
   /* We can encode the message */
@@ -5116,8 +5115,8 @@ int osmo_gprs_rlcmac_encode_downlink(struct bitvec *vector, RlcMacDownlink_t * d
   LOGPC(DLCSN1, LOGL_INFO, "\n");
 
   if (ret > 0 || ret == CSN_ERROR_NEED_MORE_BITS_TO_UNPACK) {
-    LOGP(g_log_cat, LOGL_ERROR, "Failed to encode a Downlink block: not enough bits "
-                                "in the output buffer (rc=%d)\n", ret);
+    LOGRLCMAC(LOGL_ERROR, "Failed to encode a Downlink block: not enough bits "
+                          "in the output buffer (rc=%d)\n", ret);
     ret = CSN_ERROR_NEED_MORE_BITS_TO_UNPACK;
   }
 
@@ -5138,25 +5137,25 @@ void osmo_gprs_rlcmac_decode_uplink_data(struct bitvec *vector, RlcMacUplinkData
     data->CV = bitvec_read_field(vector, &readIndex, 4);
     data->SI = bitvec_read_field(vector, &readIndex, 1);
     data->R = bitvec_read_field(vector, &readIndex, 1);
-    LOGPC(g_log_cat, LOGL_NOTICE, "PAYLOAD_TYPE = %u ", (unsigned)(data->PAYLOAD_TYPE));
-    LOGPC(g_log_cat, LOGL_NOTICE, "CV = %u ", (unsigned)(data->CV));
-    LOGPC(g_log_cat, LOGL_NOTICE, "SI = %u ", (unsigned)(data->SI));
-    LOGPC(g_log_cat, LOGL_NOTICE, "R = %u ", (unsigned)(data->R));
+    LOGRLCMACC(LOGL_NOTICE, "PAYLOAD_TYPE = %u ", (unsigned)(data->PAYLOAD_TYPE));
+    LOGRLCMACC(LOGL_NOTICE, "CV = %u ", (unsigned)(data->CV));
+    LOGRLCMACC(LOGL_NOTICE, "SI = %u ", (unsigned)(data->SI));
+    LOGRLCMACC(LOGL_NOTICE, "R = %u ", (unsigned)(data->R));
     // Octet 1
     data->spare = bitvec_read_field(vector, &readIndex, 1);
     data->PI = bitvec_read_field(vector, &readIndex, 1);
     data->TFI = bitvec_read_field(vector, &readIndex, 5);
     data->TI = bitvec_read_field(vector, &readIndex, 1);
-    LOGPC(g_log_cat, LOGL_NOTICE, "spare = %u ", (unsigned)(data->spare));
-    LOGPC(g_log_cat, LOGL_NOTICE, "PI = %u ", (unsigned)(data->PI));
-    LOGPC(g_log_cat, LOGL_NOTICE, "TFI = %u ", (unsigned)(data->TFI));
-    LOGPC(g_log_cat, LOGL_NOTICE, "TI = %u ", (unsigned)(data->TI));
+    LOGRLCMACC(LOGL_NOTICE, "spare = %u ", (unsigned)(data->spare));
+    LOGRLCMACC(LOGL_NOTICE, "PI = %u ", (unsigned)(data->PI));
+    LOGRLCMACC(LOGL_NOTICE, "TFI = %u ", (unsigned)(data->TFI));
+    LOGRLCMACC(LOGL_NOTICE, "TI = %u ", (unsigned)(data->TI));
 
     // Octet 2
     data->BSN = bitvec_read_field(vector, &readIndex, 7);
     data->E_1 = bitvec_read_field(vector, &readIndex, 1);
-    LOGPC(g_log_cat, LOGL_NOTICE, "BSN = %u ", (unsigned)(data->BSN));
-    LOGPC(g_log_cat, LOGL_NOTICE, "E_1 = %u ", (unsigned)(data->E_1));
+    LOGRLCMACC(LOGL_NOTICE, "BSN = %u ", (unsigned)(data->BSN));
+    LOGRLCMACC(LOGL_NOTICE, "E_1 = %u ", (unsigned)(data->E_1));
 
 
     if (data->E_1 == 0) // Extension octet follows immediately
@@ -5168,37 +5167,37 @@ void osmo_gprs_rlcmac_decode_uplink_data(struct bitvec *vector, RlcMacUplinkData
 	data->LENGTH_INDICATOR[i] = bitvec_read_field(vector, &readIndex, 6);
 	data->M[i] = bitvec_read_field(vector, &readIndex, 1);
 	data->E[i] = bitvec_read_field(vector, &readIndex, 1);
-        LOGPC(g_log_cat, LOGL_NOTICE, "LENGTH_INDICATOR[%u] = %u ", i, (unsigned)(data->LENGTH_INDICATOR[i]));
-        LOGPC(g_log_cat, LOGL_NOTICE, "M[%u] = %u ", i, (unsigned)(data->M[i]));
-        LOGPC(g_log_cat, LOGL_NOTICE, "E[%u] = %u ", i, (unsigned)(data->E[i]));
+        LOGRLCMACC(LOGL_NOTICE, "LENGTH_INDICATOR[%u] = %u ", i, (unsigned)(data->LENGTH_INDICATOR[i]));
+        LOGRLCMACC(LOGL_NOTICE, "M[%u] = %u ", i, (unsigned)(data->M[i]));
+        LOGRLCMACC(LOGL_NOTICE, "E[%u] = %u ", i, (unsigned)(data->E[i]));
         i++;
       } while((data->M[i-1] == 1)&&(data->E[i-1] == 0));
     }
     if (data->TI == 1) // TLLI field is present
     {
       data->TLLI = bitvec_read_field(vector, &readIndex, 32);
-      LOGPC(g_log_cat, LOGL_NOTICE, "TLLI = %08x ", data->TLLI);
+      LOGRLCMACC(LOGL_NOTICE, "TLLI = %08x ", data->TLLI);
       if (data->PI == 1) // PFI is present if TI field indicates presence of TLLI
       {
 	data->PFI = bitvec_read_field(vector, &readIndex, 7);
 	data->E_2 = bitvec_read_field(vector, &readIndex, 1);
-        LOGPC(g_log_cat, LOGL_NOTICE, "PFI = %u ", (unsigned)(data->PFI));
-        LOGPC(g_log_cat, LOGL_NOTICE, "E_2 = %u ", (unsigned)(data->E_2));
+        LOGRLCMACC(LOGL_NOTICE, "PFI = %u ", (unsigned)(data->PFI));
+        LOGRLCMACC(LOGL_NOTICE, "E_2 = %u ", (unsigned)(data->E_2));
       }
     }
     unsigned dataLen = 23 - readIndex/8;
-    LOGPC(g_log_cat, LOGL_NOTICE, "DATA[%u] = ", dataLen);
+    LOGRLCMACC(LOGL_NOTICE, "DATA[%u] = ", dataLen);
     OSMO_ASSERT(dataLen <= 20);
     for (i = 0; i < dataLen; i++)
     {
       data->RLC_DATA[i] = bitvec_read_field(vector, &readIndex, 8);
-      LOGPC(g_log_cat, LOGL_NOTICE, "%02x", (unsigned)(data->RLC_DATA[i]));
+      LOGRLCMACC(LOGL_NOTICE, "%02x", (unsigned)(data->RLC_DATA[i]));
     }
-    LOGPC(g_log_cat, LOGL_NOTICE, "\n");
+    LOGRLCMACC(LOGL_NOTICE, "\n");
   }
   else
   {
-    LOGP(g_log_cat, LOGL_NOTICE, "Payload Type: RESERVED (3)\n");
+    LOGRLCMAC(LOGL_NOTICE, "Payload Type: RESERVED (3)\n");
     return;
   }
 }
@@ -5215,24 +5214,24 @@ void osmo_gprs_rlcmac_encode_downlink_data(struct bitvec *vector, RlcMacDownlink
     bitvec_write_field(vector, &writeIndex, data->RRBP, 2);
     bitvec_write_field(vector, &writeIndex, data->SP, 1);
     bitvec_write_field(vector, &writeIndex, data->USF, 3);
-    LOGPC(g_log_cat, LOGL_NOTICE, "PAYLOAD_TYPE = %u ", (unsigned)(data->PAYLOAD_TYPE));
-    LOGPC(g_log_cat, LOGL_NOTICE, "RRBP = %u ", (unsigned)(data->RRBP));
-    LOGPC(g_log_cat, LOGL_NOTICE, "SP = %u ", (unsigned)(data->SP));
-    LOGPC(g_log_cat, LOGL_NOTICE, "USF = %u ", (unsigned)(data->USF));
+    LOGRLCMACC(LOGL_NOTICE, "PAYLOAD_TYPE = %u ", (unsigned)(data->PAYLOAD_TYPE));
+    LOGRLCMACC(LOGL_NOTICE, "RRBP = %u ", (unsigned)(data->RRBP));
+    LOGRLCMACC(LOGL_NOTICE, "SP = %u ", (unsigned)(data->SP));
+    LOGRLCMACC(LOGL_NOTICE, "USF = %u ", (unsigned)(data->USF));
 
     // Octet 1
     bitvec_write_field(vector, &writeIndex, data->PR, 2);
     bitvec_write_field(vector, &writeIndex, data->TFI, 5);
     bitvec_write_field(vector, &writeIndex, data->FBI, 1);
-    LOGPC(g_log_cat, LOGL_NOTICE, "PR = %u ", (unsigned)(data->PR));
-    LOGPC(g_log_cat, LOGL_NOTICE, "TFI = %u ", (unsigned)(data->TFI));
-    LOGPC(g_log_cat, LOGL_NOTICE, "FBI = %u ", (unsigned)(data->FBI));
+    LOGRLCMACC(LOGL_NOTICE, "PR = %u ", (unsigned)(data->PR));
+    LOGRLCMACC(LOGL_NOTICE, "TFI = %u ", (unsigned)(data->TFI));
+    LOGRLCMACC(LOGL_NOTICE, "FBI = %u ", (unsigned)(data->FBI));
 
     // Octet 2
     bitvec_write_field(vector, &writeIndex, data->BSN, 7);
     bitvec_write_field(vector, &writeIndex, data->E_1, 1);
-    LOGPC(g_log_cat, LOGL_NOTICE, "BSN = %u ", (unsigned)(data->BSN));
-    LOGPC(g_log_cat, LOGL_NOTICE, "E_1 = %u ", (unsigned)(data->E_1));
+    LOGRLCMACC(LOGL_NOTICE, "BSN = %u ", (unsigned)(data->BSN));
+    LOGRLCMACC(LOGL_NOTICE, "E_1 = %u ", (unsigned)(data->E_1));
 
     // Octet 3 (optional)
     if (data->E_1 == 0)
@@ -5243,22 +5242,22 @@ void osmo_gprs_rlcmac_encode_downlink_data(struct bitvec *vector, RlcMacDownlink
 	bitvec_write_field(vector, &writeIndex, data->LENGTH_INDICATOR[i], 6);
 	bitvec_write_field(vector, &writeIndex, data->M[i], 1);
 	bitvec_write_field(vector, &writeIndex, data->E[i], 1);
-        LOGPC(g_log_cat, LOGL_NOTICE, "LENGTH_INDICATOR[%u] = %u ", i, (unsigned)(data->LENGTH_INDICATOR[i]));
-        LOGPC(g_log_cat, LOGL_NOTICE, "M[%u] = %u ", i, (unsigned)(data->M[i]));
-        LOGPC(g_log_cat, LOGL_NOTICE, "E[%u] = %u ", i, (unsigned)(data->E[i]));
+        LOGRLCMACC(LOGL_NOTICE, "LENGTH_INDICATOR[%u] = %u ", i, (unsigned)(data->LENGTH_INDICATOR[i]));
+        LOGRLCMACC(LOGL_NOTICE, "M[%u] = %u ", i, (unsigned)(data->M[i]));
+        LOGRLCMACC(LOGL_NOTICE, "E[%u] = %u ", i, (unsigned)(data->E[i]));
         i++;
       }
       while ((data->M[i-1] == 1) && (data->E[i-1] == 0));
     }
     unsigned dataNumOctets = 23 - writeIndex/8;
-    LOGPC(g_log_cat, LOGL_NOTICE, "DATA[%u] = ", dataNumOctets);
+    LOGRLCMACC(LOGL_NOTICE, "DATA[%u] = ", dataNumOctets);
     OSMO_ASSERT(dataNumOctets <= 20);
     for (i = 0; i < dataNumOctets; i++)
     {
       bitvec_write_field(vector, &writeIndex, data->RLC_DATA[i], 8);
-      LOGPC(g_log_cat, LOGL_NOTICE, "%02x", (unsigned)(data->RLC_DATA[i]));
+      LOGRLCMACC(LOGL_NOTICE, "%02x", (unsigned)(data->RLC_DATA[i]));
     }
-    LOGPC(g_log_cat, LOGL_NOTICE, "\n");
+    LOGRLCMACC(LOGL_NOTICE, "\n");
   }
 }
 

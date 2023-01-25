@@ -26,8 +26,7 @@
 
 #include <osmocom/csn1/csn1.h>
 #include <osmocom/gprs/rlcmac/gprs_rlcmac.h>
-
-extern int g_log_cat;
+#include <osmocom/gprs/rlcmac/rlcmac_private.h>
 
 CSN_DESCR_EXTERN(GPRS_Mobile_Allocation_t);
 CSN_DESCR_EXTERN(PBCCH_Not_present_t);
@@ -648,9 +647,8 @@ static int _osmo_gprs_rlcmac_decode(void *storage,
 	LOGPC(DLCSN1, LOGL_INFO, "\n");
 
 	if (ret > 0) {
-		LOGP(g_log_cat, LOGL_NOTICE,
-		     "%s: %d remaining bits unhandled by decoder\n",
-		     descr_name, ret);
+		LOGRLCMAC(LOGL_NOTICE, "%s: %d remaining bits unhandled by decoder\n",
+		          descr_name, ret);
 		ret = 0;
 	}
 

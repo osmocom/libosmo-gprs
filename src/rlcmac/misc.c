@@ -15,11 +15,16 @@
  * GNU General Public License for more details.
  */
 
+#include <osmocom/core/utils.h>
 #include <osmocom/core/logging.h>
+#include <osmocom/gprs/rlcmac/rlcmac.h>
 
-int g_log_cat = DLGLOBAL;
+int g_rlcmac_log_cat[_OSMO_GPRS_RLCMAC_LOGC_MAX] = {
+	[0 ... _OSMO_GPRS_RLCMAC_LOGC_MAX - 1] = DLGLOBAL
+};
 
-void osmo_gprs_rlcmac_set_log_cat(int cat)
+void osmo_gprs_rlcmac_set_log_cat(enum osmo_gprs_rlcmac_log_cat logc, int logc_num)
 {
-	g_log_cat = cat;
+	OSMO_ASSERT(logc < _OSMO_GPRS_RLCMAC_LOGC_MAX);
+	g_rlcmac_log_cat[logc] = logc_num;
 }

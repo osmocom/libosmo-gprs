@@ -26,8 +26,7 @@
 
 #include <osmocom/csn1/csn1.h>
 #include <osmocom/gprs/rlcmac/gprs_rlcmac.h>
-
-extern int g_log_cat;
+#include <osmocom/gprs/rlcmac/rlcmac_private.h>
 
 /*< MS Classmark 3 IE >*/
 #if 0
@@ -364,7 +363,7 @@ int osmo_gprs_rlcmac_decode_ms_ra_cap(struct bitvec *vector, MS_Radio_Access_cap
   LOGPC(DLCSN1, LOGL_INFO, "\n");
 
   if (ret > 0) {
-    LOGP(g_log_cat, LOGL_NOTICE, "RAcap: Got %d remaining bits unhandled by decoder at the end of bitvec\n", ret);
+    LOGRLCMAC(LOGL_NOTICE, "RAcap: Got %d remaining bits unhandled by decoder at the end of bitvec\n", ret);
     ret = 0;
   }
   return ret;
@@ -384,8 +383,8 @@ int osmo_gprs_rlcmac_encode_ms_ra_cap(struct bitvec *vector, MS_Radio_Access_cap
   LOGPC(DLCSN1, LOGL_INFO, "\n");
 
   if (ret > 0 || ret == CSN_ERROR_NEED_MORE_BITS_TO_UNPACK) {
-    LOGP(g_log_cat, LOGL_ERROR, "Failed to encode MS RA Capability IE: not enough bits "
-                                "in the output buffer (rc=%d)\n", ret);
+    LOGRLCMAC(LOGL_ERROR, "Failed to encode MS RA Capability IE: not enough bits "
+                          "in the output buffer (rc=%d)\n", ret);
     ret = CSN_ERROR_NEED_MORE_BITS_TO_UNPACK;
   }
 
