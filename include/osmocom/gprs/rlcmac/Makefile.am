@@ -4,6 +4,7 @@ noinst_HEADERS = \
 
 rlcmac_HEADERS = \
 	rlcmac.h \
+	rlcmac_prim.h \
 	gprs_rlcmac.h \
 	$(NULL)
 

@@ -197,6 +197,7 @@ struct osmo_gprs_llc_ll_prim {
 };
 
 /* Parameters for OSMO_GPRS_LLC_GRR_* prims */
+/* This is expected to stay ABI compatible with libosmo-gprs-rlcmac struct osmo_gprs_rlcmac_grr_prim */
 struct osmo_gprs_llc_grr_prim {
 	/* Common fields */
 	uint32_t tlli;
