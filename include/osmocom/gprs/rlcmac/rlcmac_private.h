@@ -18,15 +18,26 @@ extern int g_rlcmac_log_cat[_OSMO_GPRS_RLCMAC_LOGC_MAX];
 #define msgb_rlcmac_prim(msg) ((struct osmo_gprs_rlcmac_prim *)(msg)->l1h)
 
 struct gprs_rlcmac_ctx {
-	enum osmo_gprs_rlcmac_location location;
+	struct {
+		enum osmo_gprs_rlcmac_location location;
+		struct {
+			bool use;
+			uint32_t interval_msec;
+		} codel;
+	} cfg;
 	osmo_gprs_rlcmac_prim_up_cb rlcmac_up_cb;
 	void *rlcmac_up_cb_user_data;
 
 	osmo_gprs_rlcmac_prim_down_cb rlcmac_down_cb;
 	void *rlcmac_down_cb_user_data;
+
+	struct llist_head gre_list; /* contains (struct gprs_rlcmac_entity)->entry */
 };
 
 extern struct gprs_rlcmac_ctx *g_ctx;
+
+/* rlcmac.c */
+struct gprs_rlcmac_entity *gprs_rlcmac_find_entity_by_tlli(uint32_t tlli);
 
 /* rlcmac_prim.c */
 int gprs_rlcmac_prim_call_up_cb(struct osmo_gprs_rlcmac_prim *rlcmac_prim);

@@ -35,3 +35,4 @@ enum osmo_gprs_rlcmac_log_cat {
 };
 
 void osmo_gprs_rlcmac_set_log_cat(enum osmo_gprs_rlcmac_log_cat logc, int logc_num);
+int osmo_gprs_rlcmac_set_codel_params(bool use, unsigned int interval_msec);

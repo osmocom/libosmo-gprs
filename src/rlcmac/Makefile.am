@@ -22,6 +22,9 @@ lib_LTLIBRARIES = \
 	$(NULL)
 
 libosmo_gprs_rlcmac_la_SOURCES = \
+	codel.c \
+	gre.c \
+	llc_queue.c \
 	rlcmac.c \
 	rlcmac_prim.c \
 	ts_24_008.c \

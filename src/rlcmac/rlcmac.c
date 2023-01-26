@@ -19,9 +19,14 @@
  *
  */
 
+#include <stdbool.h>
+
 #include <osmocom/gprs/rlcmac/rlcmac.h>
 #include <osmocom/gprs/rlcmac/rlcmac_prim.h>
 #include <osmocom/gprs/rlcmac/rlcmac_private.h>
+#include <osmocom/gprs/rlcmac/gre.h>
+
+#define GPRS_CODEL_SLOW_INTERVAL_MS 4000
 
 struct gprs_rlcmac_ctx *g_ctx;
 
@@ -33,7 +38,36 @@ int osmo_gprs_rlcmac_init(enum osmo_gprs_rlcmac_location location)
 		talloc_free(g_ctx);
 
 	g_ctx = talloc_zero(NULL, struct gprs_rlcmac_ctx);
-	g_ctx->location = location;
+	g_ctx->cfg.location = location;
+	g_ctx->cfg.codel.use = true;
+	g_ctx->cfg.codel.interval_msec = GPRS_CODEL_SLOW_INTERVAL_MS;
+	INIT_LLIST_HEAD(&g_ctx->gre_list);
 
 	return 0;
+}
+
+/*! Set CoDel parameters used in the Tx queue of LLC PDUs waiting to be transmitted.
+ *  \param[in] use Whether to enable or disable use of CoDel algo.
+ *  \param[in] interval_msec Interval at which CoDel triggers, in milliseconds. (0 = use default interval value)
+ *  \returns 0 on success; negative on error.
+ */
+int osmo_gprs_rlcmac_set_codel_params(bool use, unsigned int interval_msec)
+{
+	if (interval_msec == 0)
+		interval_msec = GPRS_CODEL_SLOW_INTERVAL_MS;
+
+	g_ctx->cfg.codel.use = use;
+	g_ctx->cfg.codel.interval_msec = interval_msec;
+	return 0;
+}
+
+struct gprs_rlcmac_entity *gprs_rlcmac_find_entity_by_tlli(uint32_t tlli)
+{
+	struct gprs_rlcmac_entity *gre;
+
+	llist_for_each_entry(gre, &g_ctx->gre_list, entry) {
+		if (gre->tlli == tlli)
+			return gre;
+	}
+	return NULL;
 }

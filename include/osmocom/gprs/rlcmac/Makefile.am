@@ -1,4 +1,7 @@
 noinst_HEADERS = \
+	codel.h \
+	gre.h \
+	llc_queue.h \
 	rlcmac_private.h \
 	$(NULL)
 

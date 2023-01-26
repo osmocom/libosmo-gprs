@@ -35,6 +35,7 @@
 #include <osmocom/gprs/rlcmac/rlcmac.h>
 #include <osmocom/gprs/rlcmac/rlcmac_prim.h>
 #include <osmocom/gprs/rlcmac/rlcmac_private.h>
+#include <osmocom/gprs/rlcmac/gre.h>
 
 #define RLCMAC_MSGB_HEADROOM 0
 
@@ -213,7 +214,22 @@ static int rlcmac_prim_handle_grr_data_req(struct osmo_gprs_rlcmac_prim *rlcmac_
 
 static int rlcmac_prim_handle_grr_unitdata_req(struct osmo_gprs_rlcmac_prim *rlcmac_prim)
 {
-	int rc = gprs_rlcmac_prim_handle_unsupported(rlcmac_prim);
+	struct gprs_rlcmac_entity *gre;
+	int rc;
+
+	gre = gprs_rlcmac_find_entity_by_tlli(rlcmac_prim->grr.tlli);
+	if (!gre) {
+		LOGRLCMAC(LOGL_INFO, "TLLI=0x%08x not found, creating entity on the fly\n",
+			  rlcmac_prim->grr.tlli);
+		gre = gprs_rlcmac_entity_alloc(rlcmac_prim->grr.tlli);
+	}
+	OSMO_ASSERT(gre);
+
+	rc = gprs_rlcmac_entity_llc_enqueue(gre,
+					    rlcmac_prim->grr.ll_pdu,
+					    rlcmac_prim->grr.ll_pdu_len,
+					    rlcmac_prim->grr.unitdata_req.sapi,
+					    rlcmac_prim->grr.unitdata_req.radio_prio);
 	return rc;
 }
 
