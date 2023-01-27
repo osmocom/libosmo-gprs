@@ -24,6 +24,8 @@
 #include <osmocom/gprs/rlcmac/rlcmac.h>
 #include <osmocom/gprs/rlcmac/rlcmac_prim.h>
 #include <osmocom/gprs/rlcmac/rlcmac_private.h>
+#include <osmocom/gprs/rlcmac/tbf_ul_fsm.h>
+#include <osmocom/gprs/rlcmac/tbf_ul.h>
 #include <osmocom/gprs/rlcmac/gre.h>
 
 struct gprs_rlcmac_entity *gprs_rlcmac_entity_alloc(uint32_t tlli)
@@ -55,6 +57,8 @@ void gprs_rlcmac_entity_free(struct gprs_rlcmac_entity *gre)
 {
 	if (!gre)
 		return;
+
+	gprs_rlcmac_ul_tbf_free(gre->ul_tbf);
 	gprs_rlcmac_llc_queue_free(gre->llc_queue);
 	llist_del(&gre->entry);
 	talloc_free(gre);
@@ -69,7 +73,14 @@ int gprs_rlcmac_entity_llc_enqueue(struct gprs_rlcmac_entity *gre, uint8_t *ll_p
 	if (rc < 0)
 		return rc;
 
-	/* TODO: here a new UL TBF will be created if not available yet */
+	if (!gre->ul_tbf) {
+		/* We have new data in the queue but we have no ul_tbf. Allocate one and start UL Assignment. */
+		gre->ul_tbf = gprs_rlcmac_ul_tbf_alloc(gre);
+		if (!gre->ul_tbf)
+			return -ENOMEM;
+		/* We always use 1phase for now... */
+		rc = gprs_rlcmac_tbf_ul_ass_start(gre->ul_tbf, GPRS_RLCMAC_TBF_UL_ASS_TYPE_1PHASE);
+	}
 
 	return rc;
 }

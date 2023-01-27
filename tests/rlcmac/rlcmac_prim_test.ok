@@ -1,2 +1,4 @@
 === test_ul_tbf_attach start ===
+test_rlcmac_prim_down_cb(): Rx L1CTL-RACH.request ra=0x7e
+test_rlcmac_prim_down_cb(): Rx L1CTL-CFG_UL_TBF.request ul_tbf_nr=0 ul_slotmask=0x80
 === test_ul_tbf_attach end ===

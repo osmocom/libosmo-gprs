@@ -27,6 +27,8 @@
 
 static void *tall_ctx = NULL;
 
+uint8_t last_rach_req_ra = 0;
+
 /**
 MS-SGSN LLC (Mobile Station - Serving GPRS Support Node Logical Link Control)  SAPI: GPRS Mobility Management
  Address field  SAPI: LLGMM
@@ -143,7 +145,19 @@ static int test_rlcmac_prim_down_cb(struct osmo_gprs_rlcmac_prim *rlcmac_prim, v
 
 	switch (rlcmac_prim->oph.sap) {
 	case OSMO_GPRS_RLCMAC_SAP_L1CTL:
-		printf("%s(): Rx %s\n", __func__, pdu_name);
+		switch (OSMO_PRIM_HDR(&rlcmac_prim->oph)) {
+		case OSMO_PRIM(OSMO_GPRS_RLCMAC_L1CTL_RACH, PRIM_OP_REQUEST):
+			last_rach_req_ra = rlcmac_prim->l1ctl.rach_req.ra;
+			printf("%s(): Rx %s ra=0x%02x\n", __func__, pdu_name, last_rach_req_ra);
+			break;
+		case OSMO_PRIM(OSMO_GPRS_RLCMAC_L1CTL_CFG_UL_TBF, PRIM_OP_REQUEST):
+			printf("%s(): Rx %s ul_tbf_nr=%u ul_slotmask=0x%02x\n", __func__, pdu_name,
+			       rlcmac_prim->l1ctl.cfg_ul_tbf_req.ul_tbf_nr,
+			       rlcmac_prim->l1ctl.cfg_ul_tbf_req.ul_slotmask);
+			break;
+		default:
+			printf("%s(): Rx %s\n", __func__, pdu_name);
+		}
 		break;
 	default:
 		printf("%s(): Unexpected Rx %s\n", __func__, pdu_name);
@@ -177,11 +191,11 @@ static void test_ul_tbf_attach(void)
 	rc = osmo_gprs_rlcmac_prim_upper_down(rlcmac_prim);
 
 	OSMO_ASSERT(sizeof(ccch_imm_ass_pkt_ul_tbf_normal) == GSM_MACBLOCK_LEN);
+	ccch_imm_ass_pkt_ul_tbf_normal[7] = last_rach_req_ra; /* Update RA to match */
 	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_ccch_data_ind(0, ccch_imm_ass_pkt_ul_tbf_normal);
 	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
 
-	/* This now fails because it's not yet implemented: */
-	OSMO_ASSERT(rc != 0);
+	OSMO_ASSERT(rc == 0);
 	printf("=== %s end ===\n", __func__);
 }
 

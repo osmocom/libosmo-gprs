@@ -6,9 +6,26 @@
 #include <stddef.h>
 
 #include <osmocom/core/msgb.h>
+#include <osmocom/core/tdef.h>
 
 #include <osmocom/gprs/rlcmac/rlcmac_prim.h>
 #include <osmocom/gprs/rlcmac/rlcmac.h>
+
+/* 3GPP TS 44.064 § 8.3 TLLI assignment procedures */
+#define GPRS_RLCMAC_TLLI_UNASSIGNED (0xffffffff)
+
+#define GPRS_RLCMAC_USF_UNUSED 0x07
+
+struct gprs_rlcmac_ul_tbf_allocation_ts {
+	bool allocated;
+	uint8_t usf;
+};
+
+struct gprs_rlcmac_ul_tbf_allocation {
+	uint8_t ul_tfi;
+	uint8_t num_ts; /* number of allocated TS */
+	struct gprs_rlcmac_ul_tbf_allocation_ts ts[8];
+};
 
 extern int g_rlcmac_log_cat[_OSMO_GPRS_RLCMAC_LOGC_MAX];
 
@@ -31,13 +48,18 @@ struct gprs_rlcmac_ctx {
 	osmo_gprs_rlcmac_prim_down_cb rlcmac_down_cb;
 	void *rlcmac_down_cb_user_data;
 
+	struct osmo_tdef *T_defs; /* timers controlled by RLC/MAC layer */
+
 	struct llist_head gre_list; /* contains (struct gprs_rlcmac_entity)->entry */
+
+	uint8_t next_ul_tbf_nr;
 };
 
 extern struct gprs_rlcmac_ctx *g_ctx;
 
 /* rlcmac.c */
 struct gprs_rlcmac_entity *gprs_rlcmac_find_entity_by_tlli(uint32_t tlli);
+int gprs_rlcmac_handle_ccch_imm_ass(const struct gsm48_imm_ass *ia);
 
 /* rlcmac_prim.c */
 int gprs_rlcmac_prim_call_up_cb(struct osmo_gprs_rlcmac_prim *rlcmac_prim);

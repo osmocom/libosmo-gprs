@@ -1,0 +1,57 @@
+/* Uplink TBF, 3GPP TS 44.060 */
+#pragma once
+
+#include <inttypes.h>
+
+#include <osmocom/core/msgb.h>
+
+#include <osmocom/gprs/rlcmac/tbf.h>
+#include <osmocom/gprs/rlcmac/tbf_ul_fsm.h>
+#include <osmocom/gprs/rlcmac/tbf_ul_ass_fsm.h>
+#include <osmocom/gprs/rlcmac/sched.h>
+#include <osmocom/gprs/rlcmac/rlcmac_private.h>
+
+struct gprs_rlcmac_ul_tbf {
+	struct gprs_rlcmac_tbf tbf;
+	struct gprs_rlcmac_tbf_ul_fsm_ctx state_fsm;
+	struct gprs_rlcmac_tbf_ul_ass_fsm_ctx ul_ass_fsm;
+
+	struct gprs_rlcmac_ul_tbf_allocation cur_alloc;
+};
+
+struct gprs_rlcmac_ul_tbf *gprs_rlcmac_ul_tbf_alloc(struct gprs_rlcmac_entity *gre);
+void gprs_rlcmac_ul_tbf_free(struct gprs_rlcmac_ul_tbf *ul_tbf);
+
+bool gprs_rlcmac_ul_tbf_data_rts(const struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_rts_block_ind *bi);
+bool gprs_rlcmac_ul_tbf_dummy_rts(const struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_rts_block_ind *bi);
+
+struct msgb *gprs_rlcmac_ul_tbf_data_create(const struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_rts_block_ind *bi);
+struct msgb *gprs_rlcmac_ul_tbf_dummy_create(const struct gprs_rlcmac_ul_tbf *ul_tbf);
+
+
+static inline struct gprs_rlcmac_tbf *ul_tbf_as_tbf(struct gprs_rlcmac_ul_tbf *ul_tbf)
+{
+	return &ul_tbf->tbf;
+}
+
+static inline const struct gprs_rlcmac_tbf *ul_tbf_as_tbf_const(const struct gprs_rlcmac_ul_tbf *ul_tbf)
+{
+	return &ul_tbf->tbf;
+}
+
+static inline struct gprs_rlcmac_ul_tbf *tbf_as_ul_tbf(struct gprs_rlcmac_tbf *tbf)
+{
+	OSMO_ASSERT(tbf->direction == GPRS_RLCMAC_TBF_DIR_UL);
+	return (struct gprs_rlcmac_ul_tbf *)tbf;
+}
+
+static inline const struct gprs_rlcmac_ul_tbf *tbf_as_ul_tbf_const(struct gprs_rlcmac_tbf *tbf)
+{
+	OSMO_ASSERT(tbf->direction == GPRS_RLCMAC_TBF_DIR_UL);
+	return (const struct gprs_rlcmac_ul_tbf *)tbf;
+}
+
+#define LOGPTBFUL(ul_tbf, lvl, fmt, args...) \
+	LOGP(g_rlcmac_log_cat[OSMO_GPRS_RLCMAC_LOGC_TBFUL], lvl, "TBF(UL:NR-%" PRIu8 ":TLLI-%08x) " fmt, \
+	(ul_tbf)->tbf.nr, (ul_tbf)->tbf.gre->tlli, \
+	## args)

@@ -17,6 +17,7 @@ int osmo_gprs_rlcmac_init(enum osmo_gprs_rlcmac_location location);
 
 enum osmo_gprs_rlcmac_log_cat {
 	OSMO_GPRS_RLCMAC_LOGC_RLCMAC,
+	OSMO_GPRS_RLCMAC_LOGC_TBFUL,
 	_OSMO_GPRS_RLCMAC_LOGC_MAX,
 };
 

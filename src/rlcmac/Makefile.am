@@ -10,10 +10,12 @@ AM_CPPFLAGS = \
 
 AM_CFLAGS = \
 	-Wall \
+	$(LIBOSMOGSM_CFLAGS) \
 	$(LIBOSMOCORE_CFLAGS) \
 	$(NULL)
 
 AM_LDFLAGS = \
+	$(LIBOSMOGSM_LIBS) \
 	$(LIBOSMOCORE_LIBS) \
 	$(NULL)
 
@@ -29,7 +31,13 @@ libosmo_gprs_rlcmac_la_SOURCES = \
 	gre.c \
 	llc_queue.c \
 	rlcmac.c \
+	rlcmac_enc.c \
 	rlcmac_prim.c \
+	sched.c \
+	tbf.c \
+	tbf_ul.c \
+	tbf_ul_fsm.c \
+	tbf_ul_ass_fsm.c \
 	ts_44_060.c \
 	ts_44_064.c \
 	misc.c \
@@ -43,5 +51,6 @@ libosmo_gprs_rlcmac_la_LDFLAGS = \
 
 libosmo_gprs_rlcmac_la_LIBADD = \
 	$(top_builddir)/src/csn1/libosmo-csn1.la \
+	$(LIBOSMOGSM_LIBS) \
 	$(LIBOSMOCORE_LIBS) \
 	$(NULL)

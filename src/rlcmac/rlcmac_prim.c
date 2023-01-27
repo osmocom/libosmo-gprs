@@ -31,11 +31,14 @@
 #include <osmocom/core/logging.h>
 #include <osmocom/crypt/gprs_cipher.h>
 #include <osmocom/gsm/gsm_utils.h>
+#include <osmocom/gsm/protocol/gsm_04_08.h>
 
 #include <osmocom/gprs/rlcmac/rlcmac.h>
 #include <osmocom/gprs/rlcmac/rlcmac_prim.h>
 #include <osmocom/gprs/rlcmac/rlcmac_private.h>
 #include <osmocom/gprs/rlcmac/gre.h>
+#include <osmocom/gprs/rlcmac/tbf_ul.h>
+#include <osmocom/gprs/rlcmac/tbf_ul_ass_fsm.h>
 
 #define RLCMAC_MSGB_HEADROOM 0
 
@@ -437,8 +440,14 @@ int gprs_rlcmac_prim_call_down_cb(struct osmo_gprs_rlcmac_prim *rlcmac_prim)
 
 static int rlcmac_prim_handle_l1ctl_pdch_rts_ind(struct osmo_gprs_rlcmac_prim *rlcmac_prim)
 {
-	int rc = gprs_rlcmac_prim_handle_unsupported(rlcmac_prim);
-	rc = 1; /* msg owned (freed) */
+	int rc;
+	struct gprs_rlcmac_rts_block_ind bi = {
+		.ts = rlcmac_prim->l1ctl.pdch_rts_ind.ts_nr,
+		.fn = rlcmac_prim->l1ctl.pdch_rts_ind.fn,
+		.usf = rlcmac_prim->l1ctl.pdch_rts_ind.usf,
+	};
+
+	rc = gprs_rlcmac_rcv_rts_block(&bi);
 	return rc;
 }
 
@@ -451,8 +460,13 @@ static int rlcmac_prim_handle_l1ctl_pdch_data_ind(struct osmo_gprs_rlcmac_prim *
 
 static int rlcmac_prim_handle_l1ctl_ccch_data_ind(struct osmo_gprs_rlcmac_prim *rlcmac_prim)
 {
-	int rc = gprs_rlcmac_prim_handle_unsupported(rlcmac_prim);
-	rc = 1; /* msg owned (freed) */
+	/* TODO: check if it's IMM_ASS: */
+	int rc;
+
+	if (rlcmac_prim->l1ctl.ccch_data_ind.data[2] == GSM48_MT_RR_IMM_ASS)
+		rc = gprs_rlcmac_handle_ccch_imm_ass((struct gsm48_imm_ass *)rlcmac_prim->l1ctl.ccch_data_ind.data);
+	else
+		rc = -ENOTSUP;
 	return rc;
 }
 

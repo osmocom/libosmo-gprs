@@ -18,6 +18,8 @@
 #include <osmocom/core/utils.h>
 #include <osmocom/core/logging.h>
 #include <osmocom/gprs/rlcmac/rlcmac.h>
+#include <osmocom/gprs/rlcmac/tbf_ul_fsm.h>
+#include <osmocom/gprs/rlcmac/tbf_ul_ass_fsm.h>
 
 int g_rlcmac_log_cat[_OSMO_GPRS_RLCMAC_LOGC_MAX] = {
 	[0 ... _OSMO_GPRS_RLCMAC_LOGC_MAX - 1] = DLGLOBAL
@@ -27,4 +29,9 @@ void osmo_gprs_rlcmac_set_log_cat(enum osmo_gprs_rlcmac_log_cat logc, int logc_n
 {
 	OSMO_ASSERT(logc < _OSMO_GPRS_RLCMAC_LOGC_MAX);
 	g_rlcmac_log_cat[logc] = logc_num;
+
+	if (logc == OSMO_GPRS_RLCMAC_LOGC_TBFUL) {
+		gprs_rlcmac_tbf_ul_fsm_set_log_cat(logc_num);
+		gprs_rlcmac_tbf_ul_ass_fsm_set_log_cat(logc_num);
+	}
 }
