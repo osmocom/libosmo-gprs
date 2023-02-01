@@ -30,6 +30,7 @@
 
 #include <osmocom/csn1/csn1.h>
 #include <osmocom/gprs/rlcmac/csn1_defs.h>
+#include <osmocom/gprs/rlcmac/types.h>
 #include <osmocom/gprs/rlcmac/rlcmac_private.h>
 
 /* Payload type as defined in TS 44.060 / 10.4.7 */
@@ -4407,62 +4408,6 @@ CSN_DESCR_END    (EGPRS_PacketChannelRequest_t)
 // ----------------------------------------------------------------------------
 // osmo-pcu RLCMAC APIs
 // ----------------------------------------------------------------------------
-static const struct value_string rlcmac_ul_msg_names[] = {
-        { MT_PACKET_CELL_CHANGE_FAILURE,        "Pkt Cell Change Failure" },
-        { MT_PACKET_CONTROL_ACK,                "Pkt Control Ack" },
-        { MT_PACKET_DOWNLINK_ACK_NACK ,         "Pkt DL ACK/NACK" },
-        { MT_PACKET_UPLINK_DUMMY_CONTROL_BLOCK, "Pkt UL Dummy Ctrl Block" },
-        { MT_PACKET_MEASUREMENT_REPORT,         "Pkt Meas Report" },
-        { MT_PACKET_RESOURCE_REQUEST,           "Pkt Resource Req" },
-        { MT_PACKET_MOBILE_TBF_STATUS,          "Pkt Mobile TBF Status" },
-        { MT_PACKET_PSI_STATUS,                 "Pkt PSI Status" },
-        { MT_EGPRS_PACKET_DOWNLINK_ACK_NACK,    "EGPRS Pkt DL ACK/NACK" },
-        { MT_PACKET_PAUSE,                      "Pkt Pause" },
-        { MT_PACKET_ENHANCED_MEASUREMENT_REPORT,"Pkt Enchanced Meas Report" },
-        { MT_ADDITIONAL_MS_RAC,                 "Additional MS RAC" },
-        { MT_PACKET_CELL_CHANGE_NOTIFICATION,   "Pkt Cell Change Notification" },
-        { MT_PACKET_SI_STATUS,                  "Pkt SI Status" },
-        { MT_ENHANCED_MEASUREMENT_REPORT,       "Enchanced Meas Report" },
-        { 0, NULL }
-};
-
-static const struct value_string rlcmac_dl_msg_names[] = {
-        { MT_PACKET_CELL_CHANGE_ORDER,            "Pkt Cell Change Order" },
-        { MT_PACKET_DOWNLINK_ASSIGNMENT,          "Pkt DL ASS" },
-        { MT_PACKET_MEASUREMENT_ORDER,            "Pkt Meas Order" },
-        { MT_PACKET_POLLING_REQ,                  "Pkt Polling Req" },
-        { MT_PACKET_POWER_CONTROL_TIMING_ADVANCE, "Pkt PWR CTRL TA" },
-        { MT_PACKET_QUEUEING_NOTIFICATION,        "Pkt Queueing Notification" },
-        { MT_PACKET_TIMESLOT_RECONFIGURE,         "Pkt TS Reconf" },
-        { MT_PACKET_TBF_RELEASE,                  "Pkt TBF Release" },
-        { MT_PACKET_UPLINK_ACK_NACK,              "Pkt UL ACK/NACK" },
-        { MT_PACKET_UPLINK_ASSIGNMENT,            "Pkt UL ASS" },
-        { MT_PACKET_CELL_CHANGE_CONTINUE,         "Pkt Cell Change Continue" },
-        { MT_PACKET_NEIGHBOUR_CELL_DATA,          "Pkt Neightbour Cell Data" },
-        { MT_PACKET_SERVING_CELL_DATA,            "Pkt Serving Cell Data" },
-        { MT_PACKET_HANDOVER_COMMAND,             "Pkt Handover Cmd" },
-        { MT_PACKET_PHYSICAL_INFORMATION,         "Pkt Physical Info" },
-        { MT_PACKET_ACCESS_REJECT,                "Pkt Access Reject" },
-        { MT_PACKET_PAGING_REQUEST,               "Pkt Paging Request" },
-        { MT_PACKET_PDCH_RELEASE,                 "Pkt PDCH Release" },
-        { MT_PACKET_PRACH_PARAMETERS,             "Pkt PRACH Params" },
-        { MT_PACKET_DOWNLINK_DUMMY_CONTROL_BLOCK, "Pkt DL Dummy Ctrl Block" },
-        { MT_PACKET_SYSTEM_INFO_6,                "Pkt SI 6" },
-        { MT_PACKET_SYSTEM_INFO_1,                "Pkt SI 1" },
-        { MT_PACKET_SYSTEM_INFO_2,                "Pkt SI 2" },
-        { MT_PACKET_SYSTEM_INFO_3,                "Pkt SI 3" },
-        { MT_PACKET_SYSTEM_INFO_3_BIS,            "Pkt SI 3bis" },
-        { MT_PACKET_SYSTEM_INFO_4,                "Pkt SI 4" },
-        { MT_PACKET_SYSTEM_INFO_5,                "Pkt SI 5" },
-        { MT_PACKET_SYSTEM_INFO_13,               "Pkt SI 13" },
-        { MT_PACKET_SYSTEM_INFO_7,                "Pkt SI 7" },
-        { MT_PACKET_SYSTEM_INFO_8,                "Pkt SI 8" },
-        { MT_PACKET_SYSTEM_INFO_14,               "Pkt SI 14" },
-        { MT_PACKET_SYSTEM_INFO_3_TER,            "Pkt SI 3ter" },
-        { MT_PACKET_SYSTEM_INFO_3_QUATER,         "Pkt SI 3quater" },
-        { MT_PACKET_SYSTEM_INFO_15,               "Pkt SI 15" },
-        { 0, NULL }
-};
 
 /* Returns 0 on success, negative on error. */
 int osmo_gprs_rlcmac_decode_uplink(struct bitvec *vector, RlcMacUplink_t * data)
@@ -4491,12 +4436,12 @@ int osmo_gprs_rlcmac_decode_uplink(struct bitvec *vector, RlcMacUplink_t * data)
   readIndex = 0;
 
   /* recursive osmo_csn1_stream_decode call uses LOGPC everywhere, so we need to start the log somewhere... */
-  msg_type_name = get_value_string(rlcmac_ul_msg_names, data->u.MESSAGE_TYPE);
+  msg_type_name = get_value_string(osmo_gprs_rlcmac_ul_msg_type_names, data->u.MESSAGE_TYPE);
   LOGP(DLCSN1, LOGL_INFO, "osmo_csn1_stream_decode (type: %s (%d)): ",
        msg_type_name, data->u.MESSAGE_TYPE);
   switch (data->u.MESSAGE_TYPE)
   {
-    case MT_PACKET_CELL_CHANGE_FAILURE:
+    case OSMO_GPRS_RLCMAC_UL_MSGT_PACKET_CELL_CHANGE_FAILURE:
     {
       /*
        * data is the pointer to the unpack struct that hold the unpack value
@@ -4506,68 +4451,68 @@ int osmo_gprs_rlcmac_decode_uplink(struct bitvec *vector, RlcMacUplink_t * data)
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(Packet_Cell_Change_Failure_t), vector, &readIndex, &data->u.Packet_Cell_Change_Failure);
       break;
     }
-    case MT_PACKET_CONTROL_ACK:
+    case OSMO_GPRS_RLCMAC_UL_MSGT_PACKET_CONTROL_ACK:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(Packet_Control_Acknowledgement_t), vector, &readIndex, &data->u.Packet_Control_Acknowledgement);
       break;
     }
-    case MT_PACKET_DOWNLINK_ACK_NACK:
+    case OSMO_GPRS_RLCMAC_UL_MSGT_PACKET_DOWNLINK_ACK_NACK:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(Packet_Downlink_Ack_Nack_t), vector, &readIndex, &data->u.Packet_Downlink_Ack_Nack);
       break;
     }
-    case MT_PACKET_UPLINK_DUMMY_CONTROL_BLOCK:
+    case OSMO_GPRS_RLCMAC_UL_MSGT_PACKET_UPLINK_DUMMY_CONTROL_BLOCK:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(Packet_Uplink_Dummy_Control_Block_t), vector, &readIndex, &data->u.Packet_Uplink_Dummy_Control_Block);
       break;
     }
-    case MT_PACKET_MEASUREMENT_REPORT:
+    case OSMO_GPRS_RLCMAC_UL_MSGT_PACKET_MEASUREMENT_REPORT:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(Packet_Measurement_Report_t), vector, &readIndex, &data->u.Packet_Measurement_Report);
       break;
     }
-    case MT_PACKET_RESOURCE_REQUEST:
+    case OSMO_GPRS_RLCMAC_UL_MSGT_PACKET_RESOURCE_REQUEST:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(Packet_Resource_Request_t), vector, &readIndex, &data->u.Packet_Resource_Request);
       break;
     }
 
-    case MT_PACKET_MOBILE_TBF_STATUS:
+    case OSMO_GPRS_RLCMAC_UL_MSGT_PACKET_MOBILE_TBF_STATUS:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(Packet_Mobile_TBF_Status_t), vector, &readIndex, &data->u.Packet_Mobile_TBF_Status);
       break;
     }
-    case MT_PACKET_PSI_STATUS:
+    case OSMO_GPRS_RLCMAC_UL_MSGT_PACKET_PSI_STATUS:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(Packet_PSI_Status_t), vector, &readIndex, &data->u.Packet_PSI_Status);
       break;
     }
-    case MT_EGPRS_PACKET_DOWNLINK_ACK_NACK:
+    case OSMO_GPRS_RLCMAC_UL_MSGT_EGPRS_PACKET_DOWNLINK_ACK_NACK:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(EGPRS_PD_AckNack_t), vector, &readIndex, &data->u.Egprs_Packet_Downlink_Ack_Nack);
       break;
     }
-    case MT_PACKET_PAUSE:
+    case OSMO_GPRS_RLCMAC_UL_MSGT_PACKET_PAUSE:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(Packet_Pause_t), vector, &readIndex, &data->u.Packet_Pause);
       break;
     }
-    case MT_PACKET_ENHANCED_MEASUREMENT_REPORT:
+    case OSMO_GPRS_RLCMAC_UL_MSGT_PACKET_ENHANCED_MEASUREMENT_REPORT:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(Packet_Enh_Measurement_Report_t), vector, &readIndex, &data->u.Packet_Enh_Measurement_Report);
       break;
     }
-    case MT_ADDITIONAL_MS_RAC:
+    case OSMO_GPRS_RLCMAC_UL_MSGT_ADDITIONAL_MS_RAC:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(Additional_MS_Rad_Access_Cap_t), vector, &readIndex, &data->u.Additional_MS_Rad_Access_Cap);
       break;
     }
-    case MT_PACKET_CELL_CHANGE_NOTIFICATION:
+    case OSMO_GPRS_RLCMAC_UL_MSGT_PACKET_CELL_CHANGE_NOTIFICATION:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(Packet_Cell_Change_Notification_t), vector, &readIndex, &data->u.Packet_Cell_Change_Notification);
       break;
     }
-    case MT_PACKET_SI_STATUS:
+    case OSMO_GPRS_RLCMAC_UL_MSGT_PACKET_SI_STATUS:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(Packet_SI_Status_t), vector, &readIndex, &data->u.Packet_SI_Status);
       break;
@@ -4653,133 +4598,133 @@ int osmo_gprs_rlcmac_decode_downlink(struct bitvec *vector, RlcMacDownlink_t * d
   osmo_csn1_stream_init(&ar, bit_offset, bit_length);
 
   /* recursive osmo_csn1_stream_decode call uses LOGPC everywhere, so we need to start the log somewhere... */
-  msg_type_name = get_value_string(rlcmac_dl_msg_names, data->u.MESSAGE_TYPE);
+  msg_type_name = get_value_string(osmo_gprs_rlcmac_dl_msg_type_names, data->u.MESSAGE_TYPE);
   LOGP(DLCSN1, LOGL_INFO, "osmo_csn1_stream_decode (type: %s (%d): ",
        msg_type_name, data->u.MESSAGE_TYPE);
 
   switch (data->u.MESSAGE_TYPE)
   {
-    case MT_PACKET_ACCESS_REJECT:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_ACCESS_REJECT:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(Packet_Access_Reject_t), vector, &readIndex, &data->u.Packet_Access_Reject);
       break;
     }
-    case MT_PACKET_CELL_CHANGE_ORDER:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_CELL_CHANGE_ORDER:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(Packet_Cell_Change_Order_t), vector, &readIndex, &data->u.Packet_Cell_Change_Order);
       break;
     }
-    case MT_PACKET_CELL_CHANGE_CONTINUE:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_CELL_CHANGE_CONTINUE:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(Packet_Cell_Change_Continue_t), vector, &readIndex, &data->u.Packet_Cell_Change_Continue);
       break;
     }
-    case MT_PACKET_DOWNLINK_ASSIGNMENT:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_DOWNLINK_ASSIGNMENT:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(Packet_Downlink_Assignment_t), vector, &readIndex, &data->u.Packet_Downlink_Assignment);
       break;
     }
-    case MT_PACKET_MEASUREMENT_ORDER:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_MEASUREMENT_ORDER:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(Packet_Measurement_Order_t), vector, &readIndex, &data->u.Packet_Measurement_Order);
       break;
     }
-    case MT_PACKET_NEIGHBOUR_CELL_DATA:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_NEIGHBOUR_CELL_DATA:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(Packet_Neighbour_Cell_Data_t), vector, &readIndex, &data->u.Packet_Neighbour_Cell_Data);
       break;
     }
-    case MT_PACKET_SERVING_CELL_DATA:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_SERVING_CELL_DATA:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(Packet_Serving_Cell_Data_t), vector, &readIndex, &data->u.Packet_Serving_Cell_Data);
       break;
     }
-    case MT_PACKET_PAGING_REQUEST:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_PAGING_REQUEST:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(Packet_Paging_Request_t), vector, &readIndex, &data->u.Packet_Paging_Request);
       break;
     }
-    case MT_PACKET_PDCH_RELEASE:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_PDCH_RELEASE:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(Packet_PDCH_Release_t), vector, &readIndex, &data->u.Packet_PDCH_Release);
       break;
     }
-    case MT_PACKET_POLLING_REQ:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_POLLING_REQ:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(Packet_Polling_Request_t), vector, &readIndex, &data->u.Packet_Polling_Request);
       break;
     }
-    case MT_PACKET_POWER_CONTROL_TIMING_ADVANCE:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_POWER_CONTROL_TIMING_ADVANCE:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(Packet_Power_Control_Timing_Advance_t), vector, &readIndex, &data->u.Packet_Power_Control_Timing_Advance);
       break;
     }
-    case MT_PACKET_PRACH_PARAMETERS:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_PRACH_PARAMETERS:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(Packet_PRACH_Parameters_t), vector, &readIndex, &data->u.Packet_PRACH_Parameters);
       break;
     }
-    case MT_PACKET_QUEUEING_NOTIFICATION:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_QUEUEING_NOTIFICATION:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(Packet_Queueing_Notification_t), vector, &readIndex, &data->u.Packet_Queueing_Notification);
       break;
     }
-    case MT_PACKET_TIMESLOT_RECONFIGURE:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_TIMESLOT_RECONFIGURE:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(Packet_Timeslot_Reconfigure_t), vector, &readIndex, &data->u.Packet_Timeslot_Reconfigure);
       break;
     }
-    case MT_PACKET_TBF_RELEASE:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_TBF_RELEASE:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(Packet_TBF_Release_t), vector, &readIndex, &data->u.Packet_TBF_Release);
       break;
     }
-    case MT_PACKET_UPLINK_ACK_NACK:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_UPLINK_ACK_NACK:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(Packet_Uplink_Ack_Nack_t), vector, &readIndex, &data->u.Packet_Uplink_Ack_Nack);
       break;
     }
-    case MT_PACKET_UPLINK_ASSIGNMENT:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_UPLINK_ASSIGNMENT:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(Packet_Uplink_Assignment_t), vector, &readIndex, &data->u.Packet_Uplink_Assignment);
       break;
     }
-    case MT_PACKET_HANDOVER_COMMAND:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_HANDOVER_COMMAND:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(Packet_Handover_Command_t), vector, &readIndex, &data->u.Packet_Handover_Command);
       break;
     }
-    case MT_PACKET_PHYSICAL_INFORMATION:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_PHYSICAL_INFORMATION:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(Packet_PhysicalInformation_t), vector, &readIndex, &data->u.Packet_Handover_Command);
       break;
     }
-    case MT_PACKET_DOWNLINK_DUMMY_CONTROL_BLOCK:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_DOWNLINK_DUMMY_CONTROL_BLOCK:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(Packet_Downlink_Dummy_Control_Block_t), vector, &readIndex, &data->u.Packet_Downlink_Dummy_Control_Block);
       break;
     }
-    case MT_PACKET_SYSTEM_INFO_1:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_SYSTEM_INFO_1:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(PSI1_t), vector, &readIndex, &data->u.PSI1);
       break;
     }
-    case MT_PACKET_SYSTEM_INFO_2:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_SYSTEM_INFO_2:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(PSI2_t), vector, &readIndex, &data->u.PSI2);
       break;
     }
-    case MT_PACKET_SYSTEM_INFO_3:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_SYSTEM_INFO_3:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(PSI3_t), vector, &readIndex, &data->u.PSI3);
       break;
     }
-    case MT_PACKET_SYSTEM_INFO_5:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_SYSTEM_INFO_5:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(PSI5_t), vector, &readIndex, &data->u.PSI5);
       break;
     }
-    case MT_PACKET_SYSTEM_INFO_13:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_SYSTEM_INFO_13:
     {
       ret = osmo_csn1_stream_decode(&ar, CSNDESCR(PSI13_t), vector, &readIndex, &data->u.PSI13);
       break;
@@ -4814,12 +4759,12 @@ int osmo_gprs_rlcmac_encode_uplink(struct bitvec *vector, RlcMacUplink_t * data)
   writeIndex = 0;
 
   /* recursive osmo_csn1_stream_encode call uses LOGPC everywhere, so we need to start the log somewhere... */
-  msg_type_name = get_value_string(rlcmac_ul_msg_names, data->u.MESSAGE_TYPE);
+  msg_type_name = get_value_string(osmo_gprs_rlcmac_ul_msg_type_names, data->u.MESSAGE_TYPE);
   LOGP(DLCSN1, LOGL_INFO, "osmo_csn1_stream_encode (type: %s (%d)): ",
        msg_type_name, data->u.MESSAGE_TYPE);
   switch (data->u.MESSAGE_TYPE)
   {
-    case MT_PACKET_CELL_CHANGE_FAILURE:
+    case OSMO_GPRS_RLCMAC_UL_MSGT_PACKET_CELL_CHANGE_FAILURE:
     {
       /*
        * data is the pointer to the unpack struct that hold the unpack value
@@ -4829,68 +4774,68 @@ int osmo_gprs_rlcmac_encode_uplink(struct bitvec *vector, RlcMacUplink_t * data)
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(Packet_Cell_Change_Failure_t), vector, &writeIndex, &data->u.Packet_Cell_Change_Failure);
       break;
     }
-    case MT_PACKET_CONTROL_ACK:
+    case OSMO_GPRS_RLCMAC_UL_MSGT_PACKET_CONTROL_ACK:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(Packet_Control_Acknowledgement_t), vector, &writeIndex, &data->u.Packet_Control_Acknowledgement);
       break;
     }
-    case MT_PACKET_DOWNLINK_ACK_NACK:
+    case OSMO_GPRS_RLCMAC_UL_MSGT_PACKET_DOWNLINK_ACK_NACK:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(Packet_Downlink_Ack_Nack_t), vector, &writeIndex, &data->u.Packet_Downlink_Ack_Nack);
       break;
     }
-    case MT_PACKET_UPLINK_DUMMY_CONTROL_BLOCK:
+    case OSMO_GPRS_RLCMAC_UL_MSGT_PACKET_UPLINK_DUMMY_CONTROL_BLOCK:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(Packet_Uplink_Dummy_Control_Block_t), vector, &writeIndex, &data->u.Packet_Uplink_Dummy_Control_Block);
       break;
     }
-    case MT_PACKET_MEASUREMENT_REPORT:
+    case OSMO_GPRS_RLCMAC_UL_MSGT_PACKET_MEASUREMENT_REPORT:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(Packet_Measurement_Report_t), vector, &writeIndex, &data->u.Packet_Measurement_Report);
       break;
     }
-    case MT_PACKET_RESOURCE_REQUEST:
+    case OSMO_GPRS_RLCMAC_UL_MSGT_PACKET_RESOURCE_REQUEST:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(Packet_Resource_Request_t), vector, &writeIndex, &data->u.Packet_Resource_Request);
       break;
     }
 
-    case MT_PACKET_MOBILE_TBF_STATUS:
+    case OSMO_GPRS_RLCMAC_UL_MSGT_PACKET_MOBILE_TBF_STATUS:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(Packet_Mobile_TBF_Status_t), vector, &writeIndex, &data->u.Packet_Mobile_TBF_Status);
       break;
     }
-    case MT_PACKET_PSI_STATUS:
+    case OSMO_GPRS_RLCMAC_UL_MSGT_PACKET_PSI_STATUS:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(Packet_PSI_Status_t), vector, &writeIndex, &data->u.Packet_PSI_Status);
       break;
     }
-    case MT_EGPRS_PACKET_DOWNLINK_ACK_NACK:
+    case OSMO_GPRS_RLCMAC_UL_MSGT_EGPRS_PACKET_DOWNLINK_ACK_NACK:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(EGPRS_PD_AckNack_t), vector, &writeIndex, &data->u.Egprs_Packet_Downlink_Ack_Nack);
       break;
     }
-    case MT_PACKET_PAUSE:
+    case OSMO_GPRS_RLCMAC_UL_MSGT_PACKET_PAUSE:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(Packet_Pause_t), vector, &writeIndex, &data->u.Packet_Pause);
       break;
     }
-    case MT_PACKET_ENHANCED_MEASUREMENT_REPORT:
+    case OSMO_GPRS_RLCMAC_UL_MSGT_PACKET_ENHANCED_MEASUREMENT_REPORT:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(Packet_Enh_Measurement_Report_t), vector, &writeIndex, &data->u.Packet_Enh_Measurement_Report);
       break;
     }
-    case MT_ADDITIONAL_MS_RAC:
+    case OSMO_GPRS_RLCMAC_UL_MSGT_ADDITIONAL_MS_RAC:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(Additional_MS_Rad_Access_Cap_t), vector, &writeIndex, &data->u.Additional_MS_Rad_Access_Cap);
       break;
     }
-    case MT_PACKET_CELL_CHANGE_NOTIFICATION:
+    case OSMO_GPRS_RLCMAC_UL_MSGT_PACKET_CELL_CHANGE_NOTIFICATION:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(Packet_Cell_Change_Notification_t), vector, &writeIndex, &data->u.Packet_Cell_Change_Notification);
       break;
     }
-    case MT_PACKET_SI_STATUS:
+    case OSMO_GPRS_RLCMAC_UL_MSGT_PACKET_SI_STATUS:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(Packet_SI_Status_t), vector, &writeIndex, &data->u.Packet_SI_Status);
       break;
@@ -4975,132 +4920,132 @@ int osmo_gprs_rlcmac_encode_downlink(struct bitvec *vector, RlcMacDownlink_t * d
 
 
   /* recursive osmo_csn1_stream_encode call uses LOGPC everywhere, so we need to start the log somewhere... */
-  msg_type_name = get_value_string(rlcmac_dl_msg_names, data->u.MESSAGE_TYPE);
+  msg_type_name = get_value_string(osmo_gprs_rlcmac_dl_msg_type_names, data->u.MESSAGE_TYPE);
   LOGP(DLCSN1, LOGL_INFO, "osmo_csn1_stream_encode (type: %s (%d)): ",
        msg_type_name, data->u.MESSAGE_TYPE);
   switch (data->u.MESSAGE_TYPE)
   {
-    case MT_PACKET_ACCESS_REJECT:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_ACCESS_REJECT:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(Packet_Access_Reject_t), vector, &writeIndex, &data->u.Packet_Access_Reject);
       break;
     }
-    case MT_PACKET_CELL_CHANGE_ORDER:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_CELL_CHANGE_ORDER:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(Packet_Cell_Change_Order_t), vector, &writeIndex, &data->u.Packet_Cell_Change_Order);
       break;
     }
-    case MT_PACKET_CELL_CHANGE_CONTINUE:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_CELL_CHANGE_CONTINUE:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(Packet_Cell_Change_Continue_t), vector, &writeIndex, &data->u.Packet_Cell_Change_Continue);
       break;
     }
-    case MT_PACKET_DOWNLINK_ASSIGNMENT:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_DOWNLINK_ASSIGNMENT:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(Packet_Downlink_Assignment_t), vector, &writeIndex, &data->u.Packet_Downlink_Assignment);
       break;
     }
-    case MT_PACKET_MEASUREMENT_ORDER:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_MEASUREMENT_ORDER:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(Packet_Measurement_Order_t), vector, &writeIndex, &data->u.Packet_Measurement_Order);
       break;
     }
-    case MT_PACKET_NEIGHBOUR_CELL_DATA:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_NEIGHBOUR_CELL_DATA:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(Packet_Neighbour_Cell_Data_t), vector, &writeIndex, &data->u.Packet_Neighbour_Cell_Data);
       break;
     }
-    case MT_PACKET_SERVING_CELL_DATA:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_SERVING_CELL_DATA:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(Packet_Serving_Cell_Data_t), vector, &writeIndex, &data->u.Packet_Serving_Cell_Data);
       break;
     }
-    case MT_PACKET_PAGING_REQUEST:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_PAGING_REQUEST:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(Packet_Paging_Request_t), vector, &writeIndex, &data->u.Packet_Paging_Request);
       break;
     }
-    case MT_PACKET_PDCH_RELEASE:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_PDCH_RELEASE:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(Packet_PDCH_Release_t), vector, &writeIndex, &data->u.Packet_PDCH_Release);
       break;
     }
-    case MT_PACKET_POLLING_REQ:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_POLLING_REQ:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(Packet_Polling_Request_t), vector, &writeIndex, &data->u.Packet_Polling_Request);
       break;
     }
-    case MT_PACKET_POWER_CONTROL_TIMING_ADVANCE:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_POWER_CONTROL_TIMING_ADVANCE:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(Packet_Power_Control_Timing_Advance_t), vector, &writeIndex, &data->u.Packet_Power_Control_Timing_Advance);
       break;
     }
-    case MT_PACKET_PRACH_PARAMETERS:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_PRACH_PARAMETERS:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(Packet_PRACH_Parameters_t), vector, &writeIndex, &data->u.Packet_PRACH_Parameters);
       break;
     }
-    case MT_PACKET_QUEUEING_NOTIFICATION:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_QUEUEING_NOTIFICATION:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(Packet_Queueing_Notification_t), vector, &writeIndex, &data->u.Packet_Queueing_Notification);
       break;
     }
-    case MT_PACKET_TIMESLOT_RECONFIGURE:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_TIMESLOT_RECONFIGURE:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(Packet_Timeslot_Reconfigure_t), vector, &writeIndex, &data->u.Packet_Timeslot_Reconfigure);
       break;
     }
-    case MT_PACKET_TBF_RELEASE:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_TBF_RELEASE:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(Packet_TBF_Release_t), vector, &writeIndex, &data->u.Packet_TBF_Release);
       break;
     }
-    case MT_PACKET_UPLINK_ACK_NACK:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_UPLINK_ACK_NACK:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(Packet_Uplink_Ack_Nack_t), vector, &writeIndex, &data->u.Packet_Uplink_Ack_Nack);
       break;
     }
-    case MT_PACKET_UPLINK_ASSIGNMENT:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_UPLINK_ASSIGNMENT:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(Packet_Uplink_Assignment_t), vector, &writeIndex, &data->u.Packet_Uplink_Assignment);
       break;
     }
-    case MT_PACKET_HANDOVER_COMMAND:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_HANDOVER_COMMAND:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(Packet_Handover_Command_t), vector, &writeIndex, &data->u.Packet_Handover_Command);
       break;
     }
-    case MT_PACKET_PHYSICAL_INFORMATION:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_PHYSICAL_INFORMATION:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(Packet_PhysicalInformation_t), vector, &writeIndex, &data->u.Packet_Handover_Command);
       break;
     }
-    case MT_PACKET_DOWNLINK_DUMMY_CONTROL_BLOCK:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_DOWNLINK_DUMMY_CONTROL_BLOCK:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(Packet_Downlink_Dummy_Control_Block_t), vector, &writeIndex, &data->u.Packet_Downlink_Dummy_Control_Block);
       break;
     }
-    case MT_PACKET_SYSTEM_INFO_1:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_SYSTEM_INFO_1:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(PSI1_t), vector, &writeIndex, &data->u.PSI1);
       break;
     }
-    case MT_PACKET_SYSTEM_INFO_2:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_SYSTEM_INFO_2:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(PSI2_t), vector, &writeIndex, &data->u.PSI2);
       break;
     }
-    case MT_PACKET_SYSTEM_INFO_3:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_SYSTEM_INFO_3:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(PSI3_t), vector, &writeIndex, &data->u.PSI3);
       break;
     }
-    case MT_PACKET_SYSTEM_INFO_5:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_SYSTEM_INFO_5:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(PSI5_t), vector, &writeIndex, &data->u.PSI5);
       break;
     }
-    case MT_PACKET_SYSTEM_INFO_13:
+    case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_SYSTEM_INFO_13:
     {
       ret = osmo_csn1_stream_encode(&ar, CSNDESCR(PSI13_t), vector, &writeIndex, &data->u.PSI13);
       break;

@@ -5071,59 +5071,6 @@ Table 25 (concluded): PACKET CELL CHANGE ORDER message content
 */
 
 /* < Downlink RLC/MAC control message > */
-#define MT_PACKET_CELL_CHANGE_ORDER            0x01
-#define MT_PACKET_DOWNLINK_ASSIGNMENT          0x02
-#define MT_PACKET_MEASUREMENT_ORDER            0x03
-#define MT_PACKET_POLLING_REQ                  0x04
-#define MT_PACKET_POWER_CONTROL_TIMING_ADVANCE 0x05
-#define MT_PACKET_QUEUEING_NOTIFICATION        0x06
-#define MT_PACKET_TIMESLOT_RECONFIGURE         0x07
-#define MT_PACKET_TBF_RELEASE                  0x08
-#define MT_PACKET_UPLINK_ACK_NACK              0x09
-#define MT_PACKET_UPLINK_ASSIGNMENT            0x0A
-#define MT_PACKET_CELL_CHANGE_CONTINUE         0x0B
-#define MT_PACKET_NEIGHBOUR_CELL_DATA          0x0C
-#define MT_PACKET_SERVING_CELL_DATA            0x0D
-#define MT_PACKET_HANDOVER_COMMAND             0x15
-#define MT_PACKET_PHYSICAL_INFORMATION         0x16
-#define MT_PACKET_ACCESS_REJECT                0x21
-#define MT_PACKET_PAGING_REQUEST               0x22
-#define MT_PACKET_PDCH_RELEASE                 0x23
-#define MT_PACKET_PRACH_PARAMETERS             0x24
-#define MT_PACKET_DOWNLINK_DUMMY_CONTROL_BLOCK 0x25
-#define MT_PACKET_SYSTEM_INFO_6                0x30
-#define MT_PACKET_SYSTEM_INFO_1                0x31
-#define MT_PACKET_SYSTEM_INFO_2                0x32
-#define MT_PACKET_SYSTEM_INFO_3                0x33
-#define MT_PACKET_SYSTEM_INFO_3_BIS            0x34
-#define MT_PACKET_SYSTEM_INFO_4                0x35
-#define MT_PACKET_SYSTEM_INFO_5                0x36
-#define MT_PACKET_SYSTEM_INFO_13               0x37
-#define MT_PACKET_SYSTEM_INFO_7                0x38
-#define MT_PACKET_SYSTEM_INFO_8                0x39
-#define MT_PACKET_SYSTEM_INFO_14               0x3A
-#define MT_PACKET_SYSTEM_INFO_3_TER            0x3C
-#define MT_PACKET_SYSTEM_INFO_3_QUATER         0x3D
-#define MT_PACKET_SYSTEM_INFO_15               0x3E
-
-/* < Uplink RLC/MAC control message > */
-#define MT_PACKET_CELL_CHANGE_FAILURE          0x00
-#define MT_PACKET_CONTROL_ACK                  0x01
-#define MT_PACKET_DOWNLINK_ACK_NACK            0x02
-#define MT_PACKET_UPLINK_DUMMY_CONTROL_BLOCK   0x03
-#define MT_PACKET_MEASUREMENT_REPORT           0x04
-#define MT_PACKET_RESOURCE_REQUEST             0x05
-#define MT_PACKET_MOBILE_TBF_STATUS            0x06
-#define MT_PACKET_PSI_STATUS                   0x07
-#define MT_EGPRS_PACKET_DOWNLINK_ACK_NACK      0x08
-#define MT_PACKET_PAUSE                        0x09
-#define MT_PACKET_ENHANCED_MEASUREMENT_REPORT  0x0A
-#define MT_ADDITIONAL_MS_RAC                   0x0B
-#define MT_PACKET_CELL_CHANGE_NOTIFICATION     0x0C
-#define MT_PACKET_SI_STATUS                    0x0D
-#define MT_ENHANCED_MEASUREMENT_REPORT         0x04
-
-/* < Downlink RLC/MAC control message > */
 typedef struct
 {
   union
