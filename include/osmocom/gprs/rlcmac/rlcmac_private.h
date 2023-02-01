@@ -10,6 +10,7 @@
 
 #include <osmocom/gprs/rlcmac/rlcmac_prim.h>
 #include <osmocom/gprs/rlcmac/rlcmac.h>
+#include <osmocom/gprs/rlcmac/coding_scheme.h>
 
 /* 3GPP TS 44.064 § 8.3 TLLI assignment procedures */
 #define GPRS_RLCMAC_TLLI_UNASSIGNED (0xffffffff)
@@ -41,6 +42,8 @@ struct gprs_rlcmac_ctx {
 			bool use;
 			uint32_t interval_msec;
 		} codel;
+		enum gprs_rlcmac_egprs_arq_type egprs_arq_type;
+		bool ul_tbf_preemptive_retransmission;
 	} cfg;
 	osmo_gprs_rlcmac_prim_up_cb rlcmac_up_cb;
 	void *rlcmac_up_cb_user_data;

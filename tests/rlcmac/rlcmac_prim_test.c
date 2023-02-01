@@ -146,6 +146,13 @@ static int test_rlcmac_prim_down_cb(struct osmo_gprs_rlcmac_prim *rlcmac_prim, v
 	switch (rlcmac_prim->oph.sap) {
 	case OSMO_GPRS_RLCMAC_SAP_L1CTL:
 		switch (OSMO_PRIM_HDR(&rlcmac_prim->oph)) {
+		case OSMO_PRIM(OSMO_GPRS_RLCMAC_L1CTL_PDCH_DATA, PRIM_OP_REQUEST):
+			printf("%s(): Rx %s fn=%u ts=%u data_len=%u data=[%s]\n", __func__, pdu_name,
+			       rlcmac_prim->l1ctl.pdch_data_req.fn,
+			       rlcmac_prim->l1ctl.pdch_data_req.ts_nr,
+			       rlcmac_prim->l1ctl.pdch_data_req.data_len,
+			       osmo_hexdump(rlcmac_prim->l1ctl.pdch_data_req.data, rlcmac_prim->l1ctl.pdch_data_req.data_len));
+			break;
 		case OSMO_PRIM(OSMO_GPRS_RLCMAC_L1CTL_RACH, PRIM_OP_REQUEST):
 			last_rach_req_ra = rlcmac_prim->l1ctl.rach_req.ra;
 			printf("%s(): Rx %s ra=0x%02x\n", __func__, pdu_name, last_rach_req_ra);
@@ -184,6 +191,9 @@ static void test_ul_tbf_attach(void)
 	printf("=== %s start ===\n", __func__);
 	prepare_test();
 	uint32_t tlli = 0x2342;
+	uint8_t ts_nr = 7;
+	uint8_t usf = 0;
+	uint32_t rts_fn = 4;
 
 	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_grr_unitdata_req(tlli, pdu_llc_gmm_att_req,
 					    sizeof(pdu_llc_gmm_att_req));
@@ -193,6 +203,10 @@ static void test_ul_tbf_attach(void)
 	OSMO_ASSERT(sizeof(ccch_imm_ass_pkt_ul_tbf_normal) == GSM_MACBLOCK_LEN);
 	ccch_imm_ass_pkt_ul_tbf_normal[7] = last_rach_req_ra; /* Update RA to match */
 	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_ccch_data_ind(0, ccch_imm_ass_pkt_ul_tbf_normal);
+	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+
+	/* Trigger transmission of LLC data (GMM Attach) */
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_rts_ind(ts_nr, rts_fn, usf);
 	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
 
 	OSMO_ASSERT(rc == 0);

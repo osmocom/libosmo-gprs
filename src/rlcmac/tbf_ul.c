@@ -24,6 +24,9 @@
 #include <osmocom/gprs/rlcmac/tbf_ul.h>
 #include <osmocom/gprs/rlcmac/rlcmac_enc.h>
 #include <osmocom/gprs/rlcmac/gre.h>
+#include <osmocom/gprs/rlcmac/coding_scheme.h>
+#include <osmocom/gprs/rlcmac/rlc_window_ul.h>
+#include <osmocom/gprs/rlcmac/rlc.h>
 
 struct gprs_rlcmac_ul_tbf *gprs_rlcmac_ul_tbf_alloc(struct gprs_rlcmac_entity *gre)
 {
@@ -45,6 +48,13 @@ struct gprs_rlcmac_ul_tbf *gprs_rlcmac_ul_tbf_alloc(struct gprs_rlcmac_entity *g
 		goto err_state_fsm_destruct;
 
 	ul_tbf->tbf.nr = g_ctx->next_ul_tbf_nr++;
+	ul_tbf->tx_cs = GPRS_RLCMAC_CS_1;
+
+	ul_tbf->ulw = gprs_rlcmac_rlc_ul_window_alloc(ul_tbf);
+	OSMO_ASSERT(ul_tbf->ulw);
+
+	ul_tbf->blkst = gprs_rlcmac_rlc_block_store_alloc(ul_tbf);
+	OSMO_ASSERT(ul_tbf->blkst);
 
 	return ul_tbf;
 
@@ -60,6 +70,14 @@ void gprs_rlcmac_ul_tbf_free(struct gprs_rlcmac_ul_tbf *ul_tbf)
 {
 	if (!ul_tbf)
 		return;
+
+	talloc_free(ul_tbf->llc_tx_msg);
+
+	gprs_rlcmac_rlc_block_store_free(ul_tbf->blkst);
+	ul_tbf->blkst = NULL;
+
+	gprs_rlcmac_rlc_ul_window_free(ul_tbf->ulw);
+	ul_tbf->ulw = NULL;
 
 	gprs_rlcmac_tbf_ul_ass_fsm_destructor(ul_tbf);
 	gprs_rlcmac_tbf_ul_fsm_destructor(ul_tbf);
@@ -126,9 +144,566 @@ free_ret:
 	return NULL;
 }
 
-struct msgb *gprs_rlcmac_ul_tbf_data_create(const struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_rts_block_ind *bi)
+bool gprs_rlcmac_ul_tbf_have_data(const struct gprs_rlcmac_ul_tbf *ul_tbf)
 {
-	LOGPTBFUL(ul_tbf, LOGL_ERROR, "(ts=%u,fn=%u,usf=%u) TODO: implement dequeue from LLC\n",
-		  bi->ts, bi->fn, bi->usf);
-	return NULL;
+	return (ul_tbf->llc_tx_msg && msgb_length(ul_tbf->llc_tx_msg) > 0) ||
+	       (gprs_rlcmac_llc_queue_size(ul_tbf->tbf.gre->llc_queue) > 0);
+}
+
+bool gprs_rlcmac_ul_tbf_shall_keep_open(const struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_rts_block_ind *bi)
+{
+	/* TODO: In here a VTY timer can be defined which specifies an amount of
+	 * time during which the MS stays in CV=15 while waiting for more data from
+	 * upper layers. This way we avoid entering last CV modes and keep the TBF
+	 * open (sending Uplink Dummy Ctrl Block if necessary).
+	 * Amount of time elapsed in this condition can be valculated based on
+	 * bi->fn - ul_tbf->last_ul_drained_fn;
+	 */
+	return false;
+}
+
+void gprs_rlcmac_ul_tbf_schedule_next_llc_frame(struct gprs_rlcmac_ul_tbf *ul_tbf)
+{
+	if (ul_tbf->llc_tx_msg && msgb_length(ul_tbf->llc_tx_msg))
+		return;
+
+	msgb_free(ul_tbf->llc_tx_msg);
+	/* dequeue next LLC frame, if any */
+	ul_tbf->llc_tx_msg = gprs_rlcmac_llc_queue_dequeue(ul_tbf->tbf.gre->llc_queue);
+	if (!ul_tbf->llc_tx_msg)
+		return;
+
+	LOGPTBFUL(ul_tbf, LOGL_DEBUG, "Dequeue next LLC (len=%d)\n", msgb_length(ul_tbf->llc_tx_msg));
+
+	ul_tbf->last_ul_drained_fn = -1;
+}
+
+static int create_new_bsn(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_rts_block_ind *bi, enum gprs_rlcmac_coding_scheme cs)
+{
+	struct gprs_rlcmac_llc_queue *llc_queue = ul_tbf->tbf.gre->llc_queue;
+	const uint16_t bsn = gprs_rlcmac_rlc_ul_window_v_s(ul_tbf->ulw);
+	struct gprs_rlcmac_rlc_block *blk;
+	struct gprs_rlcmac_rlc_block_info *rdbi;
+	uint8_t *data;
+	int num_chunks = 0;
+	int write_offset = 0;
+	enum gpr_rlcmac_append_result ar;
+
+	if (!ul_tbf->llc_tx_msg || msgb_length(ul_tbf->llc_tx_msg) == 0)
+		gprs_rlcmac_ul_tbf_schedule_next_llc_frame(ul_tbf);
+	OSMO_ASSERT(ul_tbf->llc_tx_msg);
+
+	OSMO_ASSERT(gprs_rlcmac_mcs_is_valid(cs));
+
+	/* length of usable data block (single data unit w/o header) */
+	const uint8_t block_data_len = gprs_rlcmac_mcs_max_data_block_bytes(cs);
+
+	/* now we still have untransmitted LLC data, so we fill mac block */
+	blk = gprs_rlcmac_rlc_block_store_get_block(ul_tbf->blkst, bsn);
+	data = gprs_rlcmac_rlc_block_prepare(blk, block_data_len);
+	blk->cs_last = cs;
+	blk->cs_current_trans = cs;
+
+	/* Initialise the variable related to UL SPB */
+	blk->spb_status.block_status_ul = GPRS_RLCMAC_EGPRS_RESEG_UL_DEFAULT;
+	blk->cs_init = cs;
+
+	blk->len = block_data_len;
+
+	rdbi = &(blk->block_info);
+	memset(rdbi, 0, sizeof(*rdbi));
+	rdbi->data_len = block_data_len;
+
+	rdbi->cv = 15; /* Final Block Indicator, set late, if true */
+	rdbi->bsn = bsn; /* Block Sequence Number */
+	rdbi->e = 1; /* Extension bit, maybe set later (1: no extension) */
+
+	do {
+		bool is_final;
+		int payload_written = 0;
+
+		if (msgb_length(ul_tbf->llc_tx_msg) == 0) {
+			/* The data just drained, store the current fn */
+			if (ul_tbf->last_ul_drained_fn < 0)
+				ul_tbf->last_ul_drained_fn = bi->fn;
+
+			int space = block_data_len - write_offset;
+
+			if (num_chunks != 0) {
+				/* Nothing to send, and we already put some data in
+				 * rlcmac data block, we are done */
+				LOGPTBFUL(ul_tbf, LOGL_DEBUG,
+					  "LLC queue completely drained and there's "
+					  "still %d free bytes in rlcmac data block\n", space);
+
+				/* We may need to update fbi in header here
+				 * since ul_tbf->last_ul_drained_fn was updated above
+				 * Specially important when X2031 is 0. */
+				is_final = gprs_rlcmac_llc_queue_size(llc_queue) == 0 &&
+					   !gprs_rlcmac_ul_tbf_shall_keep_open(ul_tbf, bi);
+				if (is_final) {
+					rdbi->cv = 0;
+					osmo_fsm_inst_dispatch(ul_tbf->state_fsm.fi, GPRS_RLCMAC_TBF_UL_EV_LAST_UL_DATA_SENT, NULL);
+				}
+
+				if (gprs_rlcmac_mcs_is_edge(cs)) {
+					/* in EGPRS there's no M bit, so we need
+					 * to flag padding with LI=127 */
+					gprs_rlcmac_rlc_data_to_ul_append_egprs_li_padding(
+						rdbi, &write_offset, &num_chunks, data);
+				}
+				break;
+			}
+		}
+
+		is_final = gprs_rlcmac_llc_queue_size(llc_queue) == 0 &&
+			   !gprs_rlcmac_ul_tbf_shall_keep_open(ul_tbf, bi);
+
+		ar = gprs_rlcmac_enc_append_ul_data(rdbi, cs, ul_tbf->llc_tx_msg,
+						    &write_offset, &num_chunks, data,
+						    is_final, &payload_written);
+
+		if (ar == GPRS_RLCMAC_AR_NEED_MORE_BLOCKS)
+			break;
+
+		LOGPTBFUL(ul_tbf, LOGL_DEBUG, "Complete UL frame, len=%d\n", msgb_length(ul_tbf->llc_tx_msg));
+		msgb_free(ul_tbf->llc_tx_msg);
+		ul_tbf->llc_tx_msg = NULL;
+
+		if (is_final)
+			osmo_fsm_inst_dispatch(ul_tbf->state_fsm.fi, GPRS_RLCMAC_TBF_UL_EV_LAST_UL_DATA_SENT, NULL);
+
+		/* dequeue next LLC frame, if any */
+		gprs_rlcmac_ul_tbf_schedule_next_llc_frame(ul_tbf);
+	} while (ar == GPRS_RLCMAC_AR_COMPLETED_SPACE_LEFT);
+
+	LOGPTBFUL(ul_tbf, LOGL_DEBUG, "data block (BSN %d, %s): %s\n",
+		  bsn, gprs_rlcmac_mcs_name(blk->cs_last),
+		  osmo_hexdump(blk->buf, block_data_len));
+	/* raise send state and set ack state array */
+	gprs_rlcmac_rlc_v_b_mark_unacked(&ul_tbf->ulw->v_b, bsn);
+	gprs_rlcmac_rlc_ul_window_increment_send(ul_tbf->ulw);
+
+	return bsn;
+}
+
+static bool restart_bsn_cycle(const struct gprs_rlcmac_ul_tbf *ul_tbf)
+{
+	/* If V(S) == V(A) and finished state, we would have received
+	 * acknowledgement of all transmitted block.  In this case we would
+	 * have transmitted the final block, and received ack from MS. But in
+	 * this case we did not receive the final ack indication from MS.  This
+	 * should never happen if MS works correctly.
+	 */
+	if (gprs_rlcmac_rlc_ul_window_window_empty(ul_tbf->ulw)) {
+		LOGPTBFUL(ul_tbf, LOGL_DEBUG, "MS acked all blocks\n");
+		return false;
+	}
+
+	/* cycle through all unacked blocks */
+	int resend = gprs_rlcmac_rlc_ul_window_mark_for_resend(ul_tbf->ulw);
+
+	/* At this point there should be at least one unacked block
+	 * to be resent. If not, this is an software error. */
+	if (resend == 0) {
+		LOGPTBFUL(ul_tbf, LOGL_ERROR,
+			  "FIXME: Software error: There are no unacknowledged blocks, but V(A) != V(S). PLEASE FIX!\n");
+		return false;
+	}
+
+	return true;
+}
+
+static int take_next_bsn(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_rts_block_ind *bi,
+			int previous_bsn, bool *may_combine)
+{
+	int bsn;
+	int data_len2;
+	int force_data_len = -1;
+	enum gprs_rlcmac_coding_scheme tx_cs;
+	struct gprs_rlcmac_rlc_block *blk;
+
+	/* search for a nacked or resend marked bsn */
+	bsn = gprs_rlcmac_rlc_ul_window_resend_needed(ul_tbf->ulw);
+
+	if (previous_bsn >= 0) {
+		struct gprs_rlcmac_rlc_block *pevious_blk = gprs_rlcmac_rlc_block_store_get_block(ul_tbf->blkst, previous_bsn);
+		tx_cs = pevious_blk->cs_current_trans;
+		if (!gprs_rlcmac_mcs_is_edge(tx_cs))
+			return -1;
+		force_data_len = pevious_blk->len;
+	} else {
+		tx_cs = ul_tbf->tx_cs;
+	}
+
+	if (bsn >= 0) {
+		/* resend an unacked bsn or resend bsn. */
+		if (previous_bsn == bsn)
+			return -1;
+
+		if (previous_bsn >= 0 &&
+		    gprs_rlcmac_rlc_window_mod_sns_bsn(ul_tbf->w, bsn - previous_bsn) > RLC_EGPRS_MAX_BSN_DELTA)
+			return -1;
+
+		blk = gprs_rlcmac_rlc_block_store_get_block(ul_tbf->blkst, bsn);
+		if (ul_tbf->tbf.is_egprs) {
+			/* Table 8.1.1.2 and Table 8.1.1.1 of 44.060 */
+			blk->cs_current_trans = gprs_rlcmac_get_retx_mcs(blk->cs_init, tx_cs,
+									 g_ctx->cfg.egprs_arq_type == GPRS_RLCMAC_EGPRS_ARQ1);
+
+			LOGPTBFUL(ul_tbf, LOGL_DEBUG,
+				  "initial_cs_dl(%s) last_mcs(%s) demanded_mcs(%s) cs_trans(%s) arq_type(%d) bsn(%d)\n",
+				  gprs_rlcmac_mcs_name(blk->cs_init),
+				  gprs_rlcmac_mcs_name(blk->cs_last),
+				  gprs_rlcmac_mcs_name(tx_cs),
+				  gprs_rlcmac_mcs_name(blk->cs_current_trans),
+				  g_ctx->cfg.egprs_arq_type, bsn);
+
+			/* TODO: Need to remove this check when MCS-8 -> MCS-6
+			 * transistion is handled.
+			 * Refer commit be881c028fc4da00c4046ecd9296727975c206a3
+			 */
+			if (blk->cs_init == GPRS_RLCMAC_MCS_8)
+				blk->cs_current_trans = GPRS_RLCMAC_MCS_8;
+		} else {
+			/* gprs */
+			blk->cs_current_trans = blk->cs_last;
+		}
+
+		data_len2 = blk->len;
+		if (force_data_len > 0 && force_data_len != data_len2)
+			return -1;
+		LOGPTBFUL(ul_tbf, LOGL_DEBUG, "Resending BSN %d\n", bsn);
+		/* re-send block with negative acknowlegement */
+		gprs_rlcmac_rlc_v_b_mark_unacked(&ul_tbf->ulw->v_b, bsn);
+	} else if (gprs_rlcmac_tbf_ul_state(ul_tbf) == GPRS_RLCMAC_TBF_UL_ST_FINISHED) {
+		/* If the TBF is in finished, we already sent all packages at least once.
+		 * If any packages could have been sent (because of unacked) it should have
+		 * been catched up by the upper if(bsn >= 0) */
+		LOGPTBFUL(ul_tbf, LOGL_DEBUG, "Restarting at BSN %d, because all blocks have been transmitted.\n",
+			  gprs_rlcmac_rlc_ul_window_v_a(ul_tbf->ulw));
+		if (restart_bsn_cycle(ul_tbf))
+			return take_next_bsn(ul_tbf, bi, previous_bsn, may_combine);
+	} else if (gprs_rlcmac_rlc_ul_window_window_stalled(ul_tbf->ulw)) {
+		/* There are no more packages to send, but the window is stalled.
+		 * Restart the bsn_cycle to resend all unacked messages */
+		LOGPTBFUL(ul_tbf, LOGL_NOTICE, "Restarting at BSN %d, because the window is stalled.\n",
+			  gprs_rlcmac_rlc_ul_window_v_a(ul_tbf->ulw));
+		if (restart_bsn_cycle(ul_tbf))
+			return take_next_bsn(ul_tbf, bi, previous_bsn, may_combine);
+	} else if (gprs_rlcmac_ul_tbf_have_data(ul_tbf)) {
+		/* The window has space left, generate new bsn */
+		LOGPTBFUL(ul_tbf, LOGL_DEBUG, "Sending new block at BSN %d, CS=%s%s\n",
+			  gprs_rlcmac_rlc_ul_window_v_s(ul_tbf->ulw), gprs_rlcmac_mcs_name(tx_cs),
+			  force_data_len != -1 ? " (forced)" : "");
+
+		bsn = create_new_bsn(ul_tbf, bi, tx_cs);
+	} else if (g_ctx->cfg.ul_tbf_preemptive_retransmission &&
+		   !gprs_rlcmac_rlc_ul_window_window_empty(ul_tbf->ulw)) {
+		/* The window contains unacked packages, but not acked.
+		 * Mark unacked bsns as RESEND */
+		LOGPTBFUL(ul_tbf, LOGL_DEBUG, "Restarting at BSN %d, because all blocks have been transmitted (FLOW).\n",
+			  gprs_rlcmac_rlc_ul_window_v_a(ul_tbf->ulw));
+		if (restart_bsn_cycle(ul_tbf))
+			return take_next_bsn(ul_tbf, bi, previous_bsn, may_combine);
+	} else {
+		/* Nothing left to send, create dummy LLC commands */
+		LOGPTBFUL(ul_tbf, LOGL_DEBUG, "Sending new dummy block at BSN %d, CS=%s\n",
+			  gprs_rlcmac_rlc_ul_window_v_s(ul_tbf->ulw),
+			  gprs_rlcmac_mcs_name(tx_cs));
+		bsn = create_new_bsn(ul_tbf, bi, tx_cs);
+		/* Don't send a second block, so don't set cs_current_trans */
+	}
+
+	if (bsn < 0) {
+		/* we just send final block again */
+		LOGPTBFUL(ul_tbf, LOGL_DEBUG, "Nothing else to send, Re-transmit final block!\n");
+		bsn = gprs_rlcmac_rlc_ul_window_v_s_mod(ul_tbf->ulw, -1);
+	}
+
+	blk = gprs_rlcmac_rlc_block_store_get_block(ul_tbf->blkst, bsn);
+	*may_combine = gprs_rlcmac_num_data_blocks(gprs_rlcmac_mcs_header_type(blk->cs_current_trans)) > 1;
+
+	return bsn;
+}
+
+/*
+ * This function returns the pointer to data which needs
+ * to be copied. Also updates the status of the block related to
+ * Split block handling in the RLC/MAC block.
+ */
+static enum gprs_rlcmac_rlc_egprs_ul_reseg_bsn_state egprs_ul_get_data(const struct gprs_rlcmac_ul_tbf *ul_tbf, int bsn, uint8_t **block_data)
+{
+	struct gprs_rlcmac_rlc_block *blk = gprs_rlcmac_rlc_block_store_get_block(ul_tbf->blkst, bsn);
+	enum gprs_rlcmac_rlc_egprs_ul_reseg_bsn_state *block_status_ul = &blk->spb_status.block_status_ul;
+
+	enum gprs_rlcmac_coding_scheme cs_init = blk->cs_init;
+	enum gprs_rlcmac_coding_scheme cs_current_trans = blk->cs_current_trans;
+
+	enum gprs_rlcmac_header_type ht_cs_init = gprs_rlcmac_mcs_header_type(blk->cs_init);
+	enum gprs_rlcmac_header_type ht_cs_current_trans = gprs_rlcmac_mcs_header_type(blk->cs_current_trans);
+
+	*block_data = &blk->buf[0];
+
+	/*
+	 * Table 10.3a.0.1 of 44.060
+	 * MCS6,9: second segment starts at 74/2 = 37
+	 * MCS5,7: second segment starts at 56/2 = 28
+	 * MCS8: second segment starts at 31
+	 * MCS4: second segment starts at 44/2 = 22
+	 */
+	if (ht_cs_current_trans == GPRS_RLCMAC_HEADER_EGPRS_DATA_TYPE_3) {
+		if (*block_status_ul == GPRS_RLCMAC_EGPRS_RESEG_FIRST_SEG_SENT) {
+			switch (cs_init) {
+			case GPRS_RLCMAC_MCS_6:
+			case GPRS_RLCMAC_MCS_9:
+				*block_data = &blk->buf[37];
+				break;
+			case GPRS_RLCMAC_MCS_7:
+			case GPRS_RLCMAC_MCS_5:
+				*block_data = &blk->buf[28];
+				break;
+			case GPRS_RLCMAC_MCS_8:
+				*block_data = &blk->buf[31];
+				break;
+			case GPRS_RLCMAC_MCS_4:
+				*block_data = &blk->buf[22];
+				break;
+			default:
+				LOGPTBFUL(ul_tbf, LOGL_ERROR,
+					  "FIXME: Software error: hit invalid condition. "
+					  "headerType(%d) blockstatus(%d) cs(%s) PLEASE FIX!\n",
+					  ht_cs_current_trans,
+					  *block_status_ul, gprs_rlcmac_mcs_name(cs_init));
+				break;
+
+			}
+			return GPRS_RLCMAC_EGPRS_RESEG_SECOND_SEG_SENT;
+		} else if ((ht_cs_init == GPRS_RLCMAC_HEADER_EGPRS_DATA_TYPE_1) ||
+			   (ht_cs_init == GPRS_RLCMAC_HEADER_EGPRS_DATA_TYPE_2)) {
+			return GPRS_RLCMAC_EGPRS_RESEG_FIRST_SEG_SENT;
+		} else if ((cs_init == GPRS_RLCMAC_MCS_4) &&
+			   (cs_current_trans == GPRS_RLCMAC_MCS_1)) {
+			return GPRS_RLCMAC_EGPRS_RESEG_FIRST_SEG_SENT;
+		}
+	}
+	return GPRS_RLCMAC_EGPRS_RESEG_UL_DEFAULT;
+}
+
+/*
+ * This function returns the spb value to be sent OTA
+ * for RLC/MAC block.
+ */
+static enum gprs_rlcmac_rlc_egprs_ul_spb get_egprs_ul_spb(const struct gprs_rlcmac_ul_tbf *ul_tbf, int bsn)
+{
+	struct gprs_rlcmac_rlc_block *blk = gprs_rlcmac_rlc_block_store_get_block(ul_tbf->blkst, bsn);
+	enum gprs_rlcmac_rlc_egprs_ul_reseg_bsn_state block_status_ul = blk->spb_status.block_status_ul;
+
+	enum gprs_rlcmac_coding_scheme cs_init = blk->cs_init;
+	enum gprs_rlcmac_coding_scheme cs_current_trans = blk->cs_current_trans;
+
+	enum gprs_rlcmac_header_type ht_cs_init = gprs_rlcmac_mcs_header_type(blk->cs_init);
+	enum gprs_rlcmac_header_type ht_cs_current_trans = gprs_rlcmac_mcs_header_type(blk->cs_current_trans);
+
+	/* Table 10.4.8b.1 of 44.060 */
+	if (ht_cs_current_trans == GPRS_RLCMAC_HEADER_EGPRS_DATA_TYPE_3) {
+		/*
+		 * if we are sending the second segment the spb should be 3
+		 * otherwise it should be 2
+		 */
+		if (block_status_ul == GPRS_RLCMAC_EGPRS_RESEG_FIRST_SEG_SENT) {
+			return GPRS_RLCMAC_EGPRS_UL_SPB_SEC_SEG;
+		} else if ((ht_cs_init == GPRS_RLCMAC_HEADER_EGPRS_DATA_TYPE_1) ||
+			   (ht_cs_init == GPRS_RLCMAC_HEADER_EGPRS_DATA_TYPE_2)) {
+			return GPRS_RLCMAC_EGPRS_UL_SPB_FIRST_SEG_6NOPAD;
+		} else if ((cs_init == GPRS_RLCMAC_MCS_4) &&
+			   (cs_current_trans == GPRS_RLCMAC_MCS_1)) {
+			return GPRS_RLCMAC_EGPRS_UL_SPB_FIRST_SEG_10PAD;
+		}
+	}
+	/* Non SPB cases 0 is reurned */
+	return GPRS_RLCMAC_EGPRS_UL_SPB_NO_RETX;
+}
+
+static struct msgb *create_ul_acked_block(struct gprs_rlcmac_ul_tbf *ul_tbf,
+					  const struct gprs_rlcmac_rts_block_ind *bi,
+					  int index, int index2)
+{
+	uint8_t *msg_data;
+	struct msgb *msg;
+	unsigned msg_len;
+	/* TODO: support MCS-7 - MCS-9, where data_block_idx can be 1 */
+	uint8_t data_block_idx = 0;
+	bool is_final = false;
+	enum gprs_rlcmac_coding_scheme cs_init, cs;
+	struct gprs_rlcmac_rlc_data_info rlc;
+	int bsns[ARRAY_SIZE(rlc.block_info)];
+	unsigned num_bsns;
+	bool need_padding = false;
+	enum gprs_rlcmac_rlc_egprs_ul_spb spb = GPRS_RLCMAC_EGPRS_UL_SPB_NO_RETX;
+	unsigned int spb_status;
+	struct gprs_rlcmac_rlc_block *blk;
+
+	blk = gprs_rlcmac_rlc_block_store_get_block(ul_tbf->blkst, index);
+	spb_status = blk->spb_status.block_status_ul;
+
+	enum gprs_rlcmac_egprs_puncturing_values punct[2] = {
+		GPRS_RLCMAC_EGPRS_PS_INVALID, GPRS_RLCMAC_EGPRS_PS_INVALID
+	};
+	osmo_static_assert(ARRAY_SIZE(rlc.block_info) == 2, rlc_block_info_size_is_two);
+
+	/*
+	 * TODO: This is an experimental work-around to put 2 BSN into
+	 * MCS-7 to MCS-9 encoded messages. It just sends the same BSN
+	 * twice in the block. The cs should be derived from the TBF's
+	 * current CS such that both BSNs (that must be compatible) can
+	 * be put into the data area, even if the resulting CS is higher than
+	 * the current limit.
+	 */
+	cs = blk->cs_current_trans;
+	cs_init = blk->cs_init;
+	bsns[0] = index;
+	num_bsns = 1;
+
+	if (index2 >= 0) {
+		bsns[num_bsns] = index2;
+		num_bsns += 1;
+	}
+
+	/*
+	 * if the initial mcs is 8 and retransmission mcs is either 6 or 3
+	 * we have to include the padding of 6 octets in first segment
+	 */
+	if ((cs_init == GPRS_RLCMAC_MCS_8) &&
+	    (cs == GPRS_RLCMAC_MCS_6 || cs == GPRS_RLCMAC_MCS_3)) {
+		if (spb_status == GPRS_RLCMAC_EGPRS_RESEG_UL_DEFAULT ||
+		    spb_status == GPRS_RLCMAC_EGPRS_RESEG_SECOND_SEG_SENT)
+			need_padding  = true;
+	} else if (num_bsns == 1) {
+		/* TODO: remove the conditional when MCS-6 padding isn't
+		 * failing to be decoded by MEs anymore */
+		/* TODO: support of MCS-8 -> MCS-6 transition should be
+		 * handled
+		 * Refer commit be881c028fc4da00c4046ecd9296727975c206a3
+		 * dated 2016-02-07 23:45:40 (UTC)
+		 */
+		if (cs != GPRS_RLCMAC_MCS_8)
+			gprs_rlcmac_mcs_dec_to_single_block(&cs, &need_padding);
+	}
+
+	spb = get_egprs_ul_spb(ul_tbf, index);
+
+	LOGPTBFUL(ul_tbf, LOGL_DEBUG, "need_padding %d spb_status %d spb %d (BSN1 %d BSN2 %d)\n",
+		  need_padding, spb_status, spb, index, index2);
+
+	gprs_rlcmac_rlc_data_info_init_ul(&rlc, cs, need_padding, spb);
+
+	rlc.usf = 7; /* will be set at scheduler */
+	rlc.pr = 0; /* FIXME: power reduction */
+	rlc.tfi = ul_tbf->cur_alloc.ul_tfi; /* TFI */
+
+	/* return data block(s) as message */
+	msg_len = gprs_rlcmac_mcs_size_dl(cs);
+	msg = msgb_alloc(msg_len, "rlcmac_ul_data");
+	if (!msg)
+		return NULL;
+
+	msg_data = msgb_put(msg, msg_len);
+
+	OSMO_ASSERT(rlc.num_data_blocks <= ARRAY_SIZE(rlc.block_info));
+	OSMO_ASSERT(rlc.num_data_blocks > 0);
+
+	LOGPTBFUL(ul_tbf, LOGL_DEBUG, "Copying %u RLC blocks, %u BSNs\n", rlc.num_data_blocks, num_bsns);
+
+	/* Copy block(s) to RLC message: the num_data_blocks cannot be more than 2 - see assert above */
+	for (data_block_idx = 0; data_block_idx < OSMO_MIN(rlc.num_data_blocks, 2); data_block_idx++) {
+		int bsn;
+		uint8_t *block_data;
+		struct gprs_rlcmac_rlc_block_info *rdbi, *block_info;
+		enum gprs_rlcmac_rlc_egprs_ul_reseg_bsn_state reseg_status;
+
+		/* Check if there are more blocks than BSNs */
+		if (data_block_idx < num_bsns)
+			bsn = bsns[data_block_idx];
+		else
+			bsn = bsns[0];
+
+		/* Get current puncturing scheme from block */
+		blk = gprs_rlcmac_rlc_block_store_get_block(ul_tbf->blkst, bsn);
+
+		blk->next_ps = gprs_rlcmac_get_punct_scheme(blk->next_ps, blk->cs_last, cs, spb);
+
+		if (gprs_rlcmac_mcs_is_edge(cs)) {
+			OSMO_ASSERT(blk->next_ps >= GPRS_RLCMAC_EGPRS_PS_1);
+			OSMO_ASSERT(blk->next_ps <= GPRS_RLCMAC_EGPRS_PS_3);
+		}
+
+		punct[data_block_idx] = blk->next_ps;
+
+		rdbi = &rlc.block_info[data_block_idx];
+		block_info = &blk->block_info;
+
+		/*
+		 * get data and header from current block
+		 * function returns the reseg status
+		 */
+		reseg_status = egprs_ul_get_data(ul_tbf, bsn, &block_data);
+		blk->spb_status.block_status_dl = reseg_status;
+
+		/*
+		 * If it is first segment of the split block set the state of
+		 * bsn to nacked. If it is the first segment dont update the
+		 * next ps value of bsn. since next segment also needs same cps
+		 */
+		if (spb == GPRS_RLCMAC_EGPRS_UL_SPB_FIRST_SEG_10PAD ||
+		    spb == GPRS_RLCMAC_EGPRS_UL_SPB_FIRST_SEG_6NOPAD)
+			gprs_rlcmac_rlc_v_b_mark_nacked(&ul_tbf->ulw->v_b, bsn);
+		else {
+			/*
+			 * TODO: Need to handle 2 same bsns
+			 * in header type 1
+			 */
+			gprs_rlcmac_update_punct_scheme(&blk->next_ps, cs);
+		}
+
+		blk->cs_last = cs;
+		rdbi->e   = block_info->e;
+		rdbi->cv  = block_info->cv;
+		rdbi->bsn = bsn;
+		is_final = is_final || rdbi->cv == 0;
+
+		LOGPTBFUL(ul_tbf, LOGL_DEBUG, "Copying data unit %d (BSN %d)\n",
+			  data_block_idx, bsn);
+
+		gprs_rlcmac_rlc_copy_from_aligned_buffer(&rlc, data_block_idx, msg_data, block_data);
+	}
+
+	/* Calculate CPS only for EGPRS case */
+	if (gprs_rlcmac_mcs_is_edge(cs))
+		rlc.cps = gprs_rlcmac_rlc_mcs_cps(cs, punct[0], punct[1], need_padding);
+
+	gprs_rlcmac_rlc_write_ul_data_header(&rlc, msg_data);
+
+	LOGPTBFUL(ul_tbf, LOGL_DEBUG, "msg block (BSN %d, %s%s): %s\n",
+		  index, gprs_rlcmac_mcs_name(cs),
+		  need_padding ? ", padded" : "",
+		  msgb_hexdump(msg));
+
+	return msg;
+}
+
+struct msgb *gprs_rlcmac_ul_tbf_data_create(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_rts_block_ind *bi)
+{
+	int bsn;
+	int bsn2 = -1;
+	bool may_combine;
+
+	bsn = take_next_bsn(ul_tbf, bi, -1, &may_combine);
+	if (bsn < 0)
+		return NULL;
+
+	if (may_combine)
+		bsn2 = take_next_bsn(ul_tbf, bi, bsn, &may_combine);
+
+	return create_ul_acked_block(ul_tbf, bi, bsn, bsn2);
 }

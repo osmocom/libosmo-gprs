@@ -8,15 +8,36 @@
 #include <osmocom/gprs/rlcmac/tbf.h>
 #include <osmocom/gprs/rlcmac/tbf_ul_fsm.h>
 #include <osmocom/gprs/rlcmac/tbf_ul_ass_fsm.h>
+#include <osmocom/gprs/rlcmac/coding_scheme.h>
 #include <osmocom/gprs/rlcmac/sched.h>
 #include <osmocom/gprs/rlcmac/rlcmac_private.h>
+
+struct gprs_rlcmac_rlc_window;
+struct gprs_rlcmac_rlc_ul_window;
 
 struct gprs_rlcmac_ul_tbf {
 	struct gprs_rlcmac_tbf tbf;
 	struct gprs_rlcmac_tbf_ul_fsm_ctx state_fsm;
 	struct gprs_rlcmac_tbf_ul_ass_fsm_ctx ul_ass_fsm;
 
+	/* Current TS/TFI/USF allocated by the PCU: */
 	struct gprs_rlcmac_ul_tbf_allocation cur_alloc;
+
+	/* Currently selected LLC frame to be scheduled/transmitted */
+	struct msgb *llc_tx_msg;
+	int32_t last_ul_drained_fn;
+
+	/* Holds state of all generated in-transit RLC blocks */
+	struct gprs_rlcmac_rlc_block_store *blkst;
+
+	/* Uplink RLC Window, holds ACK state */
+	union { /* easy access to parent and child */
+		struct gprs_rlcmac_rlc_window *w;
+		struct gprs_rlcmac_rlc_ul_window *ulw;
+	};
+
+	/* (M)CS used to transmit uplink blocks, assigned by PCU: */
+	enum gprs_rlcmac_coding_scheme tx_cs;
 };
 
 struct gprs_rlcmac_ul_tbf *gprs_rlcmac_ul_tbf_alloc(struct gprs_rlcmac_entity *gre);
@@ -25,7 +46,7 @@ void gprs_rlcmac_ul_tbf_free(struct gprs_rlcmac_ul_tbf *ul_tbf);
 bool gprs_rlcmac_ul_tbf_data_rts(const struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_rts_block_ind *bi);
 bool gprs_rlcmac_ul_tbf_dummy_rts(const struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_rts_block_ind *bi);
 
-struct msgb *gprs_rlcmac_ul_tbf_data_create(const struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_rts_block_ind *bi);
+struct msgb *gprs_rlcmac_ul_tbf_data_create(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_rts_block_ind *bi);
 struct msgb *gprs_rlcmac_ul_tbf_dummy_create(const struct gprs_rlcmac_ul_tbf *ul_tbf);
 
 

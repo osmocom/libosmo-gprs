@@ -18,10 +18,269 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+
+#include <osmocom/core/endian.h>
+
 #include <osmocom/gprs/rlcmac/csn1_defs.h>
 #include <osmocom/gprs/rlcmac/rlcmac_enc.h>
 #include <osmocom/gprs/rlcmac/gre.h>
 #include <osmocom/gprs/rlcmac/tbf_ul.h>
+
+int gprs_rlcmac_rlc_write_ul_data_header(const struct gprs_rlcmac_rlc_data_info *rlc, uint8_t *data)
+{
+	struct gprs_rlcmac_rlc_ul_data_header *gprs;
+
+	switch (gprs_rlcmac_mcs_header_type(rlc->cs)) {
+	case GPRS_RLCMAC_HEADER_GPRS_DATA:
+		gprs = (struct gprs_rlcmac_rlc_ul_data_header *)data;
+
+		gprs->r  = rlc->r;
+		gprs->si = rlc->si;
+		gprs->cv = rlc->block_info[0].cv;
+		gprs->pt = 0;
+
+		gprs->ti    = 0; /* TODO */
+		gprs->tfi   = rlc->tfi;
+		gprs->pi    = 0; /* TODO */
+		gprs->spare = 0;
+
+		gprs->e   = rlc->block_info[0].e;
+		gprs->bsn = rlc->block_info[0].bsn;
+		break;
+
+	case GPRS_RLCMAC_HEADER_EGPRS_DATA_TYPE_1:
+	case GPRS_RLCMAC_HEADER_EGPRS_DATA_TYPE_2:
+	case GPRS_RLCMAC_HEADER_EGPRS_DATA_TYPE_3:
+		/* TODO: EGPRS. See osmo-pcu.git Encoding::rlc_write_dl_data_header() */
+	default:
+		LOGRLCMAC(LOGL_ERROR, "Encoding of uplink %s data blocks not yet supported.\n",
+			  gprs_rlcmac_mcs_name(rlc->cs));
+		return -ENOTSUP;
+	};
+
+	return 0;
+}
+
+enum gpr_rlcmac_append_result gprs_rlcmac_enc_append_ul_data(
+				struct gprs_rlcmac_rlc_block_info *rdbi,
+				enum gprs_rlcmac_coding_scheme cs,
+				struct msgb *llc_msg, int *offset, int *num_chunks,
+				uint8_t *data_block, bool is_final, int *count_payload)
+{
+	int chunk;
+	int space;
+	struct gprs_rlcmac_rlc_li_field *li;
+	uint8_t *delimiter, *data, *e_pointer;
+
+	data = data_block + *offset;
+	delimiter = data_block + *num_chunks;
+	e_pointer = (*num_chunks ? delimiter - 1 : NULL);
+
+	chunk = msgb_length(llc_msg);
+	space = rdbi->data_len - *offset;
+
+	/* if chunk will exceed block limit */
+	if (chunk > space) {
+		LOGRLCMAC(LOGL_DEBUG, "-- Chunk with length %d "
+			  "larger than space (%d) left in block: copy "
+			  "only remaining space, and we are done\n",
+			  chunk, space);
+		if (e_pointer) {
+			/* LLC frame not finished, so there is no extension octet */
+			*e_pointer |= 0x02; /* set previous M bit = 1 */
+		}
+		/* fill only space */
+		memcpy(data, msgb_data(llc_msg), space);
+		msgb_pull(llc_msg, space);
+		if (count_payload)
+			*count_payload = space;
+		/* return data block as message */
+		*offset = rdbi->data_len;
+		(*num_chunks)++;
+		return GPRS_RLCMAC_AR_NEED_MORE_BLOCKS;
+	}
+	/* if FINAL chunk would fit precisely in space left */
+	if (chunk == space && is_final) {
+		LOGRLCMAC(LOGL_DEBUG, "-- Chunk with length %d "
+			  "would exactly fit into space (%d): because "
+			  "this is a final block, we don't add length "
+			  "header, and we are done\n", chunk, space);
+		/* block is filled, so there is no extension */
+		if (e_pointer)
+			*e_pointer |= 0x01;
+		/* fill space */
+		memcpy(data, msgb_data(llc_msg), space);
+		msgb_pull(llc_msg, space);
+		if (count_payload)
+			*count_payload = space;
+		*offset = rdbi->data_len;
+		(*num_chunks)++;
+		rdbi->cv = 0;
+		return GPRS_RLCMAC_AR_COMPLETED_BLOCK_FILLED;
+	}
+	/* if chunk would fit exactly in space left */
+	if (chunk == space) {
+		LOGRLCMAC(LOGL_DEBUG, "-- Chunk with length %d "
+			  "would exactly fit into space (%d): add length "
+			  "header with LI=0, to make frame extend to "
+			  "next block, and we are done\n", chunk, space);
+		/* make space for delimiter */
+		if (delimiter != data)
+			memmove(delimiter + 1, delimiter,
+				data - delimiter);
+		if (e_pointer) {
+			*e_pointer &= 0xfe; /* set previous E bit = 0 */
+			*e_pointer |= 0x02; /* set previous M bit = 1 */
+		}
+		data++;
+		(*offset)++;
+		space--;
+		/* add LI with 0 length */
+		li = (struct gprs_rlcmac_rlc_li_field *)delimiter;
+		li->e = 1; /* not more extension */
+		li->m = 0; /* shall be set to 0, in case of li = 0 */
+		li->li = 0; /* chunk fills the complete space */
+		rdbi->e = 0; /* 0: extensions present */
+		// no need to set e_pointer nor increase delimiter
+		/* fill only space, which is 1 octet less than chunk */
+		memcpy(data, msgb_data(llc_msg), space);
+		msgb_pull(llc_msg, space);
+		if (count_payload)
+			*count_payload = space;
+		/* return data block as message */
+		*offset = rdbi->data_len;
+		(*num_chunks)++;
+		return GPRS_RLCMAC_AR_NEED_MORE_BLOCKS;
+	}
+
+	LOGRLCMAC(LOGL_DEBUG, "-- Chunk with length %d is less "
+		  "than remaining space (%d): add length header to "
+		  "delimit LLC frame\n", chunk, space);
+	/* the LLC frame chunk ends in this block */
+	/* make space for delimiter */
+	if (delimiter != data)
+		memmove(delimiter + 1, delimiter, data - delimiter);
+	if (e_pointer) {
+		*e_pointer &= 0xfe; /* set previous E bit = 0 */
+		*e_pointer |= 0x02; /* set previous M bit = 1 */
+	}
+	data++;
+	(*offset)++;
+	space--;
+	/* add LI to delimit frame */
+	li = (struct gprs_rlcmac_rlc_li_field *)delimiter;
+	li->e = 1; /*  not more extension, maybe set later */
+	li->m = 0; /* will be set later, if there is more LLC data */
+	li->li = chunk; /* length of chunk */
+	rdbi->e = 0; /* 0: extensions present */
+	(*num_chunks)++;
+	/* copy (rest of) LLC frame to space and reset later */
+	memcpy(data, msgb_data(llc_msg), chunk);
+	msgb_pull(llc_msg, chunk);
+	if (count_payload)
+		*count_payload = chunk;
+	data += chunk;
+	space -= chunk;
+	(*offset) += chunk;
+	/* if we have more data and we have space left */
+	if (space > 0 && !is_final)
+		return GPRS_RLCMAC_AR_COMPLETED_SPACE_LEFT;
+
+	/* if we don't have more LLC frames */
+	if (is_final) {
+		LOGRLCMAC(LOGL_DEBUG, "-- Final block, so we done.\n");
+		rdbi->cv = 0;
+		return GPRS_RLCMAC_AR_COMPLETED_BLOCK_FILLED;
+	}
+	/* we have no space left */
+	LOGRLCMAC(LOGL_DEBUG, "-- No space left, so we are done.\n");
+	return GPRS_RLCMAC_AR_COMPLETED_BLOCK_FILLED;
+}
+
+void gprs_rlcmac_rlc_data_to_ul_append_egprs_li_padding(const struct gprs_rlcmac_rlc_block_info *rdbi,
+							int *offset, int *num_chunks, uint8_t *data_block)
+{
+	struct gprs_rlcmacrlc_li_field_egprs *li;
+	struct gprs_rlcmacrlc_li_field_egprs *prev_li;
+	uint8_t *delimiter, *data;
+
+	LOGRLCMAC(LOGL_DEBUG, "Adding LI=127 to signal padding\n");
+
+	data = data_block + *offset;
+	delimiter = data_block + *num_chunks;
+	prev_li = (struct gprs_rlcmacrlc_li_field_egprs *)(*num_chunks ? delimiter - 1 : NULL);
+
+	/* we don't have more LLC frames */
+	/* We will have to add another chunk with filling octets */
+
+	if (delimiter != data)
+		memmove(delimiter + 1, delimiter, data - delimiter);
+
+	/* set filling bytes extension */
+	li = (struct gprs_rlcmacrlc_li_field_egprs *)delimiter;
+	li->e = 1;
+	li->li = 127;
+
+	/* tell previous extension header about the new one */
+	if (prev_li)
+		prev_li->e = 0;
+
+	(*num_chunks)++;
+	*offset = rdbi->data_len;
+}
+
+/**
+ * Copy LSB bitstream RLC data block from byte aligned buffer.
+ *
+ * Note that the bitstream is encoded in LSB first order, so the two octets
+ * 654321xx xxxxxx87 contain the octet 87654321 starting at bit position 3
+ * (LSB has bit position 1). This is a different order than the one used by
+ * CSN.1.
+ *
+ * \param data_block_idx  The block index, 0..1 for header type 1, 0 otherwise
+ * \param src     A pointer to the start of the RLC block (incl. the header)
+ * \param buffer  A data area of a least the size of the RLC block
+ * \returns  the number of bytes copied
+ */
+unsigned int gprs_rlcmac_rlc_copy_from_aligned_buffer(const struct gprs_rlcmac_rlc_data_info *rlc,
+						      unsigned int data_block_idx,
+						      uint8_t *dst, const uint8_t *buffer)
+{
+	unsigned int hdr_bytes;
+	unsigned int extra_bits;
+	unsigned int i;
+
+	uint8_t c, last_c;
+	const uint8_t *src;
+	const struct gprs_rlcmac_rlc_block_info *rdbi;
+
+	OSMO_ASSERT(data_block_idx < rlc->num_data_blocks);
+	rdbi = &rlc->block_info[data_block_idx];
+
+	hdr_bytes = rlc->data_offs_bits[data_block_idx] / 8;
+	extra_bits = (rlc->data_offs_bits[data_block_idx] % 8);
+
+	if (extra_bits == 0) {
+		/* It is aligned already */
+		memmove(dst + hdr_bytes, buffer, rdbi->data_len);
+		return rdbi->data_len;
+	}
+
+	src = buffer;
+	dst = dst + hdr_bytes;
+	last_c = *dst << (8 - extra_bits);
+
+	for (i = 0; i < rdbi->data_len; i++) {
+		c = src[i];
+		*(dst++) = (last_c >> (8 - extra_bits)) | (c << extra_bits);
+		last_c = c;
+	}
+
+	/* overwrite the lower extra_bits */
+	*dst = (*dst & (0xff << extra_bits)) | (last_c >> (8 - extra_bits));
+
+	return rdbi->data_len;
+}
 
 void gprs_rlcmac_enc_prepare_pkt_ul_dummy_block(RlcMacUplink_t *block, uint32_t tlli)
 {

@@ -11,6 +11,7 @@ enum gprs_rlcmac_tbf_ul_fsm_states {
 	GPRS_RLCMAC_TBF_UL_ST_NEW = 0,	/* new created TBF */
 	GPRS_RLCMAC_TBF_UL_ST_WAIT_ASSIGN,	/* wait for Immediate Assignment */
 	GPRS_RLCMAC_TBF_UL_ST_FLOW,	/* RLC/MAC flow, resource needed */
+	GPRS_RLCMAC_TBF_UL_ST_FINISHED,	/* flow finished, wait for release */
 };
 
 struct gprs_rlcmac_tbf_ul_fsm_ctx {
@@ -24,6 +25,7 @@ struct gprs_rlcmac_tbf_ul_fsm_ctx {
 enum tbf_ul_fsm_event {
 	GPRS_RLCMAC_TBF_UL_EV_UL_ASS_START,
 	GPRS_RLCMAC_TBF_UL_EV_UL_ASS_COMPL,
+	GPRS_RLCMAC_TBF_UL_EV_LAST_UL_DATA_SENT,
 	GPRS_RLCMAC_TBF_UL_EV_FOOBAR,
 };
 

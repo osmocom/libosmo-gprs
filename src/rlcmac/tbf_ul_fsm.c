@@ -30,9 +30,10 @@
 #define X(s) (1 << (s))
 
 static const struct value_string tbf_ul_fsm_event_names[] = {
-	{ GPRS_RLCMAC_TBF_UL_EV_UL_ASS_START, "UL_ASS_START" },
-	{ GPRS_RLCMAC_TBF_UL_EV_UL_ASS_COMPL, "UL_ASS_COMPL" },
-	{ GPRS_RLCMAC_TBF_UL_EV_FOOBAR, "FOOBAR" },
+	{ GPRS_RLCMAC_TBF_UL_EV_UL_ASS_START,		 "UL_ASS_START" },
+	{ GPRS_RLCMAC_TBF_UL_EV_UL_ASS_COMPL,		"UL_ASS_COMPL" },
+	{ GPRS_RLCMAC_TBF_UL_EV_LAST_UL_DATA_SENT,	"LAST_UL_DATA_SENT" },
+	{ GPRS_RLCMAC_TBF_UL_EV_FOOBAR,			"FOOBAR" },
 	{ 0, NULL }
 };
 
@@ -40,6 +41,7 @@ static const struct osmo_tdef_state_timeout tbf_ul_fsm_timeouts[32] = {
 	[GPRS_RLCMAC_TBF_UL_ST_NEW] = { },
 	[GPRS_RLCMAC_TBF_UL_ST_WAIT_ASSIGN] = { },
 	[GPRS_RLCMAC_TBF_UL_ST_FLOW] = { },
+	[GPRS_RLCMAC_TBF_UL_ST_FINISHED] = { },
 };
 
 /* Transition to a state, using the T timer defined in tbf_fsm_timeouts.
@@ -104,6 +106,18 @@ static void st_flow(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	//struct gprs_rlcmac_tbf_ul_fsm_ctx *ctx = (struct gprs_rlcmac_tbf_ul_fsm_ctx *)fi->priv;
 	switch (event) {
+	case GPRS_RLCMAC_TBF_UL_EV_LAST_UL_DATA_SENT:
+		tbf_ul_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ST_FINISHED);
+		break;
+	default:
+		OSMO_ASSERT(0);
+	}
+}
+
+static void st_finished(struct osmo_fsm_inst *fi, uint32_t event, void *data)
+{
+	//struct gprs_rlcmac_tbf_ul_fsm_ctx *ctx = (struct gprs_rlcmac_tbf_ul_fsm_ctx *)fi->priv;
+	switch (event) {
 	default:
 		OSMO_ASSERT(0);
 	}
@@ -129,11 +143,19 @@ static struct osmo_fsm_state tbf_ul_fsm_states[] = {
 	},
 	[GPRS_RLCMAC_TBF_UL_ST_FLOW] = {
 		.in_event_mask =
+			X(GPRS_RLCMAC_TBF_UL_EV_LAST_UL_DATA_SENT),
+		.out_state_mask =
+			X(GPRS_RLCMAC_TBF_UL_ST_FINISHED),
+		.name = "FLOW",
+		.action = st_flow,
+	},
+	[GPRS_RLCMAC_TBF_UL_ST_FINISHED] = {
+		.in_event_mask =
 			X(GPRS_RLCMAC_TBF_UL_EV_FOOBAR),
 		.out_state_mask =
 			X(GPRS_RLCMAC_TBF_UL_ST_WAIT_ASSIGN),
-		.name = "FLOW",
-		.action = st_flow,
+		.name = "FINISHED",
+		.action = st_finished,
 	},
 };
 

@@ -115,6 +115,8 @@ int gprs_rlcmac_rcv_rts_block(struct gprs_rlcmac_rts_block_ind *bi)
 {
 	struct msgb *msg = NULL;
 	struct tbf_sched_ctrl_candidates tbf_cand = {0};
+	struct osmo_gprs_rlcmac_prim *rlcmac_prim_tx;
+	int rc;
 
 	get_ctrl_msg_tbf_candidates(bi, &tbf_cand);
 
@@ -130,7 +132,11 @@ int gprs_rlcmac_rcv_rts_block(struct gprs_rlcmac_rts_block_ind *bi)
 
 	/* Nothing to transmit */
 	return 0;
+
 tx_msg:
-	/* TODO: transmit msg to lower layer (L1CTL?) */
-	return 0;
+	rlcmac_prim_tx = gprs_rlcmac_prim_alloc_l1ctl_pdch_data_req(bi->ts, bi->fn, msgb_data(msg), 0);
+	rlcmac_prim_tx->l1ctl.pdch_data_req.data_len = msgb_length(msg);
+	rc = gprs_rlcmac_prim_call_down_cb(rlcmac_prim_tx);
+	msgb_free(msg);
+	return rc;
 }

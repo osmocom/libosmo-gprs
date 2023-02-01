@@ -24,12 +24,16 @@ lib_LTLIBRARIES = \
 	$(NULL)
 
 libosmo_gprs_rlcmac_la_SOURCES = \
+	codel.c \
+	coding_scheme.c \
 	csn1_ts_24_008.c \
 	csn1_ts_44_018.c \
 	csn1_ts_44_060.c \
-	codel.c \
 	gre.c \
 	llc_queue.c \
+	rlc_window.c \
+	rlc_window_ul.c \
+	rlc.c \
 	rlcmac.c \
 	rlcmac_enc.c \
 	rlcmac_prim.c \

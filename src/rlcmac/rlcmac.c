@@ -65,6 +65,8 @@ int osmo_gprs_rlcmac_init(enum osmo_gprs_rlcmac_location location)
 	g_ctx->cfg.location = location;
 	g_ctx->cfg.codel.use = true;
 	g_ctx->cfg.codel.interval_msec = GPRS_CODEL_SLOW_INTERVAL_MS;
+	g_ctx->cfg.egprs_arq_type = GPRS_RLCMAC_EGPRS_ARQ1;
+	g_ctx->cfg.ul_tbf_preemptive_retransmission = true;
 	g_ctx->T_defs = T_defs_rlcmac;
 	INIT_LLIST_HEAD(&g_ctx->gre_list);
 
