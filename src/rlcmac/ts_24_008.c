@@ -25,7 +25,7 @@
 #include <osmocom/core/logging.h>
 
 #include <osmocom/csn1/csn1.h>
-#include <osmocom/gprs/rlcmac/gprs_rlcmac.h>
+#include <osmocom/gprs/rlcmac/csn1_defs.h>
 #include <osmocom/gprs/rlcmac/rlcmac_private.h>
 
 /*< MS Classmark 3 IE >*/

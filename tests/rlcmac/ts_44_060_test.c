@@ -23,7 +23,7 @@
 #include <osmocom/core/msgb.h>
 
 #include <osmocom/csn1/csn1.h>
-#include <osmocom/gprs/rlcmac/gprs_rlcmac.h>
+#include <osmocom/gprs/rlcmac/csn1_defs.h>
 
 static void testRlcMacDownlink(void *test_ctx)
 {

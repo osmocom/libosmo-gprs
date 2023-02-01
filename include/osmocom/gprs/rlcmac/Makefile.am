@@ -6,9 +6,9 @@ noinst_HEADERS = \
 	$(NULL)
 
 rlcmac_HEADERS = \
+	csn1_defs.h \
 	rlcmac.h \
 	rlcmac_prim.h \
-	gprs_rlcmac.h \
 	$(NULL)
 
 rlcmacdir = $(includedir)/osmocom/gprs/rlcmac
