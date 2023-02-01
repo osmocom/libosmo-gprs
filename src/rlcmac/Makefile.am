@@ -22,14 +22,14 @@ lib_LTLIBRARIES = \
 	$(NULL)
 
 libosmo_gprs_rlcmac_la_SOURCES = \
+	csn1_ts_24_008.c \
+	csn1_ts_44_018.c \
+	csn1_ts_44_060.c \
 	codel.c \
 	gre.c \
 	llc_queue.c \
 	rlcmac.c \
 	rlcmac_prim.c \
-	ts_24_008.c \
-	ts_44_018.c \
-	ts_44_060.c \
 	ts_44_064.c \
 	misc.c \
 	$(NULL)

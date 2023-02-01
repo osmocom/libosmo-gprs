@@ -29,18 +29,18 @@ cat $abs_srcdir/llc/xid_codec_test.err > experr
 AT_CHECK([$abs_top_builddir/tests/llc/xid_codec_test], [0], [expout], [experr])
 AT_CLEANUP
 
-AT_SETUP([rlcmac/ts_44_018])
-AT_KEYWORDS([rlcmac ts_44_018])
-cat $abs_srcdir/rlcmac/ts_44_018_test.ok > expout
-cat $abs_srcdir/rlcmac/ts_44_018_test.err > experr
-AT_CHECK([$abs_top_builddir/tests/rlcmac/ts_44_018_test], [0], [expout], [experr])
+AT_SETUP([rlcmac/csn1_ts_44_018])
+AT_KEYWORDS([rlcmac csn1_ts_44_018])
+cat $abs_srcdir/rlcmac/csn1_ts_44_018_test.ok > expout
+cat $abs_srcdir/rlcmac/csn1_ts_44_018_test.err > experr
+AT_CHECK([$abs_top_builddir/tests/rlcmac/csn1_ts_44_018_test], [0], [expout], [experr])
 AT_CLEANUP
 
-AT_SETUP([rlcmac/ts_44_060])
-AT_KEYWORDS([rlcmac ts_44_060])
-cat $abs_srcdir/rlcmac/ts_44_060_test.ok > expout
-cat $abs_srcdir/rlcmac/ts_44_060_test.err > experr
-AT_CHECK([$abs_top_builddir/tests/rlcmac/ts_44_060_test], [0], [expout], [experr])
+AT_SETUP([rlcmac/csn1_ts_44_060])
+AT_KEYWORDS([rlcmac csn1_ts_44_060])
+cat $abs_srcdir/rlcmac/csn1_ts_44_060_test.ok > expout
+cat $abs_srcdir/rlcmac/csn1_ts_44_060_test.err > experr
+AT_CHECK([$abs_top_builddir/tests/rlcmac/csn1_ts_44_060_test], [0], [expout], [experr])
 AT_CLEANUP
 
 AT_SETUP([sndcp/sndcp_prim])

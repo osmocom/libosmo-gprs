@@ -9,15 +9,15 @@ AM_LDFLAGS = \
 	$(NULL)
 
 check_PROGRAMS = \
-	ts_44_018_test \
-	ts_44_060_test \
+	csn1_ts_44_018_test \
+	csn1_ts_44_060_test \
 	$(NULL)
 
 EXTRA_DIST = \
-	ts_44_018_test.ok \
-	ts_44_018_test.err \
-	ts_44_060_test.ok \
-	ts_44_060_test.err \
+	csn1_ts_44_018_test.ok \
+	csn1_ts_44_018_test.err \
+	csn1_ts_44_060_test.ok \
+	csn1_ts_44_060_test.err \
 	$(NULL)
 
 # Common LDADD entries
@@ -27,8 +27,8 @@ LDADD = \
 	$(top_builddir)/src/rlcmac/libosmo-gprs-rlcmac.la \
 	$(NULL)
 
-ts_44_018_test_SOURCES = ts_44_018_test.c
-ts_44_018_test_LDADD = $(LDADD)
+csn1_ts_44_018_test_SOURCES = csn1_ts_44_018_test.c
+csn1_ts_44_018_test_LDADD = $(LDADD)
 
-ts_44_060_test_SOURCES = ts_44_060_test.c
-ts_44_060_test_LDADD = $(LDADD)
+csn1_ts_44_060_test_SOURCES = csn1_ts_44_060_test.c
+csn1_ts_44_060_test_LDADD = $(LDADD)
