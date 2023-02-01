@@ -9,6 +9,7 @@
 
 #include <osmocom/gprs/rlcmac/codel.h>
 #include <osmocom/gprs/rlcmac/rlcmac_prim.h>
+#include <osmocom/gprs/rlcmac/types.h>
 #include <osmocom/gprs/rlcmac/rlcmac.h>
 
 struct gprs_rlcmac_entity;

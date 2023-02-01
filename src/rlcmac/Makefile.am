@@ -30,6 +30,7 @@ libosmo_gprs_rlcmac_la_SOURCES = \
 	llc_queue.c \
 	rlcmac.c \
 	rlcmac_prim.c \
+	ts_44_060.c \
 	ts_44_064.c \
 	misc.c \
 	$(NULL)

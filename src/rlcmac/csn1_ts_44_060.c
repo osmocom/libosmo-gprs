@@ -5261,20 +5261,6 @@ void osmo_gprs_rlcmac_encode_downlink_data(struct bitvec *vector, RlcMacDownlink
   }
 }
 
-const struct value_string osmo_gprs_rlcmac_egprs_pkt_ch_req_type_names[] = {
-  { EGPRS_PKT_CHAN_REQ_ONE_PHASE,               "One Phase Access" },
-  { EGPRS_PKT_CHAN_REQ_SHORT,                   "Short Access" },
-  { EGPRS_PKT_CHAN_REQ_ONE_PHASE_RED_LATENCY,   "One Phase Access (Reduced Latency MS)" },
-  { EGPRS_PKT_CHAN_REQ_TWO_PHASE,               "Two Phase Access" },
-  { EGPRS_PKT_CHAN_REQ_SIGNALLING,              "Signalling" },
-  { EGPRS_PKT_CHAN_REQ_ONE_PHASE_UNACK,         "One Phase Access (RLC unack mode)" },
-  { EGPRS_PKT_CHAN_REQ_DEDICATED_CHANNEL,       "Dedicated Channel Request" },
-  { EGPRS_PKT_CHAN_REQ_EMERGENCY_CALL,          "Emergency call" },
-  { EGPRS_PKT_CHAN_REQ_TWO_PHASE_IPA,           "Two Phase Access (by IPA capable MS)" },
-  { EGPRS_PKT_CHAN_REQ_SIGNALLING_IPA,          "Signalling (by IPA capable MS)" },
-  { 0, NULL }
-};
-
 int osmo_gprs_rlcmac_decode_egprs_pkt_ch_req(guint16 ra, EGPRS_PacketChannelRequest_t *req)
 {
   unsigned readIndex = 0;

@@ -9,6 +9,7 @@ rlcmac_HEADERS = \
 	csn1_defs.h \
 	rlcmac.h \
 	rlcmac_prim.h \
+	types.h \
 	$(NULL)
 
 rlcmacdir = $(includedir)/osmocom/gprs/rlcmac

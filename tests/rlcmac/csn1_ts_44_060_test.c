@@ -24,6 +24,7 @@
 
 #include <osmocom/csn1/csn1.h>
 #include <osmocom/gprs/rlcmac/csn1_defs.h>
+#include <osmocom/gprs/rlcmac/types.h>
 
 static void testRlcMacDownlink(void *test_ctx)
 {

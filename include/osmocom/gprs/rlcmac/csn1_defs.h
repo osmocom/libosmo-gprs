@@ -5404,21 +5404,6 @@ typedef struct
   EGPRS_PacketChannelRequestContent_t	  Content;
 } EGPRS_PacketChannelRequest_t;
 
-typedef enum {
-  EGPRS_PKT_CHAN_REQ_ONE_PHASE = 0,
-  EGPRS_PKT_CHAN_REQ_SHORT,
-  EGPRS_PKT_CHAN_REQ_ONE_PHASE_RED_LATENCY,
-  EGPRS_PKT_CHAN_REQ_TWO_PHASE,
-  EGPRS_PKT_CHAN_REQ_SIGNALLING,
-  EGPRS_PKT_CHAN_REQ_ONE_PHASE_UNACK,
-  EGPRS_PKT_CHAN_REQ_DEDICATED_CHANNEL,
-  EGPRS_PKT_CHAN_REQ_EMERGENCY_CALL,
-  EGPRS_PKT_CHAN_REQ_TWO_PHASE_IPA,
-  EGPRS_PKT_CHAN_REQ_SIGNALLING_IPA,
-} EGPRS_PacketChannelRequestType_t;
-
-extern const struct value_string osmo_gprs_rlcmac_egprs_pkt_ch_req_type_names[];
-
  int osmo_gprs_rlcmac_decode_uplink(struct bitvec *vector, RlcMacUplink_t *data);
  int osmo_gprs_rlcmac_decode_downlink(struct bitvec *vector, RlcMacDownlink_t *data);
  int osmo_gprs_rlcmac_encode_downlink(struct bitvec *vector, RlcMacDownlink_t *data);

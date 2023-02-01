@@ -22,14 +22,16 @@
 #include <osmocom/core/utils.h>
 #include <osmocom/gprs/rlcmac/types.h>
 
-const struct value_string osmo_gprs_rlcmac_llc_sapi_names[] = {
-	{ OSMO_GPRS_RLCMAC_LLC_SAPI_GMM,	"GMM" },
-	{ OSMO_GPRS_RLCMAC_LLC_SAPI_TOM2,	"TOM2" },
-	{ OSMO_GPRS_RLCMAC_LLC_SAPI_SNDCP3,	"SNDCP3" },
-	{ OSMO_GPRS_RLCMAC_LLC_SAPI_SNDCP5,	"SNDCP5" },
-	{ OSMO_GPRS_RLCMAC_LLC_SAPI_SMS,	"SMS" },
-	{ OSMO_GPRS_RLCMAC_LLC_SAPI_TOM8,	"TOM8" },
-	{ OSMO_GPRS_RLCMAC_LLC_SAPI_SNDCP9,	"SNDCP9" },
-	{ OSMO_GPRS_RLCMAC_LLC_SAPI_SNDCP11,	"SNDCP11" },
+const struct value_string osmo_gprs_rlcmac_egprs_pkt_ch_req_type_names[] = {
+	{ OSMO_GPRS_RLCMAC_EGPRS_PKT_CH_REQ_ONE_PHASE,			"One Phase Access" },
+	{ OSMO_GPRS_RLCMAC_EGPRS_PKT_CH_REQ_SHORT,			"Short Access" },
+	{ OSMO_GPRS_RLCMAC_EGPRS_PKT_CH_REQ_ONE_PHASE_RED_LATENCY,	"One Phase Access (Reduced Latency MS)" },
+	{ OSMO_GPRS_RLCMAC_EGPRS_PKT_CH_REQ_TWO_PHASE,			"Two Phase Access" },
+	{ OSMO_GPRS_RLCMAC_EGPRS_PKT_CH_REQ_SIGNALLING,			"Signalling" },
+	{ OSMO_GPRS_RLCMAC_EGPRS_PKT_CH_REQ_ONE_PHASE_UNACK,		"One Phase Access (RLC unack mode)" },
+	{ OSMO_GPRS_RLCMAC_EGPRS_PKT_CH_REQ_DEDICATED_CHANNEL,		"Dedicated Channel Request" },
+	{ OSMO_GPRS_RLCMAC_EGPRS_PKT_CH_REQ_EMERGENCY_CALL,		"Emergency call" },
+	{ OSMO_GPRS_RLCMAC_EGPRS_PKT_CH_REQ_TWO_PHASE_IPA,		"Two Phase Access (by IPA capable MS)" },
+	{ OSMO_GPRS_RLCMAC_EGPRS_PKT_CH_REQ_SIGNALLING_IPA,		"Signalling (by IPA capable MS)" },
 	{ 0, NULL }
 };
