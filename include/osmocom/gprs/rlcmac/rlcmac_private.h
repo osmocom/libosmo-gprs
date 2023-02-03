@@ -46,3 +46,10 @@ int gprs_rlcmac_prim_call_down_cb(struct osmo_gprs_rlcmac_prim *rlcmac_prim);
 struct osmo_gprs_rlcmac_prim *gprs_rlcmac_prim_alloc_grr_unitdata_ind(
 				uint32_t tlli, uint8_t *ll_pdu, size_t ll_pdu_len);
 struct osmo_gprs_rlcmac_prim *gprs_rlcmac_prim_alloc_gmmrr_page_ind(uint32_t tlli);
+
+struct osmo_gprs_rlcmac_prim *gprs_rlcmac_prim_alloc_l1ctl_rach8_req(uint8_t ra);
+struct osmo_gprs_rlcmac_prim *gprs_rlcmac_prim_alloc_l1ctl_rach11_req(uint16_t ra11, uint8_t synch_seq);
+struct osmo_gprs_rlcmac_prim *gprs_rlcmac_prim_alloc_l1ctl_pdch_data_req(uint8_t ts_nr, uint32_t fn,
+									uint8_t *data, uint8_t data_len);
+struct osmo_gprs_rlcmac_prim *gprs_rlcmac_prim_alloc_l1ctl_cfg_dl_tbf_req(uint8_t dl_tbf_nr, uint8_t dl_slotmask, uint8_t dl_tfi);
+struct osmo_gprs_rlcmac_prim *gprs_rlcmac_prim_alloc_l1ctl_cfg_ul_tbf_req(uint8_t ul_tbf_nr, uint8_t ul_slotmask);

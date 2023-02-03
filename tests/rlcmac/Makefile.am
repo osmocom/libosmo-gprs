@@ -11,6 +11,7 @@ AM_LDFLAGS = \
 check_PROGRAMS = \
 	csn1_ts_44_018_test \
 	csn1_ts_44_060_test \
+	rlcmac_prim_test \
 	$(NULL)
 
 EXTRA_DIST = \
@@ -18,6 +19,8 @@ EXTRA_DIST = \
 	csn1_ts_44_018_test.err \
 	csn1_ts_44_060_test.ok \
 	csn1_ts_44_060_test.err \
+	rlcmac_prim_test.ok \
+	rlcmac_prim_test.err \
 	$(NULL)
 
 # Common LDADD entries
@@ -32,3 +35,6 @@ csn1_ts_44_018_test_LDADD = $(LDADD)
 
 csn1_ts_44_060_test_SOURCES = csn1_ts_44_060_test.c
 csn1_ts_44_060_test_LDADD = $(LDADD)
+
+rlcmac_prim_test_SOURCES = rlcmac_prim_test.c
+rlcmac_prim_test_LDADD = $(LDADD)

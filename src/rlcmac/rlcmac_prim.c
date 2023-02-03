@@ -42,6 +42,7 @@
 const struct value_string osmo_gprs_rlcmac_prim_sap_names[] = {
 	{ OSMO_GPRS_RLCMAC_SAP_GRR,	"GRR" },
 	{ OSMO_GPRS_RLCMAC_SAP_GMMRR,	"GMMRR" },
+	{ OSMO_GPRS_RLCMAC_SAP_L1CTL,	"L1CTL" },
 	{ 0, NULL }
 };
 
@@ -54,6 +55,16 @@ const struct value_string osmo_gprs_rlcmac_grr_prim_type_names[] = {
 const struct value_string osmo_gprs_rlcmac_gmmrr_prim_type_names[] = {
 	{ OSMO_GPRS_RLCMAC_GMMRR_ASSIGN,	"ASSIGN" },
 	{ OSMO_GPRS_RLCMAC_GMMRR_PAGE,		"PAGE" },
+	{ 0, NULL }
+};
+
+const struct value_string osmo_gprs_rlcmac_l1ctl_prim_type_names[] = {
+	{ OSMO_GPRS_RLCMAC_L1CTL_RACH,		"RACH" },
+	{ OSMO_GPRS_RLCMAC_L1CTL_CCCH_DATA,	"CCCH_DATA" },
+	{ OSMO_GPRS_RLCMAC_L1CTL_PDCH_DATA,	"PDCH_DATA" },
+	{ OSMO_GPRS_RLCMAC_L1CTL_PDCH_RTS,	"PDCH_RTS" },
+	{ OSMO_GPRS_RLCMAC_L1CTL_CFG_UL_TBF,	"CFG_UL_TBF" },
+	{ OSMO_GPRS_RLCMAC_L1CTL_CFG_DL_TBF,	"CFG_DL_TBF" },
 	{ 0, NULL }
 };
 
@@ -70,6 +81,9 @@ const char *osmo_gprs_rlcmac_prim_name(const struct osmo_gprs_rlcmac_prim *rlcma
 		break;
 	case OSMO_GPRS_RLCMAC_SAP_GMMRR:
 		type = osmo_gprs_rlcmac_gmmrr_prim_type_name(rlcmac_prim->oph.primitive);
+		break;
+	case OSMO_GPRS_RLCMAC_SAP_L1CTL:
+		type = osmo_gprs_rlcmac_l1ctl_prim_type_name(rlcmac_prim->oph.primitive);
 		break;
 	default:
 		type = "unsupported-rlcmac-sap";
@@ -152,6 +166,14 @@ struct osmo_gprs_rlcmac_prim *rlcmac_prim_gmmrr_alloc(enum osmo_gprs_rlcmac_gmmr
 	return gprs_rlcmac_prim_alloc(OSMO_GPRS_RLCMAC_SAP_GMMRR, type, operation, l3_len);
 }
 
+static inline
+struct osmo_gprs_rlcmac_prim *rlcmac_prim_l1ctl_alloc(enum osmo_gprs_rlcmac_l1ctl_prim_type type,
+						    enum osmo_prim_operation operation,
+						    unsigned int l3_len)
+{
+	return gprs_rlcmac_prim_alloc(OSMO_GPRS_RLCMAC_SAP_L1CTL, type, operation, l3_len);
+}
+
 /* 3GPP TS 44.064 7.2.3.2 GRR-UNITDATA.ind (MS):*/
 struct osmo_gprs_rlcmac_prim *gprs_rlcmac_prim_alloc_grr_unitdata_ind(
 					uint32_t tlli, uint8_t *ll_pdu,
@@ -192,6 +214,98 @@ struct osmo_gprs_rlcmac_prim *gprs_rlcmac_prim_alloc_gmmrr_page_ind(uint32_t tll
 	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
 	rlcmac_prim = rlcmac_prim_gmmrr_alloc(OSMO_GPRS_RLCMAC_GMMRR_PAGE, PRIM_OP_INDICATION, 0);
 	rlcmac_prim->gmmrr.page_ind.tlli = tlli;
+	return rlcmac_prim;
+}
+
+/* L1CTL-RACH.req (8bit) */
+struct osmo_gprs_rlcmac_prim *gprs_rlcmac_prim_alloc_l1ctl_rach8_req(uint8_t ra)
+{
+	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
+	rlcmac_prim = rlcmac_prim_l1ctl_alloc(OSMO_GPRS_RLCMAC_L1CTL_RACH, PRIM_OP_REQUEST, 0);
+	rlcmac_prim->l1ctl.rach_req.is_11bit = false;
+	rlcmac_prim->l1ctl.rach_req.ra = ra;
+	return rlcmac_prim;
+}
+
+/* L1CTL-RACH.req (11bit) */
+struct osmo_gprs_rlcmac_prim *gprs_rlcmac_prim_alloc_l1ctl_rach11_req(uint16_t ra11, uint8_t synch_seq)
+{
+	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
+	rlcmac_prim = rlcmac_prim_l1ctl_alloc(OSMO_GPRS_RLCMAC_L1CTL_RACH, PRIM_OP_REQUEST, 0);
+	rlcmac_prim->l1ctl.rach_req.is_11bit = true;
+	rlcmac_prim->l1ctl.rach_req.ra11 = ra11;
+	rlcmac_prim->l1ctl.rach_req.synch_seq = synch_seq;
+	return rlcmac_prim;
+}
+
+/* L1CTL-CCCH_DATA.ind */
+struct osmo_gprs_rlcmac_prim *osmo_gprs_rlcmac_prim_alloc_l1ctl_ccch_data_ind(uint32_t fn, uint8_t *data)
+{
+	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
+	rlcmac_prim = rlcmac_prim_l1ctl_alloc(OSMO_GPRS_RLCMAC_L1CTL_CCCH_DATA, PRIM_OP_INDICATION, 0);
+	rlcmac_prim->l1ctl.ccch_data_ind.fn = fn;
+	rlcmac_prim->l1ctl.ccch_data_ind.data = data;
+	return rlcmac_prim;
+}
+
+/* L1CTL-PDCH_DATA.req */
+struct osmo_gprs_rlcmac_prim *gprs_rlcmac_prim_alloc_l1ctl_pdch_data_req(uint8_t ts_nr, uint32_t fn,
+									uint8_t *data, uint8_t data_len)
+{
+	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
+	rlcmac_prim = rlcmac_prim_l1ctl_alloc(OSMO_GPRS_RLCMAC_L1CTL_PDCH_DATA, PRIM_OP_REQUEST, data_len);
+	rlcmac_prim->l1ctl.pdch_data_req.fn = fn;
+	rlcmac_prim->l1ctl.pdch_data_req.ts_nr = ts_nr;
+	rlcmac_prim->l1ctl.pdch_data_req.data_len = data_len;
+	rlcmac_prim->l1ctl.pdch_data_req.data = data;
+	return rlcmac_prim;
+}
+
+/* L1CTL-PDCH_DATA.ind */
+struct osmo_gprs_rlcmac_prim *osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_data_ind(uint8_t ts_nr, uint32_t fn,
+				uint8_t rx_lev, uint16_t ber10k, int16_t ci_cb, uint8_t *data, uint8_t data_len)
+{
+	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
+	rlcmac_prim = rlcmac_prim_l1ctl_alloc(OSMO_GPRS_RLCMAC_L1CTL_PDCH_DATA, PRIM_OP_INDICATION, data_len);
+	rlcmac_prim->l1ctl.pdch_data_ind.fn = fn;
+	rlcmac_prim->l1ctl.pdch_data_ind.ts_nr = ts_nr;
+	rlcmac_prim->l1ctl.pdch_data_ind.rx_lev = rx_lev;
+	rlcmac_prim->l1ctl.pdch_data_ind.ber10k = ber10k;
+	rlcmac_prim->l1ctl.pdch_data_ind.ci_cb = ci_cb;
+	rlcmac_prim->l1ctl.pdch_data_ind.data_len = data_len;
+	rlcmac_prim->l1ctl.pdch_data_ind.data = data;
+	return rlcmac_prim;
+}
+
+/* L1CTL-PDCH_RTS.ind */
+struct osmo_gprs_rlcmac_prim *osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_rts_ind(uint8_t ts_nr, uint32_t fn, uint8_t usf)
+{
+	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
+	rlcmac_prim = rlcmac_prim_l1ctl_alloc(OSMO_GPRS_RLCMAC_L1CTL_PDCH_RTS, PRIM_OP_INDICATION, 0);
+	rlcmac_prim->l1ctl.pdch_rts_ind.fn = fn;
+	rlcmac_prim->l1ctl.pdch_rts_ind.ts_nr = ts_nr;
+	rlcmac_prim->l1ctl.pdch_rts_ind.usf = usf;
+	return rlcmac_prim;
+}
+
+/* L1CTL-CFG_DL_TBF.req */
+struct osmo_gprs_rlcmac_prim *gprs_rlcmac_prim_alloc_l1ctl_cfg_dl_tbf_req(uint8_t tbf_nr, uint8_t slotmask, uint8_t dl_tfi)
+{
+	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
+	rlcmac_prim = rlcmac_prim_l1ctl_alloc(OSMO_GPRS_RLCMAC_L1CTL_CFG_DL_TBF, PRIM_OP_REQUEST, 0);
+	rlcmac_prim->l1ctl.cfg_dl_tbf_req.dl_tbf_nr = tbf_nr;
+	rlcmac_prim->l1ctl.cfg_dl_tbf_req.dl_slotmask = slotmask;
+	rlcmac_prim->l1ctl.cfg_dl_tbf_req.dl_tfi = dl_tfi;
+	return rlcmac_prim;
+}
+
+/* L1CTL-CFG_UL_TBF.req */
+struct osmo_gprs_rlcmac_prim *gprs_rlcmac_prim_alloc_l1ctl_cfg_ul_tbf_req(uint8_t ul_tbf_nr, uint8_t ul_slotmask)
+{
+	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
+	rlcmac_prim = rlcmac_prim_l1ctl_alloc(OSMO_GPRS_RLCMAC_L1CTL_CFG_UL_TBF, PRIM_OP_REQUEST, 0);
+	rlcmac_prim->l1ctl.cfg_ul_tbf_req.ul_tbf_nr = ul_tbf_nr;
+	rlcmac_prim->l1ctl.cfg_ul_tbf_req.ul_slotmask = ul_slotmask;
 	return rlcmac_prim;
 }
 
@@ -321,6 +435,47 @@ int gprs_rlcmac_prim_call_down_cb(struct osmo_gprs_rlcmac_prim *rlcmac_prim)
 	return rc;
 }
 
+static int rlcmac_prim_handle_l1ctl_pdch_rts_ind(struct osmo_gprs_rlcmac_prim *rlcmac_prim)
+{
+	int rc = gprs_rlcmac_prim_handle_unsupported(rlcmac_prim);
+	rc = 1; /* msg owned (freed) */
+	return rc;
+}
+
+static int rlcmac_prim_handle_l1ctl_pdch_data_ind(struct osmo_gprs_rlcmac_prim *rlcmac_prim)
+{
+	int rc = gprs_rlcmac_prim_handle_unsupported(rlcmac_prim);
+	rc = 1; /* msg owned (freed) */
+	return rc;
+}
+
+static int rlcmac_prim_handle_l1ctl_ccch_data_ind(struct osmo_gprs_rlcmac_prim *rlcmac_prim)
+{
+	int rc = gprs_rlcmac_prim_handle_unsupported(rlcmac_prim);
+	rc = 1; /* msg owned (freed) */
+	return rc;
+}
+
+static int gprs_rlcmac_prim_l1ctl_lower_up(struct osmo_gprs_rlcmac_prim *rlcmac_prim)
+{
+	int rc;
+
+	switch (OSMO_PRIM_HDR(&rlcmac_prim->oph)) {
+	case OSMO_PRIM(OSMO_GPRS_RLCMAC_L1CTL_PDCH_RTS, PRIM_OP_INDICATION):
+		rc = rlcmac_prim_handle_l1ctl_pdch_rts_ind(rlcmac_prim);
+		break;
+	case OSMO_PRIM(OSMO_GPRS_RLCMAC_L1CTL_PDCH_DATA, PRIM_OP_INDICATION):
+		rc = rlcmac_prim_handle_l1ctl_pdch_data_ind(rlcmac_prim);
+		break;
+	case OSMO_PRIM(OSMO_GPRS_RLCMAC_L1CTL_CCCH_DATA, PRIM_OP_INDICATION):
+		rc = rlcmac_prim_handle_l1ctl_ccch_data_ind(rlcmac_prim);
+		break;
+	default:
+		rc = -ENOTSUP;
+	}
+	return rc;
+}
+
 int osmo_gprs_rlcmac_prim_lower_up(struct osmo_gprs_rlcmac_prim *rlcmac_prim)
 {
 	OSMO_ASSERT(g_ctx);
@@ -331,10 +486,9 @@ int osmo_gprs_rlcmac_prim_lower_up(struct osmo_gprs_rlcmac_prim *rlcmac_prim)
 	LOGRLCMAC(LOGL_INFO, "Rx from lower layers: %s\n", osmo_gprs_rlcmac_prim_name(rlcmac_prim));
 
 	switch (rlcmac_prim->oph.sap) {
-	// TODO
-	//case OSMO_GPRS_LLC_SAP_GRR:
-	//	OSMO_ASSERT(g_ctx->location == OSMO_GPRS_LLC_LOCATION_MS);
-	//	rc = gprs_rlcmac_prim_lower_up_grr(rlcmac_prim);
+	case OSMO_GPRS_RLCMAC_SAP_L1CTL:
+		rc = gprs_rlcmac_prim_l1ctl_lower_up(rlcmac_prim);
+		break;
 	default:
 		rc = -EINVAL;
 	}

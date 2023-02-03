@@ -1,0 +1,4 @@
+DLGLOBAL INFO Rx from upper layers: GRR-UNITDATA.request
+DLGLOBAL INFO TLLI=0x00002342 not found, creating entity on the fly
+DLGLOBAL INFO Rx from lower layers: L1CTL-CCCH_DATA.indication
+DLGLOBAL ERROR Unsupported rlcmac_prim! L1CTL-CCCH_DATA.indication

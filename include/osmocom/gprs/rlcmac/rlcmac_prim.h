@@ -15,6 +15,7 @@
 enum osmo_gprs_rlcmac_prim_sap {
 	OSMO_GPRS_RLCMAC_SAP_GRR,
 	OSMO_GPRS_RLCMAC_SAP_GMMRR,
+	OSMO_GPRS_RLCMAC_SAP_L1CTL,
 };
 
 extern const struct value_string osmo_gprs_rlcmac_prim_sap_names[];
@@ -87,11 +88,85 @@ struct osmo_gprs_rlcmac_gmmrr_prim {
 	};
 };
 
+/* From/Towards lower layers */
+enum osmo_gprs_rlcmac_l1ctl_prim_type {
+	OSMO_GPRS_RLCMAC_L1CTL_RACH,
+	OSMO_GPRS_RLCMAC_L1CTL_CCCH_DATA,
+	OSMO_GPRS_RLCMAC_L1CTL_PDCH_DATA,
+	OSMO_GPRS_RLCMAC_L1CTL_PDCH_RTS,
+	OSMO_GPRS_RLCMAC_L1CTL_CFG_UL_TBF,
+	OSMO_GPRS_RLCMAC_L1CTL_CFG_DL_TBF,
+};
+
+extern const struct value_string osmo_gprs_rlcmac_l1ctl_prim_type_names[];
+static inline const char *osmo_gprs_rlcmac_l1ctl_prim_type_name(enum osmo_gprs_rlcmac_l1ctl_prim_type val)
+{
+	return get_value_string(osmo_gprs_rlcmac_l1ctl_prim_type_names, val);
+}
+
+/* Parameters for OSMO_GPRS_RLCMAC_L1CTL_* prims */
+struct osmo_gprs_rlcmac_l1ctl_prim {
+	/* Common fields (none) */
+	union {
+		/* OSMO_GPRS_RLCMAC_L1CTL_RACH | Req */
+		struct {
+			bool is_11bit;
+			union {
+				uint8_t ra;
+				struct {
+					uint16_t ra11;
+					uint8_t synch_seq;
+				};
+			};
+		} rach_req;
+		/* OSMO_GPRS_RLCMAC_L1CTL_CCCH_DATA | Ind */
+		struct {
+			uint32_t fn;
+			uint8_t *data; /* data_len = GSM_MACBLOCK_LEN */
+		} ccch_data_ind;
+		/* OSMO_GPRS_RLCMAC_L1CTL_PDCH_DATA | Req */
+		struct {
+			uint32_t fn;
+			uint8_t ts_nr;
+			uint8_t data_len;
+			uint8_t *data;
+		} pdch_data_req;
+		/* OSMO_GPRS_RLCMAC_L1CTL_PDCH_DATA | Ind */
+		struct {
+			uint32_t fn;
+			uint8_t ts_nr;
+			uint8_t rx_lev;
+			uint16_t ber10k;
+			int16_t ci_cb;
+			uint8_t data_len; /* data_len = 0 if decoding fails or filtered by lower layer based on DL TFI */
+			uint8_t *data;
+		} pdch_data_ind;
+		/* OSMO_GPRS_RLCMAC_L1CTL_PDCH_RTS | Ind */
+		struct {
+			uint32_t fn;
+			uint8_t ts_nr;
+			uint8_t usf;
+		} pdch_rts_ind;
+		/* OSMO_GPRS_RLCMAC_L1CTL_CFG_UL_TBF | Req */
+		struct {
+			uint8_t ul_tbf_nr;
+			uint8_t ul_slotmask;
+		} cfg_ul_tbf_req;
+		/* OSMO_GPRS_RLCMAC_L1CTL_CFG_DL_TBF | Req */
+		struct {
+			uint8_t dl_tbf_nr;
+			uint8_t dl_slotmask;
+			uint8_t dl_tfi;
+		} cfg_dl_tbf_req;
+	};
+};
+
 struct osmo_gprs_rlcmac_prim {
 	struct osmo_prim_hdr oph;
 	union {
 		struct osmo_gprs_rlcmac_grr_prim grr;
 		struct osmo_gprs_rlcmac_gmmrr_prim gmmrr;
+		struct osmo_gprs_rlcmac_l1ctl_prim l1ctl;
 	};
 };
 
@@ -113,3 +188,10 @@ struct osmo_gprs_rlcmac_prim *osmo_gprs_rlcmac_prim_alloc_grr_unitdata_req(
 /* Alloc primitive for GMMRR SAP: */
 struct osmo_gprs_rlcmac_prim *osmo_gprs_rlcmac_prim_alloc_gmmrr_asign_req(
 				uint32_t new_tlli);
+
+/* Alloc primitive for L1CTL SAP: */
+struct osmo_gprs_rlcmac_prim *osmo_gprs_rlcmac_prim_alloc_l1ctl_ccch_data_ind(uint32_t fn, uint8_t *data);
+struct osmo_gprs_rlcmac_prim *osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_data_ind(uint8_t ts_nr, uint32_t fn,
+				uint8_t rx_lev, uint16_t ber10k, int16_t ci_cb,
+				uint8_t *data, uint8_t data_len);
+struct osmo_gprs_rlcmac_prim *osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_rts_ind(uint8_t ts_nr, uint32_t fn, uint8_t usf);
