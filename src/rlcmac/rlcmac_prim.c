@@ -230,6 +230,7 @@ static int rlcmac_prim_handle_grr_unitdata_req(struct osmo_gprs_rlcmac_prim *rlc
 					    rlcmac_prim->grr.ll_pdu_len,
 					    rlcmac_prim->grr.unitdata_req.sapi,
 					    rlcmac_prim->grr.unitdata_req.radio_prio);
+	msgb_free(rlcmac_prim->oph.msg);
 	return rc;
 }
 
