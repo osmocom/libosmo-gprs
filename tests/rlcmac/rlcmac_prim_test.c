@@ -24,6 +24,7 @@
 
 #include <osmocom/gprs/rlcmac/rlcmac.h>
 #include <osmocom/gprs/rlcmac/gre.h>
+#include <osmocom/gprs/rlcmac/rlc.h>
 
 static void *tall_ctx = NULL;
 
@@ -118,6 +119,64 @@ static uint8_t ccch_imm_ass_pkt_ul_tbf_normal[] = {
 	0x2b, 0x2b, 0x2b, 0x2b, 0x2b, 0x2b, 0x2b
 };
 
+/*
+GSM CCCH - Immediate Assignment
+	L2 Pseudo Length
+		0010 11.. = L2 Pseudo Length value: 11
+	.... 0110 = Protocol discriminator: Radio Resources Management messages (0x6)
+		.... 0110 = Protocol discriminator: Radio Resources Management messages (0x6)
+		0000 .... = Skip Indicator: No indication of selected PLMN (0)
+	Message Type: Immediate Assignment
+	Page Mode
+		.... 0000 = Page Mode: Normal paging (0)
+	Dedicated mode or TBF
+		0011 .... = Dedicated mode or TBF: This message assigns a downlink TBF to the mobile station identified in the IA Rest Octets IE (3)
+	Packet Channel Description
+		0000 1... = Channel Type: 1
+		.... .111 = Timeslot: 7
+		111. .... = Training Sequence: 7
+		.... .0.. = Spare: 0x00
+		.... ..11  0110 0111 = Single channel ARFCN: 871
+	Request Reference
+		Random Access Information (RA): 125
+		1000 0... = T1': 16
+		.... .000 000. .... = T3: 0
+		...0 0000 = T2: 0
+		[RFN: 21216]
+	Timing Advance
+		Timing advance value: 28
+	Mobile Allocation
+		Length: 0
+	IA Rest Octets
+		H... .... = First Discriminator Bit: High
+		.H.. .... = Second Discriminator Bit: High
+		..0. .... = Discriminator Bit: Packet Assignment
+		...1 .... = Discriminator Bit: Packet Downlink Assignment
+		Packet Downlink Assignment
+			.... 0000  0000 0000  0000 0000  0000 0000  0001 .... = TLLI: 0x00000001
+			.... 1... = TFI Assignment (etc): Present
+			.... .000  00.. .... = TFI_Assignment: 0
+			..0. .... = RLC_Mode: RLC acknowledged mode
+			...0 .... = Alpha: Not Present
+			.... 0000  0... .... = Gamma: 0 dB (0)
+			.0.. .... = Polling: no action is required from MS
+			..0. .... = TA_Valid: the timing advance value is not valid
+			...0 .... = Timing Advance Index: Not Present
+			.... 0... = TBF Starting Time: Not Present
+			.... .0.. = P0: Not Present
+			.... ..L. = Additions in R99: Not Present
+			.... ...L = Additions in Rel-6: Not Present
+			L... .... = Additions in Rel-7: Not Present
+		.L.. .... = Additions in Rel-10: Not Present
+		..L. .... = Additions in Rel-13: Not Present
+		Padding Bits: default padding
+*/
+static uint8_t ccch_imm_ass_pkt_dl_tbf[] = {
+	0x2d, 0x06, 0x3f, 0x30, 0x0f, 0xe3, 0x67, 0x7d, 0x80, 0x00,
+	0x1c, 0x00, 0xd0, 0x00, 0x00, 0x00, 0x18, 0x00, 0x03,
+	0x2b, 0x2b, 0x2b, 0x2b
+};
+
 static int test_rlcmac_prim_up_cb(struct osmo_gprs_rlcmac_prim *rlcmac_prim, void *user_data)
 {
 	const char *pdu_name = osmo_gprs_rlcmac_prim_name(rlcmac_prim);
@@ -162,6 +221,12 @@ static int test_rlcmac_prim_down_cb(struct osmo_gprs_rlcmac_prim *rlcmac_prim, v
 			       rlcmac_prim->l1ctl.cfg_ul_tbf_req.ul_tbf_nr,
 			       rlcmac_prim->l1ctl.cfg_ul_tbf_req.ul_slotmask);
 			break;
+		case OSMO_PRIM(OSMO_GPRS_RLCMAC_L1CTL_CFG_DL_TBF, PRIM_OP_REQUEST):
+			printf("%s(): Rx %s dl_tbf_nr=%u dl_slotmask=0x%02x dl_tfi=%u\n", __func__, pdu_name,
+			       rlcmac_prim->l1ctl.cfg_dl_tbf_req.dl_tbf_nr,
+			       rlcmac_prim->l1ctl.cfg_dl_tbf_req.dl_slotmask,
+			       rlcmac_prim->l1ctl.cfg_dl_tbf_req.dl_tfi);
+			break;
 		default:
 			printf("%s(): Rx %s\n", __func__, pdu_name);
 		}
@@ -173,6 +238,37 @@ static int test_rlcmac_prim_down_cb(struct osmo_gprs_rlcmac_prim *rlcmac_prim, v
 	return 0;
 }
 
+static const uint8_t llc_dummy_command[] = {
+	0x43, 0xc0, 0x01, 0x2b, 0x2b, 0x2b
+};
+
+static struct msgb *create_dl_data_block(uint8_t dl_tfi, uint8_t usf, enum gprs_rlcmac_coding_scheme cs, uint8_t bsn, bool fbi)
+{
+	struct msgb *msg = msgb_alloc(128, __func__);
+	struct gprs_rlcmac_rlc_dl_data_header *hdr;
+	struct gprs_rlcmac_rlc_li_field *lime;
+
+	hdr = (struct gprs_rlcmac_rlc_dl_data_header *)msgb_put(msg, gprs_rlcmac_mcs_size_dl(cs));
+	hdr->pt = 0; /* RLC/MAC block contains an RLC data block */
+	hdr->rrbp = 0;
+	hdr->s_p = 0;
+	hdr->usf = usf;
+	hdr->pr = 0;
+	hdr->tfi = dl_tfi;
+	hdr->fbi = fbi ? 1 : 0;
+	hdr->tfi = dl_tfi;
+	hdr->bsn = bsn;
+	hdr->e = 0;
+	lime = &hdr->lime[0];
+	lime->li = sizeof(llc_dummy_command);
+	lime->m = 0;
+	lime->e = 1;
+	msg->l3h = &lime->ll_pdu[0];
+	memset(msg->l3h, 0x2b, msgb_l3len(msg));
+	memcpy(msg->l3h, llc_dummy_command, sizeof(llc_dummy_command));
+	return msg;
+}
+
 void prepare_test(void)
 {
 	int rc;
@@ -181,6 +277,12 @@ void prepare_test(void)
 
 	osmo_gprs_rlcmac_prim_set_up_cb(test_rlcmac_prim_up_cb, NULL);
 	osmo_gprs_rlcmac_prim_set_down_cb(test_rlcmac_prim_down_cb, NULL);
+}
+
+void cleanup_test(void)
+{
+	/* Reinit the RLCMAC layer so that data generated during the test is freed within the test context: */
+	osmo_gprs_rlcmac_init(OSMO_GPRS_RLCMAC_LOCATION_MS);
 }
 
 static void test_ul_tbf_attach(void)
@@ -210,7 +312,46 @@ static void test_ul_tbf_attach(void)
 	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
 
 	OSMO_ASSERT(rc == 0);
+
 	printf("=== %s end ===\n", __func__);
+	cleanup_test();
+}
+
+/* PCU allocates a DL TBF through PCH ImmAss for MS (when in packet-idle) */
+static void test_dl_tbf_ccch_assign(void)
+{
+	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
+	int rc;
+	struct msgb *dl_data_msg;
+
+	printf("=== %s start ===\n", __func__);
+	prepare_test();
+	uint32_t tlli = 0x0000001;
+	uint8_t ts_nr = 7;
+	uint8_t usf = 0;
+	uint32_t rts_fn = 4;
+	uint8_t dl_tfi = 0;
+
+	/* Notify RLCMAC about our TLLI */
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_gmmrr_assign_req(tlli);
+	rc = osmo_gprs_rlcmac_prim_upper_down(rlcmac_prim);
+
+	OSMO_ASSERT(sizeof(ccch_imm_ass_pkt_dl_tbf) == GSM_MACBLOCK_LEN);
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_ccch_data_ind(0, ccch_imm_ass_pkt_dl_tbf);
+	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+	OSMO_ASSERT(rc == 0);
+
+	/* Transmit some DL LLC data MS<-PCU */
+	dl_data_msg = create_dl_data_block(dl_tfi, usf, GPRS_RLCMAC_CS_1, 0, 1);
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_data_ind(ts_nr, rts_fn, 0, 0, 0,
+								      msgb_data(dl_data_msg),
+								      msgb_length(dl_data_msg));
+	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+	OSMO_ASSERT(rc == 0);
+	msgb_free(dl_data_msg);
+
+	printf("=== %s end ===\n", __func__);
+	cleanup_test();
 }
 
 static const struct log_info_cat test_log_categories[] = { };
@@ -234,6 +375,7 @@ int main(int argc, char *argv[])
 	log_set_use_color(osmo_stderr_target, 0);
 
 	test_ul_tbf_attach();
+	test_dl_tbf_ccch_assign();
 
 	talloc_free(tall_ctx);
 }

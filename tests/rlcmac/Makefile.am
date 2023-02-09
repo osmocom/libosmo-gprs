@@ -1,5 +1,6 @@
 AM_CFLAGS = \
 	-Wall \
+	$(LIBOSMOGSM_CFLAGS) \
 	$(LIBOSMOCORE_CFLAGS) \
 	-I$(top_srcdir)/include/ \
 	$(NULL)
@@ -24,10 +25,12 @@ EXTRA_DIST = \
 	$(NULL)
 
 # Common LDADD entries
+# libosmo-gprs-rlcmac.a is used below to access non-exported private symbols used in the test:
 LDADD = \
-	$(LIBOSMOCORE_LIBS) \
+	$(top_builddir)/src/rlcmac/.libs/libosmo-gprs-rlcmac.a \
 	$(top_builddir)/src/csn1/libosmo-csn1.la \
-	$(top_builddir)/src/rlcmac/libosmo-gprs-rlcmac.la \
+	$(LIBOSMOGSM_LIBS) \
+	$(LIBOSMOCORE_LIBS) \
 	$(NULL)
 
 csn1_ts_44_018_test_SOURCES = csn1_ts_44_018_test.c

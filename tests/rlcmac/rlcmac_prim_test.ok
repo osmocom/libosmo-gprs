@@ -3,3 +3,6 @@ test_rlcmac_prim_down_cb(): Rx L1CTL-RACH.request ra=0x7e
 test_rlcmac_prim_down_cb(): Rx L1CTL-CFG_UL_TBF.request ul_tbf_nr=0 ul_slotmask=0x80
 test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=4 ts=7 data_len=34 data=[3c 00 01 01 c0 00 08 01 01 d5 71 00 00 08 29 26 24 00 00 00 00 71 62 f2 24 6c 84 44 04 11 e5 10 00 00 ]
 === test_ul_tbf_attach end ===
+=== test_dl_tbf_ccch_assign start ===
+test_rlcmac_prim_down_cb(): Rx L1CTL-CFG_DL_TBF.request dl_tbf_nr=0 dl_slotmask=0x80 dl_tfi=0
+=== test_dl_tbf_ccch_assign end ===

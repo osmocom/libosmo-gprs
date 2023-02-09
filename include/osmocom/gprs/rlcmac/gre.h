@@ -4,6 +4,7 @@
 #include <osmocom/gprs/rlcmac/rlcmac.h>
 #include <osmocom/gprs/rlcmac/llc_queue.h>
 
+struct gprs_rlcmac_dl_tbf;
 struct gprs_rlcmac_ul_tbf;
 
 struct gprs_rlcmac_entity {
@@ -12,6 +13,7 @@ struct gprs_rlcmac_entity {
 
 	struct gprs_rlcmac_llc_queue *llc_queue;
 
+	struct gprs_rlcmac_dl_tbf *dl_tbf;
 	struct gprs_rlcmac_ul_tbf *ul_tbf;
 };
 

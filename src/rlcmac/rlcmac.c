@@ -29,8 +29,11 @@
 #include <osmocom/gprs/rlcmac/tbf_ul_fsm.h>
 #include <osmocom/gprs/rlcmac/tbf_ul_ass_fsm.h>
 #include <osmocom/gprs/rlcmac/gre.h>
+#include <osmocom/gprs/rlcmac/tbf_dl.h>
 #include <osmocom/gprs/rlcmac/tbf_ul.h>
 #include <osmocom/gprs/rlcmac/csn1_defs.h>
+#include <osmocom/gprs/rlcmac/rlc.h>
+#include <osmocom/gprs/rlcmac/types_private.h>
 
 #define GPRS_CODEL_SLOW_INTERVAL_MS 4000
 
@@ -73,6 +76,11 @@ int osmo_gprs_rlcmac_init(enum osmo_gprs_rlcmac_location location)
 	osmo_tdefs_reset(g_ctx->T_defs);
 
 	if (first_init) {
+		rc = gprs_rlcmac_tbf_dl_fsm_init();
+		if (rc != 0) {
+			TALLOC_FREE(g_ctx);
+			return rc;
+		}
 		rc = gprs_rlcmac_tbf_ul_fsm_init();
 		if (rc != 0) {
 			TALLOC_FREE(g_ctx);
@@ -114,6 +122,20 @@ struct gprs_rlcmac_entity *gprs_rlcmac_find_entity_by_tlli(uint32_t tlli)
 	return NULL;
 }
 
+struct gprs_rlcmac_dl_tbf *gprs_rlcmac_find_dl_tbf_by_tfi(uint8_t dl_tfi)
+{
+	struct gprs_rlcmac_entity *gre;
+
+	llist_for_each_entry(gre, &g_ctx->gre_list, entry) {
+		if (!gre->dl_tbf)
+			continue;
+		if (gre->dl_tbf->cur_alloc.dl_tfi != dl_tfi)
+			continue;
+		return gre->dl_tbf;
+	}
+	return NULL;
+}
+
 static int gprs_rlcmac_handle_ccch_imm_ass_ul_tbf(uint8_t ts_nr, const struct gsm48_imm_ass *ia, const IA_RestOctets_t *iaro)
 {
 	int rc = -ENOENT;
@@ -136,6 +158,40 @@ static int gprs_rlcmac_handle_ccch_imm_ass_ul_tbf(uint8_t ts_nr, const struct gs
 					    &d);
 		break;
 	}
+	return rc;
+}
+
+static int gprs_rlcmac_handle_ccch_imm_ass_dl_tbf(uint8_t ts_nr, const struct gsm48_imm_ass *ia, const IA_RestOctets_t *iaro)
+{
+	int rc;
+	struct gprs_rlcmac_entity *gre;
+	struct gprs_rlcmac_dl_tbf *dl_tbf;
+	const Packet_Downlink_ImmAssignment_t *pkdlass;
+
+	if (iaro->UnionType == 1) {
+		/* TODO */
+		return -ENOENT;
+	}
+
+	pkdlass = &iaro->u.hh.u.UplinkDownlinkAssignment.ul_dl.Packet_Downlink_ImmAssignment;
+
+	gre = gprs_rlcmac_find_entity_by_tlli(pkdlass->TLLI);
+	if (!gre) {
+		LOGRLCMAC(LOGL_NOTICE, "Got IMM_ASS (DL_TBF) for unknown TLLI=0x%08x\n", pkdlass->TLLI);
+		return -ENOENT;
+	}
+
+	LOGGRE(gre, LOGL_INFO, "Got PCH IMM_ASS (DL_TBF): DL_TFI=%u TS=%u\n",
+	       pkdlass->TFI_ASSIGNMENT, ts_nr);
+	dl_tbf = gprs_rlcmac_dl_tbf_alloc(gre);
+	dl_tbf->cur_alloc.dl_tfi = pkdlass->TFI_ASSIGNMENT;
+	dl_tbf->cur_alloc.ts[ts_nr].allocated = true;
+
+	/* replace old DL TBF with new one: */
+	gprs_rlcmac_dl_tbf_free(gre->dl_tbf);
+	gre->dl_tbf = dl_tbf;
+
+	rc = osmo_fsm_inst_dispatch(dl_tbf->state_fsm.fi, GPRS_RLCMAC_TBF_UL_EV_DL_ASS_COMPL, NULL);
 	return rc;
 }
 
@@ -171,7 +227,7 @@ int gprs_rlcmac_handle_ccch_imm_ass(const struct gsm48_imm_ass *ia)
 			rc = gprs_rlcmac_handle_ccch_imm_ass_ul_tbf(ch_ts, ia, &iaro);
 			break;
 		case 1: /* iaro.u.ll.lh0x.MultiBlock_PktDlAss.* (IA_MultiBlock_PktDlAss_t) */
-			/* TODO: Alloc DL TBF */
+			rc = gprs_rlcmac_handle_ccch_imm_ass_dl_tbf(ch_ts, ia, &iaro);
 			break;
 		}
 		/* TODO: iaro.u.lh.AdditionsR13.* (IA_AdditionsR13_t) */
@@ -204,7 +260,7 @@ int gprs_rlcmac_handle_ccch_imm_ass(const struct gsm48_imm_ass *ia)
 				}
 				break;
 			case 1: /* iaro.u.hh.u.UplinkDownlinkAssignment.ul_dl.Packet_Downlink_ImmAssignment* (Packet_Downlink_ImmAssignment_t) */
-				/* TODO: Alloc DL TBF */
+				rc = gprs_rlcmac_handle_ccch_imm_ass_dl_tbf(ch_ts, ia, &iaro);
 				break;
 			}
 			break;
@@ -215,4 +271,72 @@ int gprs_rlcmac_handle_ccch_imm_ass(const struct gsm48_imm_ass *ia)
 	}
 
 	return rc;
+}
+
+static int gprs_rlcmac_handle_gprs_dl_ctrl_block(const struct osmo_gprs_rlcmac_prim *rlcmac_prim)
+{
+	struct bitvec *bv;
+	RlcMacDownlink_t *dl_ctrl_block;
+	size_t max_len = gprs_rlcmac_mcs_max_bytes_dl(GPRS_RLCMAC_CS_1);
+	int rc;
+
+	bv = bitvec_alloc(max_len, g_ctx);
+	OSMO_ASSERT(bv);
+	bitvec_unpack(bv, rlcmac_prim->l1ctl.pdch_data_ind.data);
+
+	dl_ctrl_block = (RlcMacDownlink_t *)talloc_zero(g_ctx, RlcMacDownlink_t);
+	OSMO_ASSERT(dl_ctrl_block);
+	rc = osmo_gprs_rlcmac_decode_downlink(bv, dl_ctrl_block);
+	if (rc < 0) {
+		LOGRLCMAC(LOGL_NOTICE, "Failed decoding dl ctrl block: %s\n",
+			  osmo_hexdump(rlcmac_prim->l1ctl.pdch_data_ind.data,
+				       rlcmac_prim->l1ctl.pdch_data_ind.data_len));
+		goto free_ret;
+	}
+
+	LOGRLCMAC(LOGL_NOTICE, "TODO: handle decoded dl ctrl block!\n");
+
+free_ret:
+	talloc_free(dl_ctrl_block);
+	bitvec_free(bv);
+	return rc;
+}
+
+static int gprs_rlcmac_handle_gprs_dl_data_block(const struct osmo_gprs_rlcmac_prim *rlcmac_prim)
+{
+	const struct gprs_rlcmac_rlc_dl_data_header *data_hdr = (const struct gprs_rlcmac_rlc_dl_data_header *)rlcmac_prim->l1ctl.pdch_data_ind.data;
+	struct gprs_rlcmac_dl_tbf *dl_tbf;
+
+	dl_tbf = gprs_rlcmac_find_dl_tbf_by_tfi(data_hdr->tfi);
+	if (!dl_tbf) {
+		LOGPTBFDL(dl_tbf, LOGL_INFO, "Rx DL data for unknown dl_tfi=%u\n", data_hdr->tfi);
+		return -ENOENT;
+	}
+	LOGPTBFDL(dl_tbf, LOGL_DEBUG, "Rx new DL data\n");
+	return 0;
+}
+
+int gprs_rlcmac_handle_gprs_dl_block(const struct osmo_gprs_rlcmac_prim *rlcmac_prim,
+					  enum gprs_rlcmac_coding_scheme cs)
+{
+	const struct gprs_rlcmac_rlc_dl_data_header *data_hdr = (const struct gprs_rlcmac_rlc_dl_data_header *)rlcmac_prim->l1ctl.pdch_data_ind.data;
+	/* Check block content (data vs ctrl) based on Payload Type: TS 44.060 10.4.7 */
+	switch ((enum gprs_rlcmac_payload_type)data_hdr->pt) {
+	case GPRS_RLCMAC_PT_DATA_BLOCK:
+		/* "Contains an RLC data block" */
+		return gprs_rlcmac_handle_gprs_dl_data_block(rlcmac_prim);
+	case GPRS_RLCMAC_PT_CONTROL_BLOCK:
+		/* "Contains an RLC/MAC control block that does not include the optional octets of the RLC/MAC
+		 * control header" */
+		return gprs_rlcmac_handle_gprs_dl_ctrl_block(rlcmac_prim);
+	case GPRS_RLCMAC_PT_CONTROL_BLOCK_OPT:
+		/* Contains an RLC/MAC control block that includes the optional first octet of the RLC/MAC
+		 * control header" */
+		return gprs_rlcmac_handle_gprs_dl_ctrl_block(rlcmac_prim);
+	case GPRS_RLCMAC_PT_RESERVED: /* Reserved. In this version of the protocol, the mobile station shall ignore all fields of the
+		 * RLC/MAC block except for the USF field */
+		return 0;
+	default:
+		OSMO_ASSERT(0);
+	}
 }

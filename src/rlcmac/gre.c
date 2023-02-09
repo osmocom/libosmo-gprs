@@ -24,6 +24,7 @@
 #include <osmocom/gprs/rlcmac/rlcmac.h>
 #include <osmocom/gprs/rlcmac/rlcmac_prim.h>
 #include <osmocom/gprs/rlcmac/rlcmac_private.h>
+#include <osmocom/gprs/rlcmac/tbf_dl.h>
 #include <osmocom/gprs/rlcmac/tbf_ul_fsm.h>
 #include <osmocom/gprs/rlcmac/tbf_ul.h>
 #include <osmocom/gprs/rlcmac/gre.h>
@@ -58,6 +59,7 @@ void gprs_rlcmac_entity_free(struct gprs_rlcmac_entity *gre)
 	if (!gre)
 		return;
 
+	gprs_rlcmac_dl_tbf_free(gre->dl_tbf);
 	gprs_rlcmac_ul_tbf_free(gre->ul_tbf);
 	gprs_rlcmac_llc_queue_free(gre->llc_queue);
 	llist_del(&gre->entry);

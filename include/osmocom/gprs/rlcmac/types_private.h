@@ -3,6 +3,14 @@
 
 #include <osmocom/gprs/rlcmac/types.h>
 
+/* TS 44.060 Section 10.4.7 Table 10.4.7.1: Payload Type field */
+enum gprs_rlcmac_payload_type {
+	GPRS_RLCMAC_PT_DATA_BLOCK = 0x0,
+	GPRS_RLCMAC_PT_CONTROL_BLOCK = 0x1,
+	GPRS_RLCMAC_PT_CONTROL_BLOCK_OPT = 0x2,
+	GPRS_RLCMAC_PT_RESERVED = 0x3
+};
+
 /* TS 44.060 Table 11.2.16.2 "ACCESS_TYPE" */
 enum gprs_rlcmac_access_type {
 	GPRS_RLCMAC_ACCESS_TYPE_2PHASE_ACC_REQ = 0, /* Two Phase Access Request */

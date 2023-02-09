@@ -10,6 +10,8 @@ noinst_HEADERS = \
 	rlcmac_private.h \
 	sched.h \
 	tbf.h \
+	tbf_dl.h \
+	tbf_dl_fsm.h \
 	tbf_ul.h \
 	tbf_ul_fsm.h \
 	tbf_ul_ass_fsm.h \

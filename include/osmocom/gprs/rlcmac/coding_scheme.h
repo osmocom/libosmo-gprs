@@ -61,6 +61,7 @@ bool gprs_rlcmac_mcs_is_edge_gmsk(enum gprs_rlcmac_coding_scheme cs);
 uint8_t gprs_rlcmac_mcs_chan_code(enum gprs_rlcmac_coding_scheme cs);
 
 enum gprs_rlcmac_coding_scheme gprs_rlcmac_mcs_get_by_size_ul(unsigned size);
+enum gprs_rlcmac_coding_scheme gprs_rlcmac_mcs_get_by_size_dl(unsigned size);
 enum gprs_rlcmac_coding_scheme gprs_rlcmac_mcs_get_gprs_by_num(unsigned num);
 enum gprs_rlcmac_coding_scheme gprs_rlcmac_mcs_get_egprs_by_num(unsigned num);
 bool gprs_rlcmac_mcs_is_valid(enum gprs_rlcmac_coding_scheme cs);

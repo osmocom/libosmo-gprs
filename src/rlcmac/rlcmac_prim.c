@@ -37,6 +37,7 @@
 #include <osmocom/gprs/rlcmac/rlcmac_prim.h>
 #include <osmocom/gprs/rlcmac/rlcmac_private.h>
 #include <osmocom/gprs/rlcmac/gre.h>
+#include <osmocom/gprs/rlcmac/tbf_dl.h>
 #include <osmocom/gprs/rlcmac/tbf_ul.h>
 #include <osmocom/gprs/rlcmac/tbf_ul_ass_fsm.h>
 
@@ -466,9 +467,27 @@ static int rlcmac_prim_handle_l1ctl_pdch_rts_ind(struct osmo_gprs_rlcmac_prim *r
 
 static int rlcmac_prim_handle_l1ctl_pdch_data_ind(struct osmo_gprs_rlcmac_prim *rlcmac_prim)
 {
-	int rc = gprs_rlcmac_prim_handle_unsupported(rlcmac_prim);
-	rc = 1; /* msg owned (freed) */
-	return rc;
+	enum gprs_rlcmac_coding_scheme cs = gprs_rlcmac_mcs_get_by_size_dl(rlcmac_prim->l1ctl.pdch_data_ind.data_len);
+
+	if (cs == GPRS_RLCMAC_CS_UNKNOWN) {
+		LOGRLCMAC(LOGL_ERROR, "Dropping DL data block with invalid length %u: %s\n",
+			  rlcmac_prim->l1ctl.pdch_data_ind.data_len,
+			  osmo_hexdump(rlcmac_prim->l1ctl.pdch_data_ind.data,
+				       rlcmac_prim->l1ctl.pdch_data_ind.data_len));
+		return -EINVAL;
+	}
+
+	if (gprs_rlcmac_mcs_is_gprs(cs))
+		return gprs_rlcmac_handle_gprs_dl_block(rlcmac_prim, cs);
+
+	if (gprs_rlcmac_mcs_is_edge(cs)) {
+		LOGRLCMAC(LOGL_NOTICE, "RX EGPRS DL data block NOT SUPPORTED\n");
+		return -ENOTSUP;
+	}
+
+	/* Should never be reached. */
+	OSMO_ASSERT(0);
+	return -EINVAL;
 }
 
 static int rlcmac_prim_handle_l1ctl_ccch_data_ind(struct osmo_gprs_rlcmac_prim *rlcmac_prim)

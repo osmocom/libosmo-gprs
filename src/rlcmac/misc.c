@@ -18,6 +18,7 @@
 #include <osmocom/core/utils.h>
 #include <osmocom/core/logging.h>
 #include <osmocom/gprs/rlcmac/rlcmac.h>
+#include <osmocom/gprs/rlcmac/tbf_dl_fsm.h>
 #include <osmocom/gprs/rlcmac/tbf_ul_fsm.h>
 #include <osmocom/gprs/rlcmac/tbf_ul_ass_fsm.h>
 
@@ -30,8 +31,15 @@ void osmo_gprs_rlcmac_set_log_cat(enum osmo_gprs_rlcmac_log_cat logc, int logc_n
 	OSMO_ASSERT(logc < _OSMO_GPRS_RLCMAC_LOGC_MAX);
 	g_rlcmac_log_cat[logc] = logc_num;
 
-	if (logc == OSMO_GPRS_RLCMAC_LOGC_TBFUL) {
+	switch (logc) {
+	case OSMO_GPRS_RLCMAC_LOGC_TBFUL:
 		gprs_rlcmac_tbf_ul_fsm_set_log_cat(logc_num);
 		gprs_rlcmac_tbf_ul_ass_fsm_set_log_cat(logc_num);
+		break;
+	case OSMO_GPRS_RLCMAC_LOGC_TBFDL:
+		gprs_rlcmac_tbf_dl_fsm_set_log_cat(logc_num);
+		break;
+	default:
+		break;
 	}
 }

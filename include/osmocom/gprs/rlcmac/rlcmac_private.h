@@ -28,6 +28,16 @@ struct gprs_rlcmac_ul_tbf_allocation {
 	struct gprs_rlcmac_ul_tbf_allocation_ts ts[8];
 };
 
+struct gprs_rlcmac_dl_tbf_allocation_ts {
+	bool allocated;
+};
+
+struct gprs_rlcmac_dl_tbf_allocation {
+	uint8_t dl_tfi;
+	uint8_t num_ts; /* number of allocated TS */
+	struct gprs_rlcmac_dl_tbf_allocation_ts ts[8];
+};
+
 extern int g_rlcmac_log_cat[_OSMO_GPRS_RLCMAC_LOGC_MAX];
 
 #define LOGRLCMAC(lvl, fmt, args...) LOGP(g_rlcmac_log_cat[OSMO_GPRS_RLCMAC_LOGC_RLCMAC], lvl, fmt, ## args)
@@ -56,13 +66,17 @@ struct gprs_rlcmac_ctx {
 	struct llist_head gre_list; /* contains (struct gprs_rlcmac_entity)->entry */
 
 	uint8_t next_ul_tbf_nr;
+	uint8_t next_dl_tbf_nr;
 };
 
 extern struct gprs_rlcmac_ctx *g_ctx;
 
 /* rlcmac.c */
 struct gprs_rlcmac_entity *gprs_rlcmac_find_entity_by_tlli(uint32_t tlli);
+struct gprs_rlcmac_dl_tbf *gprs_rlcmac_find_dl_tbf_by_tfi(uint8_t dl_tfi);
 int gprs_rlcmac_handle_ccch_imm_ass(const struct gsm48_imm_ass *ia);
+int gprs_rlcmac_handle_gprs_dl_block(const struct osmo_gprs_rlcmac_prim *rlcmac_prim,
+				     enum gprs_rlcmac_coding_scheme cs);
 
 /* rlcmac_prim.c */
 int gprs_rlcmac_prim_call_up_cb(struct osmo_gprs_rlcmac_prim *rlcmac_prim);

@@ -144,6 +144,27 @@ enum gprs_rlcmac_coding_scheme gprs_rlcmac_mcs_get_by_size_ul(unsigned size)
 	}
 }
 
+/* Same as UL. Sizes only change in EGPRS2 blocks, which we don't support */
+enum gprs_rlcmac_coding_scheme gprs_rlcmac_mcs_get_by_size_dl(unsigned size)
+{
+	switch (size) {
+	case 23: return GPRS_RLCMAC_CS_1;
+	case 27: return GPRS_RLCMAC_MCS_1;
+	case 33: return GPRS_RLCMAC_MCS_2;
+	case 34: return GPRS_RLCMAC_CS_2;
+	case 40: return GPRS_RLCMAC_CS_3;
+	case 42: return GPRS_RLCMAC_MCS_3;
+	case 49: return GPRS_RLCMAC_MCS_4;
+	case 54: return GPRS_RLCMAC_CS_4;
+	case 61: return GPRS_RLCMAC_MCS_5;
+	case 79: return GPRS_RLCMAC_MCS_6;
+	case 119: return GPRS_RLCMAC_MCS_7;
+	case 143: return GPRS_RLCMAC_MCS_8;
+	case 155: return GPRS_RLCMAC_MCS_9;
+	default: return GPRS_RLCMAC_CS_UNKNOWN;
+	}
+}
+
 enum gprs_rlcmac_coding_scheme gprs_rlcmac_mcs_get_gprs_by_num(unsigned num)
 {
 	if (num < 1 || num > 4)
