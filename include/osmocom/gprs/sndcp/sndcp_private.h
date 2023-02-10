@@ -9,6 +9,7 @@
 #include <osmocom/core/linuxlist.h>
 #include <osmocom/core/msgb.h>
 #include <osmocom/core/logging.h>
+#include <osmocom/core/endian.h>
 
 #include <osmocom/gprs/llc/llc.h>
 #include <osmocom/gprs/sndcp/sndcp.h>
