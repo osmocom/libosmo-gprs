@@ -40,6 +40,16 @@ static struct osmo_tdef T_defs_rlcmac[] = {
 	{ 0 } /* empty item at the end */
 };
 
+static void gprs_rlcmac_ctx_free(void)
+{
+	struct gprs_rlcmac_entity *gre;
+
+	while ((gre = llist_first_entry_or_null(&g_ctx->gre_list, struct gprs_rlcmac_entity, entry)))
+		gprs_rlcmac_entity_free(gre);
+
+	talloc_free(g_ctx);
+}
+
 int osmo_gprs_rlcmac_init(enum osmo_gprs_rlcmac_location location)
 {
 	bool first_init = true;
@@ -47,7 +57,7 @@ int osmo_gprs_rlcmac_init(enum osmo_gprs_rlcmac_location location)
 	OSMO_ASSERT(location == OSMO_GPRS_RLCMAC_LOCATION_MS || location == OSMO_GPRS_RLCMAC_LOCATION_PCU)
 
 	if (g_ctx) {
-		talloc_free(g_ctx);
+		gprs_rlcmac_ctx_free();
 		first_init = false;
 	}
 
