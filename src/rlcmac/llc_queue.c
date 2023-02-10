@@ -56,6 +56,7 @@ struct gprs_rlcmac_llc_queue *gprs_rlcmac_llc_queue_alloc(struct gprs_rlcmac_ent
 
 void gprs_rlcmac_llc_queue_free(struct gprs_rlcmac_llc_queue *q)
 {
+	gprs_rlcmac_llc_queue_clear(q);
 	talloc_free(q);
 }
 
