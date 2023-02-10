@@ -186,7 +186,7 @@ struct osmo_gprs_rlcmac_prim *osmo_gprs_rlcmac_prim_alloc_grr_unitdata_req(
 				uint32_t tlli, uint8_t *ll_pdu, size_t ll_pdu_len);
 
 /* Alloc primitive for GMMRR SAP: */
-struct osmo_gprs_rlcmac_prim *osmo_gprs_rlcmac_prim_alloc_gmmrr_asign_req(
+struct osmo_gprs_rlcmac_prim *osmo_gprs_rlcmac_prim_alloc_gmmrr_assign_req(
 				uint32_t new_tlli);
 
 /* Alloc primitive for L1CTL SAP: */

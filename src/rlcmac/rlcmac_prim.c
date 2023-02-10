@@ -383,8 +383,21 @@ static int gprs_rlcmac_prim_grr_upper_down(struct osmo_gprs_rlcmac_prim *rlcmac_
 
 static int rlcmac_prim_handle_gmmrr_assign_req(struct osmo_gprs_rlcmac_prim *rlcmac_prim)
 {
-	int rc = gprs_rlcmac_prim_handle_unsupported(rlcmac_prim);
-	return rc;
+	struct gprs_rlcmac_entity *gre;
+
+	gre = gprs_rlcmac_find_entity_by_tlli(rlcmac_prim->gmmrr.assign_req.new_tlli);
+	if (!gre) {
+		LOGRLCMAC(LOGL_INFO, "GMMRR-ASSIGN.req: creating new entity TLLI=0x%08x\n",
+			  rlcmac_prim->gmmrr.assign_req.new_tlli);
+		gre = gprs_rlcmac_entity_alloc(rlcmac_prim->gmmrr.assign_req.new_tlli);
+		OSMO_ASSERT(gre);
+	} else {
+		LOGRLCMAC(LOGL_INFO, "GMMRR-ASSIGN.req: TLLI=0x%08x already exists\n",
+			  rlcmac_prim->gmmrr.assign_req.new_tlli);
+	}
+
+	msgb_free(rlcmac_prim->oph.msg);
+	return 0;
 }
 
 static int gprs_rlcmac_prim_gmmrr_upper_down(struct osmo_gprs_rlcmac_prim *rlcmac_prim)
