@@ -1,0 +1,5 @@
+usr/include/osmocom/gprs/sndcp
+usr/lib/*/libosmo-gprs-sndcp*.a
+usr/lib/*/libosmo-gprs-sndcp*.so
+usr/lib/*/libosmo-gprs-sndcp*.la
+usr/lib/*/pkgconfig/libosmo-gprs-sndcp.pc
