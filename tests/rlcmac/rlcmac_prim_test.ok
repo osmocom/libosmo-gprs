@@ -5,4 +5,5 @@ test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=4 ts=7 data_len=34 dat
 === test_ul_tbf_attach end ===
 === test_dl_tbf_ccch_assign start ===
 test_rlcmac_prim_down_cb(): Rx L1CTL-CFG_DL_TBF.request dl_tbf_nr=0 dl_slotmask=0x80 dl_tfi=0
+test_rlcmac_prim_up_cb(): Rx GRR-UNITDATA.indication TLLI=0x00000001 ll=[43 c0 01 2b 2b 2b ]
 === test_dl_tbf_ccch_assign end ===

@@ -10,6 +10,10 @@
 #include <osmocom/gprs/rlcmac/coding_scheme.h>
 #include <osmocom/gprs/rlcmac/sched.h>
 #include <osmocom/gprs/rlcmac/rlcmac_private.h>
+#include <osmocom/gprs/rlcmac/rlc.h>
+
+struct gprs_rlcmac_rlc_window;
+struct gprs_rlcmac_rlc_ul_window;
 
 struct gprs_rlcmac_dl_tbf {
 	struct gprs_rlcmac_tbf tbf;
@@ -17,12 +21,28 @@ struct gprs_rlcmac_dl_tbf {
 
 	/* Current TS/TFI/USF allocated by the PCU: */
 	struct gprs_rlcmac_dl_tbf_allocation cur_alloc;
+
+	/* Currently LLC frame being filled from RLC blocks */
+	struct msgb *llc_rx_msg;
+
+	/* Holds state of all generated in-transit RLC blocks */
+	struct gprs_rlcmac_rlc_block_store *blkst;
+
+	/* Downlink RLC Window, holds ACK state */
+	union { /* easy access to parent and child */
+		struct gprs_rlcmac_rlc_window *w;
+		struct gprs_rlcmac_rlc_dl_window *dlw;
+	};
 };
 
 struct gprs_rlcmac_dl_tbf *gprs_rlcmac_dl_tbf_alloc(struct gprs_rlcmac_entity *gre);
 void gprs_rlcmac_dl_tbf_free(struct gprs_rlcmac_dl_tbf *dl_tbf);
 
 int gprs_rlcmac_dl_tbf_configure_l1ctl(struct gprs_rlcmac_dl_tbf *dl_tbf);
+
+int gprs_rlcmac_dl_tbf_rcv_data_block(struct gprs_rlcmac_dl_tbf *dl_tbf,
+				      const struct gprs_rlcmac_rlc_data_info *rlc,
+				      uint8_t *data);
 
 static inline struct gprs_rlcmac_tbf *dl_tbf_as_tbf(struct gprs_rlcmac_dl_tbf *dl_tbf)
 {

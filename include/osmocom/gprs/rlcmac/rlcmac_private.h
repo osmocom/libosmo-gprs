@@ -17,6 +17,8 @@
 
 #define GPRS_RLCMAC_USF_UNUSED 0x07
 
+#define GPRS_RLCMAC_LLC_PDU_MAX_LEN 1543
+
 struct gprs_rlcmac_ul_tbf_allocation_ts {
 	bool allocated;
 	uint8_t usf;

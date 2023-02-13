@@ -5,7 +5,9 @@ noinst_HEADERS = \
 	llc_queue.h \
 	rlc.h \
 	rlc_window.h \
+	rlc_window_dl.h \
 	rlc_window_ul.h \
+	rlcmac_dec.h \
 	rlcmac_enc.h \
 	rlcmac_private.h \
 	sched.h \

@@ -68,7 +68,7 @@ struct gprs_rlcmac_rlc_dl_data_header {
 #endif
 } __attribute__ ((packed));
 
-struct gprs_rlcmacrlc_li_field_egprs {
+struct gprs_rlcmac_rlc_li_field_egprs {
 #if OSMO_IS_LITTLE_ENDIAN
 	uint8_t	e:1,
 		 li:7;
@@ -105,6 +105,7 @@ struct gprs_rlcmac_rlc_data_info {
 	unsigned int es_p;
 	unsigned int rrbp;
 	unsigned int pr;
+	unsigned int fbi;
 	uint8_t num_data_blocks; /* this can actually be only 0, 1, 2: enforced in gprs_rlcmac_rlc_data_header_init() */
 	unsigned int with_padding;
 	unsigned int data_offs_bits[2];

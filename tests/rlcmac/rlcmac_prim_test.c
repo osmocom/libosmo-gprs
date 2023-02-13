@@ -186,9 +186,8 @@ static int test_rlcmac_prim_up_cb(struct osmo_gprs_rlcmac_prim *rlcmac_prim, voi
 		printf("%s(): Rx %s TLLI=0x%08x\n", __func__, pdu_name, rlcmac_prim->gmmrr.page_ind.tlli);
 		break;
 	case OSMO_GPRS_RLCMAC_SAP_GRR:
-		printf("%s(): Rx %s TLLI=0x%08x SAPI=%s ll=[%s]\n", __func__, pdu_name,
+		printf("%s(): Rx %s TLLI=0x%08x ll=[%s]\n", __func__, pdu_name,
 		       rlcmac_prim->grr.tlli,
-		       get_value_string(osmo_gprs_rlcmac_llc_sapi_names, rlcmac_prim->grr.unitdata_req.sapi),
 		       osmo_hexdump(rlcmac_prim->grr.ll_pdu, rlcmac_prim->grr.ll_pdu_len));
 		break;
 	default:

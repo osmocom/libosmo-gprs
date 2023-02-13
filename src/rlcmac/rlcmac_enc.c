@@ -200,15 +200,15 @@ enum gpr_rlcmac_append_result gprs_rlcmac_enc_append_ul_data(
 void gprs_rlcmac_rlc_data_to_ul_append_egprs_li_padding(const struct gprs_rlcmac_rlc_block_info *rdbi,
 							int *offset, int *num_chunks, uint8_t *data_block)
 {
-	struct gprs_rlcmacrlc_li_field_egprs *li;
-	struct gprs_rlcmacrlc_li_field_egprs *prev_li;
+	struct gprs_rlcmac_rlc_li_field_egprs *li;
+	struct gprs_rlcmac_rlc_li_field_egprs *prev_li;
 	uint8_t *delimiter, *data;
 
 	LOGRLCMAC(LOGL_DEBUG, "Adding LI=127 to signal padding\n");
 
 	data = data_block + *offset;
 	delimiter = data_block + *num_chunks;
-	prev_li = (struct gprs_rlcmacrlc_li_field_egprs *)(*num_chunks ? delimiter - 1 : NULL);
+	prev_li = (struct gprs_rlcmac_rlc_li_field_egprs *)(*num_chunks ? delimiter - 1 : NULL);
 
 	/* we don't have more LLC frames */
 	/* We will have to add another chunk with filling octets */
@@ -217,7 +217,7 @@ void gprs_rlcmac_rlc_data_to_ul_append_egprs_li_padding(const struct gprs_rlcmac
 		memmove(delimiter + 1, delimiter, data - delimiter);
 
 	/* set filling bytes extension */
-	li = (struct gprs_rlcmacrlc_li_field_egprs *)delimiter;
+	li = (struct gprs_rlcmac_rlc_li_field_egprs *)delimiter;
 	li->e = 1;
 	li->li = 127;
 

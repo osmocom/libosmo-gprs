@@ -26,6 +26,7 @@
 #include <osmocom/gprs/rlcmac/rlcmac.h>
 #include <osmocom/gprs/rlcmac/rlcmac_prim.h>
 #include <osmocom/gprs/rlcmac/rlcmac_private.h>
+#include <osmocom/gprs/rlcmac/rlcmac_dec.h>
 #include <osmocom/gprs/rlcmac/tbf_ul_fsm.h>
 #include <osmocom/gprs/rlcmac/tbf_ul_ass_fsm.h>
 #include <osmocom/gprs/rlcmac/gre.h>
@@ -302,29 +303,40 @@ free_ret:
 	return rc;
 }
 
-static int gprs_rlcmac_handle_gprs_dl_data_block(const struct osmo_gprs_rlcmac_prim *rlcmac_prim)
+static int gprs_rlcmac_handle_gprs_dl_data_block(const struct osmo_gprs_rlcmac_prim *rlcmac_prim,
+						 enum gprs_rlcmac_coding_scheme cs)
 {
 	const struct gprs_rlcmac_rlc_dl_data_header *data_hdr = (const struct gprs_rlcmac_rlc_dl_data_header *)rlcmac_prim->l1ctl.pdch_data_ind.data;
 	struct gprs_rlcmac_dl_tbf *dl_tbf;
+	struct gprs_rlcmac_rlc_data_info rlc_dec;
+	int rc;
 
-	dl_tbf = gprs_rlcmac_find_dl_tbf_by_tfi(data_hdr->tfi);
+	rc = gprs_rlcmac_rlc_parse_dl_data_header(&rlc_dec, rlcmac_prim->l1ctl.pdch_data_ind.data, cs);
+	if (rc < 0) {
+		LOGRLCMAC(LOGL_ERROR, "Got %s DL data block but header parsing has failed\n",
+			  gprs_rlcmac_mcs_name(cs));
+		return rc;
+	}
+
+	dl_tbf = gprs_rlcmac_find_dl_tbf_by_tfi(rlc_dec.tfi);
 	if (!dl_tbf) {
 		LOGPTBFDL(dl_tbf, LOGL_INFO, "Rx DL data for unknown dl_tfi=%u\n", data_hdr->tfi);
 		return -ENOENT;
 	}
 	LOGPTBFDL(dl_tbf, LOGL_DEBUG, "Rx new DL data\n");
-	return 0;
+	rc = gprs_rlcmac_dl_tbf_rcv_data_block(dl_tbf, &rlc_dec, rlcmac_prim->l1ctl.pdch_data_ind.data);
+	return rc;
 }
 
 int gprs_rlcmac_handle_gprs_dl_block(const struct osmo_gprs_rlcmac_prim *rlcmac_prim,
-					  enum gprs_rlcmac_coding_scheme cs)
+				     enum gprs_rlcmac_coding_scheme cs)
 {
 	const struct gprs_rlcmac_rlc_dl_data_header *data_hdr = (const struct gprs_rlcmac_rlc_dl_data_header *)rlcmac_prim->l1ctl.pdch_data_ind.data;
 	/* Check block content (data vs ctrl) based on Payload Type: TS 44.060 10.4.7 */
 	switch ((enum gprs_rlcmac_payload_type)data_hdr->pt) {
 	case GPRS_RLCMAC_PT_DATA_BLOCK:
 		/* "Contains an RLC data block" */
-		return gprs_rlcmac_handle_gprs_dl_data_block(rlcmac_prim);
+		return gprs_rlcmac_handle_gprs_dl_data_block(rlcmac_prim, cs);
 	case GPRS_RLCMAC_PT_CONTROL_BLOCK:
 		/* "Contains an RLC/MAC control block that does not include the optional octets of the RLC/MAC
 		 * control header" */

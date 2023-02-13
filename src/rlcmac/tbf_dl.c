@@ -22,6 +22,8 @@
 
 #include <osmocom/gprs/rlcmac/tbf_dl.h>
 #include <osmocom/gprs/rlcmac/gre.h>
+#include <osmocom/gprs/rlcmac/rlc_window_dl.h>
+#include <osmocom/gprs/rlcmac/rlcmac_dec.h>
 
 struct gprs_rlcmac_dl_tbf *gprs_rlcmac_dl_tbf_alloc(struct gprs_rlcmac_entity *gre)
 {
@@ -40,7 +42,15 @@ struct gprs_rlcmac_dl_tbf *gprs_rlcmac_dl_tbf_alloc(struct gprs_rlcmac_entity *g
 
 	dl_tbf->tbf.nr = g_ctx->next_dl_tbf_nr++;
 
+	dl_tbf->dlw = gprs_rlcmac_rlc_dl_window_alloc(dl_tbf);
+	OSMO_ASSERT(dl_tbf->dlw);
+
+
+	dl_tbf->blkst = gprs_rlcmac_rlc_block_store_alloc(dl_tbf);
+	OSMO_ASSERT(dl_tbf->blkst);
+
 	return dl_tbf;
+
 err_tbf_destruct:
 	gprs_rlcmac_tbf_destructor(dl_tbf_as_tbf(dl_tbf));
 	talloc_free(dl_tbf);
@@ -51,6 +61,15 @@ void gprs_rlcmac_dl_tbf_free(struct gprs_rlcmac_dl_tbf *dl_tbf)
 {
 	if (!dl_tbf)
 		return;
+
+	msgb_free(dl_tbf->llc_rx_msg);
+	dl_tbf->llc_rx_msg = NULL;
+
+	gprs_rlcmac_rlc_block_store_free(dl_tbf->blkst);
+	dl_tbf->blkst = NULL;
+
+	gprs_rlcmac_rlc_dl_window_free(dl_tbf->dlw);
+	dl_tbf->dlw = NULL;
 
 	//gprs_rlcmac_tbf_dl_fsm_destructor(dl_tbf);
 
@@ -83,4 +102,162 @@ int gprs_rlcmac_dl_tbf_configure_l1ctl(struct gprs_rlcmac_dl_tbf *dl_tbf)
 								  dl_slotmask,
 								  dl_tbf->cur_alloc.dl_tfi);
 	return gprs_rlcmac_prim_call_down_cb(rlcmac_prim);
+}
+
+/*
+ * Store received block data in LLC message(s) and forward to SGSN
+ * if complete.
+ */
+static int gprs_rlcmac_dl_tbf_assemble_forward_llc(struct gprs_rlcmac_dl_tbf *dl_tbf,
+						   const struct gprs_rlcmac_rlc_block *blk)
+{
+	const uint8_t *data = &blk->buf[0];
+	uint8_t len = blk->len;
+	const struct gprs_rlcmac_rlc_block_info *rdbi = &blk->block_info;
+	enum gprs_rlcmac_coding_scheme cs = blk->cs_last;
+	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
+
+	struct gprs_rlcmac_rlc_llc_chunk frames[16], *frame;
+	int i, num_frames = 0;
+	int rc = 0;
+
+	LOGPTBFDL(dl_tbf, LOGL_DEBUG, "Assembling frames: (len=%d)\n", len);
+
+	if (!dl_tbf->llc_rx_msg) {
+		rlcmac_prim = gprs_rlcmac_prim_alloc_grr_unitdata_ind(
+				dl_tbf->tbf.gre->tlli, NULL, GPRS_RLCMAC_LLC_PDU_MAX_LEN);
+		dl_tbf->llc_rx_msg = rlcmac_prim->oph.msg;
+		dl_tbf->llc_rx_msg->l3h = dl_tbf->llc_rx_msg->tail;
+	} else {
+		rlcmac_prim = msgb_rlcmac_prim(dl_tbf->llc_rx_msg);
+	}
+
+	num_frames = gprs_rlcmac_rlc_data_from_dl_data(rdbi, cs, data,
+						       &frames[0], ARRAY_SIZE(frames));
+
+	/* create LLC frames */
+	for (i = 0; i < num_frames; i++) {
+		frame = frames + i;
+
+		if (frame->length) {
+			LOGPTBFDL(dl_tbf, LOGL_DEBUG, "Frame %d "
+				"starts at offset %d, "
+				"length=%d, is_complete=%d\n",
+				i + 1, frame->offset, frame->length,
+				frame->is_complete);
+
+			memcpy(msgb_put(dl_tbf->llc_rx_msg, frame->length),
+			       data + frame->offset, frame->length);
+		}
+
+		if (frame->is_complete) {
+			/* send frame to upper layers: */
+			LOGPTBFDL(dl_tbf, LOGL_DEBUG, "complete UL frame len=%d\n", msgb_l3len(dl_tbf->llc_rx_msg));
+			rlcmac_prim->grr.ll_pdu = msgb_l3(dl_tbf->llc_rx_msg);
+			rlcmac_prim->grr.ll_pdu_len = msgb_l3len(dl_tbf->llc_rx_msg);
+
+			/* ownserhsip of dl_tbf->llc_rx_msg transferred here: */
+			rc = gprs_rlcmac_prim_call_up_cb(rlcmac_prim);
+			dl_tbf->llc_rx_msg = NULL;
+		}
+	}
+
+	return rc;
+}
+
+int gprs_rlcmac_dl_tbf_rcv_data_block(struct gprs_rlcmac_dl_tbf *dl_tbf,
+				      const struct gprs_rlcmac_rlc_data_info *rlc,
+				      uint8_t *data)
+{
+	const struct gprs_rlcmac_rlc_block_info *rdbi;
+	struct gprs_rlcmac_rlc_block *block;
+
+	const uint16_t ws = gprs_rlcmac_rlc_window_ws(dl_tbf->w);
+
+	LOGPTBFDL(dl_tbf, LOGL_DEBUG, "DL DATA TFI=%d received (V(Q)=%d .. V(R)=%d)\n",
+		  rlc->tfi,
+		  gprs_rlcmac_rlc_dl_window_v_q(dl_tbf->dlw),
+		  gprs_rlcmac_rlc_dl_window_v_r(dl_tbf->dlw));
+
+	unsigned int block_idx;
+
+	/* Loop over num_blocks */
+	for (block_idx = 0; block_idx < rlc->num_data_blocks; block_idx++) {
+		uint8_t *rlc_data;
+		rdbi = &rlc->block_info[block_idx];
+
+		LOGPTBFDL(dl_tbf, LOGL_DEBUG,
+			  "Got %s RLC data block: FBI=%u, BSN=%d, SPB=%d, S/P=%d RRBP=%u, E=%d, bitoffs=%d\n",
+			  gprs_rlcmac_mcs_name(rlc->cs),
+			  rdbi->cv == 0, rdbi->bsn, rdbi->spb,
+			  rlc->es_p, rlc->rrbp, rdbi->e,
+			  rlc->data_offs_bits[block_idx]);
+
+		/* Check whether the block needs to be decoded */
+
+		if (!gprs_rlcmac_rlc_dl_window_is_in_window(dl_tbf->dlw, rdbi->bsn)) {
+			LOGPTBFDL(dl_tbf, LOGL_DEBUG, "BSN %d out of window %d..%d (it's normal)\n",
+				  rdbi->bsn,
+				  gprs_rlcmac_rlc_dl_window_v_q(dl_tbf->dlw),
+				  gprs_rlcmac_rlc_window_mod_sns_bsn(dl_tbf->w, gprs_rlcmac_rlc_dl_window_v_q(dl_tbf->dlw) + ws - 1));
+			continue;
+		} else if (gprs_rlcmac_rlc_v_n_is_received(&dl_tbf->dlw->v_n, rdbi->bsn)) {
+			LOGPTBFDL(dl_tbf, LOGL_DEBUG, "BSN %d already received\n", rdbi->bsn);
+			continue;
+		}
+
+		/* Store block and meta info to BSN buffer */
+
+		LOGPTBFDL(dl_tbf, LOGL_DEBUG, "BSN %d storing in window (%d..%d)\n",
+			  rdbi->bsn, gprs_rlcmac_rlc_dl_window_v_q(dl_tbf->dlw),
+			  gprs_rlcmac_rlc_window_mod_sns_bsn(dl_tbf->w, gprs_rlcmac_rlc_dl_window_v_q(dl_tbf->dlw) + ws - 1));
+		block = gprs_rlcmac_rlc_block_store_get_block(dl_tbf->blkst, rdbi->bsn);
+		OSMO_ASSERT(rdbi->data_len <= sizeof(block->buf));
+		rlc_data = &(block->buf[0]);
+
+		block->block_info = *rdbi;
+		block->cs_last = rlc->cs;
+		block->len = gprs_rlcmac_rlc_copy_to_aligned_buffer(rlc, block_idx,
+								    data, rlc_data);
+
+		LOGPTBFDL(dl_tbf, LOGL_DEBUG, "data_length=%d, data=%s\n",
+			  block->len, osmo_hexdump(rlc_data, block->len));
+
+		gprs_rlcmac_rlc_dl_window_receive_bsn(dl_tbf->dlw, rdbi->bsn);
+	}
+
+	/* Raise V(Q) if possible, and retrieve LLC frames from blocks.
+	 * This is looped until there is a gap (non received block) or
+	 * the window is empty.*/
+	const uint16_t v_q_beg = gprs_rlcmac_rlc_dl_window_v_q(dl_tbf->dlw);
+	const uint16_t count = gprs_rlcmac_rlc_dl_window_raise_v_q(dl_tbf->dlw);
+
+	/* Retrieve LLC frames from blocks that are ready */
+	for (uint16_t i = 0; i < count; ++i) {
+		uint16_t index = gprs_rlcmac_rlc_window_mod_sns_bsn(dl_tbf->w, v_q_beg + i);
+		gprs_rlcmac_dl_tbf_assemble_forward_llc(dl_tbf, gprs_rlcmac_rlc_block_store_get_block(dl_tbf->blkst, index));
+	}
+
+	/* Last frame in buffer: */
+	uint16_t last = gprs_rlcmac_rlc_window_mod_sns_bsn(dl_tbf->w,
+							   gprs_rlcmac_rlc_dl_window_v_r(dl_tbf->dlw) - 1);
+	block = gprs_rlcmac_rlc_block_store_get_block(dl_tbf->blkst, last);
+	rdbi = &block->block_info;
+
+	/* Check if we already received all data TBF had to send: */
+	if (//this->state_is(TBF_ST_FLOW) && /* still in flow state */
+	    (gprs_rlcmac_rlc_dl_window_v_q(dl_tbf->dlw) == gprs_rlcmac_rlc_dl_window_v_r(dl_tbf->dlw)) && /* if complete */
+	     block->len) { /* if there was ever a last block received */
+		LOGPTBFDL(dl_tbf, LOGL_DEBUG,
+			  "No gaps in received block, last block: BSN=%d FBI=%d\n",
+			  rdbi->bsn, rdbi->cv == 0);
+		if (rdbi->cv == 0) {
+			LOGPTBFDL(dl_tbf, LOGL_DEBUG, "Finished with DL TBF\n");
+			osmo_fsm_inst_dispatch(dl_tbf->state_fsm.fi, GPRS_RLCMAC_TBF_DL_EV_LAST_DL_DATA_RECVD, NULL);
+		}
+	}
+
+	/* TODO: if RRBP contains valid data, schedule a DL ACK/NACK. */
+
+	return 0;
 }

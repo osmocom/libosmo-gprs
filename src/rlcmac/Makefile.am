@@ -32,9 +32,11 @@ libosmo_gprs_rlcmac_la_SOURCES = \
 	gre.c \
 	llc_queue.c \
 	rlc_window.c \
+	rlc_window_dl.c \
 	rlc_window_ul.c \
 	rlc.c \
 	rlcmac.c \
+	rlcmac_dec.c \
 	rlcmac_enc.c \
 	rlcmac_prim.c \
 	sched.c \
