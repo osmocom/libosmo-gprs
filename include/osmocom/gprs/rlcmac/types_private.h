@@ -3,6 +3,14 @@
 
 #include <osmocom/gprs/rlcmac/types.h>
 
+/* TS 44.060 able 10.4.5.1 RRBP offsets */
+enum gprs_rlcmac_rrbp_field {
+	GPRS_RLCMAC_RRBP_N_plus_13 = 0x0,
+	GPRS_RLCMAC_RRBP_N_plus_17_18 = 0x1,
+	GPRS_RLCMAC_RRBP_N_plus_21_22 = 0x2,
+	GPRS_RLCMAC_RRBP_N_plus_26 = 0x3,
+};
+
 /* TS 44.060 Section 10.4.7 Table 10.4.7.1: Payload Type field */
 enum gprs_rlcmac_payload_type {
 	GPRS_RLCMAC_PT_DATA_BLOCK = 0x0,

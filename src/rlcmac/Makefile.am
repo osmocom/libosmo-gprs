@@ -30,6 +30,7 @@ libosmo_gprs_rlcmac_la_SOURCES = \
 	csn1_ts_44_018.c \
 	csn1_ts_44_060.c \
 	gre.c \
+	pdch_ul_controller.c \
 	llc_queue.c \
 	rlc_window.c \
 	rlc_window_dl.c \

@@ -25,19 +25,85 @@
 #include <osmocom/gprs/rlcmac/rlcmac_private.h>
 #include <osmocom/gprs/rlcmac/sched.h>
 #include <osmocom/gprs/rlcmac/gre.h>
+#include <osmocom/gprs/rlcmac/tbf_dl.h>
 #include <osmocom/gprs/rlcmac/tbf_ul.h>
 #include <osmocom/gprs/rlcmac/tbf_ul_ass_fsm.h>
+#include <osmocom/gprs/rlcmac/types_private.h>
+#include <osmocom/gprs/rlcmac/pdch_ul_controller.h>
 
 struct tbf_sched_ctrl_candidates {
+	struct gprs_rlcmac_dl_tbf *poll_dl_ack_final_ack; /* 8.1.2.2 1) */
+	struct gprs_rlcmac_dl_tbf *poll_dl_ack; /* 8.1.2.2 7) */
 	struct gprs_rlcmac_ul_tbf *ul_ass;
 };
+
+static inline uint32_t next_fn(uint32_t fn, uint32_t offset)
+{
+	return (fn + offset) % GSM_MAX_FN;
+}
+
+static inline bool fn_valid(uint32_t fn)
+{
+	uint32_t f = fn % 13;
+	return f == 0 || f == 4 || f == 8;
+}
+
+uint32_t rrbp2fn(uint32_t cur_fn, uint8_t rrbp)
+{
+	uint32_t poll_fn;
+	static const uint8_t rrbp_list[] = {
+		13, /* GPRS_RLCMAC_RRBP_N_plus_13 */
+		17, /* GPRS_RLCMAC_RRBP_N_plus_17_18 */
+		21, /* GPRS_RLCMAC_RRBP_N_plus_21_22 */
+		26, /* GPRS_RLCMAC_RRBP_N_plus_26 */
+	};
+
+	OSMO_ASSERT(rrbp < ARRAY_SIZE(rrbp_list));
+
+	poll_fn = next_fn(cur_fn, rrbp_list[rrbp]);
+	if (!fn_valid(poll_fn)) {
+		/* 17 -> 18, 21 -> 22: */
+		poll_fn = next_fn(poll_fn, 1);
+		OSMO_ASSERT(fn_valid(poll_fn));
+	}
+	return poll_fn;
+}
 
 static void get_ctrl_msg_tbf_candidates(const struct gprs_rlcmac_rts_block_ind *bi,
 					struct tbf_sched_ctrl_candidates *tbfs)
 {
 
 	struct gprs_rlcmac_entity *gre;
+	struct gprs_rlcmac_dl_tbf *dl_tbf;
 	struct gprs_rlcmac_ul_tbf *ul_tbf;
+	struct gprs_rlcmac_pdch_ulc_node *node;
+
+	node = gprs_rlcmac_pdch_ulc_get_node(g_ctx->sched.ulc[bi->ts], bi->fn);
+	if (node) {
+		switch (node->reason) {
+		case GPRS_RLCMAC_PDCH_ULC_POLL_UL_ASS:
+			/* TODO */
+			break;
+		case GPRS_RLCMAC_PDCH_ULC_POLL_DL_ASS:
+			/* TODO */
+			break;
+		case GPRS_RLCMAC_PDCH_ULC_POLL_UL_ACK:
+			/* TODO */
+			break;
+		case GPRS_RLCMAC_PDCH_ULC_POLL_DL_ACK:
+			dl_tbf = tbf_as_dl_tbf(node->tbf);
+			/* 8.1.2.2 Polling for Packet Downlink Ack/Nack */
+			if (gprs_rlcmac_tbf_dl_state(dl_tbf) == GPRS_RLCMAC_TBF_DL_ST_FINISHED)
+				tbfs->poll_dl_ack_final_ack = dl_tbf;
+			else
+				tbfs->poll_dl_ack = dl_tbf;
+			break;
+		case GPRS_RLCMAC_PDCH_ULC_POLL_CELL_CHG_CONTINUE:
+			/* TODO */
+			break;
+		}
+		gprs_rlcmac_pdch_ulc_release_node(g_ctx->sched.ulc[bi->ts], node);
+	}
 
 	/* Iterate over UL TBFs: */
 	llist_for_each_entry(gre, &g_ctx->gre_list, entry) {
@@ -75,13 +141,38 @@ static struct gprs_rlcmac_ul_tbf *find_requested_ul_tbf_for_dummy(const struct g
 	return NULL;
 }
 
+
 static struct msgb *sched_select_ctrl_msg(const struct gprs_rlcmac_rts_block_ind *bi,
 					     struct tbf_sched_ctrl_candidates *tbfs)
 {
 	struct msgb *msg = NULL;
-	if (tbfs->ul_ass)
+	/* 8.1.2.2 1) (EGPRS) PACKET DOWNLINK ACK/NACK w/ FinalAckInd=1 */
+	if (tbfs->poll_dl_ack_final_ack) {
+		LOGRLCMAC(LOGL_DEBUG, "(ts=%u,fn=%u,usf=%u) Tx DL ACK/NACK FinalAck=1\n",
+			  bi->ts, bi->fn, bi->usf);
+		msg = NULL; /* TODO: generate DL ACK/NACK ctrl block */
+		if (msg)
+			return msg;
+	}
+
+	/* 8.1.2.2 5) Any other RLC/MAC control message, other than a (EGPRS) PACKET DOWNLINK ACK/NACK */
+	if (tbfs->ul_ass) {
 		msg = gprs_rlcmac_tbf_ul_ass_create_rlcmac_msg(tbfs->ul_ass, bi);
-	return msg;
+		if (msg)
+			return msg;
+	}
+
+	/* 8.1.2.2 7) A (EGPRS) PACKET DOWNLINK ACK/NACK message not containing a Final Ack Indicator or a
+	 * Channel Request Description IE */
+	if (tbfs->poll_dl_ack) {
+		LOGRLCMAC(LOGL_DEBUG, "(ts=%u,fn=%u,usf=%u) Tx DL ACK/NACK\n",
+			  bi->ts, bi->fn, bi->usf);
+		msg = NULL; /* TODO: generate DL ACK/NACK ctrl block */
+		if (msg)
+			return msg;
+	}
+
+	return NULL;
 }
 
 static struct msgb *sched_select_ul_data_msg(const struct gprs_rlcmac_rts_block_ind *bi)
@@ -116,7 +207,7 @@ int gprs_rlcmac_rcv_rts_block(struct gprs_rlcmac_rts_block_ind *bi)
 	struct msgb *msg = NULL;
 	struct tbf_sched_ctrl_candidates tbf_cand = {0};
 	struct osmo_gprs_rlcmac_prim *rlcmac_prim_tx;
-	int rc;
+	int rc = 0;
 
 	get_ctrl_msg_tbf_candidates(bi, &tbf_cand);
 
@@ -126,17 +217,20 @@ int gprs_rlcmac_rcv_rts_block(struct gprs_rlcmac_rts_block_ind *bi)
 	if ((msg = sched_select_ul_data_msg(bi)))
 		goto tx_msg;
 
-	/* Prio 3: send dummy control message (or nothing depending on EXT_UTBF_NODATA) */
+	/* Lowest prio: send dummy control message (or nothing depending on EXT_UTBF_NODATA) */
 	if ((msg = sched_select_ul_dummy_ctrl_blk(bi)))
 		goto tx_msg;
 
 	/* Nothing to transmit */
-	return 0;
+	goto ret_rc;
 
 tx_msg:
 	rlcmac_prim_tx = gprs_rlcmac_prim_alloc_l1ctl_pdch_data_req(bi->ts, bi->fn, msgb_data(msg), 0);
 	rlcmac_prim_tx->l1ctl.pdch_data_req.data_len = msgb_length(msg);
 	rc = gprs_rlcmac_prim_call_down_cb(rlcmac_prim_tx);
 	msgb_free(msg);
+
+ret_rc:
+	gprs_rlcmac_pdch_ulc_expire_fn(g_ctx->sched.ulc[bi->ts], bi->fn);
 	return rc;
 }

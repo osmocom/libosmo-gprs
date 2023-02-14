@@ -42,7 +42,7 @@ int gprs_rlcmac_dl_tbf_configure_l1ctl(struct gprs_rlcmac_dl_tbf *dl_tbf);
 
 int gprs_rlcmac_dl_tbf_rcv_data_block(struct gprs_rlcmac_dl_tbf *dl_tbf,
 				      const struct gprs_rlcmac_rlc_data_info *rlc,
-				      uint8_t *data);
+				      uint8_t *data, uint32_t fn, uint8_t ts_nr);
 
 static inline struct gprs_rlcmac_tbf *dl_tbf_as_tbf(struct gprs_rlcmac_dl_tbf *dl_tbf)
 {

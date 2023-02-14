@@ -69,6 +69,10 @@ struct gprs_rlcmac_ctx {
 
 	uint8_t next_ul_tbf_nr;
 	uint8_t next_dl_tbf_nr;
+
+	struct {
+		struct gprs_rlcmac_pdch_ulc *ulc[8];
+	} sched;
 };
 
 extern struct gprs_rlcmac_ctx *g_ctx;

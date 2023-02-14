@@ -25,6 +25,8 @@
 #include <osmocom/gprs/rlcmac/rlcmac.h>
 #include <osmocom/gprs/rlcmac/gre.h>
 #include <osmocom/gprs/rlcmac/rlc.h>
+#include <osmocom/gprs/rlcmac/types_private.h>
+#include <osmocom/gprs/rlcmac/sched.h>
 
 static void *tall_ctx = NULL;
 
@@ -241,7 +243,7 @@ static const uint8_t llc_dummy_command[] = {
 	0x43, 0xc0, 0x01, 0x2b, 0x2b, 0x2b
 };
 
-static struct msgb *create_dl_data_block(uint8_t dl_tfi, uint8_t usf, enum gprs_rlcmac_coding_scheme cs, uint8_t bsn, bool fbi)
+static struct msgb *create_dl_data_block(uint8_t dl_tfi, uint8_t usf, enum gprs_rlcmac_coding_scheme cs, uint8_t bsn, bool fbi, bool s_p, uint8_t rrbp)
 {
 	struct msgb *msg = msgb_alloc(128, __func__);
 	struct gprs_rlcmac_rlc_dl_data_header *hdr;
@@ -249,8 +251,8 @@ static struct msgb *create_dl_data_block(uint8_t dl_tfi, uint8_t usf, enum gprs_
 
 	hdr = (struct gprs_rlcmac_rlc_dl_data_header *)msgb_put(msg, gprs_rlcmac_mcs_size_dl(cs));
 	hdr->pt = 0; /* RLC/MAC block contains an RLC data block */
-	hdr->rrbp = 0;
-	hdr->s_p = 0;
+	hdr->rrbp = rrbp;
+	hdr->s_p = s_p ? 1 : 0;
 	hdr->usf = usf;
 	hdr->pr = 0;
 	hdr->tfi = dl_tfi;
@@ -330,6 +332,7 @@ static void test_dl_tbf_ccch_assign(void)
 	uint8_t usf = 0;
 	uint32_t rts_fn = 4;
 	uint8_t dl_tfi = 0;
+	uint8_t rrbp = GPRS_RLCMAC_RRBP_N_plus_17_18;
 
 	/* Notify RLCMAC about our TLLI */
 	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_gmmrr_assign_req(tlli);
@@ -341,13 +344,19 @@ static void test_dl_tbf_ccch_assign(void)
 	OSMO_ASSERT(rc == 0);
 
 	/* Transmit some DL LLC data MS<-PCU */
-	dl_data_msg = create_dl_data_block(dl_tfi, usf, GPRS_RLCMAC_CS_1, 0, 1);
+	dl_data_msg = create_dl_data_block(dl_tfi, usf, GPRS_RLCMAC_CS_1, 0, true, true, rrbp);
 	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_data_ind(ts_nr, rts_fn, 0, 0, 0,
 								      msgb_data(dl_data_msg),
 								      msgb_length(dl_data_msg));
 	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
 	OSMO_ASSERT(rc == 0);
 	msgb_free(dl_data_msg);
+
+	/* Trigger transmission of DL ACK/NACK */
+	rts_fn = rrbp2fn(rts_fn, rrbp);
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_rts_ind(ts_nr, rts_fn, usf);
+	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+	OSMO_ASSERT(rc == 0);
 
 	printf("=== %s end ===\n", __func__);
 	cleanup_test();

@@ -3,6 +3,7 @@ noinst_HEADERS = \
 	coding_scheme.h \
 	gre.h \
 	llc_queue.h \
+	pdch_ul_controller.h \
 	rlc.h \
 	rlc_window.h \
 	rlc_window_dl.h \

@@ -38,7 +38,7 @@ DLGLOBAL INFO DL_TBF{NEW}: state_chg to FLOW
 DLGLOBAL INFO Rx from lower layers: L1CTL-PDCH_DATA.indication
 DLGLOBAL DEBUG TBF(DL:NR-0:TLLI-00000001) Rx new DL data
 DLGLOBAL DEBUG TBF(DL:NR-0:TLLI-00000001) DL DATA TFI=0 received (V(Q)=0 .. V(R)=0)
-DLGLOBAL DEBUG TBF(DL:NR-0:TLLI-00000001) Got CS-1 RLC data block: FBI=1, BSN=0, SPB=0, S/P=0 RRBP=0, E=0, bitoffs=24
+DLGLOBAL DEBUG TBF(DL:NR-0:TLLI-00000001) Got CS-1 RLC data block: FBI=1, BSN=0, SPB=0, S/P=1 RRBP=1, E=0, bitoffs=24
 DLGLOBAL DEBUG TBF(DL:NR-0:TLLI-00000001) BSN 0 storing in window (0..63)
 DLGLOBAL DEBUG TBF(DL:NR-0:TLLI-00000001) data_length=20, data=19 43 c0 01 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 
 DLGLOBAL DEBUG - Raising V(R) to 1
@@ -51,3 +51,8 @@ DLGLOBAL DEBUG TBF(DL:NR-0:TLLI-00000001) No gaps in received block, last block:
 DLGLOBAL DEBUG TBF(DL:NR-0:TLLI-00000001) Finished with DL TBF
 DLGLOBAL INFO DL_TBF{FLOW}: Received Event LAST_DL_DATA_RECVD
 DLGLOBAL INFO DL_TBF{FLOW}: state_chg to FINISHED
+DLGLOBAL DEBUG Register POLL (TS=7 FN=21, reason=DL_ACK)
+DLGLOBAL INFO Rx from lower layers: L1CTL-PDCH_RTS.indication
+DLGLOBAL DEBUG (ts=7,fn=21,usf=0) Tx DL ACK/NACK FinalAck=1
+DLGLOBAL DEBUG (ts=7,fn=21,usf=0) No Uplink TBF available to transmit RLC/MAC Ul Data Block
+DLGLOBAL DEBUG (ts=7,fn=21,usf=0) No Uplink TBF available to transmit RLC/MAC Ul Dummy Ctrl Block

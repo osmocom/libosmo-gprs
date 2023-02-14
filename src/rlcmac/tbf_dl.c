@@ -24,6 +24,7 @@
 #include <osmocom/gprs/rlcmac/gre.h>
 #include <osmocom/gprs/rlcmac/rlc_window_dl.h>
 #include <osmocom/gprs/rlcmac/rlcmac_dec.h>
+#include <osmocom/gprs/rlcmac/pdch_ul_controller.h>
 
 struct gprs_rlcmac_dl_tbf *gprs_rlcmac_dl_tbf_alloc(struct gprs_rlcmac_entity *gre)
 {
@@ -167,7 +168,7 @@ static int gprs_rlcmac_dl_tbf_assemble_forward_llc(struct gprs_rlcmac_dl_tbf *dl
 
 int gprs_rlcmac_dl_tbf_rcv_data_block(struct gprs_rlcmac_dl_tbf *dl_tbf,
 				      const struct gprs_rlcmac_rlc_data_info *rlc,
-				      uint8_t *data)
+				      uint8_t *data, uint32_t fn, uint8_t ts_nr)
 {
 	const struct gprs_rlcmac_rlc_block_info *rdbi;
 	struct gprs_rlcmac_rlc_block *block;
@@ -257,7 +258,13 @@ int gprs_rlcmac_dl_tbf_rcv_data_block(struct gprs_rlcmac_dl_tbf *dl_tbf,
 		}
 	}
 
-	/* TODO: if RRBP contains valid data, schedule a DL ACK/NACK. */
+	/* If RRBP contains valid data, schedule a DL ACK/NACK. */
+	if (rlc->es_p) {
+		uint32_t poll_fn = rrbp2fn(fn, rlc->rrbp);
+		gprs_rlcmac_pdch_ulc_reserve(g_ctx->sched.ulc[ts_nr], poll_fn,
+					     GPRS_RLCMAC_PDCH_ULC_POLL_DL_ACK,
+					     dl_tbf_as_tbf(dl_tbf));
+	}
 
 	return 0;
 }

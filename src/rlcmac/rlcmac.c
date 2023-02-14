@@ -27,6 +27,7 @@
 #include <osmocom/gprs/rlcmac/rlcmac_prim.h>
 #include <osmocom/gprs/rlcmac/rlcmac_private.h>
 #include <osmocom/gprs/rlcmac/rlcmac_dec.h>
+#include <osmocom/gprs/rlcmac/pdch_ul_controller.h>
 #include <osmocom/gprs/rlcmac/tbf_ul_fsm.h>
 #include <osmocom/gprs/rlcmac/tbf_ul_ass_fsm.h>
 #include <osmocom/gprs/rlcmac/gre.h>
@@ -58,6 +59,7 @@ int osmo_gprs_rlcmac_init(enum osmo_gprs_rlcmac_location location)
 {
 	bool first_init = true;
 	int rc;
+	unsigned int i;
 	OSMO_ASSERT(location == OSMO_GPRS_RLCMAC_LOCATION_MS || location == OSMO_GPRS_RLCMAC_LOCATION_PCU)
 
 	if (g_ctx) {
@@ -92,6 +94,11 @@ int osmo_gprs_rlcmac_init(enum osmo_gprs_rlcmac_location location)
 			TALLOC_FREE(g_ctx);
 			return rc;
 		}
+	}
+
+	for (i = 0; i < ARRAY_SIZE(g_ctx->sched.ulc); i++) {
+		g_ctx->sched.ulc[i] = gprs_rlcmac_pdch_ulc_alloc(g_ctx, i);
+		OSMO_ASSERT(g_ctx->sched.ulc[i]);
 	}
 
 	return 0;
@@ -324,7 +331,8 @@ static int gprs_rlcmac_handle_gprs_dl_data_block(const struct osmo_gprs_rlcmac_p
 		return -ENOENT;
 	}
 	LOGPTBFDL(dl_tbf, LOGL_DEBUG, "Rx new DL data\n");
-	rc = gprs_rlcmac_dl_tbf_rcv_data_block(dl_tbf, &rlc_dec, rlcmac_prim->l1ctl.pdch_data_ind.data);
+	rc = gprs_rlcmac_dl_tbf_rcv_data_block(dl_tbf, &rlc_dec, rlcmac_prim->l1ctl.pdch_data_ind.data,
+					       rlcmac_prim->l1ctl.pdch_data_ind.fn, rlcmac_prim->l1ctl.pdch_data_ind.ts_nr);
 	return rc;
 }
 
