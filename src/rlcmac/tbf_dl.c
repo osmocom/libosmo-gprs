@@ -24,6 +24,7 @@
 #include <osmocom/gprs/rlcmac/gre.h>
 #include <osmocom/gprs/rlcmac/rlc_window_dl.h>
 #include <osmocom/gprs/rlcmac/rlcmac_dec.h>
+#include <osmocom/gprs/rlcmac/rlcmac_enc.h>
 #include <osmocom/gprs/rlcmac/pdch_ul_controller.h>
 
 struct gprs_rlcmac_dl_tbf *gprs_rlcmac_dl_tbf_alloc(struct gprs_rlcmac_entity *gre)
@@ -103,6 +104,40 @@ int gprs_rlcmac_dl_tbf_configure_l1ctl(struct gprs_rlcmac_dl_tbf *dl_tbf)
 								  dl_slotmask,
 								  dl_tbf->cur_alloc.dl_tfi);
 	return gprs_rlcmac_prim_call_down_cb(rlcmac_prim);
+}
+
+struct msgb *gprs_rlcmac_dl_tbf_create_pkt_dl_ack_nack(const struct gprs_rlcmac_dl_tbf *dl_tbf)
+{
+	struct msgb *msg;
+	struct bitvec bv;
+	RlcMacUplink_t ul_block;
+	int rc;
+
+	OSMO_ASSERT(dl_tbf);
+
+	msg = msgb_alloc(GSM_MACBLOCK_LEN, "pkt_dl_ack_nack");
+	if (!msg)
+		return NULL;
+
+	/* Initialize a bit vector that uses allocated msgb as the data buffer. */
+	bv = (struct bitvec){
+		.data = msgb_put(msg, GSM_MACBLOCK_LEN),
+		.data_len = GSM_MACBLOCK_LEN,
+	};
+	bitvec_unhex(&bv, GPRS_RLCMAC_DUMMY_VEC);
+
+	gprs_rlcmac_enc_prepare_pkt_downlink_ack_nack(&ul_block, dl_tbf);
+	rc = osmo_gprs_rlcmac_encode_uplink(&bv, &ul_block);
+	if (rc < 0) {
+		LOGPTBFDL(dl_tbf, LOGL_ERROR, "Encoding of Packet Downlink ACK/NACK failed (%d)\n", rc);
+		goto free_ret;
+	}
+
+	return msg;
+
+free_ret:
+	msgb_free(msg);
+	return NULL;
 }
 
 /*

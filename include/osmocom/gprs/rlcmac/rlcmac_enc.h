@@ -46,3 +46,5 @@ unsigned int gprs_rlcmac_rlc_copy_from_aligned_buffer(const struct gprs_rlcmac_r
 void gprs_rlcmac_enc_prepare_pkt_ul_dummy_block(RlcMacUplink_t *block, uint32_t tlli);
 
 void gprs_rlcmac_enc_prepare_pkt_resource_req(RlcMacUplink_t *block, struct gprs_rlcmac_ul_tbf *ul_tbf, enum gprs_rlcmac_access_type acc_type);
+
+void gprs_rlcmac_enc_prepare_pkt_downlink_ack_nack(RlcMacUplink_t *block, const struct gprs_rlcmac_dl_tbf *dl_tbf);

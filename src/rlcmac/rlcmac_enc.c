@@ -24,6 +24,8 @@
 #include <osmocom/gprs/rlcmac/csn1_defs.h>
 #include <osmocom/gprs/rlcmac/rlcmac_enc.h>
 #include <osmocom/gprs/rlcmac/gre.h>
+#include <osmocom/gprs/rlcmac/tbf_dl.h>
+#include <osmocom/gprs/rlcmac/rlc_window_dl.h>
 #include <osmocom/gprs/rlcmac/tbf_ul.h>
 
 int gprs_rlcmac_rlc_write_ul_data_header(const struct gprs_rlcmac_rlc_data_info *rlc, uint8_t *data)
@@ -351,4 +353,60 @@ void gprs_rlcmac_enc_prepare_pkt_resource_req(RlcMacUplink_t *block,
 
 	req->Exist_AdditionsR99 = 0;
 	/* TODO: no req->AdditionsR99 yet */
+}
+
+static void gprs_rlcmac_enc_prepare_pkt_ack_nack_desc_gprs(Ack_Nack_Description_t *ack_desc, const struct gprs_rlcmac_dl_tbf *dl_tbf)
+{
+	struct bitvec bv = {
+		.data = &ack_desc->RECEIVED_BLOCK_BITMAP[0],
+		.data_len = sizeof(ack_desc->RECEIVED_BLOCK_BITMAP),
+	};
+	char rbb[65];
+
+	gprs_rlcmac_rlc_dl_window_update_rbb(dl_tbf->dlw, rbb);
+	rbb[64] = 0;
+	LOGPTBFDL(dl_tbf, LOGL_DEBUG, "- V(N): \"%s\" R=Received I=Invalid\n", rbb);
+
+	ack_desc->FINAL_ACK_INDICATION = (gprs_rlcmac_tbf_dl_state(dl_tbf) == GPRS_RLCMAC_TBF_DL_ST_FINISHED);
+	ack_desc->STARTING_SEQUENCE_NUMBER = gprs_rlcmac_rlc_dl_window_ssn(dl_tbf->dlw);
+	for (int i = 0; i < 64; i++) {
+		/* Set bit at the appropriate position (see 3GPP TS 44.060 9.1.8.1) */
+		bool is_ack = (rbb[i] == 'R');
+		bitvec_set_bit(&bv, is_ack == 1 ? ONE : ZERO);
+	}
+}
+
+/* Channel Quality Report struct, TS 44.060 Table 11.2.6. */
+static void gprs_rlcmac_enc_prepare_channel_quality_report(Channel_Quality_Report_t *cqr, const struct gprs_rlcmac_dl_tbf *dl_tbf)
+{
+	/* TODO: fill cqr from info stored probably in the gre object. */
+}
+
+void gprs_rlcmac_enc_prepare_pkt_downlink_ack_nack(RlcMacUplink_t *block, const struct gprs_rlcmac_dl_tbf *dl_tbf)
+{
+	Packet_Downlink_Ack_Nack_t *ack = &block->u.Packet_Downlink_Ack_Nack;
+	struct gprs_rlcmac_entity *gre = dl_tbf->tbf.gre;
+
+	memset(block, 0, sizeof(*block));
+	ack->MESSAGE_TYPE = OSMO_GPRS_RLCMAC_UL_MSGT_PACKET_RESOURCE_REQUEST;
+	ack->PayloadType = GPRS_RLCMAC_PT_CONTROL_BLOCK;
+	ack->R = 0; /* MS sent channel request message once */
+
+	ack->DOWNLINK_TFI = dl_tbf->cur_alloc.dl_tfi;
+	gprs_rlcmac_enc_prepare_pkt_ack_nack_desc_gprs(&ack->Ack_Nack_Description, dl_tbf);
+
+	/* Channel Request Description */
+	if (gre->ul_tbf && gprs_rlcmac_tbf_ul_ass_pending(gre->ul_tbf)) {
+		Channel_Request_Description_t *chan_req = &ack->Channel_Request_Description;
+		ack->Exist_Channel_Request_Description = 1;
+		chan_req->PEAK_THROUGHPUT_CLASS = 0; /* TODO */
+		chan_req->RADIO_PRIORITY = 0; /* TODO */
+		chan_req->RLC_MODE = GPRS_RLCMAC_RLC_MODE_ACKNOWLEDGED;
+		chan_req->LLC_PDU_TYPE = GPRS_RLCMAC_LLC_PDU_TYPE_ACKNOWLEDGED;
+		chan_req->RLC_OCTET_COUNT = 0; /* TODO */
+	} else {
+		ack->Exist_Channel_Request_Description = 0;
+	}
+
+	gprs_rlcmac_enc_prepare_channel_quality_report(&ack->Channel_Quality_Report, dl_tbf);
 }
