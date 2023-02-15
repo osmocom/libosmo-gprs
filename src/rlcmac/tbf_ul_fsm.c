@@ -33,7 +33,7 @@ static const struct value_string tbf_ul_fsm_event_names[] = {
 	{ GPRS_RLCMAC_TBF_UL_EV_UL_ASS_START,		 "UL_ASS_START" },
 	{ GPRS_RLCMAC_TBF_UL_EV_UL_ASS_COMPL,		"UL_ASS_COMPL" },
 	{ GPRS_RLCMAC_TBF_UL_EV_LAST_UL_DATA_SENT,	"LAST_UL_DATA_SENT" },
-	{ GPRS_RLCMAC_TBF_UL_EV_FOOBAR,			"FOOBAR" },
+	{ GPRS_RLCMAC_TBF_UL_EV_FINAL_ACK_RECVD,	"FINAL_ACK_RECVD" },
 	{ 0, NULL }
 };
 
@@ -118,6 +118,8 @@ static void st_finished(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	//struct gprs_rlcmac_tbf_ul_fsm_ctx *ctx = (struct gprs_rlcmac_tbf_ul_fsm_ctx *)fi->priv;
 	switch (event) {
+	case GPRS_RLCMAC_TBF_UL_EV_FINAL_ACK_RECVD:
+		break;
 	default:
 		OSMO_ASSERT(0);
 	}
@@ -151,7 +153,7 @@ static struct osmo_fsm_state tbf_ul_fsm_states[] = {
 	},
 	[GPRS_RLCMAC_TBF_UL_ST_FINISHED] = {
 		.in_event_mask =
-			X(GPRS_RLCMAC_TBF_UL_EV_FOOBAR),
+			X(GPRS_RLCMAC_TBF_UL_EV_FINAL_ACK_RECVD),
 		.out_state_mask =
 			X(GPRS_RLCMAC_TBF_UL_ST_WAIT_ASSIGN),
 		.name = "FINISHED",

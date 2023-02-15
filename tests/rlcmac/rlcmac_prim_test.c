@@ -23,8 +23,10 @@
 #include <osmocom/core/fsm.h>
 
 #include <osmocom/gprs/rlcmac/rlcmac.h>
+#include <osmocom/gprs/rlcmac/csn1_defs.h>
 #include <osmocom/gprs/rlcmac/gre.h>
 #include <osmocom/gprs/rlcmac/rlc.h>
+#include <osmocom/gprs/rlcmac/rlc_window.h>
 #include <osmocom/gprs/rlcmac/types_private.h>
 #include <osmocom/gprs/rlcmac/sched.h>
 
@@ -192,6 +194,64 @@ static inline unsigned fn_next_block(unsigned fn)
 	return fn % GSM_MAX_FN;
 }
 
+static struct osmo_gprs_rlcmac_prim *create_dl_ctrl_block_buf(uint8_t *buf, int num_bytes, uint8_t tn, uint32_t fn)
+{
+	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
+
+
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_data_ind(tn, fn, 0, 0, 0,
+								      NULL, num_bytes);
+	rlcmac_prim->l1ctl.pdch_data_ind.data = msgb_put(rlcmac_prim->oph.msg, num_bytes);
+	memcpy(rlcmac_prim->l1ctl.pdch_data_ind.data, buf, num_bytes);
+	return rlcmac_prim;
+}
+
+static struct osmo_gprs_rlcmac_prim *create_dl_ctrl_block(RlcMacDownlink_t *dl_block, uint8_t tn, uint32_t fn)
+{
+	struct bitvec *rlc_block;
+	uint8_t buf[64];
+	int num_bytes;
+
+	rlc_block = bitvec_alloc(23, tall_ctx);
+
+	OSMO_ASSERT(osmo_gprs_rlcmac_encode_downlink(rlc_block, dl_block) == 0);
+	num_bytes = bitvec_pack(rlc_block, &buf[0]);
+	OSMO_ASSERT((size_t)num_bytes < sizeof(buf));
+	bitvec_free(rlc_block);
+
+	return create_dl_ctrl_block_buf(&buf[0], num_bytes, tn, fn);
+}
+
+static void ul_ack_nack_init(RlcMacDownlink_t *dl_block, uint8_t ul_tfi, enum gprs_rlcmac_coding_scheme cs)
+{
+	Packet_Uplink_Ack_Nack_t *ack = &dl_block->u.Packet_Uplink_Ack_Nack;
+	PU_AckNack_GPRS_t *gprs = &ack->u.PU_AckNack_GPRS_Struct;
+
+	memset(dl_block, 0, sizeof(*dl_block));
+	dl_block->PAYLOAD_TYPE = GPRS_RLCMAC_PT_CONTROL_BLOCK;
+	dl_block->RRBP = 0;
+	dl_block->SP = 0;
+	dl_block->USF = 0x00;
+	dl_block->u.MESSAGE_TYPE = OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_UPLINK_ACK_NACK;
+
+	ack->MESSAGE_TYPE = OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_UPLINK_ACK_NACK;
+	ack->PAGE_MODE = GPRS_RLCMAC_PAGE_MODE_NORMAL;
+	ack->UPLINK_TFI = ul_tfi;
+	ack->UnionType = 0; /* GPRS */
+
+	gprs->CHANNEL_CODING_COMMAND = cs;
+}
+
+static void ul_ack_nack_mark(Ack_Nack_Description_t *ack_desc, unsigned int idx, bool received)
+{
+	//ack_desc->RECEIVED_BLOCK_BITMAP[sizeof(ack_desc->RECEIVED_BLOCK_BITMAP) - 1] = 0xff;
+	//memset(ack_desc->RECEIVED_BLOCK_BITMAP, 0xff, sizeof(ack_desc->RECEIVED_BLOCK_BITMAP));
+	if (received)
+		ack_desc->RECEIVED_BLOCK_BITMAP[sizeof(ack_desc->RECEIVED_BLOCK_BITMAP) - idx/8 - 1] |= (1 << (idx & 0x03));
+	else
+		ack_desc->RECEIVED_BLOCK_BITMAP[sizeof(ack_desc->RECEIVED_BLOCK_BITMAP) - idx/8 - 1] &= ~(1 << (idx & 0x03));
+}
+
 static int test_rlcmac_prim_up_cb(struct osmo_gprs_rlcmac_prim *rlcmac_prim, void *user_data)
 {
 	const char *pdu_name = osmo_gprs_rlcmac_prim_name(rlcmac_prim);
@@ -306,7 +366,10 @@ static void test_ul_tbf_attach(void)
 
 	printf("=== %s start ===\n", __func__);
 	prepare_test();
+	RlcMacDownlink_t dl_block;
+	Ack_Nack_Description_t *ack_desc = &dl_block.u.Packet_Uplink_Ack_Nack.u.PU_AckNack_GPRS_Struct.Ack_Nack_Description;
 	uint32_t tlli = 0x2342;
+	uint8_t ul_tfi = 0;
 	uint8_t ts_nr = 7;
 	uint8_t usf = 0;
 	uint32_t rts_fn = 4;
@@ -330,7 +393,16 @@ static void test_ul_tbf_attach(void)
 	rts_fn = fn_next_block(rts_fn);
 	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_rts_ind(ts_nr, rts_fn, usf);
 	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+	OSMO_ASSERT(rc == 0);
 
+	/* PCU acks it: */
+	ul_ack_nack_init(&dl_block, ul_tfi, GPRS_RLCMAC_CS_2);
+	ack_desc->STARTING_SEQUENCE_NUMBER = 1;
+	ack_desc->FINAL_ACK_INDICATION = 1;
+	ul_ack_nack_mark(ack_desc, 0, true);
+	ul_ack_nack_mark(ack_desc, 1, true);
+	rlcmac_prim = create_dl_ctrl_block(&dl_block, ts_nr, rts_fn);
+	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
 	OSMO_ASSERT(rc == 0);
 
 	printf("=== %s end ===\n", __func__);

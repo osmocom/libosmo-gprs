@@ -3,6 +3,12 @@
 
 #include <stdint.h>
 
+#define GPRS_RLCMAC_GPRS_WS  64 /* max window size */
+#define GPRS_RLCMAC_EGPRS_MIN_WS 64 /* min window size */
+#define GPRS_RLCMAC_EGPRS_MAX_WS 1024 /* min window size */
+#define GPRS_RLCMAC_EGPRS_MAX_BSN_DELTA 512
+#define GPRS_RLCMAC_MAX_WS   RLC_EGPRS_MAX_WS
+
 struct gprs_rlcmac_rlc_window {
 	uint16_t sns;
 	uint16_t ws;

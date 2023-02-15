@@ -49,6 +49,8 @@ bool gprs_rlcmac_ul_tbf_dummy_rts(const struct gprs_rlcmac_ul_tbf *ul_tbf, const
 struct msgb *gprs_rlcmac_ul_tbf_data_create(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_rts_block_ind *bi);
 struct msgb *gprs_rlcmac_ul_tbf_dummy_create(const struct gprs_rlcmac_ul_tbf *ul_tbf);
 
+int gprs_rlcmac_ul_tbf_handle_pkt_ul_ack_nack(struct gprs_rlcmac_ul_tbf *ul_tbf, bool final_ack,
+					      unsigned first_bsn, struct bitvec *rbb);
 
 static inline struct gprs_rlcmac_tbf *ul_tbf_as_tbf(struct gprs_rlcmac_ul_tbf *ul_tbf)
 {

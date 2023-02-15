@@ -22,6 +22,7 @@
 #include <osmocom/core/bitvec.h>
 
 #include <osmocom/gprs/rlcmac/tbf_ul.h>
+#include <osmocom/gprs/rlcmac/rlcmac_dec.h>
 #include <osmocom/gprs/rlcmac/rlcmac_enc.h>
 #include <osmocom/gprs/rlcmac/gre.h>
 #include <osmocom/gprs/rlcmac/coding_scheme.h>
@@ -108,6 +109,74 @@ bool gprs_rlcmac_ul_tbf_data_rts(const struct gprs_rlcmac_ul_tbf *ul_tbf, const 
 
 	st = gprs_rlcmac_tbf_ul_state(ul_tbf);
 	return (st == GPRS_RLCMAC_TBF_UL_ST_FLOW);
+}
+
+static int gprs_rlcmac_ul_tbf_update_window(struct gprs_rlcmac_ul_tbf *ul_tbf,
+					    unsigned first_bsn, struct bitvec *rbb)
+{
+	unsigned dist;
+	uint16_t lost = 0, received = 0;
+	char show_v_b[RLC_MAX_SNS + 1];
+	char show_rbb[RLC_MAX_SNS + 1];
+	dist = gprs_rlcmac_rlc_ul_window_distance(ul_tbf->ulw);
+	unsigned num_blocks = rbb->cur_bit > dist
+				? dist : rbb->cur_bit;
+	unsigned behind_last_bsn = gprs_rlcmac_rlc_window_mod_sns_bsn(ul_tbf->w, first_bsn + num_blocks);
+
+	gprs_rlcmac_extract_rbb(rbb, show_rbb);
+	/* show received array in debug */
+	LOGPTBFUL(ul_tbf, LOGL_DEBUG,
+		  "ack:  (BSN=%d)\"%s\"(BSN=%d)  R=ACK I=NACK\n",
+		  first_bsn, show_rbb,
+		  gprs_rlcmac_rlc_window_mod_sns_bsn(ul_tbf->w, behind_last_bsn - 1));
+
+	gprs_rlcmac_rlc_ul_window_update(ul_tbf->ulw, rbb, first_bsn, &lost, &received);
+
+	/* raise V(A), if possible */
+	gprs_rlcmac_rlc_ul_window_raise(ul_tbf->ulw,
+					gprs_rlcmac_rlc_ul_window_move_window(ul_tbf->ulw));
+
+	/* show receive state array in debug (V(A)..V(S)-1) */
+	gprs_rlcmac_rlc_ul_window_show_state(ul_tbf->ulw, show_v_b);
+	LOGPTBFUL(ul_tbf, LOGL_DEBUG,
+		  "V(B): (V(A)=%d)\"%s\"(V(S)-1=%d)  A=Acked N=Nacked U=Unacked X=Resend-Unacked I=Invalid\n",
+		  gprs_rlcmac_rlc_ul_window_v_a(ul_tbf->ulw), show_v_b,
+		  gprs_rlcmac_rlc_ul_window_v_s_mod(ul_tbf->ulw, -1));
+	return 0;
+}
+
+int gprs_rlcmac_ul_tbf_handle_final_ack(struct gprs_rlcmac_ul_tbf *ul_tbf)
+{
+	int rc = 0;
+
+	osmo_fsm_inst_dispatch(ul_tbf->state_fsm.fi, GPRS_RLCMAC_TBF_UL_EV_FINAL_ACK_RECVD, NULL);
+
+	/* range V(A)..V(S)-1 */
+	//received = gprs_rlcmac_rlc_ul_window_count_unacked(ul_tbf->ulw);
+	/* report all outstanding packets as received */
+	//gprs_rlcmac_received_lost(this, received, 0);
+	gprs_rlcmac_rlc_ul_window_reset(ul_tbf->ulw);
+
+	/* TODO: check for RRBP and attempt to create a new UL TBF if
+	* gprs_rlcmac_ul_tbf_have_data(ul_tbf) */
+	return rc;
+}
+
+int gprs_rlcmac_ul_tbf_handle_pkt_ul_ack_nack(struct gprs_rlcmac_ul_tbf *ul_tbf, bool final_ack,
+					      unsigned first_bsn, struct bitvec *rbb)
+{
+	int rc;
+	rc = gprs_rlcmac_ul_tbf_update_window(ul_tbf, first_bsn, rbb);
+
+	if (final_ack) {
+		LOGPTBFUL(ul_tbf, LOGL_DEBUG, "Final ACK received.\n");
+		rc = gprs_rlcmac_ul_tbf_handle_final_ack(ul_tbf);
+	} else if (gprs_rlcmac_tbf_ul_state(ul_tbf) &&
+		   gprs_rlcmac_rlc_ul_window_window_empty(ul_tbf->ulw)) {
+		LOGPTBFUL(ul_tbf, LOGL_NOTICE,
+			  "Received acknowledge of all blocks, but without final ack indication (don't worry)\n");
+	}
+	return rc;
 }
 
 struct msgb *gprs_rlcmac_ul_tbf_dummy_create(const struct gprs_rlcmac_ul_tbf *ul_tbf)

@@ -4,10 +4,13 @@
 
 #include <stdint.h>
 #include <osmocom/core/msgb.h>
+#include <osmocom/core/bitvec.h>
 
+#include <osmocom/gprs/rlcmac/csn1_defs.h>
 #include <osmocom/gprs/rlcmac/rlc.h>
 #include <osmocom/gprs/rlcmac/coding_scheme.h>
 
+struct gprs_rlcmac_rlc_ul_window;
 
 /****************
  * DATA BLOCKS:
@@ -38,3 +41,8 @@ unsigned int gprs_rlcmac_rlc_copy_to_aligned_buffer(const struct gprs_rlcmac_rlc
 /****************
  * CONTROL BLOCKS:
  ****************/
+
+void gprs_rlcmac_extract_rbb(const struct bitvec *rbb, char *show_rbb);
+int gprs_rlcmac_decode_gprs_acknack_bits(const Ack_Nack_Description_t *desc,
+					 struct bitvec *bits, int *bsn_begin, int *bsn_end,
+					 struct gprs_rlcmac_rlc_ul_window *ulw);

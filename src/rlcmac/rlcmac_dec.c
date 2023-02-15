@@ -26,6 +26,7 @@
 #include <osmocom/gprs/rlcmac/rlcmac_private.h>
 #include <osmocom/gprs/rlcmac/rlcmac_dec.h>
 #include <osmocom/gprs/rlcmac/rlc.h>
+#include <osmocom/gprs/rlcmac/rlc_window_ul.h>
 
 #define LENGTH_TO_END 255
 /*!
@@ -340,4 +341,84 @@ unsigned int gprs_rlcmac_rlc_copy_to_aligned_buffer(
 	}
 
 	return rdbi->data_len;
+}
+
+/**
+ * show_rbb needs to be an array with 65 elements
+ * The index of the array is the bit position in the rbb
+ * (show_rbb[63] relates to BSN ssn-1)
+ */
+void gprs_rlcmac_extract_rbb(const struct bitvec *rbb, char *show_rbb)
+{
+	unsigned int i;
+	for (i = 0; i < rbb->cur_bit; i++) {
+		uint8_t bit;
+		bit = bitvec_get_bit_pos(rbb, i);
+		show_rbb[i] = bit == 1 ? 'R' : 'I';
+	}
+
+	show_rbb[i] = '\0';
+}
+
+static int handle_final_ack(struct bitvec *bits, int *bsn_begin, int *bsn_end,
+			    struct gprs_rlcmac_rlc_ul_window *ulw)
+{
+	int num_blocks, i;
+	uint16_t v_a = gprs_rlcmac_rlc_ul_window_v_a(ulw);
+
+	num_blocks = gprs_rlcmac_rlc_window_mod_sns_bsn(rlc_ulw_as_w(ulw),
+				gprs_rlcmac_rlc_ul_window_v_s(ulw) - v_a);
+	for (i = 0; i < num_blocks; i++)
+		bitvec_set_bit(bits, ONE);
+
+	*bsn_begin = v_a;
+	*bsn_end = gprs_rlcmac_rlc_window_mod_sns_bsn(rlc_ulw_as_w(ulw), *bsn_begin + num_blocks);
+	return num_blocks;
+}
+
+int gprs_rlcmac_decode_gprs_acknack_bits(const Ack_Nack_Description_t *desc,
+					 struct bitvec *bits, int *bsn_begin, int *bsn_end,
+					 struct gprs_rlcmac_rlc_ul_window *ulw)
+{
+	int urbb_len = GPRS_RLCMAC_GPRS_WS;
+	int num_blocks;
+	struct bitvec urbb;
+
+	if (desc->FINAL_ACK_INDICATION)
+		return handle_final_ack(bits, bsn_begin, bsn_end, ulw);
+
+	*bsn_begin = gprs_rlcmac_rlc_ul_window_v_a(ulw);
+	*bsn_end   = desc->STARTING_SEQUENCE_NUMBER;
+
+	num_blocks = gprs_rlcmac_rlc_window_mod_sns_bsn(rlc_ulw_as_w(ulw), *bsn_end - *bsn_begin);
+
+	if (num_blocks < 0 || num_blocks > urbb_len) {
+		*bsn_end  = *bsn_begin;
+		LOGRLCMAC(LOGL_NOTICE, "Invalid GPRS Ack/Nack window %d:%d (length %d)\n",
+			  *bsn_begin, *bsn_end, num_blocks);
+		return -EINVAL;
+	}
+
+	urbb.cur_bit = 0;
+	urbb.data = (uint8_t *)desc->RECEIVED_BLOCK_BITMAP;
+	urbb.data_len = sizeof(desc->RECEIVED_BLOCK_BITMAP);
+
+	/*
+	 * TS 44.060, 12.3:
+	 * BSN = (SSN - bit_number) modulo 128, for bit_number = 1 to 64.
+	 * The BSN values represented range from (SSN - 1) mod 128 to (SSN - 64) mod 128.
+	 *
+	 * We are only interested in the range from V(A) to SSN-1 which is
+	 * num_blocks large. The RBB is laid out as
+	 *   [SSN-1] [SSN-2] ... [V(A)] ... [SSN-64]
+	 * so we want to start with [V(A)] and go backwards until we reach
+	 * [SSN-1] to get the needed BSNs in an increasing order. Note that
+	 * the bit numbers are counted from the end of the buffer.
+	 */
+	for (int i = num_blocks; i > 0; i--) {
+		int is_ack = bitvec_get_bit_pos(&urbb, urbb_len - i);
+		bitvec_set_bit(bits, is_ack == 1 ? ONE : ZERO);
+	}
+
+	return num_blocks;
 }

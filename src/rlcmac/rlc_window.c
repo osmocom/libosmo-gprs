@@ -22,16 +22,10 @@
 #include <osmocom/gprs/rlcmac/rlc.h>
 #include <osmocom/gprs/rlcmac/rlc_window.h>
 
-#define RLC_GPRS_WS  64 /* max window size */
-#define RLC_EGPRS_MIN_WS 64 /* min window size */
-#define RLC_EGPRS_MAX_WS 1024 /* min window size */
-#define RLC_EGPRS_MAX_BSN_DELTA 512
-#define RLC_MAX_WS   RLC_EGPRS_MAX_WS
-
 void gprs_rlcmac_rlc_window_constructor(struct gprs_rlcmac_rlc_window *w)
 {
 	w->sns = RLC_GPRS_SNS;
-	w->ws = RLC_GPRS_WS;
+	w->ws = GPRS_RLCMAC_GPRS_WS;
 }
 
 void gprs_rlcmac_rlc_window_destructor(struct gprs_rlcmac_rlc_window *w)
