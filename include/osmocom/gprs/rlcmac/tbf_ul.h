@@ -26,6 +26,8 @@ struct gprs_rlcmac_ul_tbf {
 	/* Currently selected LLC frame to be scheduled/transmitted */
 	struct msgb *llc_tx_msg;
 	int32_t last_ul_drained_fn;
+	/* count all transmitted data blocks */
+	unsigned int n3104;
 
 	/* Holds state of all generated in-transit RLC blocks */
 	struct gprs_rlcmac_rlc_block_store *blkst;

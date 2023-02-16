@@ -761,6 +761,9 @@ static struct msgb *create_ul_acked_block(struct gprs_rlcmac_ul_tbf *ul_tbf,
 		  need_padding ? ", padded" : "",
 		  msgb_hexdump(msg));
 
+	if (ul_tbf->n3104 == 0)
+		osmo_fsm_inst_dispatch(ul_tbf->state_fsm.fi, GPRS_RLCMAC_TBF_UL_EV_FIRST_UL_DATA_SENT, NULL);
+	ul_tbf->n3104++;
 	return msg;
 }
 

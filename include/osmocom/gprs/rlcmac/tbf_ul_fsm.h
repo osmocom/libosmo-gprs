@@ -20,11 +20,14 @@ struct gprs_rlcmac_tbf_ul_fsm_ctx {
 		struct gprs_rlcmac_tbf *tbf;
 		struct gprs_rlcmac_ul_tbf *ul_tbf;
 	};
+	/* Number of packet access procedure timeouts (T3164, T3166) */
+	unsigned int pkt_acc_proc_attempts;
 };
 
 enum tbf_ul_fsm_event {
 	GPRS_RLCMAC_TBF_UL_EV_UL_ASS_START,
 	GPRS_RLCMAC_TBF_UL_EV_UL_ASS_COMPL,
+	GPRS_RLCMAC_TBF_UL_EV_FIRST_UL_DATA_SENT,
 	GPRS_RLCMAC_TBF_UL_EV_LAST_UL_DATA_SENT,
 	GPRS_RLCMAC_TBF_UL_EV_FINAL_ACK_RECVD,
 };

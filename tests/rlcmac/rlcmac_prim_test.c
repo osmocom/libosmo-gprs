@@ -21,6 +21,9 @@
 #include <osmocom/core/utils.h>
 #include <osmocom/core/msgb.h>
 #include <osmocom/core/fsm.h>
+#include <osmocom/core/timer.h>
+#include <osmocom/core/timer_compat.h>
+#include <osmocom/core/select.h>
 
 #include <osmocom/gprs/rlcmac/rlcmac.h>
 #include <osmocom/gprs/rlcmac/csn1_defs.h>
@@ -180,6 +183,44 @@ static uint8_t ccch_imm_ass_pkt_dl_tbf[] = {
 	0x1c, 0x00, 0xd0, 0x00, 0x00, 0x00, 0x18, 0x00, 0x03,
 	0x2b, 0x2b, 0x2b, 0x2b
 };
+
+#define clock_debug(fmt, args...) \
+	do { \
+		struct timespec ts; \
+		struct timeval tv; \
+		osmo_clock_gettime(CLOCK_MONOTONIC, &ts); \
+		osmo_gettimeofday(&tv, NULL); \
+		fprintf(stdout, "sys={%lu.%06lu}, mono={%lu.%06lu}: " fmt "\n", \
+			tv.tv_sec, tv.tv_usec, ts.tv_sec, ts.tv_nsec/1000, ##args); \
+	} while (0)
+
+static void clock_override_enable(bool enable)
+{
+	osmo_gettimeofday_override = enable;
+	osmo_clock_override_enable(CLOCK_MONOTONIC, enable);
+}
+
+static void clock_override_set(long sec, long usec)
+{
+	struct timespec *mono;
+	osmo_gettimeofday_override_time.tv_sec = sec;
+	osmo_gettimeofday_override_time.tv_usec = usec;
+	mono = osmo_clock_override_gettimespec(CLOCK_MONOTONIC);
+	mono->tv_sec = sec;
+	mono->tv_nsec = usec*1000;
+
+	clock_debug("clock_override_set");
+}
+
+static void clock_override_add_debug(long sec, long usec, bool dbg)
+{
+	osmo_gettimeofday_override_add(sec, usec);
+	osmo_clock_override_add(CLOCK_MONOTONIC, sec, usec*1000);
+	if (dbg)
+		clock_debug("clock_override_add");
+}
+#define clock_override_add(sec, usec) clock_override_add_debug(sec, usec, true)
+
 
 static inline unsigned fn2bn(unsigned fn)
 {
@@ -346,6 +387,8 @@ static struct msgb *create_dl_data_block(uint8_t dl_tfi, uint8_t usf, enum gprs_
 void prepare_test(void)
 {
 	int rc;
+	clock_override_set(0, 0);
+
 	rc = osmo_gprs_rlcmac_init(OSMO_GPRS_RLCMAC_LOCATION_MS);
 	OSMO_ASSERT(rc == 0);
 
@@ -404,6 +447,39 @@ static void test_ul_tbf_attach(void)
 	rlcmac_prim = create_dl_ctrl_block(&dl_block, ts_nr, rts_fn);
 	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
 	OSMO_ASSERT(rc == 0);
+
+	printf("=== %s end ===\n", __func__);
+	cleanup_test();
+}
+
+static void test_ul_tbf_t3164_timeout(void)
+{
+	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
+	int rc;
+	unsigned int i;
+
+	printf("=== %s start ===\n", __func__);
+	prepare_test();
+	uint32_t tlli = 0x2342;
+
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_grr_unitdata_req(tlli, pdu_llc_gmm_att_req,
+					    sizeof(pdu_llc_gmm_att_req));
+	rlcmac_prim->grr.unitdata_req.sapi = OSMO_GPRS_RLCMAC_LLC_SAPI_GMM;
+	rc = osmo_gprs_rlcmac_prim_upper_down(rlcmac_prim);
+
+	OSMO_ASSERT(sizeof(ccch_imm_ass_pkt_ul_tbf_normal) == GSM_MACBLOCK_LEN);
+
+	for (i = 0; i < 4; i++) {
+		ccch_imm_ass_pkt_ul_tbf_normal[7] = last_rach_req_ra; /* Update RA to match */
+		rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_ccch_data_ind(0, ccch_imm_ass_pkt_ul_tbf_normal);
+		rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+		OSMO_ASSERT(rc == 0);
+
+		/* increase time 5 seconds, timeout should trigger */
+		clock_override_add(5, 0);
+		clock_debug("Expect T3164 timeout");
+		osmo_select_main(0);
+	}
 
 	printf("=== %s end ===\n", __func__);
 	cleanup_test();
@@ -473,7 +549,10 @@ int main(int argc, char *argv[])
 	log_set_print_level(osmo_stderr_target, 1);
 	log_set_use_color(osmo_stderr_target, 0);
 
+	clock_override_enable(true);
+
 	test_ul_tbf_attach();
+	test_ul_tbf_t3164_timeout();
 	test_dl_tbf_ccch_assign();
 
 	talloc_free(tall_ctx);
