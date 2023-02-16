@@ -25,8 +25,20 @@ DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) need_padding 0 spb_status 0 spb 0 (BSN
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying 1 RLC blocks, 1 BSNs
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying data unit 0 (BSN 0)
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) msg block (BSN 0, CS-2): 3c 00 01 01 c0 00 08 01 01 d5 71 00 00 08 29 26 24 00 00 00 00 71 62 f2 24 6c 84 44 04 11 e5 10 00 00 
+DLGLOBAL INFO Rx from lower layers: L1CTL-PDCH_RTS.indication
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Sending new block at BSN 1, CS=CS-2
+DLGLOBAL DEBUG -- Chunk with length 3 is less than remaining space (30): add length header to delimit LLC frame
+DLGLOBAL DEBUG -- Final block, so we done.
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Complete UL frame, len=0
+DLGLOBAL INFO UL_TBF{FLOW}: Received Event LAST_UL_DATA_SENT
+DLGLOBAL INFO UL_TBF{FLOW}: state_chg to FINISHED
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) data block (BSN 1, CS-2): 0d e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) need_padding 0 spb_status 0 spb 0 (BSN1 1 BSN2 -1)
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying 1 RLC blocks, 1 BSNs
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying data unit 0 (BSN 1)
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) msg block (BSN 1, CS-2): 00 00 02 0d e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: Deallocated
-DLGLOBAL INFO UL_TBF{FLOW}: Deallocated
+DLGLOBAL INFO UL_TBF{FINISHED}: Deallocated
 DLGLOBAL INFO Rx from upper layers: GMMRR-ASSIGN.request
 DLGLOBAL INFO GMMRR-ASSIGN.req: creating new entity TLLI=0x00000001
 DLGLOBAL INFO Rx from lower layers: L1CTL-CCCH_DATA.indication

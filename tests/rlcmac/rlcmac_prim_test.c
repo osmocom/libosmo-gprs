@@ -179,6 +179,19 @@ static uint8_t ccch_imm_ass_pkt_dl_tbf[] = {
 	0x2b, 0x2b, 0x2b, 0x2b
 };
 
+static inline unsigned fn2bn(unsigned fn)
+{
+	return (fn % 52) / 4;
+}
+
+static inline unsigned fn_next_block(unsigned fn)
+{
+	unsigned bn = fn2bn(fn) + 1;
+	fn = fn - (fn % 52);
+	fn += bn * 4 + bn / 3;
+	return fn % GSM_MAX_FN;
+}
+
 static int test_rlcmac_prim_up_cb(struct osmo_gprs_rlcmac_prim *rlcmac_prim, void *user_data)
 {
 	const char *pdu_name = osmo_gprs_rlcmac_prim_name(rlcmac_prim);
@@ -308,7 +321,13 @@ static void test_ul_tbf_attach(void)
 	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_ccch_data_ind(0, ccch_imm_ass_pkt_ul_tbf_normal);
 	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
 
-	/* Trigger transmission of LLC data (GMM Attach) */
+	/* Trigger transmission of LLC data (GMM Attach) (first part) */
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_rts_ind(ts_nr, rts_fn, usf);
+	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+	OSMO_ASSERT(rc == 0);
+
+	/* Trigger transmission of LLC data (GMM Attach) (second part) */
+	rts_fn = fn_next_block(rts_fn);
 	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_rts_ind(ts_nr, rts_fn, usf);
 	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
 
