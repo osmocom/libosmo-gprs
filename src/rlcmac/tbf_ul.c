@@ -72,6 +72,9 @@ void gprs_rlcmac_ul_tbf_free(struct gprs_rlcmac_ul_tbf *ul_tbf)
 	if (!ul_tbf)
 		return;
 
+	if (ul_tbf->tbf.gre->ul_tbf == ul_tbf)
+		ul_tbf->tbf.gre->ul_tbf = NULL;
+
 	talloc_free(ul_tbf->llc_tx_msg);
 
 	gprs_rlcmac_rlc_block_store_free(ul_tbf->blkst);

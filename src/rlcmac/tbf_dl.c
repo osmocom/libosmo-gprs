@@ -64,6 +64,9 @@ void gprs_rlcmac_dl_tbf_free(struct gprs_rlcmac_dl_tbf *dl_tbf)
 	if (!dl_tbf)
 		return;
 
+	if (dl_tbf->tbf.gre->dl_tbf == dl_tbf)
+		dl_tbf->tbf.gre->dl_tbf = NULL;
+
 	msgb_free(dl_tbf->llc_rx_msg);
 	dl_tbf->llc_rx_msg = NULL;
 
