@@ -112,6 +112,17 @@ bool gprs_rlcmac_ul_tbf_in_contention_resolution(const struct gprs_rlcmac_ul_tbf
 	}
 }
 
+unsigned int gprs_rlcmac_ul_tbf_n3104_max(const struct gprs_rlcmac_ul_tbf *ul_tbf)
+{
+	/* 3GPP TS 44.060 13.3:
+	 * N3104_MAX = 3 * (BS_CV_MAX + 3) * number of uplink timeslots assigned */
+	/* If we didn't receive SI13 yet, use maximum value bs_cv_max in range 0..15 */
+	uint8_t bs_cv_max = g_ctx->si13_available ?
+				g_ctx->si13ro.u.PBCCH_Not_present.GPRS_Cell_Options.BS_CV_MAX :
+				15;
+	return 3 * (bs_cv_max + 3) * ul_tbf->cur_alloc.num_ts;
+}
+
 /* Used by the scheduler to find out whether an Uplink Dummy Control Block can be transmitted. If
  * true, it will potentially call gprs_rlcmac_ul_tbf_dummy_create() to generate a new dummy message to transmit. */
 bool gprs_rlcmac_ul_tbf_dummy_rts(const struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_rts_block_ind *bi)
@@ -790,6 +801,15 @@ static struct msgb *create_ul_acked_block(struct gprs_rlcmac_ul_tbf *ul_tbf,
 	if (ul_tbf->n3104 == 0)
 		osmo_fsm_inst_dispatch(ul_tbf->state_fsm.fi, GPRS_RLCMAC_TBF_UL_EV_FIRST_UL_DATA_SENT, NULL);
 	ul_tbf->n3104++;
+	if (gprs_rlcmac_ul_tbf_in_contention_resolution(ul_tbf)) {
+		unsigned int n3104_max = gprs_rlcmac_ul_tbf_n3104_max(ul_tbf);
+		if (ul_tbf->n3104 >= n3104_max) {
+			LOGPTBFUL(ul_tbf, LOGL_NOTICE, "N3104_MAX (%u) reached\n", n3104_max);
+			osmo_fsm_inst_dispatch(ul_tbf->state_fsm.fi, GPRS_RLCMAC_TBF_UL_EV_N3104_MAX, NULL);
+		} else {
+			LOGPTBFUL(ul_tbf, LOGL_DEBUG, "N3104 inc (%u)\n", ul_tbf->n3104);
+		}
+	}
 	return msg;
 }
 

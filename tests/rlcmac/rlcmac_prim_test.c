@@ -24,6 +24,8 @@
 #include <osmocom/core/timer.h>
 #include <osmocom/core/timer_compat.h>
 #include <osmocom/core/select.h>
+#include <osmocom/gsm/protocol/gsm_04_08.h>
+#include <osmocom/gsm/gsm48_rest_octets.h>
 
 #include <osmocom/gprs/rlcmac/rlcmac.h>
 #include <osmocom/gprs/rlcmac/csn1_defs.h>
@@ -293,6 +295,63 @@ static void ul_ack_nack_mark(Ack_Nack_Description_t *ack_desc, unsigned int idx,
 		ack_desc->RECEIVED_BLOCK_BITMAP[sizeof(ack_desc->RECEIVED_BLOCK_BITMAP) - idx/8 - 1] &= ~(1 << (idx & 0x03));
 }
 
+static uint8_t *create_si13(uint8_t bs_cv_max /* 0..15 */)
+{
+	static uint8_t si13_buf[GSM_MACBLOCK_LEN];
+	struct gsm48_system_information_type_13 *si13 = (struct gsm48_system_information_type_13 *)&si13_buf[0];
+	struct osmo_gsm48_si13_info si13_info;
+	int ret;
+
+	memset(si13, GSM_MACBLOCK_PADDING, GSM_MACBLOCK_LEN);
+
+	si13->header.rr_protocol_discriminator = GSM48_PDISC_RR;
+	si13->header.skip_indicator = 0;
+	si13->header.system_information = GSM48_MT_RR_SYSINFO_13;
+
+	si13_info = (struct osmo_gsm48_si13_info){
+		.cell_opts = {
+			.nmo		= GPRS_NMO_II,
+			.t3168		= 2000,
+			.t3192		= 1500,
+			.drx_timer_max	= 3,
+			.bs_cv_max	= bs_cv_max,
+			.ctrl_ack_type_use_block = 1,
+			.ext_info_present = true,
+			.ext_info = {
+				.egprs_supported = 1,
+				.use_egprs_p_ch_req = 1,
+				.bep_period = 5,
+				.pfc_supported = 0,
+				.dtm_supported = 0,
+				.bss_paging_coordination = 1,
+				.ccn_active = true,
+			},
+		},
+		.pwr_ctrl_pars = {
+			.alpha		= 0,	/* a = 0.0 */
+			.t_avg_w	= 16,
+			.t_avg_t	= 16,
+			.pc_meas_chan	= 0,	/* downling measured on CCCH */
+			.n_avg_i	= 8,
+		},
+		.bcch_change_mark	= 1, /* Information about the other SIs */
+		.si_change_field	= 0,
+		.rac		= 33,
+		.spgc_ccch_sup	= 0,
+		.net_ctrl_ord	= 1 /* NC1 */,
+		.prio_acc_thr	= 6,
+	};
+
+	ret = osmo_gsm48_rest_octets_si13_encode(si13->rest_octets, &si13_info);
+	if (ret < 0)
+		return NULL;
+
+	/* length is coded in bit 2 an up */
+	si13->header.l2_plen = 0x01;
+
+	return &si13_buf[0];
+}
+
 static int test_rlcmac_prim_up_cb(struct osmo_gprs_rlcmac_prim *rlcmac_prim, void *user_data)
 {
 	const char *pdu_name = osmo_gprs_rlcmac_prim_name(rlcmac_prim);
@@ -524,6 +583,55 @@ static void test_ul_tbf_t3166_timeout(void)
 	cleanup_test();
 }
 
+static void test_ul_tbf_n3104_timeout(void)
+{
+	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
+	int rc;
+
+	printf("=== %s start ===\n", __func__);
+	prepare_test();
+	uint32_t tlli = 0x2342;
+	uint8_t ts_nr = 7;
+	uint8_t usf = 0;
+	uint32_t rts_fn = 4;
+	unsigned int i;
+	const unsigned int bs_cv_max = 0;
+	const unsigned int num_ts = 1;
+	const unsigned int n3104_max = 3 * (bs_cv_max + 3) * num_ts;
+
+	/* Submit an SI13 with bs_cv_max=0: */
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_ccch_data_ind(0, create_si13(bs_cv_max));
+	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+	OSMO_ASSERT(rc == 0);
+
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_grr_unitdata_req(tlli, pdu_llc_gmm_att_req,
+					    sizeof(pdu_llc_gmm_att_req));
+	rlcmac_prim->grr.unitdata_req.sapi = OSMO_GPRS_RLCMAC_LLC_SAPI_GMM;
+	rc = osmo_gprs_rlcmac_prim_upper_down(rlcmac_prim);
+
+	ccch_imm_ass_pkt_ul_tbf_normal[7] = last_rach_req_ra; /* Update RA to match */
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_ccch_data_ind(0, ccch_imm_ass_pkt_ul_tbf_normal);
+	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+	OSMO_ASSERT(rc == 0);
+
+	for (i = 0; i < n3104_max; i++) {
+		rts_fn = fn_next_block(rts_fn);
+		printf("RTS %u: FN=%u\n", i, rts_fn);
+		/* Trigger transmission of LLC data (GMM Attach) (first part) */
+		rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_rts_ind(ts_nr, rts_fn, usf);
+		rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+		OSMO_ASSERT(rc == 0);
+	}
+
+	/* After N3104 triggers, MS re-tries pkt access: */
+	ccch_imm_ass_pkt_ul_tbf_normal[7] = last_rach_req_ra; /* Update RA to match */
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_ccch_data_ind(0, ccch_imm_ass_pkt_ul_tbf_normal);
+	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+
+	printf("=== %s end ===\n", __func__);
+	cleanup_test();
+}
+
 /* PCU allocates a DL TBF through PCH ImmAss for MS (when in packet-idle) */
 static void test_dl_tbf_ccch_assign(void)
 {
@@ -593,6 +701,7 @@ int main(int argc, char *argv[])
 	test_ul_tbf_attach();
 	test_ul_tbf_t3164_timeout();
 	test_ul_tbf_t3166_timeout();
+	test_ul_tbf_n3104_timeout();
 	test_dl_tbf_ccch_assign();
 
 	talloc_free(tall_ctx);
