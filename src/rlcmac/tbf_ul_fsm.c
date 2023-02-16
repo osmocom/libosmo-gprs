@@ -25,16 +25,18 @@
 
 #include <osmocom/gprs/rlcmac/tbf_ul_fsm.h>
 #include <osmocom/gprs/rlcmac/tbf_ul.h>
+#include <osmocom/gprs/rlcmac/rlc_window_ul.h>
 #include <osmocom/gprs/rlcmac/gre.h>
 
 #define X(s) (1 << (s))
 
 static const struct value_string tbf_ul_fsm_event_names[] = {
-	{ GPRS_RLCMAC_TBF_UL_EV_UL_ASS_START,		"UL_ASS_START" },
-	{ GPRS_RLCMAC_TBF_UL_EV_UL_ASS_COMPL,		"UL_ASS_COMPL" },
-	{ GPRS_RLCMAC_TBF_UL_EV_FIRST_UL_DATA_SENT,	"FIRST_UL_DATA_SENT" },
-	{ GPRS_RLCMAC_TBF_UL_EV_LAST_UL_DATA_SENT,	"LAST_UL_DATA_SENT" },
-	{ GPRS_RLCMAC_TBF_UL_EV_FINAL_ACK_RECVD,	"FINAL_ACK_RECVD" },
+	{ GPRS_RLCMAC_TBF_UL_EV_UL_ASS_START,			"UL_ASS_START" },
+	{ GPRS_RLCMAC_TBF_UL_EV_UL_ASS_COMPL,			"UL_ASS_COMPL" },
+	{ GPRS_RLCMAC_TBF_UL_EV_FIRST_UL_DATA_SENT,		"FIRST_UL_DATA_SENT" },
+	{ GPRS_RLCMAC_TBF_UL_EV_CONTENTION_RESOLUTION_SUCCESS,	"CONTENTION_RESOLUTION_SUCCESS" },
+	{ GPRS_RLCMAC_TBF_UL_EV_LAST_UL_DATA_SENT,		"LAST_UL_DATA_SENT" },
+	{ GPRS_RLCMAC_TBF_UL_EV_FINAL_ACK_RECVD,		"FINAL_ACK_RECVD" },
 	{ 0, NULL }
 };
 
@@ -42,7 +44,7 @@ static const struct osmo_tdef_state_timeout tbf_ul_fsm_timeouts[32] = {
 	[GPRS_RLCMAC_TBF_UL_ST_NEW] = { },
 	[GPRS_RLCMAC_TBF_UL_ST_WAIT_ASSIGN] = { },
 	[GPRS_RLCMAC_TBF_UL_ST_FLOW] = { .T = 3164 },
-	[GPRS_RLCMAC_TBF_UL_ST_FINISHED] = { },
+	[GPRS_RLCMAC_TBF_UL_ST_FINISHED] = { .keep_timer = true }, /* keep FLOW state's T3164 / T3166 */
 };
 
 /* Transition to a state, using the T timer defined in tbf_fsm_timeouts.
@@ -77,14 +79,29 @@ static int configure_ul_tbf(struct gprs_rlcmac_tbf_ul_fsm_ctx *ctx)
 	return gprs_rlcmac_prim_call_down_cb(rlcmac_prim);
 }
 
+static void reinit_pkt_acces_procedure(struct gprs_rlcmac_tbf_ul_fsm_ctx *ctx)
+{
+	int rc;
+	/* TS 44.060 sub-clause 7.1.4. Reinitiate the packet access procedure:
+		* Move to NEW state, start Ass and wait for GPRS_RLCMAC_TBF_UL_ASS_EV_START */
+	tbf_ul_fsm_state_chg(ctx->fi, GPRS_RLCMAC_TBF_UL_ST_NEW);
+	/* We always use 1phase for now... */
+	rc = gprs_rlcmac_tbf_ul_ass_start(ctx->ul_tbf, GPRS_RLCMAC_TBF_UL_ASS_TYPE_1PHASE);
+	if (rc < 0)
+		gprs_rlcmac_ul_tbf_free(ctx->ul_tbf);
+}
+
 /* This one is triggered when packet access procedure fails, which can happen
  * either in WAIT_IMM_ASS (ImmAss timeout), FLOW (T3164) or FINISHED (T3164, T3166) */
 static void st_new_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_state)
 {
 	struct gprs_rlcmac_tbf_ul_fsm_ctx *ctx = (struct gprs_rlcmac_tbf_ul_fsm_ctx *)fi->priv;
+
 	memset(&ctx->ul_tbf->cur_alloc, 0, sizeof(ctx->ul_tbf->cur_alloc));
 	ctx->ul_tbf->n3104 = 0;
 
+	/* Mark everything we transmitted so far as NACKed: */
+	gprs_rlcmac_rlc_ul_window_mark_for_resend(ctx->ul_tbf->ulw);
 	/* Make sure the lower layers realize this tbf_nr has no longer any assigned resource: */
 	configure_ul_tbf(ctx);
 }
@@ -118,11 +135,26 @@ static void st_wait_assign(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 static void st_flow(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	struct gprs_rlcmac_tbf_ul_fsm_ctx *ctx = (struct gprs_rlcmac_tbf_ul_fsm_ctx *)fi->priv;
+	unsigned long val_sec;
+
 	switch (event) {
 	case GPRS_RLCMAC_TBF_UL_EV_FIRST_UL_DATA_SENT:
 		LOGPFSML(ctx->fi, LOGL_INFO, "First UL block sent, stop T3164\n");
 		OSMO_ASSERT(fi->T == 3164);
 		osmo_timer_del(&fi->timer);
+		if (ctx->ul_tbf->ul_ass_fsm.ass_type == GPRS_RLCMAC_TBF_UL_ASS_TYPE_1PHASE) {
+			LOGPFSML(ctx->fi, LOGL_INFO, "First UL block sent (1 phase access), start T3166\n");
+			fi->T = 3166;
+			val_sec = osmo_tdef_get(g_ctx->T_defs, fi->T, OSMO_TDEF_S, -1);
+			osmo_timer_schedule(&fi->timer, val_sec, 0);
+		}
+		break;
+	case GPRS_RLCMAC_TBF_UL_EV_CONTENTION_RESOLUTION_SUCCESS:
+		LOGPFSML(ctx->fi, LOGL_INFO, "Contention resolution succeeded, stop T3166\n");
+		OSMO_ASSERT(ctx->ul_tbf->ul_ass_fsm.ass_type == GPRS_RLCMAC_TBF_UL_ASS_TYPE_1PHASE);
+		OSMO_ASSERT(fi->T == 3166);
+		osmo_timer_del(&fi->timer);
+		fi->T = 0;
 		break;
 	case GPRS_RLCMAC_TBF_UL_EV_LAST_UL_DATA_SENT:
 		tbf_ul_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ST_FINISHED);
@@ -134,8 +166,15 @@ static void st_flow(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 
 static void st_finished(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
-	//struct gprs_rlcmac_tbf_ul_fsm_ctx *ctx = (struct gprs_rlcmac_tbf_ul_fsm_ctx *)fi->priv;
+	struct gprs_rlcmac_tbf_ul_fsm_ctx *ctx = (struct gprs_rlcmac_tbf_ul_fsm_ctx *)fi->priv;
 	switch (event) {
+	case GPRS_RLCMAC_TBF_UL_EV_CONTENTION_RESOLUTION_SUCCESS:
+		LOGPFSML(ctx->fi, LOGL_INFO, "Contention resolution succeeded, stop T3166\n");
+		OSMO_ASSERT(ctx->ul_tbf->ul_ass_fsm.ass_type == GPRS_RLCMAC_TBF_UL_ASS_TYPE_1PHASE);
+		OSMO_ASSERT(fi->T == 3166);
+		osmo_timer_del(&fi->timer);
+		fi->T = 0;
+		break;
 	case GPRS_RLCMAC_TBF_UL_EV_FINAL_ACK_RECVD:
 		break;
 	default:
@@ -165,6 +204,7 @@ static struct osmo_fsm_state tbf_ul_fsm_states[] = {
 	[GPRS_RLCMAC_TBF_UL_ST_FLOW] = {
 		.in_event_mask =
 			X(GPRS_RLCMAC_TBF_UL_EV_FIRST_UL_DATA_SENT) |
+			X(GPRS_RLCMAC_TBF_UL_EV_CONTENTION_RESOLUTION_SUCCESS) |
 			X(GPRS_RLCMAC_TBF_UL_EV_LAST_UL_DATA_SENT),
 		.out_state_mask =
 			X(GPRS_RLCMAC_TBF_UL_ST_NEW) |
@@ -174,9 +214,10 @@ static struct osmo_fsm_state tbf_ul_fsm_states[] = {
 	},
 	[GPRS_RLCMAC_TBF_UL_ST_FINISHED] = {
 		.in_event_mask =
+			X(GPRS_RLCMAC_TBF_UL_EV_CONTENTION_RESOLUTION_SUCCESS) |
 			X(GPRS_RLCMAC_TBF_UL_EV_FINAL_ACK_RECVD),
 		.out_state_mask =
-			X(GPRS_RLCMAC_TBF_UL_ST_WAIT_ASSIGN),
+			X(GPRS_RLCMAC_TBF_UL_ST_NEW),
 		.name = "FINISHED",
 		.action = st_finished,
 	},
@@ -185,7 +226,6 @@ static struct osmo_fsm_state tbf_ul_fsm_states[] = {
 static int tbf_ul_fsm_timer_cb(struct osmo_fsm_inst *fi)
 {
 	struct gprs_rlcmac_tbf_ul_fsm_ctx *ctx = (struct gprs_rlcmac_tbf_ul_fsm_ctx *)fi->priv;
-	int rc;
 
 	switch (fi->T) {
 	case 3164:
@@ -200,13 +240,23 @@ static int tbf_ul_fsm_timer_cb(struct osmo_fsm_inst *fi)
 			gprs_rlcmac_ul_tbf_free(ctx->ul_tbf);
 			return 0;
 		}
-		/* TS 44.060 sub-clause 7.1.4. Reinitiate the packet access procedure:
-		 * Move to NEW state, start Ass and wait for GPRS_RLCMAC_TBF_UL_ASS_EV_START */
-		tbf_ul_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ST_NEW);
-		/* We always use 1phase for now... */
-		rc = gprs_rlcmac_tbf_ul_ass_start(ctx->ul_tbf, GPRS_RLCMAC_TBF_UL_ASS_TYPE_1PHASE);
-		if (rc < 0)
+		reinit_pkt_acces_procedure(ctx);
+		break;
+	case 3166:
+		ctx->pkt_acc_proc_attempts++;
+		LOGPFSML(ctx->fi, LOGL_INFO, "T3166 timeout attempts=%u\n", ctx->pkt_acc_proc_attempts);
+		OSMO_ASSERT(fi->state == GPRS_RLCMAC_TBF_UL_ST_FLOW ||
+			    fi->state == GPRS_RLCMAC_TBF_UL_ST_FINISHED);
+		if (ctx->pkt_acc_proc_attempts == 4) {
+			/* TS 44.060 7.1.4 "... expiry of timers T3166 ... the
+			 * mobile station shall remain in packet idle mode and
+			 * notify higher layer (TBF establishment failure)" */
+			/* TODO: find out how to notify higher layers */
+			LOGPFSML(ctx->fi, LOGL_NOTICE, "TBF establishment failure (T3166 timeout attempts=%u)\n", ctx->pkt_acc_proc_attempts);
 			gprs_rlcmac_ul_tbf_free(ctx->ul_tbf);
+			return 0;
+		}
+		reinit_pkt_acces_procedure(ctx);
 		break;
 	default:
 		OSMO_ASSERT(0);

@@ -45,6 +45,7 @@ struct gprs_rlcmac_ctx *g_ctx;
 /* TS 44.060 Table 13.1.1 */
 static struct osmo_tdef T_defs_rlcmac[] = {
 	{ .T=3164, .default_val=5, .desc="Wait for Uplink State Flag After Assignment (s)" },
+	{ .T=3166, .default_val=5, .desc="Wait for Packet Uplink ACK/NACK after sending of first data block (s)" },
 	{ 0 } /* empty item at the end */
 };
 

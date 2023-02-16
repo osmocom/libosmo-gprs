@@ -90,6 +90,28 @@ void gprs_rlcmac_ul_tbf_free(struct gprs_rlcmac_ul_tbf *ul_tbf)
 	talloc_free(ul_tbf);
 }
 
+/* whether the UL TBF is in Contention Resolution state (false = already succeeded)*/
+bool gprs_rlcmac_ul_tbf_in_contention_resolution(const struct gprs_rlcmac_ul_tbf *ul_tbf)
+{
+	struct osmo_fsm_inst *fi = ul_tbf->state_fsm.fi;
+	switch (fi->state) {
+	case GPRS_RLCMAC_TBF_UL_ST_NEW:
+	case GPRS_RLCMAC_TBF_UL_ST_WAIT_ASSIGN:
+		return true;
+	case GPRS_RLCMAC_TBF_UL_ST_FLOW:
+	case GPRS_RLCMAC_TBF_UL_ST_FINISHED:
+		/* TS 44.60 7.1.3.3: For 2hase access, contention resolution is
+		 * successful once we get out of GPRS_RLCMAC_TBF_UL_ST_WAIT_ASSIGN
+		 * (when we receive a Pkt Ul Ass, see TS 44.60 7.1.3.3) */
+		/* 1phase access: Check if either T3164 or T3166 are active: */
+		return (ul_tbf->ul_ass_fsm.ass_type == GPRS_RLCMAC_TBF_UL_ASS_TYPE_1PHASE &&
+			osmo_timer_pending(&fi->timer) &&
+			(fi->T == 3164 || fi->T == 3166));
+	default:
+		return false;
+	}
+}
+
 /* Used by the scheduler to find out whether an Uplink Dummy Control Block can be transmitted. If
  * true, it will potentially call gprs_rlcmac_ul_tbf_dummy_create() to generate a new dummy message to transmit. */
 bool gprs_rlcmac_ul_tbf_dummy_rts(const struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_rts_block_ind *bi)
@@ -170,6 +192,9 @@ int gprs_rlcmac_ul_tbf_handle_pkt_ul_ack_nack(struct gprs_rlcmac_ul_tbf *ul_tbf,
 {
 	int rc;
 	rc = gprs_rlcmac_ul_tbf_update_window(ul_tbf, first_bsn, rbb);
+
+	if (gprs_rlcmac_ul_tbf_in_contention_resolution(ul_tbf))
+		osmo_fsm_inst_dispatch(ul_tbf->state_fsm.fi, GPRS_RLCMAC_TBF_UL_EV_CONTENTION_RESOLUTION_SUCCESS, NULL);
 
 	if (final_ack) {
 		LOGPTBFUL(ul_tbf, LOGL_DEBUG, "Final ACK received.\n");
