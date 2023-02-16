@@ -207,7 +207,9 @@ struct msgb *gprs_rlcmac_llc_queue_dequeue(struct gprs_rlcmac_llc_queue *q)
 		       "new_queue_size=%zu\n", frames, octets, gprs_rlcmac_llc_queue_size(q));
 	}
 
-	msgb_pull_to_l2(msg);
+	if (!msg)
+		return NULL;
 
+	msgb_pull_to_l2(msg);
 	return msg;
 }
