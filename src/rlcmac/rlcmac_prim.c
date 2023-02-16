@@ -495,10 +495,16 @@ static int rlcmac_prim_handle_l1ctl_ccch_data_ind(struct osmo_gprs_rlcmac_prim *
 	/* TODO: check if it's IMM_ASS: */
 	int rc;
 
-	if (rlcmac_prim->l1ctl.ccch_data_ind.data[2] == GSM48_MT_RR_IMM_ASS)
+	switch (rlcmac_prim->l1ctl.ccch_data_ind.data[2]) {
+	case GSM48_MT_RR_IMM_ASS:
 		rc = gprs_rlcmac_handle_ccch_imm_ass((struct gsm48_imm_ass *)rlcmac_prim->l1ctl.ccch_data_ind.data);
-	else
+		break;
+	case GSM48_MT_RR_SYSINFO_13:
+		rc = gprs_rlcmac_handle_bcch_si13((struct gsm48_system_information_type_13 *)rlcmac_prim->l1ctl.ccch_data_ind.data);
+		break;
+	default:
 		rc = -ENOTSUP;
+	}
 	return rc;
 }
 

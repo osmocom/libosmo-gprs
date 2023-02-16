@@ -299,6 +299,25 @@ int gprs_rlcmac_handle_ccch_imm_ass(const struct gsm48_imm_ass *ia)
 	return rc;
 }
 
+int gprs_rlcmac_handle_bcch_si13(const struct gsm48_system_information_type_13 *si13)
+{
+	int rc;
+
+	LOGRLCMAC(LOGL_DEBUG, "Rx SI13 from lower layers\n");
+	memcpy(g_ctx->si13, si13, GSM_MACBLOCK_LEN);
+
+	rc = osmo_gprs_rlcmac_decode_si13ro(&g_ctx->si13ro, si13->rest_octets,
+					    GSM_MACBLOCK_LEN - offsetof(struct gsm48_system_information_type_13, rest_octets));
+	if (rc < 0) {
+		LOGRLCMAC(LOGL_ERROR, "Error decoding SI13: %s\n",
+			  osmo_hexdump((uint8_t *)si13, GSM_MACBLOCK_LEN));
+		return rc;
+	}
+
+	g_ctx->si13_available = true;
+	return rc;
+}
+
 static int gprs_rlcmac_handle_pkt_ul_ack_nack(const struct osmo_gprs_rlcmac_prim *rlcmac_prim, const RlcMacDownlink_t *dl_block)
 {
 	const Packet_Uplink_Ack_Nack_t *ack = &dl_block->u.Packet_Uplink_Ack_Nack;

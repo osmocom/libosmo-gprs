@@ -7,10 +7,12 @@
 
 #include <osmocom/core/msgb.h>
 #include <osmocom/core/tdef.h>
+#include <osmocom/gsm/gsm48_rest_octets.h>
 
 #include <osmocom/gprs/rlcmac/rlcmac_prim.h>
 #include <osmocom/gprs/rlcmac/rlcmac.h>
 #include <osmocom/gprs/rlcmac/coding_scheme.h>
+#include <osmocom/gprs/rlcmac/csn1_defs.h>
 
 /* 3GPP TS 44.064 § 8.3 TLLI assignment procedures */
 #define GPRS_RLCMAC_TLLI_UNASSIGNED (0xffffffff)
@@ -73,6 +75,11 @@ struct gprs_rlcmac_ctx {
 	struct {
 		struct gprs_rlcmac_pdch_ulc *ulc[8];
 	} sched;
+
+	/* Last SI13 received from BCCH: */
+	bool si13_available;
+	uint8_t si13[GSM_MACBLOCK_LEN];
+	SI13_RestOctets_t si13ro;
 };
 
 extern struct gprs_rlcmac_ctx *g_ctx;
@@ -82,6 +89,7 @@ struct gprs_rlcmac_entity *gprs_rlcmac_find_entity_by_tlli(uint32_t tlli);
 struct gprs_rlcmac_dl_tbf *gprs_rlcmac_find_dl_tbf_by_tfi(uint8_t dl_tfi);
 struct gprs_rlcmac_ul_tbf *gprs_rlcmac_find_ul_tbf_by_tfi(uint8_t ul_tfi);
 int gprs_rlcmac_handle_ccch_imm_ass(const struct gsm48_imm_ass *ia);
+int gprs_rlcmac_handle_bcch_si13(const struct gsm48_system_information_type_13 *si13);
 int gprs_rlcmac_handle_gprs_dl_block(const struct osmo_gprs_rlcmac_prim *rlcmac_prim,
 				     enum gprs_rlcmac_coding_scheme cs);
 
