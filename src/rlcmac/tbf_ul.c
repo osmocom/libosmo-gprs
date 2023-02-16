@@ -672,7 +672,7 @@ static struct msgb *create_ul_acked_block(struct gprs_rlcmac_ul_tbf *ul_tbf,
 	rlc.tfi = ul_tbf->cur_alloc.ul_tfi; /* TFI */
 
 	/* return data block(s) as message */
-	msg_len = gprs_rlcmac_mcs_size_dl(cs);
+	msg_len = gprs_rlcmac_mcs_size_ul(cs);
 	msg = msgb_alloc(msg_len, "rlcmac_ul_data");
 	if (!msg)
 		return NULL;
