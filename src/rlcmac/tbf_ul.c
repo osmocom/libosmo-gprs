@@ -199,16 +199,38 @@ int gprs_rlcmac_ul_tbf_handle_final_ack(struct gprs_rlcmac_ul_tbf *ul_tbf)
 	return rc;
 }
 
-int gprs_rlcmac_ul_tbf_handle_pkt_ul_ack_nack(struct gprs_rlcmac_ul_tbf *ul_tbf, bool final_ack,
-					      unsigned first_bsn, struct bitvec *rbb)
+int gprs_rlcmac_ul_tbf_handle_pkt_ul_ack_nack(struct gprs_rlcmac_ul_tbf *ul_tbf,
+					      const RlcMacDownlink_t *dl_block)
 {
+	const Packet_Uplink_Ack_Nack_t *ack = &dl_block->u.Packet_Uplink_Ack_Nack;
+	const PU_AckNack_GPRS_t *gprs = &ack->u.PU_AckNack_GPRS_Struct;
+	const Ack_Nack_Description_t *ack_desc = &gprs->Ack_Nack_Description;
+	int bsn_begin, bsn_end;
+	int num_blocks;
+	uint8_t bits_data[GPRS_RLCMAC_GPRS_WS/8];
+	char show_bits[GPRS_RLCMAC_GPRS_WS + 1];
+	struct bitvec bits = {
+		.data = bits_data,
+		.data_len = sizeof(bits_data),
+		.cur_bit = 0,
+	};
 	int rc;
-	rc = gprs_rlcmac_ul_tbf_update_window(ul_tbf, first_bsn, rbb);
+
+	num_blocks = gprs_rlcmac_decode_gprs_acknack_bits(
+		ack_desc, &bits, &bsn_begin, &bsn_end, ul_tbf->ulw);
+
+	LOGPTBFUL(ul_tbf, LOGL_DEBUG,
+		"Got GPRS UL ACK bitmap: SSN: %d, BSN %d to %d - 1 (%d blocks), \"%s\"\n",
+		ack_desc->STARTING_SEQUENCE_NUMBER,
+		bsn_begin, bsn_end, num_blocks,
+		(gprs_rlcmac_extract_rbb(&bits, show_bits), show_bits));
+
+	rc = gprs_rlcmac_ul_tbf_update_window(ul_tbf, bsn_begin, &bits);
 
 	if (gprs_rlcmac_ul_tbf_in_contention_resolution(ul_tbf))
 		osmo_fsm_inst_dispatch(ul_tbf->state_fsm.fi, GPRS_RLCMAC_TBF_UL_EV_CONTENTION_RESOLUTION_SUCCESS, NULL);
 
-	if (final_ack) {
+	if (ack_desc->FINAL_ACK_INDICATION) {
 		LOGPTBFUL(ul_tbf, LOGL_DEBUG, "Final ACK received.\n");
 		rc = gprs_rlcmac_ul_tbf_handle_final_ack(ul_tbf);
 	} else if (gprs_rlcmac_tbf_ul_state(ul_tbf) &&
@@ -216,6 +238,7 @@ int gprs_rlcmac_ul_tbf_handle_pkt_ul_ack_nack(struct gprs_rlcmac_ul_tbf *ul_tbf,
 		LOGPTBFUL(ul_tbf, LOGL_NOTICE,
 			  "Received acknowledge of all blocks, but without final ack indication (don't worry)\n");
 	}
+
 	return rc;
 }
 
@@ -245,6 +268,41 @@ struct msgb *gprs_rlcmac_ul_tbf_dummy_create(const struct gprs_rlcmac_ul_tbf *ul
 		LOGPTBFUL(ul_tbf, LOGL_ERROR, "Encoding of Packet Uplink Dummy Control Block failed (%d)\n", rc);
 		goto free_ret;
 	}
+
+	return msg;
+
+free_ret:
+	msgb_free(msg);
+	return NULL;
+}
+
+struct msgb *gprs_rlcmac_ul_tbf_create_pkt_ctrl_ack(const struct gprs_rlcmac_ul_tbf *ul_tbf)
+{
+	struct msgb *msg;
+	struct bitvec bv;
+	RlcMacUplink_t ul_block;
+	int rc;
+
+	OSMO_ASSERT(ul_tbf);
+
+	msg = msgb_alloc(GSM_MACBLOCK_LEN, "pkt_ctrl_ack");
+	if (!msg)
+		return NULL;
+
+	/* Initialize a bit vector that uses allocated msgb as the data buffer. */
+	bv = (struct bitvec){
+		.data = msgb_put(msg, GSM_MACBLOCK_LEN),
+		.data_len = GSM_MACBLOCK_LEN,
+	};
+	bitvec_unhex(&bv, GPRS_RLCMAC_DUMMY_VEC);
+
+	gprs_rlcmac_enc_prepare_pkt_ctrl_ack(&ul_block, ul_tbf->tbf.gre->tlli);
+	rc = osmo_gprs_rlcmac_encode_uplink(&bv, &ul_block);
+	if (rc < 0) {
+		LOGPTBFUL(ul_tbf, LOGL_ERROR, "Encoding of Packet Control ACK failed (%d)\n", rc);
+		goto free_ret;
+	}
+	LOGPTBFUL(ul_tbf, LOGL_DEBUG, "Tx Packet Control Ack\n");
 
 	return msg;
 

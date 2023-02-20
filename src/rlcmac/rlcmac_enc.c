@@ -410,3 +410,16 @@ void gprs_rlcmac_enc_prepare_pkt_downlink_ack_nack(RlcMacUplink_t *block, const 
 
 	gprs_rlcmac_enc_prepare_channel_quality_report(&ack->Channel_Quality_Report, dl_tbf);
 }
+
+void gprs_rlcmac_enc_prepare_pkt_ctrl_ack(RlcMacUplink_t *block, uint32_t tlli)
+{
+	Packet_Control_Acknowledgement_t *ctrl_ack = &block->u.Packet_Control_Acknowledgement;
+
+	memset(block, 0, sizeof(*block));
+	ctrl_ack->MESSAGE_TYPE = OSMO_GPRS_RLCMAC_UL_MSGT_PACKET_CONTROL_ACK;
+	ctrl_ack->PayloadType = GPRS_RLCMAC_PT_CONTROL_BLOCK;
+	ctrl_ack->R = 0; /* MS sent channel request message once */
+
+	ctrl_ack->TLLI = tlli;
+	ctrl_ack->CTRL_ACK = 0; /* not clear what this should be set to. TS 44.060 Table 11.2.2.2 */
+}

@@ -503,7 +503,16 @@ static void test_ul_tbf_attach(void)
 	ack_desc->FINAL_ACK_INDICATION = 1;
 	ul_ack_nack_mark(ack_desc, 0, true);
 	ul_ack_nack_mark(ack_desc, 1, true);
+	/* Final ACK has Poll set: */
+	dl_block.SP = 1;
+	dl_block.RRBP = GPRS_RLCMAC_RRBP_N_plus_13;
 	rlcmac_prim = create_dl_ctrl_block(&dl_block, ts_nr, rts_fn);
+	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+	OSMO_ASSERT(rc == 0);
+
+	/* Trigger transmission of PKT CTRL ACK */
+	rts_fn = rrbp2fn(rts_fn, dl_block.RRBP);
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_rts_ind(ts_nr, rts_fn, usf);
 	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
 	OSMO_ASSERT(rc == 0);
 

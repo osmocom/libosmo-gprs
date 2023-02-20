@@ -34,6 +34,7 @@
 struct tbf_sched_ctrl_candidates {
 	struct gprs_rlcmac_dl_tbf *poll_dl_ack_final_ack; /* 8.1.2.2 1) */
 	struct gprs_rlcmac_dl_tbf *poll_dl_ack; /* 8.1.2.2 7) */
+	struct gprs_rlcmac_ul_tbf *poll_ul_ack; /* 11.2.2 (answer with PKT CTRL ACK) */
 	struct gprs_rlcmac_ul_tbf *ul_ass;
 };
 
@@ -88,7 +89,8 @@ static void get_ctrl_msg_tbf_candidates(const struct gprs_rlcmac_rts_block_ind *
 			/* TODO */
 			break;
 		case GPRS_RLCMAC_PDCH_ULC_POLL_UL_ACK:
-			/* TODO */
+			ul_tbf = tbf_as_ul_tbf(node->tbf);
+			tbfs->poll_ul_ack = ul_tbf;
 			break;
 		case GPRS_RLCMAC_PDCH_ULC_POLL_DL_ACK:
 			dl_tbf = tbf_as_dl_tbf(node->tbf);
@@ -156,6 +158,13 @@ static struct msgb *sched_select_ctrl_msg(const struct gprs_rlcmac_rts_block_ind
 	}
 
 	/* 8.1.2.2 5) Any other RLC/MAC control message, other than a (EGPRS) PACKET DOWNLINK ACK/NACK */
+	if (tbfs->poll_ul_ack) {
+		LOGRLCMAC(LOGL_DEBUG, "(ts=%u,fn=%u,usf=%u) Tx Pkt Control Ack (UL ACK/NACK poll)\n",
+			  bi->ts, bi->fn, bi->usf);
+		msg = gprs_rlcmac_ul_tbf_create_pkt_ctrl_ack(tbfs->poll_ul_ack);
+		if (msg)
+			return msg;
+	}
 	if (tbfs->ul_ass) {
 		msg = gprs_rlcmac_tbf_ul_ass_create_rlcmac_msg(tbfs->ul_ass, bi);
 		if (msg)

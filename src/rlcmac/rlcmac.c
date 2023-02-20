@@ -320,19 +320,7 @@ int gprs_rlcmac_handle_bcch_si13(const struct gsm48_system_information_type_13 *
 
 static int gprs_rlcmac_handle_pkt_ul_ack_nack(const struct osmo_gprs_rlcmac_prim *rlcmac_prim, const RlcMacDownlink_t *dl_block)
 {
-	const Packet_Uplink_Ack_Nack_t *ack = &dl_block->u.Packet_Uplink_Ack_Nack;
-	const PU_AckNack_GPRS_t *gprs = &ack->u.PU_AckNack_GPRS_Struct;
-	const Ack_Nack_Description_t *ack_desc = &gprs->Ack_Nack_Description;
 	struct gprs_rlcmac_ul_tbf *ul_tbf;
-	int bsn_begin, bsn_end;
-	int num_blocks;
-	uint8_t bits_data[GPRS_RLCMAC_GPRS_WS/8];
-	char show_bits[GPRS_RLCMAC_GPRS_WS + 1];
-	struct bitvec bits = {
-		.data = bits_data,
-		.data_len = sizeof(bits_data),
-		.cur_bit = 0,
-	};
 	int rc;
 
 	ul_tbf = gprs_rlcmac_find_ul_tbf_by_tfi(dl_block->TFI);
@@ -344,16 +332,15 @@ static int gprs_rlcmac_handle_pkt_ul_ack_nack(const struct osmo_gprs_rlcmac_prim
 		return -ENOENT;
 	}
 
-	num_blocks = gprs_rlcmac_decode_gprs_acknack_bits(
-		ack_desc, &bits, &bsn_begin, &bsn_end, ul_tbf->ulw);
+	rc = gprs_rlcmac_ul_tbf_handle_pkt_ul_ack_nack(ul_tbf, dl_block);
 
-	LOGPTBFUL(ul_tbf, LOGL_DEBUG,
-		"Got GPRS UL ACK bitmap: SSN: %d, BSN %d to %d - 1 (%d blocks), \"%s\"\n",
-		ack_desc->STARTING_SEQUENCE_NUMBER,
-		bsn_begin, bsn_end, num_blocks,
-		(gprs_rlcmac_extract_rbb(&bits, show_bits), show_bits));
-
-	rc = gprs_rlcmac_ul_tbf_handle_pkt_ul_ack_nack(ul_tbf, ack_desc->FINAL_ACK_INDICATION, bsn_begin, &bits);
+	/* If RRBP contains valid data, schedule a response (PKT CONTROL ACK or PKT RESOURCE REQ). */
+	if (dl_block->SP) {
+		uint32_t poll_fn = rrbp2fn(rlcmac_prim->l1ctl.pdch_data_ind.fn, dl_block->RRBP);
+		gprs_rlcmac_pdch_ulc_reserve(g_ctx->sched.ulc[rlcmac_prim->l1ctl.pdch_data_ind.ts_nr], poll_fn,
+					     GPRS_RLCMAC_PDCH_ULC_POLL_UL_ACK,
+					     ul_tbf_as_tbf(ul_tbf));
+	}
 	return rc;
 }
 
