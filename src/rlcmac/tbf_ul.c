@@ -323,9 +323,21 @@ static int create_new_bsn(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_r
 	memset(rdbi, 0, sizeof(*rdbi));
 	rdbi->data_len = block_data_len;
 
+	rdbi->ti = gprs_rlcmac_ul_tbf_in_contention_resolution(ul_tbf);
 	rdbi->cv = 15; /* Final Block Indicator, set late, if true */
 	rdbi->bsn = bsn; /* Block Sequence Number */
 	rdbi->e = 1; /* Extension bit, maybe set later (1: no extension) */
+
+	if (rdbi->ti) {
+		/* Append TLLI: */
+		if (gprs_rlcmac_mcs_is_gprs(cs))
+			/* The TLLI is encoded in big endian for GPRS (see TS 44.060, figure 10.2.2.1, note) */
+			osmo_store32be(ul_tbf->tbf.gre->tlli, (uint32_t *)&data[0]);
+		else
+			/* The TLLI is encoded in little endian for EGPRS (see TS 44.060, figure 10.3a.2.1, note 2) */
+			osmo_store32le(ul_tbf->tbf.gre->tlli, (uint32_t *)&data[0]);
+		write_offset += sizeof(uint32_t);
+	}
 
 	do {
 		bool is_final;

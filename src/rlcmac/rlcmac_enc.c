@@ -41,7 +41,7 @@ int gprs_rlcmac_rlc_write_ul_data_header(const struct gprs_rlcmac_rlc_data_info 
 		gprs->cv = rlc->block_info[0].cv;
 		gprs->pt = 0;
 
-		gprs->ti    = 0; /* TODO */
+		gprs->ti    = rlc->block_info[0].ti;
 		gprs->tfi   = rlc->tfi;
 		gprs->pi    = 0; /* TODO */
 		gprs->spare = 0;
