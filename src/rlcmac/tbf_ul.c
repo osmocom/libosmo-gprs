@@ -133,7 +133,8 @@ bool gprs_rlcmac_ul_tbf_data_rts(const struct gprs_rlcmac_ul_tbf *ul_tbf, const 
 		return false;
 
 	st = gprs_rlcmac_tbf_ul_state(ul_tbf);
-	return (st == GPRS_RLCMAC_TBF_UL_ST_FLOW);
+	return (st == GPRS_RLCMAC_TBF_UL_ST_FLOW ||
+		st == GPRS_RLCMAC_TBF_UL_ST_FINISHED);
 }
 
 static int gprs_rlcmac_ul_tbf_update_window(struct gprs_rlcmac_ul_tbf *ul_tbf,
