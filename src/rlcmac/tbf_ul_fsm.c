@@ -184,7 +184,16 @@ static void st_finished(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 		break;
 	case GPRS_RLCMAC_TBF_UL_EV_LAST_UL_DATA_SENT:
 		/* If LAST_UL_DATA_SENT is received in this state, it means the
-		 * UL TBF is retransmitting the block. We need do nothing, ignore. */
+		 * UL TBF is retransmitting the block.
+		 * 9.3.3.3.2: The block with CV=0 shall not be retransmitted more than four times.
+		 */
+		ctx->last_data_block_retrans_attempts++;
+		LOGPFSML(ctx->fi, LOGL_INFO, "Data block with CV=0 retransmit attempts=%u\n", ctx->last_data_block_retrans_attempts);
+		if (ctx->last_data_block_retrans_attempts == 4) {
+			LOGPFSML(ctx->fi, LOGL_NOTICE, "TBF establishment failure (Data block with CV=0 retransmit attempts=%u)\n",
+				 ctx->last_data_block_retrans_attempts);
+			gprs_rlcmac_ul_tbf_free(ctx->ul_tbf);
+		}
 		break;
 	case GPRS_RLCMAC_TBF_UL_EV_FINAL_ACK_RECVD:
 		break;

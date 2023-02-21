@@ -717,6 +717,7 @@ static struct msgb *create_ul_acked_block(struct gprs_rlcmac_ul_tbf *ul_tbf,
 	enum gprs_rlcmac_rlc_egprs_ul_spb spb = GPRS_RLCMAC_EGPRS_UL_SPB_NO_RETX;
 	unsigned int spb_status;
 	struct gprs_rlcmac_rlc_block *blk;
+	struct gprs_rlcmac_entity *gre = ul_tbf->tbf.gre;
 
 	blk = gprs_rlcmac_rlc_block_store_get_block(ul_tbf->blkst, index);
 	spb_status = blk->spb_status.block_status_ul;
@@ -867,6 +868,10 @@ static struct msgb *create_ul_acked_block(struct gprs_rlcmac_ul_tbf *ul_tbf,
 		osmo_fsm_inst_dispatch(ul_tbf->state_fsm.fi, GPRS_RLCMAC_TBF_UL_EV_FIRST_UL_DATA_SENT, NULL);
 	if (is_final)
 		osmo_fsm_inst_dispatch(ul_tbf->state_fsm.fi, GPRS_RLCMAC_TBF_UL_EV_LAST_UL_DATA_SENT, NULL);
+	/* Early return if ul_tbf was freed by FSM: */
+	if (!gre->ul_tbf)
+		return msg;
+
 	ul_tbf->n3104++;
 	if (gprs_rlcmac_ul_tbf_in_contention_resolution(ul_tbf)) {
 		unsigned int n3104_max = gprs_rlcmac_ul_tbf_n3104_max(ul_tbf);

@@ -22,6 +22,8 @@ struct gprs_rlcmac_tbf_ul_fsm_ctx {
 	};
 	/* Number of packet access procedure timeouts (T3164, T3166) */
 	unsigned int pkt_acc_proc_attempts;
+	/* 9.3.3.3.2: The block with CV=0 shall not be retransmitted more than four times. */
+	unsigned int last_data_block_retrans_attempts;
 };
 
 enum tbf_ul_fsm_event {
