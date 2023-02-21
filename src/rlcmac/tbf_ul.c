@@ -212,25 +212,6 @@ static int gprs_rlcmac_ul_tbf_update_window(struct gprs_rlcmac_ul_tbf *ul_tbf,
 	return 0;
 }
 
-int gprs_rlcmac_ul_tbf_handle_final_ack(struct gprs_rlcmac_ul_tbf *ul_tbf, const RlcMacDownlink_t *dl_block)
-{
-	int rc = 0;
-	bool tbf_est = false;
-	const PU_AckNack_GPRS_t *ack_gprs = &dl_block->u.Packet_Uplink_Ack_Nack.u.PU_AckNack_GPRS_Struct;
-
-	if (ack_gprs->Exist_AdditionsR99)
-		tbf_est = ack_gprs->AdditionsR99.TBF_EST;
-
-	osmo_fsm_inst_dispatch(ul_tbf->state_fsm.fi, GPRS_RLCMAC_TBF_UL_EV_FINAL_ACK_RECVD, &tbf_est);
-
-	/* range V(A)..V(S)-1 */
-	//received = gprs_rlcmac_rlc_ul_window_count_unacked(ul_tbf->ulw);
-	/* report all outstanding packets as received */
-	//gprs_rlcmac_received_lost(this, received, 0);
-	gprs_rlcmac_rlc_ul_window_reset(ul_tbf->ulw);
-	return rc;
-}
-
 int gprs_rlcmac_ul_tbf_handle_pkt_ul_ack_nack(struct gprs_rlcmac_ul_tbf *ul_tbf,
 					      const RlcMacDownlink_t *dl_block)
 {
@@ -247,6 +228,10 @@ int gprs_rlcmac_ul_tbf_handle_pkt_ul_ack_nack(struct gprs_rlcmac_ul_tbf *ul_tbf,
 		.cur_bit = 0,
 	};
 	int rc;
+	struct tbf_ul_ass_ev_rx_ul_ack_nack ev_ack = {
+		.final_ack = ack_desc->FINAL_ACK_INDICATION,
+		.tbf_est = (gprs->Exist_AdditionsR99 && gprs->AdditionsR99.TBF_EST),
+	};
 
 	num_blocks = gprs_rlcmac_decode_gprs_acknack_bits(
 		ack_desc, &bits, &bsn_begin, &bsn_end, ul_tbf->ulw);
@@ -259,12 +244,10 @@ int gprs_rlcmac_ul_tbf_handle_pkt_ul_ack_nack(struct gprs_rlcmac_ul_tbf *ul_tbf,
 
 	rc = gprs_rlcmac_ul_tbf_update_window(ul_tbf, bsn_begin, &bits);
 
-	if (gprs_rlcmac_ul_tbf_in_contention_resolution(ul_tbf))
-		osmo_fsm_inst_dispatch(ul_tbf->state_fsm.fi, GPRS_RLCMAC_TBF_UL_EV_CONTENTION_RESOLUTION_SUCCESS, NULL);
+	osmo_fsm_inst_dispatch(ul_tbf->state_fsm.fi, GPRS_RLCMAC_TBF_UL_EV_RX_UL_ACK_NACK, &ev_ack);
 
 	if (ack_desc->FINAL_ACK_INDICATION) {
-		LOGPTBFUL(ul_tbf, LOGL_DEBUG, "Final ACK received.\n");
-		rc = gprs_rlcmac_ul_tbf_handle_final_ack(ul_tbf, dl_block);
+		gprs_rlcmac_rlc_ul_window_reset(ul_tbf->ulw);
 	} else if (gprs_rlcmac_tbf_ul_state(ul_tbf) == GPRS_RLCMAC_TBF_UL_ST_FINISHED &&
 		   gprs_rlcmac_rlc_ul_window_window_empty(ul_tbf->ulw)) {
 		LOGPTBFUL(ul_tbf, LOGL_NOTICE,

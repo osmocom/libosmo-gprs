@@ -35,9 +35,8 @@ static const struct value_string tbf_ul_fsm_event_names[] = {
 	{ GPRS_RLCMAC_TBF_UL_EV_UL_ASS_COMPL,			"UL_ASS_COMPL" },
 	{ GPRS_RLCMAC_TBF_UL_EV_FIRST_UL_DATA_SENT,		"FIRST_UL_DATA_SENT" },
 	{ GPRS_RLCMAC_TBF_UL_EV_N3104_MAX,			"N3104_MAX" },
-	{ GPRS_RLCMAC_TBF_UL_EV_CONTENTION_RESOLUTION_SUCCESS,	"CONTENTION_RESOLUTION_SUCCESS" },
+	{ GPRS_RLCMAC_TBF_UL_EV_RX_UL_ACK_NACK,			"RX_UL_ACK_NACK" },
 	{ GPRS_RLCMAC_TBF_UL_EV_LAST_UL_DATA_SENT,		"LAST_UL_DATA_SENT" },
-	{ GPRS_RLCMAC_TBF_UL_EV_FINAL_ACK_RECVD,		"FINAL_ACK_RECVD" },
 	{ 0, NULL }
 };
 
@@ -153,12 +152,16 @@ static void st_flow(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 	case GPRS_RLCMAC_TBF_UL_EV_N3104_MAX:
 		reinit_pkt_acces_procedure(ctx);
 		break;
-	case GPRS_RLCMAC_TBF_UL_EV_CONTENTION_RESOLUTION_SUCCESS:
-		LOGPFSML(ctx->fi, LOGL_INFO, "Contention resolution succeeded, stop T3166\n");
-		OSMO_ASSERT(ctx->ul_tbf->ul_ass_fsm.ass_type == GPRS_RLCMAC_TBF_UL_ASS_TYPE_1PHASE);
-		OSMO_ASSERT(fi->T == 3166);
-		osmo_timer_del(&fi->timer);
-		fi->T = 0;
+	case GPRS_RLCMAC_TBF_UL_EV_RX_UL_ACK_NACK:
+		if (gprs_rlcmac_ul_tbf_in_contention_resolution(ctx->ul_tbf)) {
+			LOGPFSML(ctx->fi, LOGL_INFO, "Contention resolution succeeded, stop T3166\n");
+			OSMO_ASSERT(ctx->ul_tbf->ul_ass_fsm.ass_type == GPRS_RLCMAC_TBF_UL_ASS_TYPE_1PHASE);
+			OSMO_ASSERT(fi->T == 3166);
+			osmo_timer_del(&fi->timer);
+			fi->T = 0;
+		}
+		/* It's impossible we receive a correct final_ack here, since we didn't
+		 * sent last data (FSM would be in FINISHED state then) */
 		break;
 	case GPRS_RLCMAC_TBF_UL_EV_LAST_UL_DATA_SENT:
 		tbf_ul_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ST_FINISHED);
@@ -171,16 +174,25 @@ static void st_flow(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 static void st_finished(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	struct gprs_rlcmac_tbf_ul_fsm_ctx *ctx = (struct gprs_rlcmac_tbf_ul_fsm_ctx *)fi->priv;
+	struct tbf_ul_ass_ev_rx_ul_ack_nack *ctx_ul_ack_nack;
 	switch (event) {
 	case GPRS_RLCMAC_TBF_UL_EV_N3104_MAX:
 		reinit_pkt_acces_procedure(ctx);
 		break;
-	case GPRS_RLCMAC_TBF_UL_EV_CONTENTION_RESOLUTION_SUCCESS:
-		LOGPFSML(ctx->fi, LOGL_INFO, "Contention resolution succeeded, stop T3166\n");
-		OSMO_ASSERT(ctx->ul_tbf->ul_ass_fsm.ass_type == GPRS_RLCMAC_TBF_UL_ASS_TYPE_1PHASE);
-		OSMO_ASSERT(fi->T == 3166);
-		osmo_timer_del(&fi->timer);
-		fi->T = 0;
+	case GPRS_RLCMAC_TBF_UL_EV_RX_UL_ACK_NACK:
+		ctx_ul_ack_nack = (struct tbf_ul_ass_ev_rx_ul_ack_nack *)data;
+		if (gprs_rlcmac_ul_tbf_in_contention_resolution(ctx->ul_tbf)) {
+			LOGPFSML(ctx->fi, LOGL_INFO, "Contention resolution succeeded, stop T3166\n");
+			OSMO_ASSERT(ctx->ul_tbf->ul_ass_fsm.ass_type == GPRS_RLCMAC_TBF_UL_ASS_TYPE_1PHASE);
+			OSMO_ASSERT(fi->T == 3166);
+			osmo_timer_del(&fi->timer);
+			fi->T = 0;
+		}
+		if (ctx_ul_ack_nack->final_ack) {
+			LOGPFSML(ctx->fi, LOGL_DEBUG, "Final ACK received\n");
+			ctx->rx_final_pkt_ul_ack_nack_has_tbf_est = ctx_ul_ack_nack->tbf_est;
+			tbf_ul_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ST_RELEASING);
+		}
 		break;
 	case GPRS_RLCMAC_TBF_UL_EV_LAST_UL_DATA_SENT:
 		/* If LAST_UL_DATA_SENT is received in this state, it means the
@@ -194,10 +206,6 @@ static void st_finished(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 				 ctx->last_data_block_retrans_attempts);
 			gprs_rlcmac_ul_tbf_free(ctx->ul_tbf);
 		}
-		break;
-	case GPRS_RLCMAC_TBF_UL_EV_FINAL_ACK_RECVD:
-		ctx->rx_final_pkt_ul_ack_nack_has_tbf_est = *((bool *)data);
-		tbf_ul_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ST_RELEASING);
 		break;
 	default:
 		OSMO_ASSERT(0);
@@ -236,7 +244,7 @@ static struct osmo_fsm_state tbf_ul_fsm_states[] = {
 		.in_event_mask =
 			X(GPRS_RLCMAC_TBF_UL_EV_FIRST_UL_DATA_SENT) |
 			X(GPRS_RLCMAC_TBF_UL_EV_N3104_MAX) |
-			X(GPRS_RLCMAC_TBF_UL_EV_CONTENTION_RESOLUTION_SUCCESS) |
+			X(GPRS_RLCMAC_TBF_UL_EV_RX_UL_ACK_NACK) |
 			X(GPRS_RLCMAC_TBF_UL_EV_LAST_UL_DATA_SENT),
 		.out_state_mask =
 			X(GPRS_RLCMAC_TBF_UL_ST_NEW) |
@@ -247,9 +255,8 @@ static struct osmo_fsm_state tbf_ul_fsm_states[] = {
 	[GPRS_RLCMAC_TBF_UL_ST_FINISHED] = {
 		.in_event_mask =
 			X(GPRS_RLCMAC_TBF_UL_EV_N3104_MAX) |
-			X(GPRS_RLCMAC_TBF_UL_EV_CONTENTION_RESOLUTION_SUCCESS) |
-			X(GPRS_RLCMAC_TBF_UL_EV_LAST_UL_DATA_SENT) |
-			X(GPRS_RLCMAC_TBF_UL_EV_FINAL_ACK_RECVD),
+			X(GPRS_RLCMAC_TBF_UL_EV_RX_UL_ACK_NACK) |
+			X(GPRS_RLCMAC_TBF_UL_EV_LAST_UL_DATA_SENT),
 		.out_state_mask =
 			X(GPRS_RLCMAC_TBF_UL_ST_NEW) |
 			X(GPRS_RLCMAC_TBF_UL_ST_RELEASING),

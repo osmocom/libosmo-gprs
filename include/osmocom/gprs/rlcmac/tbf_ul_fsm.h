@@ -36,9 +36,13 @@ enum tbf_ul_fsm_event {
 	GPRS_RLCMAC_TBF_UL_EV_UL_ASS_COMPL,
 	GPRS_RLCMAC_TBF_UL_EV_FIRST_UL_DATA_SENT,
 	GPRS_RLCMAC_TBF_UL_EV_N3104_MAX,
-	GPRS_RLCMAC_TBF_UL_EV_CONTENTION_RESOLUTION_SUCCESS,
+	GPRS_RLCMAC_TBF_UL_EV_RX_UL_ACK_NACK, /* data: struct tbf_ul_ass_ev_rx_ul_ack_nack* */
 	GPRS_RLCMAC_TBF_UL_EV_LAST_UL_DATA_SENT,
-	GPRS_RLCMAC_TBF_UL_EV_FINAL_ACK_RECVD, /* data: bool TBF_EST */
+};
+
+struct tbf_ul_ass_ev_rx_ul_ack_nack {
+	bool final_ack;
+	bool tbf_est;
 };
 
 int gprs_rlcmac_tbf_ul_fsm_init(void);
