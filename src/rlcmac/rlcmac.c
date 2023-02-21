@@ -404,7 +404,7 @@ static int gprs_rlcmac_handle_gprs_dl_data_block(const struct osmo_gprs_rlcmac_p
 
 	dl_tbf = gprs_rlcmac_find_dl_tbf_by_tfi(rlc_dec.tfi);
 	if (!dl_tbf) {
-		LOGPTBFDL(dl_tbf, LOGL_INFO, "Rx DL data for unknown dl_tfi=%u\n", data_hdr->tfi);
+		LOGRLCMAC(LOGL_INFO, "Rx DL data for unknown dl_tfi=%u\n", data_hdr->tfi);
 		return -ENOENT;
 	}
 	LOGPTBFDL(dl_tbf, LOGL_DEBUG, "Rx new DL data\n");
