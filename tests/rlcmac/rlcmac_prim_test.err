@@ -34,13 +34,13 @@ DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Sending new block at BSN 1, CS=CS-2
 DLGLOBAL DEBUG -- Chunk with length 7 is less than remaining space (26): add length header to delimit LLC frame
 DLGLOBAL DEBUG -- Final block, so we done.
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Complete UL frame, len=0
-DLGLOBAL INFO UL_TBF{FLOW}: Received Event LAST_UL_DATA_SENT
-DLGLOBAL INFO UL_TBF{FLOW}: state_chg to FINISHED
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) data block (BSN 1, CS-2): 1d 00 00 23 42 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) need_padding 0 spb_status 0 spb 0 (BSN1 1 BSN2 -1)
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying 1 RLC blocks, 1 BSNs
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying data unit 0 (BSN 1)
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) msg block (BSN 1, CS-2): 00 00 02 1d 00 00 23 42 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 
+DLGLOBAL INFO UL_TBF{FLOW}: Received Event LAST_UL_DATA_SENT
+DLGLOBAL INFO UL_TBF{FLOW}: state_chg to FINISHED
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) N3104 inc (2)
 DLGLOBAL INFO Rx from lower layers: L1CTL-PDCH_DATA.indication
 DLGLOBAL INFO TS=7 FN=8 Rx Pkt UL ACK/NACK
@@ -294,13 +294,13 @@ DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Sending new block at BSN 1, CS=CS-2
 DLGLOBAL DEBUG -- Chunk with length 7 is less than remaining space (26): add length header to delimit LLC frame
 DLGLOBAL DEBUG -- Final block, so we done.
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Complete UL frame, len=0
-DLGLOBAL INFO UL_TBF{FLOW}: Received Event LAST_UL_DATA_SENT
-DLGLOBAL INFO UL_TBF{FLOW}: state_chg to FINISHED
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) data block (BSN 1, CS-2): 1d 00 00 23 42 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) need_padding 0 spb_status 0 spb 0 (BSN1 1 BSN2 -1)
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying 1 RLC blocks, 1 BSNs
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying data unit 0 (BSN 1)
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) msg block (BSN 1, CS-2): 00 00 02 1d 00 00 23 42 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 
+DLGLOBAL INFO UL_TBF{FLOW}: Received Event LAST_UL_DATA_SENT
+DLGLOBAL INFO UL_TBF{FLOW}: state_chg to FINISHED
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) N3104 inc (2)
 DLGLOBAL INFO Rx from lower layers: L1CTL-PDCH_RTS.indication
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Restarting at BSN 0, because all blocks have been transmitted.
@@ -316,6 +316,7 @@ DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) need_padding 0 spb_status 0 spb 0 (BSN
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying 1 RLC blocks, 1 BSNs
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying data unit 0 (BSN 1)
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) msg block (BSN 1, CS-2): 00 00 02 1d 00 00 23 42 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 
+DLGLOBAL INFO UL_TBF{FINISHED}: Received Event LAST_UL_DATA_SENT
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) N3104 inc (4)
 DLGLOBAL INFO Rx from lower layers: L1CTL-PDCH_RTS.indication
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Restarting at BSN 0, because all blocks have been transmitted.
@@ -331,6 +332,7 @@ DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) need_padding 0 spb_status 0 spb 0 (BSN
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying 1 RLC blocks, 1 BSNs
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying data unit 0 (BSN 1)
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) msg block (BSN 1, CS-2): 00 00 02 1d 00 00 23 42 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 
+DLGLOBAL INFO UL_TBF{FINISHED}: Received Event LAST_UL_DATA_SENT
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) N3104 inc (6)
 DLGLOBAL INFO Rx from lower layers: L1CTL-PDCH_RTS.indication
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Restarting at BSN 0, because all blocks have been transmitted.
@@ -346,6 +348,7 @@ DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) need_padding 0 spb_status 0 spb 0 (BSN
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying 1 RLC blocks, 1 BSNs
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying data unit 0 (BSN 1)
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) msg block (BSN 1, CS-2): 00 00 02 1d 00 00 23 42 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 
+DLGLOBAL INFO UL_TBF{FINISHED}: Received Event LAST_UL_DATA_SENT
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) N3104 inc (8)
 DLGLOBAL INFO Rx from lower layers: L1CTL-PDCH_RTS.indication
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Restarting at BSN 0, because all blocks have been transmitted.

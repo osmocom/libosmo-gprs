@@ -182,6 +182,10 @@ static void st_finished(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 		osmo_timer_del(&fi->timer);
 		fi->T = 0;
 		break;
+	case GPRS_RLCMAC_TBF_UL_EV_LAST_UL_DATA_SENT:
+		/* If LAST_UL_DATA_SENT is received in this state, it means the
+		 * UL TBF is retransmitting the block. We need do nothing, ignore. */
+		break;
 	case GPRS_RLCMAC_TBF_UL_EV_FINAL_ACK_RECVD:
 		break;
 	default:
@@ -224,6 +228,7 @@ static struct osmo_fsm_state tbf_ul_fsm_states[] = {
 		.in_event_mask =
 			X(GPRS_RLCMAC_TBF_UL_EV_N3104_MAX) |
 			X(GPRS_RLCMAC_TBF_UL_EV_CONTENTION_RESOLUTION_SUCCESS) |
+			X(GPRS_RLCMAC_TBF_UL_EV_LAST_UL_DATA_SENT) |
 			X(GPRS_RLCMAC_TBF_UL_EV_FINAL_ACK_RECVD),
 		.out_state_mask =
 			X(GPRS_RLCMAC_TBF_UL_ST_NEW),

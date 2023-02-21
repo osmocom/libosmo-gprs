@@ -420,10 +420,8 @@ static int create_new_bsn(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_r
 				 * Specially important when X2031 is 0. */
 				is_final = gprs_rlcmac_llc_queue_size(llc_queue) == 0 &&
 					   !gprs_rlcmac_ul_tbf_shall_keep_open(ul_tbf, bi);
-				if (is_final) {
+				if (is_final)
 					rdbi->cv = 0;
-					osmo_fsm_inst_dispatch(ul_tbf->state_fsm.fi, GPRS_RLCMAC_TBF_UL_EV_LAST_UL_DATA_SENT, NULL);
-				}
 
 				if (gprs_rlcmac_mcs_is_edge(cs)) {
 					/* in EGPRS there's no M bit, so we need
@@ -448,9 +446,6 @@ static int create_new_bsn(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_r
 		LOGPTBFUL(ul_tbf, LOGL_DEBUG, "Complete UL frame, len=%d\n", msgb_length(ul_tbf->llc_tx_msg));
 		msgb_free(ul_tbf->llc_tx_msg);
 		ul_tbf->llc_tx_msg = NULL;
-
-		if (is_final)
-			osmo_fsm_inst_dispatch(ul_tbf->state_fsm.fi, GPRS_RLCMAC_TBF_UL_EV_LAST_UL_DATA_SENT, NULL);
 
 		/* dequeue next LLC frame, if any */
 		gprs_rlcmac_ul_tbf_schedule_next_llc_frame(ul_tbf);
@@ -870,6 +865,8 @@ static struct msgb *create_ul_acked_block(struct gprs_rlcmac_ul_tbf *ul_tbf,
 
 	if (ul_tbf->n3104 == 0)
 		osmo_fsm_inst_dispatch(ul_tbf->state_fsm.fi, GPRS_RLCMAC_TBF_UL_EV_FIRST_UL_DATA_SENT, NULL);
+	if (is_final)
+		osmo_fsm_inst_dispatch(ul_tbf->state_fsm.fi, GPRS_RLCMAC_TBF_UL_EV_LAST_UL_DATA_SENT, NULL);
 	ul_tbf->n3104++;
 	if (gprs_rlcmac_ul_tbf_in_contention_resolution(ul_tbf)) {
 		unsigned int n3104_max = gprs_rlcmac_ul_tbf_n3104_max(ul_tbf);
