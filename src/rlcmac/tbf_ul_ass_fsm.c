@@ -48,7 +48,7 @@ static const struct osmo_tdef_state_timeout tbf_ul_ass_fsm_timeouts[32] = {
 	[GPRS_RLCMAC_TBF_UL_ASS_ST_IDLE] = { },
 	[GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_CCCH_IMM_ASS] = { },
 	[GPRS_RLCMAC_TBF_UL_ASS_ST_SCHED_PKT_RES_REQ] = { },
-	[GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_PKT_UL_ASS] = { },
+	[GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_PKT_UL_ASS] = { .T = 3168 },
 	[GPRS_RLCMAC_TBF_UL_ASS_ST_SCHED_PKT_CTRL_ACK] = { },
 	[GPRS_RLCMAC_TBF_UL_ASS_ST_COMPL] = { },
 };
@@ -217,7 +217,6 @@ static void st_sched_pkt_res_req(struct osmo_fsm_inst *fi, uint32_t event, void 
 	switch (event) {
 	case GPRS_RLCMAC_TBF_UL_ASS_EV_CREATE_RLCMAC_MSG:
 		data_ctx = (struct tbf_ul_ass_ev_create_rlcmac_msg_ctx *)data;
-		LOGPFSML(fi, LOGL_ERROR, "TODO: create PKT RES REQ...\n");
 		data_ctx->msg = create_pkt_resource_req(ctx, data_ctx);
 		if (!data_ctx->msg)
 			return;
@@ -308,6 +307,7 @@ static struct osmo_fsm_state tbf_ul_ass_fsm_states[] = {
 		.in_event_mask =
 			X(GPRS_RLCMAC_TBF_UL_ASS_EV_RX_PKT_UL_ASS),
 		.out_state_mask =
+			X(GPRS_RLCMAC_TBF_UL_ASS_ST_SCHED_PKT_RES_REQ) |
 			X(GPRS_RLCMAC_TBF_UL_ASS_ST_SCHED_PKT_CTRL_ACK),
 		.name = "WAIT_PKT_UL_ASS",
 		.action = st_wait_pkt_ul_ass,
@@ -334,12 +334,22 @@ static int tbf_ul_ass_fsm_timer_cb(struct osmo_fsm_inst *fi)
 {
 	struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *ctx = (struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *)fi->priv;
 	switch (fi->T) {
-	case -2001:
-		LOGPTBFUL(ctx->ul_tbf, LOGL_NOTICE, "releasing due to PACCH assignment timeout.\n");
-		/* fall-through */
-	case 3169:
-	case 3195:
-		gprs_rlcmac_ul_tbf_free(ctx->ul_tbf);
+	case 3168:
+		/* TS 44.060 7.1.3.3: "the mobile station shall then reinitiate the packet access
+		 * procedure unless the packet access procedure has already been attempted four
+		 * times. In that case, TBF failure has occurred and an RLC/MAC error should be
+		 * reported to the higher layer for each of the TBFs for which resources were
+		 * requested". */
+		ctx->pkt_res_req_proc_attempts++;
+		LOGPFSML(ctx->fi, LOGL_INFO, "T3168 timeout attempts=%u\n", ctx->pkt_res_req_proc_attempts);
+		OSMO_ASSERT(fi->state == GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_PKT_UL_ASS);
+		if (ctx->pkt_res_req_proc_attempts == 4) {
+			LOGPFSML(ctx->fi, LOGL_NOTICE, "TBF establishment failure (T3168 timeout attempts=%u)\n",
+				 ctx->pkt_res_req_proc_attempts);
+			gprs_rlcmac_ul_tbf_free(ctx->ul_tbf);
+			return 0;
+		}
+		tbf_ul_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ASS_ST_SCHED_PKT_RES_REQ);
 		break;
 	default:
 		OSMO_ASSERT(0);

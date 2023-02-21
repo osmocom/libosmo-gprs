@@ -44,8 +44,10 @@ struct gprs_rlcmac_ctx *g_ctx;
 
 /* TS 44.060 Table 13.1.1 */
 static struct osmo_tdef T_defs_rlcmac[] = {
-	{ .T=3164, .default_val=5, .desc="Wait for Uplink State Flag After Assignment (s)" },
-	{ .T=3166, .default_val=5, .desc="Wait for Packet Uplink ACK/NACK after sending of first data block (s)" },
+	{ .T=3164, .default_val=5,	.unit = OSMO_TDEF_S,	.desc="Wait for Uplink State Flag After Assignment (s)" },
+	{ .T=3166, .default_val=5,	.unit = OSMO_TDEF_S,	.desc="Wait for Packet Uplink ACK/NACK after sending of first data block (s)" },
+	/* T3168: dynamically updated with what's received in BCCH SI13 */
+	{ .T=3168, .default_val=5000,	.unit = OSMO_TDEF_MS,	.desc="Wait for PACKET UPLINK ASSIGNMENT (updated by BCCH SI13) (ms)" },
 	{ 0 } /* empty item at the end */
 };
 
@@ -315,6 +317,17 @@ int gprs_rlcmac_handle_bcch_si13(const struct gsm48_system_information_type_13 *
 	}
 
 	g_ctx->si13_available = true;
+
+	/* Update tdef for T3168:
+	 * TS 44.060 Table 12.24.2: Range: 0 to 7. The timeout value is given as the binary value plus one in units of 500 ms. */
+	osmo_tdef_set(g_ctx->T_defs, 3168,
+		      (g_ctx->si13ro.u.PBCCH_Not_present.GPRS_Cell_Options.T3168 + 1) * 500,
+		      OSMO_TDEF_MS);
+
+	/* TODO: Update tdef for T3192 as per TS 44.060 Table 12.24.2
+	 * osmo_tdef_set(g_ctx->T_defs, 3192, si13ro.u.PBCCH_Not_present.GPRS_Cell_Options.T3192, enum osmo_tdef_unit val_unit);
+	 */
+
 	return rc;
 }
 

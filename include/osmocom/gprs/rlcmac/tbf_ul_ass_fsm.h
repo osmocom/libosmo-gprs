@@ -40,6 +40,8 @@ struct gprs_rlcmac_tbf_ul_ass_fsm_ctx {
 		uint8_t ts;
 		uint32_t fn;
 	} sched_pkt_ctrl_ack;
+	/* Number of packet resource request transmitted (T3168) */
+	unsigned int pkt_res_req_proc_attempts;
 };
 
 enum tbf_ul_ass_fsm_event {
