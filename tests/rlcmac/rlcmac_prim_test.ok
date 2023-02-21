@@ -95,6 +95,13 @@ test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=21 ts=7 data_len=34 da
 RTS 3: FN=26
 test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=26 ts=7 data_len=34 data=[00 00 02 1d 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 ]
 === test_ul_tbf_last_data_cv0_retrans_max end ===
+=== test_ul_tbf_request_another_ul_tbf start ===
+sys={0.000000}, mono={0.000000}: clock_override_set
+test_rlcmac_prim_down_cb(): Rx L1CTL-RACH.request ra=0x7b
+test_rlcmac_prim_down_cb(): Rx L1CTL-CFG_UL_TBF.request ul_tbf_nr=0 ul_slotmask=0x80
+test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=4 ts=7 data_len=34 data=[00 00 00 39 00 00 23 42 01 c0 00 08 01 01 d5 71 00 00 08 29 26 24 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 ]
+test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=17 ts=7 data_len=23 data=[40 16 40 00 08 d0 a0 bc 00 00 00 00 00 00 70 00 38 00 00 2b 2b 2b 2b ]
+=== test_ul_tbf_request_another_ul_tbf end ===
 === test_dl_tbf_ccch_assign start ===
 sys={0.000000}, mono={0.000000}: clock_override_set
 test_rlcmac_prim_down_cb(): Rx L1CTL-CFG_DL_TBF.request dl_tbf_nr=0 dl_slotmask=0x80 dl_tfi=0

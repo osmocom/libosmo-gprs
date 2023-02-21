@@ -11,7 +11,8 @@ enum gprs_rlcmac_tbf_ul_fsm_states {
 	GPRS_RLCMAC_TBF_UL_ST_NEW = 0,	/* new created TBF */
 	GPRS_RLCMAC_TBF_UL_ST_WAIT_ASSIGN,	/* wait for Immediate Assignment */
 	GPRS_RLCMAC_TBF_UL_ST_FLOW,	/* RLC/MAC flow, resource needed */
-	GPRS_RLCMAC_TBF_UL_ST_FINISHED,	/* flow finished, wait for release */
+	GPRS_RLCMAC_TBF_UL_ST_FINISHED,	/* All data transmitted (CV=0), only retransmits and waiting for ACKs */
+	GPRS_RLCMAC_TBF_UL_ST_RELEASING, /* Network sent UL ACK w/ FinalAck=1 and polled for response */
 };
 
 struct gprs_rlcmac_tbf_ul_fsm_ctx {
@@ -24,6 +25,10 @@ struct gprs_rlcmac_tbf_ul_fsm_ctx {
 	unsigned int pkt_acc_proc_attempts;
 	/* 9.3.3.3.2: The block with CV=0 shall not be retransmitted more than four times. */
 	unsigned int last_data_block_retrans_attempts;
+	/* Whether the Received Packet UL ACK/NACK w/ FinalAck=1 had 'TBF Est' field to '1'.
+	 * Used during ST_RELEASING to find out if a new UL TBF can be recreated
+	 * when ansering the final UL ACK. */
+	bool rx_final_pkt_ul_ack_nack_has_tbf_est;
 };
 
 enum tbf_ul_fsm_event {
@@ -33,7 +38,7 @@ enum tbf_ul_fsm_event {
 	GPRS_RLCMAC_TBF_UL_EV_N3104_MAX,
 	GPRS_RLCMAC_TBF_UL_EV_CONTENTION_RESOLUTION_SUCCESS,
 	GPRS_RLCMAC_TBF_UL_EV_LAST_UL_DATA_SENT,
-	GPRS_RLCMAC_TBF_UL_EV_FINAL_ACK_RECVD,
+	GPRS_RLCMAC_TBF_UL_EV_FINAL_ACK_RECVD, /* data: bool TBF_EST */
 };
 
 int gprs_rlcmac_tbf_ul_fsm_init(void);

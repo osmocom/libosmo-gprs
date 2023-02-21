@@ -123,6 +123,36 @@ unsigned int gprs_rlcmac_ul_tbf_n3104_max(const struct gprs_rlcmac_ul_tbf *ul_tb
 	return 3 * (bs_cv_max + 3) * ul_tbf->cur_alloc.num_ts;
 }
 
+/* Whether the existing UL TBF can directly request a new UL TBF instead of goig to packet idle mode. */
+bool gprs_rlcmac_ul_tbf_can_request_new_ul_tbf(const struct gprs_rlcmac_ul_tbf *ul_tbf)
+{
+	/* 9.3.2.4.2: "If the PACKET UPLINK ACK/NACK message has the Final Ack Indicator
+	* bit set to '1' and the following conditions are fulfilled: TBF Est field is set
+	* to '1'; the mobile station has new data to transmit; the mobile station has no
+	* other ongoing downlink TBFs, the mobile station shall release the uplink TBF and
+	* may request the establishment of a new TBF"
+	*/
+
+	/* "PACKET UPLINK ACK/NACK message has the Final Ack Indicator" means GPRS_RLCMAC_TBF_UL_ST_RELEASING: */
+	if (gprs_rlcmac_tbf_ul_state(ul_tbf) != GPRS_RLCMAC_TBF_UL_ST_RELEASING)
+		return false;
+
+	/* "TBF Est field is set to '1'"" */
+	if (!ul_tbf->state_fsm.rx_final_pkt_ul_ack_nack_has_tbf_est)
+		return false;
+
+	/* the mobile station has new data to transmit */
+	if (!gprs_rlcmac_ul_tbf_have_data(ul_tbf))
+		return false;
+
+	/* "the mobile station has no other ongoing downlink TBFs */
+	if (ul_tbf->tbf.gre->dl_tbf)
+		return false;
+
+	return true;
+
+}
+
 /* Used by the scheduler to find out whether an Uplink Dummy Control Block can be transmitted. If
  * true, it will potentially call gprs_rlcmac_ul_tbf_dummy_create() to generate a new dummy message to transmit. */
 bool gprs_rlcmac_ul_tbf_dummy_rts(const struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_rts_block_ind *bi)
@@ -182,20 +212,22 @@ static int gprs_rlcmac_ul_tbf_update_window(struct gprs_rlcmac_ul_tbf *ul_tbf,
 	return 0;
 }
 
-int gprs_rlcmac_ul_tbf_handle_final_ack(struct gprs_rlcmac_ul_tbf *ul_tbf)
+int gprs_rlcmac_ul_tbf_handle_final_ack(struct gprs_rlcmac_ul_tbf *ul_tbf, const RlcMacDownlink_t *dl_block)
 {
 	int rc = 0;
+	bool tbf_est = false;
+	const PU_AckNack_GPRS_t *ack_gprs = &dl_block->u.Packet_Uplink_Ack_Nack.u.PU_AckNack_GPRS_Struct;
 
-	osmo_fsm_inst_dispatch(ul_tbf->state_fsm.fi, GPRS_RLCMAC_TBF_UL_EV_FINAL_ACK_RECVD, NULL);
+	if (ack_gprs->Exist_AdditionsR99)
+		tbf_est = ack_gprs->AdditionsR99.TBF_EST;
+
+	osmo_fsm_inst_dispatch(ul_tbf->state_fsm.fi, GPRS_RLCMAC_TBF_UL_EV_FINAL_ACK_RECVD, &tbf_est);
 
 	/* range V(A)..V(S)-1 */
 	//received = gprs_rlcmac_rlc_ul_window_count_unacked(ul_tbf->ulw);
 	/* report all outstanding packets as received */
 	//gprs_rlcmac_received_lost(this, received, 0);
 	gprs_rlcmac_rlc_ul_window_reset(ul_tbf->ulw);
-
-	/* TODO: check for RRBP and attempt to create a new UL TBF if
-	* gprs_rlcmac_ul_tbf_have_data(ul_tbf) */
 	return rc;
 }
 
@@ -232,7 +264,7 @@ int gprs_rlcmac_ul_tbf_handle_pkt_ul_ack_nack(struct gprs_rlcmac_ul_tbf *ul_tbf,
 
 	if (ack_desc->FINAL_ACK_INDICATION) {
 		LOGPTBFUL(ul_tbf, LOGL_DEBUG, "Final ACK received.\n");
-		rc = gprs_rlcmac_ul_tbf_handle_final_ack(ul_tbf);
+		rc = gprs_rlcmac_ul_tbf_handle_final_ack(ul_tbf, dl_block);
 	} else if (gprs_rlcmac_tbf_ul_state(ul_tbf) &&
 		   gprs_rlcmac_rlc_ul_window_window_empty(ul_tbf->ulw)) {
 		LOGPTBFUL(ul_tbf, LOGL_NOTICE,

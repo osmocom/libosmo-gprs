@@ -520,6 +520,74 @@ static void test_ul_tbf_attach(void)
 	cleanup_test();
 }
 
+/* Test UL TBF requesting assignment of a new UL TBF through PACCH when
+ * answering UL ACK/NACK w/ FinalACK=1 */
+static void test_ul_tbf_request_another_ul_tbf(void)
+{
+	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
+	int rc;
+
+	printf("=== %s start ===\n", __func__);
+	prepare_test();
+	RlcMacDownlink_t dl_block;
+	PU_AckNack_GPRS_t *ack_gprs = &dl_block.u.Packet_Uplink_Ack_Nack.u.PU_AckNack_GPRS_Struct;
+	Ack_Nack_Description_t *ack_desc = &ack_gprs->Ack_Nack_Description;
+	uint32_t tlli = 0x2342;
+	uint8_t ul_tfi = 0;
+	uint8_t ts_nr = 7;
+	uint8_t usf = 0;
+	uint32_t rts_fn = 4;
+
+	/* Send only 14 data to feed it in 1 UL block and speed up test length: */
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_grr_unitdata_req(tlli, pdu_llc_gmm_att_req,
+					    14);
+	rlcmac_prim->grr.unitdata_req.sapi = OSMO_GPRS_RLCMAC_LLC_SAPI_GMM;
+	rc = osmo_gprs_rlcmac_prim_upper_down(rlcmac_prim);
+
+	OSMO_ASSERT(sizeof(ccch_imm_ass_pkt_ul_tbf_normal) == GSM_MACBLOCK_LEN);
+	ccch_imm_ass_pkt_ul_tbf_normal[7] = last_rach_req_ra; /* Update RA to match */
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_ccch_data_ind(0, ccch_imm_ass_pkt_ul_tbf_normal);
+	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+
+	/* Trigger transmission of LLC data (GMM Attach) */
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_rts_ind(ts_nr, rts_fn, usf);
+	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+	OSMO_ASSERT(rc == 0);
+
+	/* PCU acks it: */
+	ul_ack_nack_init(&dl_block, ul_tfi, GPRS_RLCMAC_CS_2);
+	ack_desc->STARTING_SEQUENCE_NUMBER = 1;
+	ack_desc->FINAL_ACK_INDICATION = 1;
+	ul_ack_nack_mark(ack_desc, 0, true);
+	ul_ack_nack_mark(ack_desc, 1, true);
+	/* TBF Est is set: */
+	ack_gprs->Exist_AdditionsR99 = 1;
+	ack_gprs->AdditionsR99.TBF_EST = 1;
+	/* Final ACK has Poll set: */
+	dl_block.SP = 1;
+	dl_block.RRBP = GPRS_RLCMAC_RRBP_N_plus_13;
+	rlcmac_prim = create_dl_ctrl_block(&dl_block, ts_nr, rts_fn);
+	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+	OSMO_ASSERT(rc == 0);
+
+	/* New data from upper layers arrive which needs to be transmitted. This
+	 * will make UL_TBF request a new UL_TBF when triggered to answer the final
+	 * UL ACK/NACK, because there's no active DL TBF: */
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_grr_unitdata_req(tlli, pdu_llc_gmm_att_req,
+					    14);
+	rlcmac_prim->grr.unitdata_req.sapi = OSMO_GPRS_RLCMAC_LLC_SAPI_GMM;
+	rc = osmo_gprs_rlcmac_prim_upper_down(rlcmac_prim);
+
+	/* Trigger transmission of PKT RES REQ: */
+	rts_fn = rrbp2fn(rts_fn, dl_block.RRBP);
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_rts_ind(ts_nr, rts_fn, usf);
+	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+	OSMO_ASSERT(rc == 0);
+
+	printf("=== %s end ===\n", __func__);
+	cleanup_test();
+}
+
 static void test_ul_tbf_t3164_timeout(void)
 {
 	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
@@ -773,6 +841,7 @@ int main(int argc, char *argv[])
 	test_ul_tbf_t3166_timeout();
 	test_ul_tbf_n3104_timeout();
 	test_ul_tbf_last_data_cv0_retrans_max();
+	test_ul_tbf_request_another_ul_tbf();
 	test_dl_tbf_ccch_assign();
 
 	talloc_free(tall_ctx);

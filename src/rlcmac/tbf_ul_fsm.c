@@ -196,7 +196,18 @@ static void st_finished(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 		}
 		break;
 	case GPRS_RLCMAC_TBF_UL_EV_FINAL_ACK_RECVD:
+		ctx->rx_final_pkt_ul_ack_nack_has_tbf_est = *((bool *)data);
+		tbf_ul_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ST_RELEASING);
 		break;
+	default:
+		OSMO_ASSERT(0);
+	}
+}
+
+static void st_releasing(struct osmo_fsm_inst *fi, uint32_t event, void *data)
+{
+	//struct gprs_rlcmac_tbf_ul_fsm_ctx *ctx = (struct gprs_rlcmac_tbf_ul_fsm_ctx *)fi->priv;
+	switch (event) {
 	default:
 		OSMO_ASSERT(0);
 	}
@@ -240,9 +251,16 @@ static struct osmo_fsm_state tbf_ul_fsm_states[] = {
 			X(GPRS_RLCMAC_TBF_UL_EV_LAST_UL_DATA_SENT) |
 			X(GPRS_RLCMAC_TBF_UL_EV_FINAL_ACK_RECVD),
 		.out_state_mask =
-			X(GPRS_RLCMAC_TBF_UL_ST_NEW),
+			X(GPRS_RLCMAC_TBF_UL_ST_NEW) |
+			X(GPRS_RLCMAC_TBF_UL_ST_RELEASING),
 		.name = "FINISHED",
 		.action = st_finished,
+	},
+	[GPRS_RLCMAC_TBF_UL_ST_RELEASING] = {
+		.in_event_mask = 0,
+		.out_state_mask = 0,
+		.name = "RELEASING",
+		.action = st_releasing,
 	},
 };
 

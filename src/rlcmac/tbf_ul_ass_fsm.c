@@ -37,6 +37,7 @@
 
 static const struct value_string tbf_ul_ass_fsm_event_names[] = {
 	{ GPRS_RLCMAC_TBF_UL_ASS_EV_START,		"START" },
+	{ GPRS_RLCMAC_TBF_UL_ASS_EV_START_DIRECT_2PHASE, "START_DIRECT_2PHASE" },
 	{ GPRS_RLCMAC_TBF_UL_ASS_EV_RX_CCCH_IMM_ASS,	"RX_CCCH_IMM_ASS" },
 	{ GPRS_RLCMAC_TBF_UL_ASS_EV_CREATE_RLCMAC_MSG,	"CREATE_RLCMAC_MSG" },
 	{ GPRS_RLCMAC_TBF_UL_ASS_EV_RX_PKT_UL_ASS,	"RX_PKT_UL_ASS" },
@@ -185,6 +186,11 @@ static void st_idle(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 		submit_rach_req(ctx);
 		tbf_ul_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_CCCH_IMM_ASS);
 		break;
+	case GPRS_RLCMAC_TBF_UL_ASS_EV_START_DIRECT_2PHASE:
+		osmo_fsm_inst_dispatch(ctx->ul_tbf->state_fsm.fi, GPRS_RLCMAC_TBF_UL_EV_UL_ASS_START, NULL);
+		ctx->ass_type = GPRS_RLCMAC_TBF_UL_ASS_TYPE_2PHASE;
+		tbf_ul_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ASS_ST_SCHED_PKT_RES_REQ);
+		break;
 	default:
 		OSMO_ASSERT(0);
 	}
@@ -279,9 +285,11 @@ static void st_compl_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_state)
 static struct osmo_fsm_state tbf_ul_ass_fsm_states[] = {
 	[GPRS_RLCMAC_TBF_UL_ASS_ST_IDLE] = {
 		.in_event_mask =
-			X(GPRS_RLCMAC_TBF_UL_ASS_EV_START),
+			X(GPRS_RLCMAC_TBF_UL_ASS_EV_START) |
+			X(GPRS_RLCMAC_TBF_UL_ASS_EV_START_DIRECT_2PHASE),
 		.out_state_mask =
-			X(GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_CCCH_IMM_ASS),
+			X(GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_CCCH_IMM_ASS) |
+			X(GPRS_RLCMAC_TBF_UL_ASS_ST_SCHED_PKT_RES_REQ),
 		.name = "IDLE",
 		.onenter = st_idle_on_enter,
 		.action = st_idle,
@@ -400,6 +408,19 @@ int gprs_rlcmac_tbf_ul_ass_start(struct gprs_rlcmac_ul_tbf *ul_tbf, enum gprs_rl
 	rc = osmo_fsm_inst_dispatch(ul_tbf->ul_ass_fsm.fi,
 				    GPRS_RLCMAC_TBF_UL_ASS_EV_START,
 				    &type);
+	return rc;
+}
+
+/* A releasing TBF being polled is used to fill in 1phase access internally and
+* switch the FSM to trigger the 2hpase directly (tx Pkt Res Req) */
+int gprs_rlcmac_tbf_ul_ass_start_from_releasing_ul_tbf(struct gprs_rlcmac_ul_tbf *ul_tbf, struct gprs_rlcmac_ul_tbf *old_ul_tbf)
+{
+	int rc;
+	memcpy(&ul_tbf->ul_ass_fsm.phase1_alloc, &old_ul_tbf->cur_alloc,
+	       sizeof(ul_tbf->ul_ass_fsm.phase1_alloc));
+	rc = osmo_fsm_inst_dispatch(ul_tbf->ul_ass_fsm.fi,
+				    GPRS_RLCMAC_TBF_UL_ASS_EV_START_DIRECT_2PHASE,
+				    NULL);
 	return rc;
 }
 

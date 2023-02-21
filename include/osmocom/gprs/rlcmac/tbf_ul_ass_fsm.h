@@ -46,6 +46,7 @@ struct gprs_rlcmac_tbf_ul_ass_fsm_ctx {
 
 enum tbf_ul_ass_fsm_event {
 	GPRS_RLCMAC_TBF_UL_ASS_EV_START,	/* Start Uplink assignment (data: enum gprs_rlcmac_tbf_ul_ass_type) */
+	GPRS_RLCMAC_TBF_UL_ASS_EV_START_DIRECT_2PHASE, /* Start Uplink assignment directly into 2phase from an older UL TBF */
 	GPRS_RLCMAC_TBF_UL_ASS_EV_RX_CCCH_IMM_ASS, /* (data: struct tbf_ul_ass_ev_rx_ccch_imm_ass_ctx *) */
 	GPRS_RLCMAC_TBF_UL_ASS_EV_CREATE_RLCMAC_MSG, /* Generate RLC/MAC block (data: struct tbf_ul_ass_ev_create_rlcmac_msg_ctx) */
 	GPRS_RLCMAC_TBF_UL_ASS_EV_RX_PKT_UL_ASS, /* (data: decoded PktUlAss) */
@@ -71,6 +72,7 @@ int gprs_rlcmac_tbf_ul_ass_fsm_constructor(struct gprs_rlcmac_ul_tbf *ul_tbf);
 void gprs_rlcmac_tbf_ul_ass_fsm_destructor(struct gprs_rlcmac_ul_tbf *ul_tbf);
 
 int gprs_rlcmac_tbf_ul_ass_start(struct gprs_rlcmac_ul_tbf *ul_tbf, enum gprs_rlcmac_tbf_ul_ass_type type);
+int gprs_rlcmac_tbf_ul_ass_start_from_releasing_ul_tbf(struct gprs_rlcmac_ul_tbf *ul_tbf, struct gprs_rlcmac_ul_tbf *old_ul_tbf);
 bool gprs_rlcmac_tbf_ul_ass_pending(struct gprs_rlcmac_ul_tbf *ul_tbf);
 bool gprs_rlcmac_tbf_ul_ass_match_rach_req(struct gprs_rlcmac_ul_tbf *ul_tbf, uint8_t ra);
 bool gprs_rlcmac_tbf_ul_ass_rts(const struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_rts_block_ind *bi);
