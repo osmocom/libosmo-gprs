@@ -91,6 +91,27 @@ static void reinit_pkt_acces_procedure(struct gprs_rlcmac_tbf_ul_fsm_ctx *ctx)
 		gprs_rlcmac_ul_tbf_free(ctx->ul_tbf);
 }
 
+/* 9.3.3.3.2: Upon each retransmission of the last block with CV=0, the mobile station shall restart timer T3182 for the TBF.
+* Slight impl deviation from spec: If tbf is still in contention resolution, keep using T3166, otherwise start T3182
+*/
+static void arm_T3182_if_needed(struct gprs_rlcmac_tbf_ul_fsm_ctx *ctx)
+{
+	struct osmo_fsm_inst *fi = ctx->fi;
+	unsigned long val_sec;
+
+	if (gprs_rlcmac_ul_tbf_in_contention_resolution(ctx->ul_tbf)) {
+		OSMO_ASSERT(fi->T == 3166);
+		OSMO_ASSERT(osmo_timer_pending(&fi->timer));
+	} else {
+		OSMO_ASSERT(!osmo_timer_pending(&fi->timer) ||
+			    (osmo_timer_pending(&fi->timer) && fi->T == 3182));
+		LOGPFSML(ctx->fi, LOGL_INFO, "Last UL block sent (CV=0), start T3182\n");
+		fi->T = 3182;
+		val_sec = osmo_tdef_get(g_ctx->T_defs, fi->T, OSMO_TDEF_S, -1);
+		osmo_timer_schedule(&fi->timer, val_sec, 0);
+	}
+}
+
 /* This one is triggered when packet access procedure fails, which can happen
  * either in WAIT_IMM_ASS (ImmAss timeout), FLOW (T3164) or FINISHED (T3164, T3166) */
 static void st_new_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_state)
@@ -164,6 +185,7 @@ static void st_flow(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 		 * sent last data (FSM would be in FINISHED state then) */
 		break;
 	case GPRS_RLCMAC_TBF_UL_EV_LAST_UL_DATA_SENT:
+		arm_T3182_if_needed(ctx);
 		tbf_ul_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ST_FINISHED);
 		break;
 	default:
@@ -187,6 +209,14 @@ static void st_finished(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 			OSMO_ASSERT(fi->T == 3166);
 			osmo_timer_del(&fi->timer);
 			fi->T = 0;
+		} else if (fi->T == 3182 && osmo_timer_pending(&fi->timer))  {
+			/* 9.3.3.3.2 "Upon reception of a PACKET UPLINK ACK/NACK message for this TBF
+			 * the mobile station shall stop timer T3182 for the TBF".
+			 * In our case we only use T3128 once we are out of contention resolution (T3166)
+			 */
+			LOGPFSML(ctx->fi, LOGL_DEBUG, "Rx Pkt UL ACK/NACK, stop T3182\n");
+			osmo_timer_del(&fi->timer);
+			fi->T = 0;
 		}
 		if (ctx_ul_ack_nack->final_ack) {
 			LOGPFSML(ctx->fi, LOGL_DEBUG, "Final ACK received\n");
@@ -201,6 +231,7 @@ static void st_finished(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 		 */
 		ctx->last_data_block_retrans_attempts++;
 		LOGPFSML(ctx->fi, LOGL_INFO, "Data block with CV=0 retransmit attempts=%u\n", ctx->last_data_block_retrans_attempts);
+		arm_T3182_if_needed(ctx);
 		if (ctx->last_data_block_retrans_attempts == 4) {
 			LOGPFSML(ctx->fi, LOGL_NOTICE, "TBF establishment failure (Data block with CV=0 retransmit attempts=%u)\n",
 				 ctx->last_data_block_retrans_attempts);
@@ -305,6 +336,9 @@ static int tbf_ul_fsm_timer_cb(struct osmo_fsm_inst *fi)
 			return 0;
 		}
 		reinit_pkt_acces_procedure(ctx);
+		break;
+	case 3182:
+		gprs_rlcmac_ul_tbf_free(ctx->ul_tbf);
 		break;
 	default:
 		OSMO_ASSERT(0);

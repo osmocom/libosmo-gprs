@@ -430,6 +430,62 @@ DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying 1 RLC blocks, 1 BSNs
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying data unit 0 (BSN 1)
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) msg block (BSN 1, CS-2): 00 00 02 1d 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 
 DLGLOBAL INFO UL_TBF{FLOW}: Received Event LAST_UL_DATA_SENT
+DLGLOBAL INFO UL_TBF{FLOW}: Last UL block sent (CV=0), start T3182
+DLGLOBAL INFO UL_TBF{FLOW}: state_chg to FINISHED
+DLGLOBAL INFO UL_TBF{FINISHED}: Timeout of T3182
+DLGLOBAL INFO UL_TBF_ASS{IDLE}: Deallocated
+DLGLOBAL INFO UL_TBF{FINISHED}: Deallocated
+DLGLOBAL INFO Rx from upper layers: GRR-UNITDATA.request
+DLGLOBAL INFO TLLI=0x00002342 not found, creating entity on the fly
+DLGLOBAL INFO UL_TBF{NEW}: Allocated
+DLGLOBAL INFO UL_TBF_ASS{IDLE}: Allocated
+DLGLOBAL INFO UL_TBF_ASS{IDLE}: Received Event START
+DLGLOBAL INFO UL_TBF{NEW}: Received Event UL_ASS_START
+DLGLOBAL INFO UL_TBF{NEW}: state_chg to ASSIGN
+DLGLOBAL INFO UL_TBF_ASS{IDLE}: Send RACH.req ra=0x7b
+DLGLOBAL INFO UL_TBF_ASS{IDLE}: state_chg to WAIT_CCCH_IMM_ASS
+DLGLOBAL INFO Rx from lower layers: L1CTL-CCCH_DATA.indication
+DLGLOBAL INFO UL_TBF_ASS{WAIT_CCCH_IMM_ASS}: Received Event RX_CCCH_IMM_ASS
+DLGLOBAL INFO UL_TBF_ASS{WAIT_CCCH_IMM_ASS}: ImmAss initial CS=CS-2
+DLGLOBAL INFO UL_TBF_ASS{WAIT_CCCH_IMM_ASS}: ImmAss DynamicAlloc (1phase access) ts_nr=7 usf=0
+DLGLOBAL INFO UL_TBF_ASS{WAIT_CCCH_IMM_ASS}: state_chg to COMPLETED
+DLGLOBAL INFO UL_TBF{ASSIGN}: Received Event UL_ASS_COMPL
+DLGLOBAL INFO UL_TBF{ASSIGN}: Send L1CTL-CF_UL_TBF.req ul_slotmask=0x80
+DLGLOBAL INFO UL_TBF{ASSIGN}: state_chg to FLOW
+DLGLOBAL INFO UL_TBF_ASS{COMPLETED}: state_chg to IDLE
+DLGLOBAL INFO Rx from lower layers: L1CTL-PDCH_RTS.indication
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Sending new block at BSN 0, CS=CS-2
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Dequeue next LLC (len=33)
+DLGLOBAL DEBUG -- Chunk with length 33 larger than space (26) left in block: copy only remaining space, and we are done
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) data block (BSN 0, CS-2): 00 00 23 42 01 c0 00 08 01 01 d5 71 00 00 08 29 26 24 00 00 00 00 71 62 f2 24 6c 84 44 04 
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) need_padding 0 spb_status 0 spb 0 (BSN1 0 BSN2 -1)
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying 1 RLC blocks, 1 BSNs
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying data unit 0 (BSN 0)
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) msg block (BSN 0, CS-2): 3c 00 01 00 00 23 42 01 c0 00 08 01 01 d5 71 00 00 08 29 26 24 00 00 00 00 71 62 f2 24 6c 84 44 04 00 
+DLGLOBAL INFO UL_TBF{FLOW}: Received Event FIRST_UL_DATA_SENT
+DLGLOBAL INFO UL_TBF{FLOW}: First UL block sent, stop T3164
+DLGLOBAL INFO UL_TBF{FLOW}: First UL block sent (1 phase access), start T3166
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) N3104 inc (1)
+DLGLOBAL INFO Rx from lower layers: L1CTL-PDCH_DATA.indication
+DLGLOBAL INFO TS=7 FN=4 Rx Pkt UL ACK/NACK
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Got GPRS UL ACK bitmap: SSN: 1, BSN 0 to 1 - 1 (1 blocks), "R"
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) ack:  (BSN=0)"R"(BSN=0)  R=ACK I=NACK
+DLGLOBAL DEBUG - got ack for BSN=0
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) V(B): (V(A)=1)""(V(S)-1=0)  A=Acked N=Nacked U=Unacked X=Resend-Unacked I=Invalid
+DLGLOBAL INFO UL_TBF{FLOW}: Received Event RX_UL_ACK_NACK
+DLGLOBAL INFO UL_TBF{FLOW}: Contention resolution succeeded, stop T3166
+DLGLOBAL INFO Rx from lower layers: L1CTL-PDCH_RTS.indication
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Sending new block at BSN 1, CS=CS-2
+DLGLOBAL DEBUG -- Chunk with length 7 is less than remaining space (30): add length header to delimit LLC frame
+DLGLOBAL DEBUG -- Final block, so we done.
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Complete UL frame, len=0
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) data block (BSN 1, CS-2): 1d 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) need_padding 0 spb_status 0 spb 0 (BSN1 1 BSN2 -1)
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying 1 RLC blocks, 1 BSNs
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying data unit 0 (BSN 1)
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) msg block (BSN 1, CS-2): 00 00 02 1d 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 
+DLGLOBAL INFO UL_TBF{FLOW}: Received Event LAST_UL_DATA_SENT
+DLGLOBAL INFO UL_TBF{FLOW}: Last UL block sent (CV=0), start T3182
 DLGLOBAL INFO UL_TBF{FLOW}: state_chg to FINISHED
 DLGLOBAL INFO Rx from lower layers: L1CTL-PDCH_RTS.indication
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Restarting at BSN 1, because all blocks have been transmitted.
@@ -440,6 +496,7 @@ DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying data unit 0 (BSN 1)
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) msg block (BSN 1, CS-2): 00 00 02 1d 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 
 DLGLOBAL INFO UL_TBF{FINISHED}: Received Event LAST_UL_DATA_SENT
 DLGLOBAL INFO UL_TBF{FINISHED}: Data block with CV=0 retransmit attempts=1
+DLGLOBAL INFO UL_TBF{FINISHED}: Last UL block sent (CV=0), start T3182
 DLGLOBAL INFO Rx from lower layers: L1CTL-PDCH_RTS.indication
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Restarting at BSN 1, because all blocks have been transmitted.
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Resending BSN 1
@@ -449,6 +506,7 @@ DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying data unit 0 (BSN 1)
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) msg block (BSN 1, CS-2): 00 00 02 1d 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 
 DLGLOBAL INFO UL_TBF{FINISHED}: Received Event LAST_UL_DATA_SENT
 DLGLOBAL INFO UL_TBF{FINISHED}: Data block with CV=0 retransmit attempts=2
+DLGLOBAL INFO UL_TBF{FINISHED}: Last UL block sent (CV=0), start T3182
 DLGLOBAL INFO Rx from lower layers: L1CTL-PDCH_RTS.indication
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Restarting at BSN 1, because all blocks have been transmitted.
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Resending BSN 1
@@ -458,6 +516,7 @@ DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying data unit 0 (BSN 1)
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) msg block (BSN 1, CS-2): 00 00 02 1d 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 
 DLGLOBAL INFO UL_TBF{FINISHED}: Received Event LAST_UL_DATA_SENT
 DLGLOBAL INFO UL_TBF{FINISHED}: Data block with CV=0 retransmit attempts=3
+DLGLOBAL INFO UL_TBF{FINISHED}: Last UL block sent (CV=0), start T3182
 DLGLOBAL INFO Rx from lower layers: L1CTL-PDCH_RTS.indication
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Restarting at BSN 1, because all blocks have been transmitted.
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Resending BSN 1
@@ -467,6 +526,7 @@ DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying data unit 0 (BSN 1)
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) msg block (BSN 1, CS-2): 00 00 02 1d 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 
 DLGLOBAL INFO UL_TBF{FINISHED}: Received Event LAST_UL_DATA_SENT
 DLGLOBAL INFO UL_TBF{FINISHED}: Data block with CV=0 retransmit attempts=4
+DLGLOBAL INFO UL_TBF{FINISHED}: Last UL block sent (CV=0), start T3182
 DLGLOBAL NOTICE UL_TBF{FINISHED}: TBF establishment failure (Data block with CV=0 retransmit attempts=4)
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: Deallocated
 DLGLOBAL INFO UL_TBF{FINISHED}: Deallocated

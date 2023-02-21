@@ -80,9 +80,18 @@ test_rlcmac_prim_down_cb(): Rx L1CTL-RACH.request ra=0x7b
 test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=43 ts=7 data_len=34 data=[3c 00 01 00 00 23 42 01 c0 00 08 01 01 d5 71 00 00 08 29 26 24 00 00 00 00 71 62 f2 24 6c 84 44 04 00 ]
 test_rlcmac_prim_down_cb(): Rx L1CTL-CFG_UL_TBF.request ul_tbf_nr=0 ul_slotmask=0x80
 === test_ul_tbf_n3104_timeout end ===
-=== test_ul_tbf_last_data_cv0_retrans_max start ===
+=== test_ul_tbf_t3182_timeout start ===
 sys={0.000000}, mono={0.000000}: clock_override_set
 test_rlcmac_prim_down_cb(): Rx L1CTL-RACH.request ra=0x7a
+test_rlcmac_prim_down_cb(): Rx L1CTL-CFG_UL_TBF.request ul_tbf_nr=0 ul_slotmask=0x80
+test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=4 ts=7 data_len=34 data=[3c 00 01 00 00 23 42 01 c0 00 08 01 01 d5 71 00 00 08 29 26 24 00 00 00 00 71 62 f2 24 6c 84 44 04 00 ]
+test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=8 ts=7 data_len=34 data=[00 00 02 1d 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 ]
+sys={5.000000}, mono={5.000000}: clock_override_add
+sys={5.000000}, mono={5.000000}: Expect T3182 timeout
+=== test_ul_tbf_t3182_timeout end ===
+=== test_ul_tbf_last_data_cv0_retrans_max start ===
+sys={0.000000}, mono={0.000000}: clock_override_set
+test_rlcmac_prim_down_cb(): Rx L1CTL-RACH.request ra=0x7b
 test_rlcmac_prim_down_cb(): Rx L1CTL-CFG_UL_TBF.request ul_tbf_nr=0 ul_slotmask=0x80
 test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=4 ts=7 data_len=34 data=[3c 00 01 00 00 23 42 01 c0 00 08 01 01 d5 71 00 00 08 29 26 24 00 00 00 00 71 62 f2 24 6c 84 44 04 00 ]
 test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=8 ts=7 data_len=34 data=[00 00 02 1d 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 ]
