@@ -154,29 +154,29 @@ static int gprs_rlcmac_dl_tbf_assemble_forward_llc(struct gprs_rlcmac_dl_tbf *dl
 	uint8_t len = blk->len;
 	const struct gprs_rlcmac_rlc_block_info *rdbi = &blk->block_info;
 	enum gprs_rlcmac_coding_scheme cs = blk->cs_last;
-	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
-
-	struct gprs_rlcmac_rlc_llc_chunk frames[16], *frame;
+	struct gprs_rlcmac_rlc_llc_chunk frames[16];
 	int i, num_frames = 0;
 	int rc = 0;
 
 	LOGPTBFDL(dl_tbf, LOGL_DEBUG, "Assembling frames: (len=%d)\n", len);
-
-	if (!dl_tbf->llc_rx_msg) {
-		rlcmac_prim = gprs_rlcmac_prim_alloc_grr_unitdata_ind(
-				dl_tbf->tbf.gre->tlli, NULL, GPRS_RLCMAC_LLC_PDU_MAX_LEN);
-		dl_tbf->llc_rx_msg = rlcmac_prim->oph.msg;
-		dl_tbf->llc_rx_msg->l3h = dl_tbf->llc_rx_msg->tail;
-	} else {
-		rlcmac_prim = msgb_rlcmac_prim(dl_tbf->llc_rx_msg);
-	}
 
 	num_frames = gprs_rlcmac_rlc_data_from_dl_data(rdbi, cs, data,
 						       &frames[0], ARRAY_SIZE(frames));
 
 	/* create LLC frames */
 	for (i = 0; i < num_frames; i++) {
-		frame = frames + i;
+		struct gprs_rlcmac_rlc_llc_chunk *frame = &frames[i];
+		struct osmo_gprs_rlcmac_prim *rlcmac_prim;
+
+		if (!dl_tbf->llc_rx_msg) {
+			rlcmac_prim = gprs_rlcmac_prim_alloc_grr_unitdata_ind(dl_tbf->tbf.gre->tlli,
+									      NULL,
+									      GPRS_RLCMAC_LLC_PDU_MAX_LEN);
+			dl_tbf->llc_rx_msg = rlcmac_prim->oph.msg;
+			dl_tbf->llc_rx_msg->l3h = dl_tbf->llc_rx_msg->tail;
+		} else {
+			rlcmac_prim = msgb_rlcmac_prim(dl_tbf->llc_rx_msg);
+		}
 
 		if (frame->length) {
 			LOGPTBFDL(dl_tbf, LOGL_DEBUG, "Frame %d "
