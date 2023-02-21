@@ -420,7 +420,6 @@ DLGLOBAL DEBUG - got ack for BSN=0
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) V(B): (V(A)=1)""(V(S)-1=0)  A=Acked N=Nacked U=Unacked X=Resend-Unacked I=Invalid
 DLGLOBAL INFO UL_TBF{FLOW}: Received Event CONTENTION_RESOLUTION_SUCCESS
 DLGLOBAL INFO UL_TBF{FLOW}: Contention resolution succeeded, stop T3166
-DLGLOBAL NOTICE TBF(UL:NR-0:TLLI-00002342) Received acknowledge of all blocks, but without final ack indication (don't worry)
 DLGLOBAL INFO Rx from lower layers: L1CTL-PDCH_RTS.indication
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Sending new block at BSN 1, CS=CS-2
 DLGLOBAL DEBUG -- Chunk with length 7 is less than remaining space (30): add length header to delimit LLC frame

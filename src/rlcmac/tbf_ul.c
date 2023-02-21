@@ -265,7 +265,7 @@ int gprs_rlcmac_ul_tbf_handle_pkt_ul_ack_nack(struct gprs_rlcmac_ul_tbf *ul_tbf,
 	if (ack_desc->FINAL_ACK_INDICATION) {
 		LOGPTBFUL(ul_tbf, LOGL_DEBUG, "Final ACK received.\n");
 		rc = gprs_rlcmac_ul_tbf_handle_final_ack(ul_tbf, dl_block);
-	} else if (gprs_rlcmac_tbf_ul_state(ul_tbf) &&
+	} else if (gprs_rlcmac_tbf_ul_state(ul_tbf) == GPRS_RLCMAC_TBF_UL_ST_FINISHED &&
 		   gprs_rlcmac_rlc_ul_window_window_empty(ul_tbf->ulw)) {
 		LOGPTBFUL(ul_tbf, LOGL_NOTICE,
 			  "Received acknowledge of all blocks, but without final ack indication (don't worry)\n");
