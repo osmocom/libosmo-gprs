@@ -76,7 +76,7 @@ void gprs_rlcmac_dl_tbf_free(struct gprs_rlcmac_dl_tbf *dl_tbf)
 	gprs_rlcmac_rlc_dl_window_free(dl_tbf->dlw);
 	dl_tbf->dlw = NULL;
 
-	//gprs_rlcmac_tbf_dl_fsm_destructor(dl_tbf);
+	gprs_rlcmac_tbf_dl_fsm_destructor(dl_tbf);
 
 	gprs_rlcmac_tbf_destructor(dl_tbf_as_tbf(dl_tbf));
 	talloc_free(dl_tbf);
