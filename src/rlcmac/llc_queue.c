@@ -46,6 +46,7 @@ struct gprs_rlcmac_llc_queue *gprs_rlcmac_llc_queue_alloc(struct gprs_rlcmac_ent
 	q->avg_queue_delay = 0;
 	for (i = 0; i < ARRAY_SIZE(q->pq); i++) {
 		for (j = 0; j < ARRAY_SIZE(q->pq[i]); j++) {
+			q->pq[i][j].radio_prio = i + 1; /* range (1..4) */
 			INIT_LLIST_HEAD(&q->pq[i][j].queue);
 			gprs_codel_init(&q->pq[i][j].codel_state);
 		}
@@ -141,25 +142,31 @@ void gprs_rlcmac_llc_queue_clear(struct gprs_rlcmac_llc_queue *q)
 
 #define ALPHA 0.5f
 
+static struct gprs_llc_prio_queue *gprs_rlcmac_llc_queue_find_msg(struct gprs_rlcmac_llc_queue *q)
+{
+	unsigned int i, j;
+
+	for (i = 0; i < ARRAY_SIZE(q->pq); i++) {
+		for (j = 0; j < ARRAY_SIZE(q->pq[i]); j++) {
+			if (!llist_empty(&q->pq[i][j].queue))
+				return &q->pq[i][j];
+		}
+	}
+	return NULL;
+}
+
 static struct msgb *gprs_rlcmac_llc_queue_pick_msg(struct gprs_rlcmac_llc_queue *q, struct gprs_llc_prio_queue **prioq)
 {
 	struct msgb *msg;
 	struct timespec tv_now, tv_result;
 	uint32_t lifetime;
-	unsigned int i, j;
 	const struct llc_queue_entry_hdr *ehdr;
 
-	for (i = 0; i < ARRAY_SIZE(q->pq); i++) {
-		for (j = 0; j < ARRAY_SIZE(q->pq[i]); j++) {
-			if ((msg = msgb_dequeue(&q->pq[i][j].queue))) {
-				*prioq = &q->pq[i][j];
-				goto found;
-			}
-		}
-	}
-	return NULL;
+	*prioq = gprs_rlcmac_llc_queue_find_msg(q);
+	if (!(*prioq))
+		return NULL;
 
-found:
+	msg = msgb_dequeue(&(*prioq)->queue);
 	ehdr = msgb_l1(msg);
 
 	q->queue_size -= 1;
@@ -212,4 +219,11 @@ struct msgb *gprs_rlcmac_llc_queue_dequeue(struct gprs_rlcmac_llc_queue *q)
 
 	msgb_pull_to_l2(msg);
 	return msg;
+}
+
+uint8_t gprs_rlcmac_llc_queue_highest_radio_prio_pending(struct gprs_rlcmac_llc_queue *q)
+{
+	struct gprs_llc_prio_queue *prioq = gprs_rlcmac_llc_queue_find_msg(q);
+	OSMO_ASSERT(prioq);
+	return prioq->radio_prio;
 }

@@ -29,6 +29,7 @@ enum gprs_rlcmac_llc_queue_sapi_prio { /* lowest value has highest prio */
 };
 
 struct gprs_llc_prio_queue {
+	uint8_t radio_prio; /* Radio prio of this queue, range (1..4) */
 	struct gprs_codel codel_state;
 	struct llist_head queue; /* queued LLC DL data. See enum gprs_rlcmac_llc_queue_prio. */
 };
@@ -51,6 +52,7 @@ void gprs_rlcmac_llc_queue_set_codel_params(struct gprs_rlcmac_llc_queue *q, boo
 int gprs_rlcmac_llc_queue_enqueue(struct gprs_rlcmac_llc_queue *q, uint8_t *ll_pdu, unsigned int ll_pdu_len,
 				   enum osmo_gprs_rlcmac_llc_sapi sapi, uint8_t radio_prio);
 struct msgb *gprs_rlcmac_llc_queue_dequeue(struct gprs_rlcmac_llc_queue *q);
+uint8_t gprs_rlcmac_llc_queue_highest_radio_prio_pending(struct gprs_rlcmac_llc_queue *q);
 
 static inline size_t gprs_rlcmac_llc_queue_size(const struct gprs_rlcmac_llc_queue *q)
 {

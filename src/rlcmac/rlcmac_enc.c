@@ -400,7 +400,7 @@ void gprs_rlcmac_enc_prepare_pkt_downlink_ack_nack(RlcMacUplink_t *block, const 
 		Channel_Request_Description_t *chan_req = &ack->Channel_Request_Description;
 		ack->Exist_Channel_Request_Description = 1;
 		chan_req->PEAK_THROUGHPUT_CLASS = 0; /* TODO */
-		chan_req->RADIO_PRIORITY = 0; /* TODO */
+		chan_req->RADIO_PRIORITY = gprs_rlcmac_llc_queue_highest_radio_prio_pending(dl_tbf->tbf.gre->llc_queue);
 		chan_req->RLC_MODE = GPRS_RLCMAC_RLC_MODE_ACKNOWLEDGED;
 		chan_req->LLC_PDU_TYPE = GPRS_RLCMAC_LLC_PDU_TYPE_ACKNOWLEDGED;
 		chan_req->RLC_OCTET_COUNT = 0; /* TODO */
