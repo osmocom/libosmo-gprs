@@ -32,14 +32,11 @@ struct gprs_rlcmac_tbf_ul_ass_fsm_ctx {
 		struct gprs_rlcmac_tbf *tbf;
 		struct gprs_rlcmac_ul_tbf *ul_tbf;
 	};
+	const struct gprs_rlcmac_dl_tbf *dl_tbf; /* Not null if assignment was started by a DL TBF ACK/NACK */
 	enum gprs_rlcmac_tbf_ul_ass_type ass_type;
 	uint8_t rach_req_ra;
 	struct gprs_rlcmac_ul_tbf_allocation phase1_alloc;
 	struct gprs_rlcmac_ul_tbf_allocation phase2_alloc;
-	struct { /* Filled when we receive the poll; exact time here the response PKT CTL ACK is to be transmitted: */
-		uint8_t ts;
-		uint32_t fn;
-	} sched_pkt_ctrl_ack;
 	/* Number of packet resource request transmitted (T3168) */
 	unsigned int pkt_res_req_proc_attempts;
 };
@@ -47,9 +44,10 @@ struct gprs_rlcmac_tbf_ul_ass_fsm_ctx {
 enum tbf_ul_ass_fsm_event {
 	GPRS_RLCMAC_TBF_UL_ASS_EV_START,	/* Start Uplink assignment (data: enum gprs_rlcmac_tbf_ul_ass_type) */
 	GPRS_RLCMAC_TBF_UL_ASS_EV_START_DIRECT_2PHASE, /* Start Uplink assignment directly into 2phase from an older UL TBF */
+	GPRS_RLCMAC_TBF_UL_ASS_EV_START_FROM_DL_TBF, /* Uplink assignment requested by DL TBF ACK/NACK, wait to receive Pkt Ul Ass on its PACCH */
 	GPRS_RLCMAC_TBF_UL_ASS_EV_RX_CCCH_IMM_ASS, /* (data: struct tbf_ul_ass_ev_rx_ccch_imm_ass_ctx *) */
 	GPRS_RLCMAC_TBF_UL_ASS_EV_CREATE_RLCMAC_MSG, /* Generate RLC/MAC block (data: struct tbf_ul_ass_ev_create_rlcmac_msg_ctx) */
-	GPRS_RLCMAC_TBF_UL_ASS_EV_RX_PKT_UL_ASS, /* (data: decoded PktUlAss) */
+	GPRS_RLCMAC_TBF_UL_ASS_EV_RX_PKT_UL_ASS, /* (data: struct tbf_ul_ass_ev_create_rlcmac_msg_ctx) */
 	GPRS_RLCMAC_TBF_UL_ASS_EV_FOOBAR,
 };
 
@@ -57,6 +55,12 @@ struct tbf_ul_ass_ev_rx_ccch_imm_ass_ctx {
 	uint8_t ts_nr;
 	const struct gsm48_imm_ass *ia;
 	const IA_RestOctets_t *iaro;
+};
+
+struct tbf_ul_ass_ev_rx_pkt_ul_ass_ctx {
+	uint8_t ts_nr;
+	uint32_t fn;
+	const RlcMacDownlink_t *dl_block; /* decoded PktUlAss */
 };
 
 struct tbf_ul_ass_ev_create_rlcmac_msg_ctx {
@@ -73,6 +77,8 @@ void gprs_rlcmac_tbf_ul_ass_fsm_destructor(struct gprs_rlcmac_ul_tbf *ul_tbf);
 
 int gprs_rlcmac_tbf_ul_ass_start(struct gprs_rlcmac_ul_tbf *ul_tbf, enum gprs_rlcmac_tbf_ul_ass_type type);
 int gprs_rlcmac_tbf_ul_ass_start_from_releasing_ul_tbf(struct gprs_rlcmac_ul_tbf *ul_tbf, struct gprs_rlcmac_ul_tbf *old_ul_tbf);
+int gprs_rlcmac_tbf_ul_ass_start_from_dl_tbf_ack_nack(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_dl_tbf *dl_tbf);
+
 bool gprs_rlcmac_tbf_ul_ass_pending(struct gprs_rlcmac_ul_tbf *ul_tbf);
 bool gprs_rlcmac_tbf_ul_ass_match_rach_req(struct gprs_rlcmac_ul_tbf *ul_tbf, uint8_t ra);
 bool gprs_rlcmac_tbf_ul_ass_rts(const struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_rts_block_ind *bi);

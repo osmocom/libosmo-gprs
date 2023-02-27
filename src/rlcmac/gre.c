@@ -66,6 +66,40 @@ void gprs_rlcmac_entity_free(struct gprs_rlcmac_entity *gre)
 	talloc_free(gre);
 }
 
+/* TS 44.060 5.3 In packet idle mode:
+* - no temporary block flow (TBF) exists..
+* - the mobile station monitors the relevant paging subchannels on CCCH. In packet
+* idle mode, upper layers may require the transfer of a upper layer PDU, which
+* implicitly triggers the establishment of a TBF and the transition to packet
+* transfer mode. In packet idle mode, upper layers may require the establishment
+* of an RR connection. When the mobile station enters dedicated mode (see 3GPP TS
+* 44.018), it may leave the packet idle mode, if the mobile station limitations
+* make it unable to handle the RR connection and the procedures in packet idle
+* mode simultaneously.*/
+bool gprs_rlcmac_entity_in_packet_idle_mode(const struct gprs_rlcmac_entity *gre)
+{
+	return !gre->ul_tbf && !gre->dl_tbf;
+}
+
+/* TS 44.060 5.4 "In packet transfer mode, the mobile station is allocated radio
+* resources providing one or more TBFs. [...]
+* When a transfer of upper layer PDUs
+* terminates, in either downlink or uplink direction, the corresponding TBF is
+* released. In packet transfer mode, when all TBFs have been released, in downlink
+* and uplink direction, the mobile station returns to packet idle mode."
+*/
+bool gprs_rlcmac_entity_in_packet_transfer_mode(const struct gprs_rlcmac_entity *gre)
+{
+	return gre->ul_tbf || gre->dl_tbf;
+}
+
+/* Whether MS has data queued from upper layers waiting to be transmitted in the
+ * Tx queue (an active UL TBF may still have some extra data) */
+bool gprs_rlcmac_entity_have_tx_data_queued(const struct gprs_rlcmac_entity *gre)
+{
+	return gprs_rlcmac_llc_queue_size(gre->llc_queue) > 0;
+}
+
 int gprs_rlcmac_entity_llc_enqueue(struct gprs_rlcmac_entity *gre, uint8_t *ll_pdu, unsigned int ll_pdu_len,
 				   enum osmo_gprs_rlcmac_llc_sapi sapi, uint8_t radio_prio)
 {
@@ -75,7 +109,11 @@ int gprs_rlcmac_entity_llc_enqueue(struct gprs_rlcmac_entity *gre, uint8_t *ll_p
 	if (rc < 0)
 		return rc;
 
-	if (!gre->ul_tbf) {
+	/* TS 44.060 5.3 "In packet idle mode, upper layers may require the
+	* transfer of a upper layer PDU, which implicitly triggers the
+	* establishment of a TBF and the transition to packet transfer mode." */
+	if (gprs_rlcmac_entity_in_packet_idle_mode(gre)) {
+		OSMO_ASSERT(!gre->ul_tbf);
 		/* We have new data in the queue but we have no ul_tbf. Allocate one and start UL Assignment. */
 		gre->ul_tbf = gprs_rlcmac_ul_tbf_alloc(gre);
 		if (!gre->ul_tbf)

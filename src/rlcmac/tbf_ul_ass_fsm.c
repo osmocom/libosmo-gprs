@@ -32,12 +32,14 @@
 #include <osmocom/gprs/rlcmac/sched.h>
 #include <osmocom/gprs/rlcmac/csn1_defs.h>
 #include <osmocom/gprs/rlcmac/rlcmac_enc.h>
+#include <osmocom/gprs/rlcmac/pdch_ul_controller.h>
 
 #define X(s) (1 << (s))
 
 static const struct value_string tbf_ul_ass_fsm_event_names[] = {
 	{ GPRS_RLCMAC_TBF_UL_ASS_EV_START,		"START" },
 	{ GPRS_RLCMAC_TBF_UL_ASS_EV_START_DIRECT_2PHASE, "START_DIRECT_2PHASE" },
+	{ GPRS_RLCMAC_TBF_UL_ASS_EV_START_FROM_DL_TBF, "START_FROM_DL_TBF" },
 	{ GPRS_RLCMAC_TBF_UL_ASS_EV_RX_CCCH_IMM_ASS,	"RX_CCCH_IMM_ASS" },
 	{ GPRS_RLCMAC_TBF_UL_ASS_EV_CREATE_RLCMAC_MSG,	"CREATE_RLCMAC_MSG" },
 	{ GPRS_RLCMAC_TBF_UL_ASS_EV_RX_PKT_UL_ASS,	"RX_PKT_UL_ASS" },
@@ -165,14 +167,73 @@ static int handle_imm_ass(struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *ctx, const stru
 	return -EFAULT;
 }
 
+static int handle_pkt_ul_ass(struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *ctx, const struct tbf_ul_ass_ev_rx_pkt_ul_ass_ctx *d)
+{
+
+	const Packet_Uplink_Assignment_t *ulass = &d->dl_block->u.Packet_Uplink_Assignment;
+	uint8_t tn;
+	const Timeslot_Allocation_t *ts_alloc;
+	const Timeslot_Allocation_Power_Ctrl_Param_t *ts_alloc_pwr_ctl;
+
+	switch (ulass->UnionType) {
+	case 0: /* ulass->u.PUA_GPRS_Struct.* (PUA_GPRS_t) */
+		ctx->ul_tbf->tx_cs = ulass->u.PUA_GPRS_Struct.CHANNEL_CODING_COMMAND + 1;
+		switch (ulass->u.PUA_GPRS_Struct.UnionType) {
+		case 1: /* Dynamic Allocation (Dynamic_Allocation_t) */
+			if (ulass->u.PUA_GPRS_Struct.u.Dynamic_Allocation.Exist_UPLINK_TFI_ASSIGNMENT)
+				ctx->phase2_alloc.ul_tfi = ulass->u.PUA_GPRS_Struct.u.Dynamic_Allocation.UPLINK_TFI_ASSIGNMENT;
+			/* TODO: P0, PR_MODE, USF_GRANULARITY, RLC_DATA_BLOCKS_GRANTED, TBF_Starting_Time */
+			switch (ulass->u.PUA_GPRS_Struct.u.Dynamic_Allocation.UnionType) {
+			case 0: /* Timeslot_Allocation_t */
+				ts_alloc = &ulass->u.PUA_GPRS_Struct.u.Dynamic_Allocation.u.Timeslot_Allocation[0];
+				ctx->phase2_alloc.num_ts = 0;
+				for (tn = 0; tn < 8; tn++) {
+					ctx->phase2_alloc.ts[tn].allocated = ts_alloc[tn].Exist;
+					if (ts_alloc[tn].Exist) {
+						ctx->phase2_alloc.num_ts++;
+						ctx->phase2_alloc.ts[tn].usf = ts_alloc[tn].USF_TN;
+					}
+				}
+				break;
+			case 1: /* Timeslot_Allocation_Power_Ctrl_Param_t */
+				/* TODO: ALPHA, GAMMA */
+				ts_alloc_pwr_ctl = &ulass->u.PUA_GPRS_Struct.u.Dynamic_Allocation.u.Timeslot_Allocation_Power_Ctrl_Param;
+				ctx->phase2_alloc.num_ts = 0;
+				for (tn = 0; tn < 8; tn++) {
+					ctx->phase2_alloc.ts[tn].allocated = ts_alloc_pwr_ctl->Slot[tn].Exist;
+					if (ts_alloc_pwr_ctl->Slot[tn].Exist) {
+						ctx->phase2_alloc.num_ts++;
+						ctx->phase2_alloc.ts[tn].usf = ts_alloc_pwr_ctl->Slot[tn].USF_TN;
+					}
+				}
+				break;
+			}
+			break;
+		case 2: /* Single Block Allocation */
+			LOGPFSML(ctx->fi, LOGL_NOTICE, "Rx Pkt Ul Ass GPRS Single Block Allocation not supported!\n");
+			return -ENOTSUP;
+		case 0: /* Fixed Allocation */
+			LOGPFSML(ctx->fi, LOGL_NOTICE, "Rx Pkt Ul Ass GPRS Fixed Allocation not supported!\n");
+			return -ENOTSUP;
+		}
+		return 0;
+	case 1: /* ulass->u.PUA_EGPRS_Struct.* (PUA_EGPRS_t) */
+		LOGPFSML(ctx->fi, LOGL_NOTICE, "Rx Pkt Ul Ass EGPRS not supported!\n");
+		return -ENOTSUP;
+	}
+
+	OSMO_ASSERT(0);
+	return -EFAULT;
+}
+
 static void st_idle_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_state)
 {
 	struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *ctx = (struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *)fi->priv;
 
 	/* Reset state: */
+	ctx->dl_tbf = NULL;
 	memset(&ctx->phase1_alloc, 0, sizeof(ctx->phase1_alloc));
 	memset(&ctx->phase2_alloc, 0, sizeof(ctx->phase2_alloc));
-	memset(&ctx->sched_pkt_ctrl_ack, 0, sizeof(ctx->sched_pkt_ctrl_ack));
 }
 
 static void st_idle(struct osmo_fsm_inst *fi, uint32_t event, void *data)
@@ -190,6 +251,11 @@ static void st_idle(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 		osmo_fsm_inst_dispatch(ctx->ul_tbf->state_fsm.fi, GPRS_RLCMAC_TBF_UL_EV_UL_ASS_START, NULL);
 		ctx->ass_type = GPRS_RLCMAC_TBF_UL_ASS_TYPE_2PHASE;
 		tbf_ul_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ASS_ST_SCHED_PKT_RES_REQ);
+		break;
+	case GPRS_RLCMAC_TBF_UL_ASS_EV_START_FROM_DL_TBF:
+		osmo_fsm_inst_dispatch(ctx->ul_tbf->state_fsm.fi, GPRS_RLCMAC_TBF_UL_EV_UL_ASS_START, NULL);
+		ctx->ass_type = GPRS_RLCMAC_TBF_UL_ASS_TYPE_2PHASE;
+		tbf_ul_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_PKT_UL_ASS);
 		break;
 	default:
 		OSMO_ASSERT(0);
@@ -235,12 +301,27 @@ static void st_sched_pkt_res_req(struct osmo_fsm_inst *fi, uint32_t event, void 
 
 static void st_wait_pkt_ul_ass(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
-	//struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *ctx = (struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *)fi->priv;
+	struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *ctx = (struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *)fi->priv;
+	struct tbf_ul_ass_ev_rx_pkt_ul_ass_ctx *d;
+	int rc;
+
 	switch (event) {
 	case GPRS_RLCMAC_TBF_UL_ASS_EV_RX_PKT_UL_ASS:
-		// TODO: fill ctx->phase2_alloc with contents from pkt_ul_ass
+		d = data;
+		rc = handle_pkt_ul_ass(ctx, d);
+		if (rc < 0)
+			LOGPFSML(fi, LOGL_ERROR, "Rx Pkt Ul Ass: failed to parse!\n");
 		// TODO: what to do if Pkt_ul_ass is "reject"? need to check spec, depending on cause.
-		tbf_ul_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ASS_ST_SCHED_PKT_CTRL_ACK);
+		/* If RRBP contains valid data, schedule a response (PKT CONTROL ACK or PKT RESOURCE REQ). */
+		if (d->dl_block->SP) {
+			uint32_t poll_fn = rrbp2fn(d->fn, d->dl_block->RRBP);
+			gprs_rlcmac_pdch_ulc_reserve(g_ctx->sched.ulc[d->ts_nr], poll_fn,
+						GPRS_RLCMAC_PDCH_ULC_POLL_UL_ASS,
+						ul_tbf_as_tbf(ctx->ul_tbf));
+			tbf_ul_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ASS_ST_SCHED_PKT_CTRL_ACK);
+		} else {
+			tbf_ul_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ASS_ST_COMPL);
+		}
 		break;
 	default:
 		OSMO_ASSERT(0);
@@ -249,15 +330,13 @@ static void st_wait_pkt_ul_ass(struct osmo_fsm_inst *fi, uint32_t event, void *d
 
 static void st_sched_pkt_ctrl_ack(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
-	//struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *ctx = (struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *)fi->priv;
+	struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *ctx = (struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *)fi->priv;
 	struct tbf_ul_ass_ev_create_rlcmac_msg_ctx *data_ctx;
 
 	switch (event) {
 	case GPRS_RLCMAC_TBF_UL_ASS_EV_CREATE_RLCMAC_MSG:
 		data_ctx = (struct tbf_ul_ass_ev_create_rlcmac_msg_ctx *)data;
-		LOGPFSML(fi, LOGL_ERROR, "TODO: create PKT CTRL ACK...\n");
-		//data_ctx->msg = create_packet_ctrl_ack(ctx, data_ctx);
-		data_ctx->msg = NULL;
+		data_ctx->msg = gprs_rlcmac_ul_tbf_create_pkt_ctrl_ack(ctx->ul_tbf);
 		if (!data_ctx->msg)
 			return;
 		tbf_ul_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ASS_ST_COMPL);
@@ -275,7 +354,7 @@ static void st_compl_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_state)
 	if (ctx->ass_type == GPRS_RLCMAC_TBF_UL_ASS_TYPE_1PHASE)
 		memcpy(&ctx->ul_tbf->cur_alloc, &ctx->phase1_alloc, sizeof(ctx->phase1_alloc));
 	else
-		memcpy(&ctx->ul_tbf->cur_alloc, &ctx->phase2_alloc, sizeof(ctx->phase1_alloc));
+		memcpy(&ctx->ul_tbf->cur_alloc, &ctx->phase2_alloc, sizeof(ctx->phase2_alloc));
 	/* Inform the main TBF state about the assignment completed: */
 	osmo_fsm_inst_dispatch(ctx->ul_tbf->state_fsm.fi, GPRS_RLCMAC_TBF_UL_EV_UL_ASS_COMPL, NULL);
 	/* Go back to IDLE state. */
@@ -286,10 +365,12 @@ static struct osmo_fsm_state tbf_ul_ass_fsm_states[] = {
 	[GPRS_RLCMAC_TBF_UL_ASS_ST_IDLE] = {
 		.in_event_mask =
 			X(GPRS_RLCMAC_TBF_UL_ASS_EV_START) |
-			X(GPRS_RLCMAC_TBF_UL_ASS_EV_START_DIRECT_2PHASE),
+			X(GPRS_RLCMAC_TBF_UL_ASS_EV_START_DIRECT_2PHASE) |
+			X(GPRS_RLCMAC_TBF_UL_ASS_EV_START_FROM_DL_TBF),
 		.out_state_mask =
 			X(GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_CCCH_IMM_ASS) |
-			X(GPRS_RLCMAC_TBF_UL_ASS_ST_SCHED_PKT_RES_REQ),
+			X(GPRS_RLCMAC_TBF_UL_ASS_ST_SCHED_PKT_RES_REQ) |
+			X(GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_PKT_UL_ASS),
 		.name = "IDLE",
 		.onenter = st_idle_on_enter,
 		.action = st_idle,
@@ -316,7 +397,8 @@ static struct osmo_fsm_state tbf_ul_ass_fsm_states[] = {
 			X(GPRS_RLCMAC_TBF_UL_ASS_EV_RX_PKT_UL_ASS),
 		.out_state_mask =
 			X(GPRS_RLCMAC_TBF_UL_ASS_ST_SCHED_PKT_RES_REQ) |
-			X(GPRS_RLCMAC_TBF_UL_ASS_ST_SCHED_PKT_CTRL_ACK),
+			X(GPRS_RLCMAC_TBF_UL_ASS_ST_SCHED_PKT_CTRL_ACK) |
+			X(GPRS_RLCMAC_TBF_UL_ASS_ST_COMPL),
 		.name = "WAIT_PKT_UL_ASS",
 		.action = st_wait_pkt_ul_ass,
 	},
@@ -343,6 +425,17 @@ static int tbf_ul_ass_fsm_timer_cb(struct osmo_fsm_inst *fi)
 	struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *ctx = (struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *)fi->priv;
 	switch (fi->T) {
 	case 3168:
+		/* If the UL TBF assignment was started from DL TBF it is not
+		really possible reattempting because we haven't yet any phase1
+		allocation. Hence simply destroy the TBF and let next DL TBF DL
+		ACK/NACK re-request an UL TBF assignment: */
+		if (ctx->dl_tbf) {
+			LOGPFSML(ctx->fi, LOGL_NOTICE,
+				 "UL TBF establishment failure (T3168 timeout attempts=%u, ass from DL TBF)\n",
+				 ctx->pkt_res_req_proc_attempts);
+			gprs_rlcmac_ul_tbf_free(ctx->ul_tbf);
+			return 0;
+		}
 		/* TS 44.060 7.1.3.3: "the mobile station shall then reinitiate the packet access
 		 * procedure unless the packet access procedure has already been attempted four
 		 * times. In that case, TBF failure has occurred and an RLC/MAC error should be
@@ -424,6 +517,18 @@ int gprs_rlcmac_tbf_ul_ass_start_from_releasing_ul_tbf(struct gprs_rlcmac_ul_tbf
 	return rc;
 }
 
+/* A DL-TBF requested a UL TBF over DL ACK/NACK, wait to receive Pkt Ul Ass for
+ * it, aka switch the FSM to trigger the 2hpase directly (tx Pkt Res Req) */
+int gprs_rlcmac_tbf_ul_ass_start_from_dl_tbf_ack_nack(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_dl_tbf *dl_tbf)
+{
+	int rc;
+	ul_tbf->ul_ass_fsm.dl_tbf = dl_tbf;
+	rc = osmo_fsm_inst_dispatch(ul_tbf->ul_ass_fsm.fi,
+				    GPRS_RLCMAC_TBF_UL_ASS_EV_START_FROM_DL_TBF,
+				    NULL);
+	return rc;
+}
+
 bool gprs_rlcmac_tbf_ul_ass_pending(struct gprs_rlcmac_ul_tbf *ul_tbf)
 {
 	return ul_tbf->ul_ass_fsm.fi->state != GPRS_RLCMAC_TBF_UL_ASS_ST_IDLE;
@@ -449,9 +554,6 @@ bool gprs_rlcmac_tbf_ul_ass_rts(const struct gprs_rlcmac_ul_tbf *ul_tbf, const s
 	case GPRS_RLCMAC_TBF_UL_ASS_ST_SCHED_PKT_RES_REQ:
 		return (ctx->phase1_alloc.ts[bi->ts].allocated &&
 			ctx->phase1_alloc.ts[bi->ts].usf == bi->usf);
-	case GPRS_RLCMAC_TBF_UL_ASS_ST_SCHED_PKT_CTRL_ACK:
-		return (ctx->sched_pkt_ctrl_ack.ts == bi->ts &&
-			ctx->sched_pkt_ctrl_ack.fn == bi->fn);
 	default:
 		return false;
 	};

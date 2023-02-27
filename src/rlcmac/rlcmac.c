@@ -358,6 +358,58 @@ static int gprs_rlcmac_handle_pkt_ul_ack_nack(const struct osmo_gprs_rlcmac_prim
 	return rc;
 }
 
+static int gprs_rlcmac_handle_pkt_ul_ass(const struct osmo_gprs_rlcmac_prim *rlcmac_prim, const RlcMacDownlink_t *dl_block)
+{
+	struct gprs_rlcmac_entity *gre = NULL;
+	struct gprs_rlcmac_ul_tbf *ul_tbf = NULL;
+	struct gprs_rlcmac_dl_tbf *dl_tbf;
+	const Packet_Uplink_Assignment_t *ulass = &dl_block->u.Packet_Uplink_Assignment;
+	int rc;
+
+	/* Attempt to find relevant UL TBF in assignment state from ID (set "gre" ptr): */
+	switch (ulass->ID.UnionType) {
+	case 0: /* GLOBAL_TFI: */
+		switch (ulass->ID.u.Global_TFI.UnionType) {
+		case 0: /* UL TFI */
+			ul_tbf = gprs_rlcmac_find_ul_tbf_by_tfi(ulass->ID.u.Global_TFI.u.UPLINK_TFI);
+			gre = ul_tbf->tbf.gre;
+			break;
+		case 1: /* DL TFI */
+			dl_tbf = gprs_rlcmac_find_dl_tbf_by_tfi(ulass->ID.u.Global_TFI.u.DOWNLINK_TFI);
+			if (dl_tbf)
+				gre = dl_tbf->tbf.gre;
+			break;
+		default:
+			OSMO_ASSERT(0);
+		}
+		break;
+	case 1: /* TLLI */
+		gre = gprs_rlcmac_find_entity_by_tlli(ulass->ID.u.TLLI);
+		if (gre)
+			ul_tbf = gre->ul_tbf;
+		break;
+	case 2: /* TQI */
+	case 3: /* Packet_Request_Reference */
+		LOGRLCMAC(LOGL_NOTICE, "TS=%u FN=%u Rx Pkt UL ASS: HANDLING OF ID=%u NOT IMPLEMENTED!\n",
+			  ulass->ID.UnionType,
+			  rlcmac_prim->l1ctl.pdch_data_ind.ts_nr,
+			  rlcmac_prim->l1ctl.pdch_data_ind.fn);
+		break;
+	}
+
+	if (!gre->ul_tbf) {
+		LOGRLCMAC(LOGL_INFO, "TS=%u FN=%u Rx Pkt UL ACK/NACK: UL_TBF TFI=%u not found\n",
+			  rlcmac_prim->l1ctl.pdch_data_ind.ts_nr,
+			  rlcmac_prim->l1ctl.pdch_data_ind.fn,
+			  dl_block->TFI);
+		return -ENOENT;
+	}
+
+	rc = gprs_rlcmac_ul_tbf_handle_pkt_ul_ass(gre->ul_tbf, rlcmac_prim, dl_block);
+
+	return rc;
+}
+
 static int gprs_rlcmac_handle_gprs_dl_ctrl_block(const struct osmo_gprs_rlcmac_prim *rlcmac_prim)
 {
 	struct bitvec *bv;
@@ -387,6 +439,9 @@ static int gprs_rlcmac_handle_gprs_dl_ctrl_block(const struct osmo_gprs_rlcmac_p
 	switch (dl_ctrl_block->u.MESSAGE_TYPE) {
 	case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_UPLINK_ACK_NACK:
 		rc = gprs_rlcmac_handle_pkt_ul_ack_nack(rlcmac_prim, dl_ctrl_block);
+		break;
+	case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_UPLINK_ASSIGNMENT:
+		rc = gprs_rlcmac_handle_pkt_ul_ass(rlcmac_prim, dl_ctrl_block);
 		break;
 	default:
 		LOGRLCMAC(LOGL_ERROR, "TS=%u FN=%u Rx %s NOT SUPPORTED! ignoring\n",

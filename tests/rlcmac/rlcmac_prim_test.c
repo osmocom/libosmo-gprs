@@ -295,6 +295,75 @@ static void ul_ack_nack_mark(Ack_Nack_Description_t *ack_desc, unsigned int idx,
 		ack_desc->RECEIVED_BLOCK_BITMAP[sizeof(ack_desc->RECEIVED_BLOCK_BITMAP) - idx/8 - 1] &= ~(1 << (idx & 0x03));
 }
 
+static void pkt_ul_ass_from_dl_tbf_init(RlcMacDownlink_t *block, uint8_t dl_tfi, uint8_t new_ul_tfi, uint16_t arfcn, uint8_t *usf_li)
+{
+	Packet_Uplink_Assignment_t *pua = &block->u.Packet_Uplink_Assignment;
+	PUA_GPRS_t *gprs = &pua->u.PUA_GPRS_Struct;
+	Packet_Timing_Advance_t *pta = &gprs->Packet_Timing_Advance;
+	Frequency_Parameters_t *fp = &gprs->Frequency_Parameters;
+	Dynamic_Allocation_t *da = &gprs->u.Dynamic_Allocation;
+	unsigned int tn;
+
+	memset(block, 0, sizeof(*block));
+	block->PAYLOAD_TYPE = GPRS_RLCMAC_PT_CONTROL_BLOCK;
+	block->RRBP = 0;
+	block->SP = 0;
+	block->USF = 0x00;
+	block->u.MESSAGE_TYPE = OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_UPLINK_ASSIGNMENT;
+
+	/* See 3GPP TS 44.060, section 11.2.29 */
+	pua = &block->u.Packet_Uplink_Assignment;
+	pua->MESSAGE_TYPE = OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_UPLINK_ASSIGNMENT;
+	pua->PAGE_MODE    = 0x00;
+
+	/* TLLI or Global DL TFI */
+	pua->ID.UnionType = 0x00;
+	pua->ID.u.Global_TFI.UnionType = 0x01;
+	pua->ID.u.Global_TFI.u.UPLINK_TFI = dl_tfi;
+
+	/* GPRS specific parameters */
+	pua->UnionType = 0x00;
+	/* Use the commanded CS/MCS value during the content resolution */
+	gprs->CHANNEL_CODING_COMMAND    = gprs_rlcmac_mcs_chan_code(GPRS_RLCMAC_MCS_2);
+	gprs->TLLI_BLOCK_CHANNEL_CODING = 0x01;  // ^^^
+	/* Dynamic allocation */
+	gprs->UnionType = 0x01;
+	/* Frequency Parameters IE is present */
+	gprs->Exist_Frequency_Parameters = 0x01;
+
+	/* Packet Timing Advance (if known) */
+	pta->Exist_TIMING_ADVANCE_VALUE = 0x01;  // Present
+	pta->TIMING_ADVANCE_VALUE       = 1;
+
+	/* Continuous Timing Advance Control */
+	pta->Exist_IndexAndtimeSlot         = 0x01;  // Present
+	pta->TIMING_ADVANCE_TIMESLOT_NUMBER = 0;  // FIXME!
+	pta->TIMING_ADVANCE_INDEX           = 2;
+
+	/* Frequency Parameters IE */
+	fp->TSC = 2;
+	fp->UnionType = 0x00;
+	fp->u.ARFCN = arfcn;
+
+	/* Dynamic allocation parameters */
+	da->USF_GRANULARITY = 0x00;
+
+	/* Assign an Uplink TFI */
+	da->Exist_UPLINK_TFI_ASSIGNMENT = 0x01;
+	da->UPLINK_TFI_ASSIGNMENT = new_ul_tfi;
+
+	/* Timeslot Allocation with or without Power Control */
+	da->UnionType = 0x00;
+
+	for (tn = 0; tn < 8; tn++) {
+		Timeslot_Allocation_t *slot = &da->u.Timeslot_Allocation[tn];
+		if (usf_li[tn] == 0xff)
+			continue;
+		slot->Exist  = 0x01;  // Enable this timeslot
+		slot->USF_TN = usf_li[tn];  // USF_TN(i)
+	}
+}
+
 static uint8_t *create_si13(uint8_t bs_cv_max /* 0..15 */)
 {
 	static uint8_t si13_buf[GSM_MACBLOCK_LEN];
@@ -869,6 +938,88 @@ static void test_dl_tbf_ccch_assign(void)
 	cleanup_test();
 }
 
+/* PCU allocates a DL TBF through PCH ImmAss for MS (when in packet-idle). Then
+ * upper layers want to transmit more data so during DL ACK/NACK a new UL TBF is
+ * requested. */
+static void test_dl_tbf_ccch_assign_requests_ul_tbf_pacch(void)
+{
+	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
+	int rc;
+	struct msgb *dl_data_msg;
+
+	printf("=== %s start ===\n", __func__);
+	prepare_test();
+	RlcMacDownlink_t dl_block;
+	uint32_t tlli = 0x0000001;
+	uint8_t ts_nr = 7;
+	uint8_t usf = 0;
+	uint32_t rts_fn = 4;
+	uint8_t dl_tfi = 0;
+	uint8_t ul_tfi = 3;
+	uint8_t rrbp = GPRS_RLCMAC_RRBP_N_plus_17_18;
+	uint16_t arfcn = 871;
+	uint8_t usf_li[8] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 1, 2 };
+
+	/* Notify RLCMAC about our TLLI */
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_gmmrr_assign_req(tlli);
+	rc = osmo_gprs_rlcmac_prim_upper_down(rlcmac_prim);
+
+	OSMO_ASSERT(sizeof(ccch_imm_ass_pkt_dl_tbf) == GSM_MACBLOCK_LEN);
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_ccch_data_ind(0, ccch_imm_ass_pkt_dl_tbf);
+	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+	OSMO_ASSERT(rc == 0);
+
+	/* Transmit some DL LLC data MS<-PCU */
+	dl_data_msg = create_dl_data_block(dl_tfi, usf, GPRS_RLCMAC_CS_1, 0, true, true, rrbp);
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_data_ind(ts_nr, rts_fn, 0, 0, 0,
+								      msgb_data(dl_data_msg),
+								      msgb_length(dl_data_msg));
+	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+	OSMO_ASSERT(rc == 0);
+	msgb_free(dl_data_msg);
+
+	/* Upper layers wants to transmit some payload, but no UL TBF exists yet: */
+	/* Submit 14 bytes to fit in 1 RLCMAC block to shorten test and end up in FINISHED state quickly: */
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_grr_unitdata_req(tlli, pdu_llc_gmm_att_req, 14);
+	rlcmac_prim->grr.unitdata_req.sapi = OSMO_GPRS_RLCMAC_LLC_SAPI_GMM;
+	rc = osmo_gprs_rlcmac_prim_upper_down(rlcmac_prim);
+	OSMO_ASSERT(rc == 0);
+
+	/* Trigger transmission of DL ACK/NACK, which should request a UL TBF in "Channel Request Description" */
+	rts_fn = rrbp2fn(rts_fn, rrbp);
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_rts_ind(ts_nr, rts_fn, usf);
+	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+	OSMO_ASSERT(rc == 0);
+
+	/* Network sends a Pkt Ul Ass to DL TBF's PACCH: */
+	rts_fn = fn_next_block(rts_fn);
+	pkt_ul_ass_from_dl_tbf_init(&dl_block, dl_tfi, ul_tfi, arfcn, &usf_li[0]);
+	/* has Poll set: */
+	dl_block.SP = 1;
+	dl_block.RRBP = rrbp;
+	rlcmac_prim = create_dl_ctrl_block(&dl_block, ts_nr, rts_fn);
+	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+	OSMO_ASSERT(rc == 0);
+
+	/* Trigger transmission of PKT CTRL ACK */
+	rts_fn = rrbp2fn(rts_fn, rrbp);
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_rts_ind(ts_nr, rts_fn, usf_li[ts_nr]);
+	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+	OSMO_ASSERT(rc == 0);
+
+	/* from now on use one of the assigned TS in UL TBF.*/
+	rts_fn = fn_next_block(rts_fn);
+	ts_nr = 6;
+
+	/* Trigger transmission of LLC data (GMM Attach) (first part) */
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_rts_ind(ts_nr, rts_fn, usf_li[ts_nr]);
+	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+	OSMO_ASSERT(rc == 0);
+
+	printf("=== %s end ===\n", __func__);
+	cleanup_test();
+}
+
 static const struct log_info_cat test_log_categories[] = { };
 static const struct log_info test_log_info = {
 	.cat = test_log_categories,
@@ -899,6 +1050,7 @@ int main(int argc, char *argv[])
 	test_ul_tbf_last_data_cv0_retrans_max();
 	test_ul_tbf_request_another_ul_tbf();
 	test_dl_tbf_ccch_assign();
+	test_dl_tbf_ccch_assign_requests_ul_tbf_pacch();
 
 	talloc_free(tall_ctx);
 }

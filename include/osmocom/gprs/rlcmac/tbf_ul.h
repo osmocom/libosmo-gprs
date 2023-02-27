@@ -58,6 +58,9 @@ struct msgb *gprs_rlcmac_ul_tbf_create_pkt_ctrl_ack(const struct gprs_rlcmac_ul_
 
 int gprs_rlcmac_ul_tbf_handle_pkt_ul_ack_nack(struct gprs_rlcmac_ul_tbf *ul_tbf,
 					      const RlcMacDownlink_t *dl_block);
+int gprs_rlcmac_ul_tbf_handle_pkt_ul_ass(struct gprs_rlcmac_ul_tbf *ul_tbf,
+					 const struct osmo_gprs_rlcmac_prim *rlcmac_prim,
+					 const RlcMacDownlink_t *dl_block);
 
 static inline struct gprs_rlcmac_tbf *ul_tbf_as_tbf(struct gprs_rlcmac_ul_tbf *ul_tbf)
 {

@@ -261,6 +261,21 @@ int gprs_rlcmac_ul_tbf_handle_pkt_ul_ack_nack(struct gprs_rlcmac_ul_tbf *ul_tbf,
 	return rc;
 }
 
+int gprs_rlcmac_ul_tbf_handle_pkt_ul_ass(struct gprs_rlcmac_ul_tbf *ul_tbf,
+					 const struct osmo_gprs_rlcmac_prim *rlcmac_prim,
+					 const RlcMacDownlink_t *dl_block)
+{
+	int rc;
+	struct tbf_ul_ass_ev_rx_pkt_ul_ass_ctx d = {
+		.ts_nr = rlcmac_prim->l1ctl.pdch_data_ind.ts_nr,
+		.fn = rlcmac_prim->l1ctl.pdch_data_ind.fn,
+		.dl_block = dl_block,
+	};
+
+	rc = osmo_fsm_inst_dispatch(ul_tbf->ul_ass_fsm.fi, GPRS_RLCMAC_TBF_UL_ASS_EV_RX_PKT_UL_ASS, &d);
+	return rc;
+}
+
 struct msgb *gprs_rlcmac_ul_tbf_dummy_create(const struct gprs_rlcmac_ul_tbf *ul_tbf)
 {
 	struct msgb *msg;
@@ -333,7 +348,7 @@ free_ret:
 bool gprs_rlcmac_ul_tbf_have_data(const struct gprs_rlcmac_ul_tbf *ul_tbf)
 {
 	return (ul_tbf->llc_tx_msg && msgb_length(ul_tbf->llc_tx_msg) > 0) ||
-	       (gprs_rlcmac_llc_queue_size(ul_tbf->tbf.gre->llc_queue) > 0);
+	       gprs_rlcmac_entity_have_tx_data_queued(ul_tbf->tbf.gre);
 }
 
 bool gprs_rlcmac_ul_tbf_shall_keep_open(const struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_rts_block_ind *bi)
