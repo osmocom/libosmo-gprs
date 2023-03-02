@@ -104,7 +104,7 @@ bool gprs_rlcmac_ul_tbf_in_contention_resolution(const struct gprs_rlcmac_ul_tbf
 		 * successful once we get out of GPRS_RLCMAC_TBF_UL_ST_WAIT_ASSIGN
 		 * (when we receive a Pkt Ul Ass, see TS 44.60 7.1.3.3) */
 		if (ul_tbf->ul_ass_fsm.ass_type == GPRS_RLCMAC_TBF_UL_ASS_TYPE_2PHASE)
-			return true;
+			return false;
 		/* 1phase access: Check if we didn't yet send any data, or whether
 		 * either T3164 or T3166 are active: */
 		if (ul_tbf->ul_ass_fsm.ass_type == GPRS_RLCMAC_TBF_UL_ASS_TYPE_1PHASE)
