@@ -448,6 +448,8 @@ static int gprs_rlcmac_handle_gprs_dl_ctrl_block(const struct osmo_gprs_rlcmac_p
 	case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_UPLINK_ASSIGNMENT:
 		rc = gprs_rlcmac_handle_pkt_ul_ass(rlcmac_prim, dl_ctrl_block);
 		break;
+	case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_DOWNLINK_DUMMY_CONTROL_BLOCK:
+		break; /* Ignore dummy blocks */
 	default:
 		LOGRLCMAC(LOGL_ERROR, "TS=%u FN=%u Rx %s NOT SUPPORTED! ignoring\n",
 			  rlcmac_prim->l1ctl.pdch_data_ind.ts_nr,
