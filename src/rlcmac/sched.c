@@ -21,6 +21,7 @@
 
 #include <osmocom/core/linuxlist.h>
 #include <osmocom/core/msgb.h>
+#include <osmocom/gsm/gsm0502.h>
 
 #include <osmocom/gprs/rlcmac/rlcmac_private.h>
 #include <osmocom/gprs/rlcmac/sched.h>
@@ -38,11 +39,6 @@ struct tbf_sched_ctrl_candidates {
 	struct gprs_rlcmac_ul_tbf *poll_ul_ack; /* 11.2.2 (answer with PKT CTRL ACK) */
 	struct gprs_rlcmac_ul_tbf *ul_ass;
 };
-
-static inline uint32_t next_fn(uint32_t fn, uint32_t offset)
-{
-	return (fn + offset) % GSM_MAX_FN;
-}
 
 static inline bool fn_valid(uint32_t fn)
 {
@@ -62,10 +58,10 @@ uint32_t rrbp2fn(uint32_t cur_fn, uint8_t rrbp)
 
 	OSMO_ASSERT(rrbp < ARRAY_SIZE(rrbp_list));
 
-	poll_fn = next_fn(cur_fn, rrbp_list[rrbp]);
+	poll_fn = GSM_TDMA_FN_SUM(cur_fn, rrbp_list[rrbp]);
 	if (!fn_valid(poll_fn)) {
 		/* 17 -> 18, 21 -> 22: */
-		poll_fn = next_fn(poll_fn, 1);
+		GSM_TDMA_FN_INC(poll_fn);
 		OSMO_ASSERT(fn_valid(poll_fn));
 	}
 	return poll_fn;
