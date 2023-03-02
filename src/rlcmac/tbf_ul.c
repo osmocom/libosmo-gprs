@@ -861,6 +861,7 @@ static struct msgb *create_ul_acked_block(struct gprs_rlcmac_ul_tbf *ul_tbf,
 		}
 
 		blk->cs_last = cs;
+		rdbi->ti  = block_info->ti;
 		rdbi->e   = block_info->e;
 		rdbi->cv  = block_info->cv;
 		rdbi->bsn = bsn;
