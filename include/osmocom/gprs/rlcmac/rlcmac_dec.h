@@ -46,3 +46,7 @@ void gprs_rlcmac_extract_rbb(const struct bitvec *rbb, char *show_rbb);
 int gprs_rlcmac_decode_gprs_acknack_bits(const Ack_Nack_Description_t *desc,
 					 struct bitvec *bits, int *bsn_begin, int *bsn_end,
 					 struct gprs_rlcmac_rlc_ul_window *ulw);
+
+uint32_t TBF_StartingTime_to_fn(const StartingTime_t *tbf_start_time, uint32_t curr_fn);
+uint32_t TBF_Starting_Frame_Number_to_fn(const Starting_Frame_Number_t *tbf_start_fn, uint32_t curr_fn);
+

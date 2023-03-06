@@ -165,12 +165,13 @@ struct gprs_rlcmac_ul_tbf *gprs_rlcmac_find_ul_tbf_by_tfi(uint8_t ul_tfi)
 	return NULL;
 }
 
-static int gprs_rlcmac_handle_ccch_imm_ass_ul_tbf(uint8_t ts_nr, const struct gsm48_imm_ass *ia, const IA_RestOctets_t *iaro)
+static int gprs_rlcmac_handle_ccch_imm_ass_ul_tbf(uint8_t ts_nr, uint32_t fn, const struct gsm48_imm_ass *ia, const IA_RestOctets_t *iaro)
 {
 	int rc = -ENOENT;
 	struct gprs_rlcmac_entity *gre;
 	struct gprs_rlcmac_ul_tbf *ul_tbf;
 	struct tbf_ul_ass_ev_rx_ccch_imm_ass_ctx d = {
+		.fn = fn,
 		.ts_nr = ts_nr,
 		.ia = ia,
 		.iaro = iaro
@@ -190,7 +191,7 @@ static int gprs_rlcmac_handle_ccch_imm_ass_ul_tbf(uint8_t ts_nr, const struct gs
 	return rc;
 }
 
-static int gprs_rlcmac_handle_ccch_imm_ass_dl_tbf(uint8_t ts_nr, const struct gsm48_imm_ass *ia, const IA_RestOctets_t *iaro)
+static int gprs_rlcmac_handle_ccch_imm_ass_dl_tbf(uint8_t ts_nr, uint32_t fn, const struct gsm48_imm_ass *ia, const IA_RestOctets_t *iaro)
 {
 	int rc;
 	struct gprs_rlcmac_entity *gre;
@@ -224,7 +225,7 @@ static int gprs_rlcmac_handle_ccch_imm_ass_dl_tbf(uint8_t ts_nr, const struct gs
 	return rc;
 }
 
-int gprs_rlcmac_handle_ccch_imm_ass(const struct gsm48_imm_ass *ia)
+int gprs_rlcmac_handle_ccch_imm_ass(const struct gsm48_imm_ass *ia, uint32_t fn)
 {
 	int rc;
 	uint8_t ch_type, ch_subch, ch_ts;
@@ -253,10 +254,10 @@ int gprs_rlcmac_handle_ccch_imm_ass(const struct gsm48_imm_ass *ia)
 	case 1: /* iaro.u.lh.* (IA_RestOctetsLH_t) */
 		switch (iaro.u.lh.lh0x.UnionType) {
 		case 0: /* iaro.u.ll.lh0x.EGPRS_PktUlAss.* (IA_EGPRS_PktUlAss_t) */
-			rc = gprs_rlcmac_handle_ccch_imm_ass_ul_tbf(ch_ts, ia, &iaro);
+			rc = gprs_rlcmac_handle_ccch_imm_ass_ul_tbf(ch_ts, fn, ia, &iaro);
 			break;
 		case 1: /* iaro.u.ll.lh0x.MultiBlock_PktDlAss.* (IA_MultiBlock_PktDlAss_t) */
-			rc = gprs_rlcmac_handle_ccch_imm_ass_dl_tbf(ch_ts, ia, &iaro);
+			rc = gprs_rlcmac_handle_ccch_imm_ass_dl_tbf(ch_ts, fn, ia, &iaro);
 			break;
 		}
 		/* TODO: iaro.u.lh.AdditionsR13.* (IA_AdditionsR13_t) */
@@ -279,17 +280,17 @@ int gprs_rlcmac_handle_ccch_imm_ass(const struct gsm48_imm_ass *ia)
 				case 1: /* iaro.u.hh.u.UplinkDownlinkAssignment.ul_dl.Packet_Uplink_ImmAssignment.Access.DynamicOrFixedAllocation.* (GPRS_DynamicOrFixedAllocation_t) */
 					switch (iaro.u.hh.u.UplinkDownlinkAssignment.ul_dl.Packet_Uplink_ImmAssignment.Access.DynamicOrFixedAllocation.UnionType) {
 					case 0: /* iaro.u.hh.u.UplinkDownlinkAssignment.ul_dl.Packet_Uplink_ImmAssignment.Access.DynamicOrFixedAllocation.Allocation.DynamicAllocation (DynamicAllocation_t) */
-						rc = gprs_rlcmac_handle_ccch_imm_ass_ul_tbf(ch_ts, ia, &iaro);
+						rc = gprs_rlcmac_handle_ccch_imm_ass_ul_tbf(ch_ts, fn, ia, &iaro);
 						break;
 					case 1: /* iaro.u.hh.u.UplinkDownlinkAssignment.ul_dl.Packet_Uplink_ImmAssignment.Access.DynamicOrFixedAllocation.Allocation.FixedAllocationDummy (guint8) */
-						rc = gprs_rlcmac_handle_ccch_imm_ass_ul_tbf(ch_ts, ia, &iaro);
+						rc = gprs_rlcmac_handle_ccch_imm_ass_ul_tbf(ch_ts, fn, ia, &iaro);
 						break;
 					}
 					break;
 				}
 				break;
 			case 1: /* iaro.u.hh.u.UplinkDownlinkAssignment.ul_dl.Packet_Downlink_ImmAssignment* (Packet_Downlink_ImmAssignment_t) */
-				rc = gprs_rlcmac_handle_ccch_imm_ass_dl_tbf(ch_ts, ia, &iaro);
+				rc = gprs_rlcmac_handle_ccch_imm_ass_dl_tbf(ch_ts, fn, ia, &iaro);
 				break;
 			}
 			break;

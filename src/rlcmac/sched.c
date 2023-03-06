@@ -41,12 +41,6 @@ struct tbf_sched_ctrl_candidates {
 	struct gprs_rlcmac_ul_tbf *ul_ass;	/* PCU grants USF/SBA: transmit Pkt Res Req (2phase access)*/
 };
 
-static inline bool fn_valid(uint32_t fn)
-{
-	uint32_t f = fn % 13;
-	return f == 0 || f == 4 || f == 8;
-}
-
 uint32_t rrbp2fn(uint32_t cur_fn, uint8_t rrbp)
 {
 	uint32_t poll_fn;
@@ -210,7 +204,7 @@ static struct msgb *sched_select_ctrl_msg(const struct gprs_rlcmac_rts_block_ind
 		return msg;
 	}
 	if (tbfs->poll_ul_ass) {
-		msg = gprs_rlcmac_tbf_ul_ass_create_rlcmac_msg(tbfs->poll_ul_ass, bi);
+		msg = gprs_rlcmac_ul_tbf_create_pkt_ctrl_ack(tbfs->poll_ul_ass);
 		if (msg)
 			return msg;
 	}
@@ -260,12 +254,23 @@ static struct msgb *sched_select_ul_dummy_ctrl_blk(const struct gprs_rlcmac_rts_
 	return gprs_rlcmac_ul_tbf_dummy_create(ul_tbf);
 }
 
+static void rts_tick(const struct gprs_rlcmac_rts_block_ind *bi)
+{
+	struct gprs_rlcmac_entity *gre;
+	llist_for_each_entry(gre, &g_ctx->gre_list, entry) {
+		if (gre->ul_tbf && gprs_rlcmac_tbf_ul_ass_waiting_tbf_starting_time(gre->ul_tbf))
+			gprs_rlcmac_tbf_ul_ass_fn_tick(gre->ul_tbf, bi->fn, bi->ts);
+	}
+}
+
 int gprs_rlcmac_rcv_rts_block(struct gprs_rlcmac_rts_block_ind *bi)
 {
 	struct msgb *msg = NULL;
 	struct tbf_sched_ctrl_candidates tbf_cand = {0};
 	struct osmo_gprs_rlcmac_prim *rlcmac_prim_tx;
 	int rc = 0;
+
+	rts_tick(bi);
 
 	get_ctrl_msg_tbf_candidates(bi, &tbf_cand);
 

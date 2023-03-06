@@ -22,11 +22,14 @@
 #include <stdint.h>
 
 #include <osmocom/core/logging.h>
+#include <osmocom/gsm/gsm0502.h>
+#include <osmocom/gsm/gsm_utils.h>
 
 #include <osmocom/gprs/rlcmac/rlcmac_private.h>
 #include <osmocom/gprs/rlcmac/rlcmac_dec.h>
 #include <osmocom/gprs/rlcmac/rlc.h>
 #include <osmocom/gprs/rlcmac/rlc_window_ul.h>
+#include <osmocom/gprs/rlcmac/sched.h>
 
 #define LENGTH_TO_END 255
 /*!
@@ -421,4 +424,48 @@ int gprs_rlcmac_decode_gprs_acknack_bits(const Ack_Nack_Description_t *desc,
 	}
 
 	return num_blocks;
+}
+
+/* 12.21 Starting Frame Number Description */
+uint32_t TBF_StartingTime_to_fn(const StartingTime_t *tbf_start_time, uint32_t curr_fn)
+{
+	const struct gsm_time g_time = {
+		.t1 = tbf_start_time->N32,
+		.t2 = tbf_start_time->N51,
+		.t3 = tbf_start_time->N26
+	};
+	return gsm_gsmtime2fn(&g_time);
+
+}
+
+/* 12.21.2 Relative Frame Number Encoding */
+static uint32_t k_to_fn(uint16_t k, uint32_t curr_fn)
+{
+	uint32_t fn = 0;
+
+	switch (k % 3) {
+	case 0:
+	case 1:
+		fn = GSM_TDMA_FN_SUM(curr_fn, 4 + 4 * k + (k / 3));
+		if (!fn_valid(fn))
+			GSM_TDMA_FN_INC(fn);
+		break;
+	case 2:
+		fn = GSM_TDMA_FN_SUM(curr_fn, 5 + 4 * k + (k / 3));
+		break;
+	}
+	OSMO_ASSERT(fn_valid(fn));
+	return fn;
+}
+
+uint32_t TBF_Starting_Frame_Number_to_fn(const Starting_Frame_Number_t *tbf_start_fn, uint32_t curr_fn)
+{
+	switch (tbf_start_fn->UnionType) {
+	case 0: /* 12.21.1 Absolute Frame Number Encoding */
+		return TBF_StartingTime_to_fn(&tbf_start_fn->u.StartingTime, curr_fn);
+	case 1: /* 12.21.2 Relative Frame Number Encoding  */
+		return k_to_fn(tbf_start_fn->u.k, curr_fn);
+	default:
+		OSMO_ASSERT(0);
+	}
 }

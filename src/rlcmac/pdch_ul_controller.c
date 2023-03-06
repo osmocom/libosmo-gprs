@@ -26,6 +26,7 @@
 #include <osmocom/gprs/rlcmac/pdch_ul_controller.h>
 #include <osmocom/gprs/rlcmac/rlcmac_private.h>
 #include <osmocom/gprs/rlcmac/types_private.h>
+#include <osmocom/gprs/rlcmac/sched.h>
 
 /* TS 44.060 Table 10.4.5.1 states maximum RRBP is N + 26. Give extra space for time diff between Tx and Rx? */
 #define MAX_FN_RESERVED (27 + 50)
@@ -38,20 +39,6 @@ const struct value_string gprs_rlcmac_pdch_ulc_poll_reason_names[] = {
 	{ GPRS_RLCMAC_PDCH_ULC_POLL_CELL_CHG_CONTINUE,	"CELL_CHG_CONTINUE" },
 	{ 0, NULL }
 };
-
-#define GSM_MAX_FN_THRESH (GSM_MAX_FN >> 1)
-/* 0: equal, -1: fn1 BEFORE fn2, 1: fn1 AFTER fn2 */
-static inline int fn_cmp(uint32_t fn1, uint32_t fn2)
-{
-	if (fn1 == fn2)
-		return 0;
-	/* FN1 goes before FN2: */
-	if ((fn1 < fn2 && (fn2 - fn1) < GSM_MAX_FN_THRESH) ||
-	    (fn1 > fn2 && (fn1 - fn2) > GSM_MAX_FN_THRESH))
-		return -1;
-	/* FN1 goes after FN2: */
-	return 1;
-}
 
 struct gprs_rlcmac_pdch_ulc *gprs_rlcmac_pdch_ulc_alloc(void *ctx, uint8_t ts_nr)
 {

@@ -24,6 +24,8 @@
 #include <osmocom/core/tdef.h>
 #include <osmocom/core/fsm.h>
 #include <osmocom/core/bitvec.h>
+#include <osmocom/gsm/gsm_utils.h>
+#include <osmocom/gsm/gsm0502.h>
 
 #include <osmocom/gprs/rlcmac/types.h>
 #include <osmocom/gprs/rlcmac/tbf_ul_ass_fsm.h>
@@ -32,6 +34,7 @@
 #include <osmocom/gprs/rlcmac/sched.h>
 #include <osmocom/gprs/rlcmac/csn1_defs.h>
 #include <osmocom/gprs/rlcmac/rlcmac_enc.h>
+#include <osmocom/gprs/rlcmac/rlcmac_dec.h>
 #include <osmocom/gprs/rlcmac/pdch_ul_controller.h>
 
 #define X(s) (1 << (s))
@@ -39,8 +42,9 @@
 static const struct value_string tbf_ul_ass_fsm_event_names[] = {
 	{ GPRS_RLCMAC_TBF_UL_ASS_EV_START,		"START" },
 	{ GPRS_RLCMAC_TBF_UL_ASS_EV_START_DIRECT_2PHASE, "START_DIRECT_2PHASE" },
-	{ GPRS_RLCMAC_TBF_UL_ASS_EV_START_FROM_DL_TBF, "START_FROM_DL_TBF" },
+	{ GPRS_RLCMAC_TBF_UL_ASS_EV_START_FROM_DL_TBF,	"START_FROM_DL_TBF" },
 	{ GPRS_RLCMAC_TBF_UL_ASS_EV_RX_CCCH_IMM_ASS,	"RX_CCCH_IMM_ASS" },
+	{ GPRS_RLCMAC_TBF_UL_ASS_EV_TBF_STARTING_TIME,	"TBF_STARTING_TIME" },
 	{ GPRS_RLCMAC_TBF_UL_ASS_EV_CREATE_RLCMAC_MSG,	"CREATE_RLCMAC_MSG" },
 	{ GPRS_RLCMAC_TBF_UL_ASS_EV_RX_PKT_UL_ASS,	"RX_PKT_UL_ASS" },
 	{ 0, NULL }
@@ -49,9 +53,10 @@ static const struct value_string tbf_ul_ass_fsm_event_names[] = {
 static const struct osmo_tdef_state_timeout tbf_ul_ass_fsm_timeouts[32] = {
 	[GPRS_RLCMAC_TBF_UL_ASS_ST_IDLE] = { },
 	[GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_CCCH_IMM_ASS] = { },
+	[GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_TBF_STARTING_TIME1] = { },
 	[GPRS_RLCMAC_TBF_UL_ASS_ST_SCHED_PKT_RES_REQ] = { },
 	[GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_PKT_UL_ASS] = { .T = 3168 },
-	[GPRS_RLCMAC_TBF_UL_ASS_ST_SCHED_PKT_CTRL_ACK] = { },
+	[GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_TBF_STARTING_TIME2] = { },
 	[GPRS_RLCMAC_TBF_UL_ASS_ST_COMPL] = { },
 };
 
@@ -141,6 +146,10 @@ static int handle_imm_ass(struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *ctx, const stru
 					return -ENOTSUP;
 				case 1: /* d->iaro->u.hh.u.UplinkDownlinkAssignment.ul_dl.Packet_Uplink_ImmAssignment.Access.DynamicOrFixedAllocation.* (GPRS_DynamicOrFixedAllocation_t) */
 					ctx->ul_tbf->tx_cs = d->iaro->u.hh.u.UplinkDownlinkAssignment.ul_dl.Packet_Uplink_ImmAssignment.Access.DynamicOrFixedAllocation.CHANNEL_CODING_COMMAND + 1;
+					ctx->tbf_starting_time_exists = d->iaro->u.hh.u.UplinkDownlinkAssignment.ul_dl.Packet_Uplink_ImmAssignment.Access.DynamicOrFixedAllocation.Exist_TBF_STARTING_TIME;
+					if (ctx->tbf_starting_time_exists)
+						ctx->tbf_starting_time = TBF_StartingTime_to_fn(&d->iaro->u.hh.u.UplinkDownlinkAssignment.ul_dl.Packet_Uplink_ImmAssignment.Access.DynamicOrFixedAllocation.TBF_STARTING_TIME,
+												d->fn);
 					LOGPFSML(ctx->fi, LOGL_INFO, "ImmAss initial CS=%s\n", gprs_rlcmac_mcs_name(ctx->ul_tbf->tx_cs));
 					switch (d->iaro->u.hh.u.UplinkDownlinkAssignment.ul_dl.Packet_Uplink_ImmAssignment.Access.DynamicOrFixedAllocation.UnionType) {
 					case 0: /* d->iaro->u.hh.u.UplinkDownlinkAssignment.ul_dl.Packet_Uplink_ImmAssignment.Access.DynamicOrFixedAllocation.Allocation.DynamicAllocation (DynamicAllocation_t) */
@@ -181,7 +190,11 @@ static int handle_pkt_ul_ass(struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *ctx, const s
 		case 1: /* Dynamic Allocation (Dynamic_Allocation_t) */
 			if (ulass->u.PUA_GPRS_Struct.u.Dynamic_Allocation.Exist_UPLINK_TFI_ASSIGNMENT)
 				ctx->phase2_alloc.ul_tfi = ulass->u.PUA_GPRS_Struct.u.Dynamic_Allocation.UPLINK_TFI_ASSIGNMENT;
-			/* TODO: P0, PR_MODE, USF_GRANULARITY, RLC_DATA_BLOCKS_GRANTED, TBF_Starting_Time */
+			/* TODO: P0, PR_MODE, USF_GRANULARITY, RLC_DATA_BLOCKS_GRANTED */
+			ctx->tbf_starting_time_exists = ulass->u.PUA_GPRS_Struct.u.Dynamic_Allocation.Exist_TBF_Starting_Time;
+			if (ctx->tbf_starting_time_exists)
+				ctx->tbf_starting_time = TBF_Starting_Frame_Number_to_fn(&ulass->u.PUA_GPRS_Struct.u.Dynamic_Allocation.TBF_Starting_Time,
+											 d->fn);
 			switch (ulass->u.PUA_GPRS_Struct.u.Dynamic_Allocation.UnionType) {
 			case 0: /* Timeslot_Allocation_t */
 				ts_alloc = &ulass->u.PUA_GPRS_Struct.u.Dynamic_Allocation.u.Timeslot_Allocation[0];
@@ -271,6 +284,42 @@ static void st_wait_ccch_imm_ass(struct osmo_fsm_inst *fi, uint32_t event, void 
 		ev_rx_ccch_imm_ass_ctx = data;
 		if (handle_imm_ass(ctx, ev_rx_ccch_imm_ass_ctx) < 0)
 			return;
+		if (ctx->tbf_starting_time_exists &&
+		    fn_cmp(ctx->tbf_starting_time, ev_rx_ccch_imm_ass_ctx->fn) > 0) {
+			tbf_ul_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_TBF_STARTING_TIME1);
+			return;
+		}
+		if (ctx->ass_type == GPRS_RLCMAC_TBF_UL_ASS_TYPE_1PHASE)
+			tbf_ul_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ASS_ST_COMPL);
+		else
+			tbf_ul_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ASS_ST_SCHED_PKT_RES_REQ);
+		break;
+	default:
+		OSMO_ASSERT(0);
+	}
+}
+
+static void st_wait_tbf_starting_time1(struct osmo_fsm_inst *fi, uint32_t event, void *data)
+{
+	struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *ctx = (struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *)fi->priv;
+	const struct tbf_ul_ass_ev_rx_ccch_imm_ass_ctx *ev_rx_ccch_imm_ass_ctx;
+
+	switch (event) {
+	case GPRS_RLCMAC_TBF_UL_ASS_EV_RX_CCCH_IMM_ASS:
+		ev_rx_ccch_imm_ass_ctx = data;
+		if (handle_imm_ass(ctx, ev_rx_ccch_imm_ass_ctx) < 0)
+			return;
+		if (ctx->tbf_starting_time_exists &&
+		    fn_cmp(ctx->tbf_starting_time, ev_rx_ccch_imm_ass_ctx->fn) > 0) {
+			tbf_ul_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_TBF_STARTING_TIME1);
+			return;
+		}
+		if (ctx->ass_type == GPRS_RLCMAC_TBF_UL_ASS_TYPE_1PHASE)
+			tbf_ul_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ASS_ST_COMPL);
+		else
+			tbf_ul_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ASS_ST_SCHED_PKT_RES_REQ);
+		break;
+	case GPRS_RLCMAC_TBF_UL_ASS_EV_TBF_STARTING_TIME:
 		if (ctx->ass_type == GPRS_RLCMAC_TBF_UL_ASS_TYPE_1PHASE)
 			tbf_ul_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ASS_ST_COMPL);
 		else
@@ -317,7 +366,11 @@ static void st_wait_pkt_ul_ass(struct osmo_fsm_inst *fi, uint32_t event, void *d
 			gprs_rlcmac_pdch_ulc_reserve(g_ctx->sched.ulc[d->ts_nr], poll_fn,
 						GPRS_RLCMAC_PDCH_ULC_POLL_UL_ASS,
 						ul_tbf_as_tbf(ctx->ul_tbf));
-			tbf_ul_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ASS_ST_SCHED_PKT_CTRL_ACK);
+		}
+
+		if (ctx->tbf_starting_time_exists &&
+		    fn_cmp(ctx->tbf_starting_time, d->fn) > 0) {
+			tbf_ul_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_TBF_STARTING_TIME2);
 		} else {
 			tbf_ul_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ASS_ST_COMPL);
 		}
@@ -327,17 +380,34 @@ static void st_wait_pkt_ul_ass(struct osmo_fsm_inst *fi, uint32_t event, void *d
 	}
 }
 
-static void st_sched_pkt_ctrl_ack(struct osmo_fsm_inst *fi, uint32_t event, void *data)
+static void st_wait_tbf_starting_time2(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *ctx = (struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *)fi->priv;
-	struct tbf_ul_ass_ev_create_rlcmac_msg_ctx *data_ctx;
+	struct tbf_ul_ass_ev_rx_pkt_ul_ass_ctx *d;
+	int rc;
 
 	switch (event) {
-	case GPRS_RLCMAC_TBF_UL_ASS_EV_CREATE_RLCMAC_MSG:
-		data_ctx = (struct tbf_ul_ass_ev_create_rlcmac_msg_ctx *)data;
-		data_ctx->msg = gprs_rlcmac_ul_tbf_create_pkt_ctrl_ack(ctx->ul_tbf);
-		if (!data_ctx->msg)
-			return;
+	case GPRS_RLCMAC_TBF_UL_ASS_EV_RX_PKT_UL_ASS:
+		d = data;
+		rc = handle_pkt_ul_ass(ctx, d);
+		if (rc < 0)
+			LOGPFSML(fi, LOGL_ERROR, "Rx Pkt Ul Ass: failed to parse!\n");
+		// TODO: what to do if Pkt_ul_ass is "reject"? need to check spec, depending on cause.
+		/* If RRBP contains valid data, schedule a response (PKT CONTROL ACK or PKT RESOURCE REQ). */
+		if (d->dl_block->SP) {
+			uint32_t poll_fn = rrbp2fn(d->fn, d->dl_block->RRBP);
+			gprs_rlcmac_pdch_ulc_reserve(g_ctx->sched.ulc[d->ts_nr], poll_fn,
+						GPRS_RLCMAC_PDCH_ULC_POLL_UL_ASS,
+						ul_tbf_as_tbf(ctx->ul_tbf));
+		}
+
+		if (ctx->tbf_starting_time_exists &&
+		    fn_cmp(ctx->tbf_starting_time, d->fn) > 0) {
+			tbf_ul_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_TBF_STARTING_TIME2);
+		} else {
+			tbf_ul_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ASS_ST_COMPL);
+		}
+	case GPRS_RLCMAC_TBF_UL_ASS_EV_TBF_STARTING_TIME:
 		tbf_ul_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ASS_ST_COMPL);
 		break;
 	default:
@@ -378,10 +448,22 @@ static struct osmo_fsm_state tbf_ul_ass_fsm_states[] = {
 		.in_event_mask =
 			X(GPRS_RLCMAC_TBF_UL_ASS_EV_RX_CCCH_IMM_ASS),
 		.out_state_mask =
+			X(GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_TBF_STARTING_TIME1) |
 			X(GPRS_RLCMAC_TBF_UL_ASS_ST_SCHED_PKT_RES_REQ) |
 			X(GPRS_RLCMAC_TBF_UL_ASS_ST_COMPL),
 		.name = "WAIT_CCCH_IMM_ASS",
 		.action = st_wait_ccch_imm_ass,
+	},
+	[GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_TBF_STARTING_TIME1] = {
+		.in_event_mask =
+			X(GPRS_RLCMAC_TBF_UL_ASS_EV_RX_CCCH_IMM_ASS) |
+			X(GPRS_RLCMAC_TBF_UL_ASS_EV_TBF_STARTING_TIME),
+		.out_state_mask =
+			X(GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_TBF_STARTING_TIME1) |
+			X(GPRS_RLCMAC_TBF_UL_ASS_ST_SCHED_PKT_RES_REQ) |
+			X(GPRS_RLCMAC_TBF_UL_ASS_ST_COMPL),
+		.name = "WAIT_TBF_STARTING_TIME1",
+		.action = st_wait_tbf_starting_time1,
 	},
 	[GPRS_RLCMAC_TBF_UL_ASS_ST_SCHED_PKT_RES_REQ] = {
 		.in_event_mask =
@@ -396,18 +478,21 @@ static struct osmo_fsm_state tbf_ul_ass_fsm_states[] = {
 			X(GPRS_RLCMAC_TBF_UL_ASS_EV_RX_PKT_UL_ASS),
 		.out_state_mask =
 			X(GPRS_RLCMAC_TBF_UL_ASS_ST_SCHED_PKT_RES_REQ) |
-			X(GPRS_RLCMAC_TBF_UL_ASS_ST_SCHED_PKT_CTRL_ACK) |
+			X(GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_TBF_STARTING_TIME2) |
 			X(GPRS_RLCMAC_TBF_UL_ASS_ST_COMPL),
 		.name = "WAIT_PKT_UL_ASS",
 		.action = st_wait_pkt_ul_ass,
 	},
-	[GPRS_RLCMAC_TBF_UL_ASS_ST_SCHED_PKT_CTRL_ACK] = {
+	[GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_TBF_STARTING_TIME2] = {
 		.in_event_mask =
-			X(GPRS_RLCMAC_TBF_UL_ASS_EV_CREATE_RLCMAC_MSG),
+			X(GPRS_RLCMAC_TBF_UL_ASS_EV_RX_PKT_UL_ASS) |
+			X(GPRS_RLCMAC_TBF_UL_ASS_EV_TBF_STARTING_TIME),
 		.out_state_mask =
+			X(GPRS_RLCMAC_TBF_UL_ASS_ST_SCHED_PKT_RES_REQ) |
+			X(GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_TBF_STARTING_TIME2) |
 			X(GPRS_RLCMAC_TBF_UL_ASS_ST_COMPL),
-		.name = "SCHED_PKT_CTRL_ACK",
-		.action = st_sched_pkt_ctrl_ack,
+		.name = "WAIT_TBF_STARTING_TIME2",
+		.action = st_wait_tbf_starting_time2,
 	},
 	[GPRS_RLCMAC_TBF_UL_ASS_ST_COMPL] = {
 		.in_event_mask = 0,
@@ -537,6 +622,23 @@ bool gprs_rlcmac_tbf_ul_ass_match_rach_req(struct gprs_rlcmac_ul_tbf *ul_tbf, ui
 {
 	return ul_tbf->ul_ass_fsm.fi->state == GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_CCCH_IMM_ASS &&
 		ul_tbf->ul_ass_fsm.rach_req_ra == ra;
+}
+
+bool gprs_rlcmac_tbf_ul_ass_waiting_tbf_starting_time(const struct gprs_rlcmac_ul_tbf *ul_tbf)
+{
+	return ul_tbf->ul_ass_fsm.fi->state == GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_TBF_STARTING_TIME1 ||
+	       ul_tbf->ul_ass_fsm.fi->state == GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_TBF_STARTING_TIME2;
+}
+
+/* The scheduled ticks the new FN, which may trigger changes internally if TBF Starting Time is reached */
+void gprs_rlcmac_tbf_ul_ass_fn_tick(const struct gprs_rlcmac_ul_tbf *ul_tbf, uint32_t fn, uint8_t ts_nr)
+{
+	OSMO_ASSERT(gprs_rlcmac_tbf_ul_ass_waiting_tbf_starting_time(ul_tbf));
+	OSMO_ASSERT(ul_tbf->ul_ass_fsm.tbf_starting_time_exists);
+	if (fn != ul_tbf->ul_ass_fsm.tbf_starting_time)
+		return;
+
+	osmo_fsm_inst_dispatch(ul_tbf->ul_ass_fsm.fi, GPRS_RLCMAC_TBF_UL_ASS_EV_TBF_STARTING_TIME, NULL);
 }
 
 enum gprs_rlcmac_tbf_ul_ass_fsm_states gprs_rlcmac_tbf_ul_ass_state(const struct gprs_rlcmac_ul_tbf *ul_tbf)
