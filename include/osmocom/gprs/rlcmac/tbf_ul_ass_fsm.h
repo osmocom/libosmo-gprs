@@ -48,7 +48,6 @@ enum tbf_ul_ass_fsm_event {
 	GPRS_RLCMAC_TBF_UL_ASS_EV_RX_CCCH_IMM_ASS, /* (data: struct tbf_ul_ass_ev_rx_ccch_imm_ass_ctx *) */
 	GPRS_RLCMAC_TBF_UL_ASS_EV_CREATE_RLCMAC_MSG, /* Generate RLC/MAC block (data: struct tbf_ul_ass_ev_create_rlcmac_msg_ctx) */
 	GPRS_RLCMAC_TBF_UL_ASS_EV_RX_PKT_UL_ASS, /* (data: struct tbf_ul_ass_ev_create_rlcmac_msg_ctx) */
-	GPRS_RLCMAC_TBF_UL_ASS_EV_FOOBAR,
 };
 
 struct tbf_ul_ass_ev_rx_ccch_imm_ass_ctx {

@@ -43,7 +43,6 @@ static const struct value_string tbf_ul_ass_fsm_event_names[] = {
 	{ GPRS_RLCMAC_TBF_UL_ASS_EV_RX_CCCH_IMM_ASS,	"RX_CCCH_IMM_ASS" },
 	{ GPRS_RLCMAC_TBF_UL_ASS_EV_CREATE_RLCMAC_MSG,	"CREATE_RLCMAC_MSG" },
 	{ GPRS_RLCMAC_TBF_UL_ASS_EV_RX_PKT_UL_ASS,	"RX_PKT_UL_ASS" },
-	{ GPRS_RLCMAC_TBF_UL_ASS_EV_FOOBAR,		"FOOBAR" },
 	{ 0, NULL }
 };
 
