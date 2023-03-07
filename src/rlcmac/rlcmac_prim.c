@@ -542,7 +542,7 @@ int osmo_gprs_rlcmac_prim_lower_up(struct osmo_gprs_rlcmac_prim *rlcmac_prim)
 	struct msgb *msg = rlcmac_prim->oph.msg;
 	int rc;
 
-	LOGRLCMAC(LOGL_INFO, "Rx from lower layers: %s\n", osmo_gprs_rlcmac_prim_name(rlcmac_prim));
+	LOGRLCMAC(LOGL_DEBUG, "Rx from lower layers: %s\n", osmo_gprs_rlcmac_prim_name(rlcmac_prim));
 
 	switch (rlcmac_prim->oph.sap) {
 	case OSMO_GPRS_RLCMAC_SAP_L1CTL:
