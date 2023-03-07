@@ -467,8 +467,15 @@ static int rlcmac_prim_handle_l1ctl_pdch_rts_ind(struct osmo_gprs_rlcmac_prim *r
 
 static int rlcmac_prim_handle_l1ctl_pdch_data_ind(struct osmo_gprs_rlcmac_prim *rlcmac_prim)
 {
-	enum gprs_rlcmac_coding_scheme cs = gprs_rlcmac_mcs_get_by_size_dl(rlcmac_prim->l1ctl.pdch_data_ind.data_len);
+	enum gprs_rlcmac_coding_scheme cs;
 
+	/* ignore empty DATA.ind */
+	if (OSMO_UNLIKELY(rlcmac_prim->l1ctl.pdch_data_ind.data_len == 0)) {
+		LOGRLCMAC(LOGL_DEBUG, "Dropping DL data block with length 0\n");
+		return 0;
+	}
+
+	cs = gprs_rlcmac_mcs_get_by_size_dl(rlcmac_prim->l1ctl.pdch_data_ind.data_len);
 	if (cs == GPRS_RLCMAC_CS_UNKNOWN) {
 		LOGRLCMAC(LOGL_ERROR, "Dropping DL data block with invalid length %u: %s\n",
 			  rlcmac_prim->l1ctl.pdch_data_ind.data_len,
