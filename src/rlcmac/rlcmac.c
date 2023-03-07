@@ -366,13 +366,14 @@ static int gprs_rlcmac_handle_pkt_ul_ass(const struct osmo_gprs_rlcmac_prim *rlc
 	const Packet_Uplink_Assignment_t *ulass = &dl_block->u.Packet_Uplink_Assignment;
 	int rc;
 
-	/* Attempt to find relevant UL TBF in assignment state from ID (set "gre" ptr): */
+	/* Attempt to find relevant MS owning UL TBF in assignment state from ID (set "gre" ptr): */
 	switch (ulass->ID.UnionType) {
 	case 0: /* GLOBAL_TFI: */
 		switch (ulass->ID.u.Global_TFI.UnionType) {
 		case 0: /* UL TFI */
 			ul_tbf = gprs_rlcmac_find_ul_tbf_by_tfi(ulass->ID.u.Global_TFI.u.UPLINK_TFI);
-			gre = ul_tbf->tbf.gre;
+			if (ul_tbf)
+				gre = ul_tbf->tbf.gre;
 			break;
 		case 1: /* DL TFI */
 			dl_tbf = gprs_rlcmac_find_dl_tbf_by_tfi(ulass->ID.u.Global_TFI.u.DOWNLINK_TFI);
@@ -385,8 +386,6 @@ static int gprs_rlcmac_handle_pkt_ul_ass(const struct osmo_gprs_rlcmac_prim *rlc
 		break;
 	case 1: /* TLLI */
 		gre = gprs_rlcmac_find_entity_by_tlli(ulass->ID.u.TLLI);
-		if (gre)
-			ul_tbf = gre->ul_tbf;
 		break;
 	case 2: /* TQI */
 	case 3: /* Packet_Request_Reference */
@@ -397,11 +396,17 @@ static int gprs_rlcmac_handle_pkt_ul_ass(const struct osmo_gprs_rlcmac_prim *rlc
 		break;
 	}
 
-	if (!gre->ul_tbf) {
-		LOGRLCMAC(LOGL_INFO, "TS=%u FN=%u Rx Pkt UL ACK/NACK: UL_TBF TFI=%u not found\n",
+	if (!gre) {
+		LOGRLCMAC(LOGL_INFO, "TS=%u FN=%u Rx Pkt UL ASS: MS not found\n",
 			  rlcmac_prim->l1ctl.pdch_data_ind.ts_nr,
-			  rlcmac_prim->l1ctl.pdch_data_ind.fn,
-			  dl_block->TFI);
+			  rlcmac_prim->l1ctl.pdch_data_ind.fn);
+		return -ENOENT;
+	}
+
+	if (!gre->ul_tbf) {
+		LOGGRE(gre, LOGL_INFO, "TS=%u FN=%u Rx Pkt UL ASS: MS has no UL TBF\n",
+		       rlcmac_prim->l1ctl.pdch_data_ind.ts_nr,
+		       rlcmac_prim->l1ctl.pdch_data_ind.fn);
 		return -ENOENT;
 	}
 
