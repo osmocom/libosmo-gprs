@@ -442,6 +442,9 @@ int osmo_gprs_rlcmac_prim_upper_down(struct osmo_gprs_rlcmac_prim *rlcmac_prim)
 int gprs_rlcmac_prim_call_down_cb(struct osmo_gprs_rlcmac_prim *rlcmac_prim)
 {
 	int rc;
+
+	LOGRLCMAC(LOGL_DEBUG, "Tx to lower layers: %s\n", osmo_gprs_rlcmac_prim_name(rlcmac_prim));
+
 	if (g_ctx->rlcmac_down_cb)
 		rc = g_ctx->rlcmac_down_cb(rlcmac_prim, g_ctx->rlcmac_down_cb_user_data);
 	else
