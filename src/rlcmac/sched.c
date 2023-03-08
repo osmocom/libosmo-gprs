@@ -204,6 +204,8 @@ static struct msgb *sched_select_ctrl_msg(const struct gprs_rlcmac_rts_block_ind
 		return msg;
 	}
 	if (tbfs->poll_ul_ass) {
+		LOGRLCMAC(LOGL_DEBUG, "(ts=%u,fn=%u,usf=%u) Tx Pkt Control Ack (UL ASS poll)\n",
+			  bi->ts, bi->fn, bi->usf);
 		msg = gprs_rlcmac_tbf_create_pkt_ctrl_ack(ul_tbf_as_tbf(tbfs->poll_ul_ass));
 		if (msg)
 			return msg;

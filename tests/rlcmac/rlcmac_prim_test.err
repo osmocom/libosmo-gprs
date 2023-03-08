@@ -731,6 +731,7 @@ DLGLOBAL DEBUG Tx to lower layers: L1CTL-CFG_UL_TBF.request
 DLGLOBAL INFO UL_TBF{ASSIGN}: state_chg to FLOW
 DLGLOBAL INFO UL_TBF_ASS{COMPLETED}: state_chg to IDLE
 DLGLOBAL DEBUG Rx from lower layers: L1CTL-PDCH_RTS.indication
+DLGLOBAL DEBUG (ts=7,fn=43,usf=2) Tx Pkt Control Ack (UL ASS poll)
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00000001) Tx Packet Control Ack
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-PDCH_DATA.request
 DLGLOBAL DEBUG Rx from lower layers: L1CTL-PDCH_RTS.indication
