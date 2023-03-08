@@ -198,13 +198,13 @@ static struct msgb *sched_select_ctrl_msg(const struct gprs_rlcmac_rts_block_ind
 	if (tbfs->poll_ul_ack) {
 		LOGRLCMAC(LOGL_DEBUG, "(ts=%u,fn=%u,usf=%u) Tx Pkt Control Ack (UL ACK/NACK poll)\n",
 			  bi->ts, bi->fn, bi->usf);
-		msg = gprs_rlcmac_ul_tbf_create_pkt_ctrl_ack(tbfs->poll_ul_ack);
+		msg = gprs_rlcmac_tbf_create_pkt_ctrl_ack(ul_tbf_as_tbf(tbfs->poll_ul_ack));
 		/* Last UL message, freeing */
 		gprs_rlcmac_ul_tbf_free(tbfs->poll_ul_ack);
 		return msg;
 	}
 	if (tbfs->poll_ul_ass) {
-		msg = gprs_rlcmac_ul_tbf_create_pkt_ctrl_ack(tbfs->poll_ul_ass);
+		msg = gprs_rlcmac_tbf_create_pkt_ctrl_ack(ul_tbf_as_tbf(tbfs->poll_ul_ass));
 		if (msg)
 			return msg;
 	}

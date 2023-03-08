@@ -310,41 +310,6 @@ free_ret:
 	return NULL;
 }
 
-struct msgb *gprs_rlcmac_ul_tbf_create_pkt_ctrl_ack(const struct gprs_rlcmac_ul_tbf *ul_tbf)
-{
-	struct msgb *msg;
-	struct bitvec bv;
-	RlcMacUplink_t ul_block;
-	int rc;
-
-	OSMO_ASSERT(ul_tbf);
-
-	msg = msgb_alloc(GSM_MACBLOCK_LEN, "pkt_ctrl_ack");
-	if (!msg)
-		return NULL;
-
-	/* Initialize a bit vector that uses allocated msgb as the data buffer. */
-	bv = (struct bitvec){
-		.data = msgb_put(msg, GSM_MACBLOCK_LEN),
-		.data_len = GSM_MACBLOCK_LEN,
-	};
-	bitvec_unhex(&bv, GPRS_RLCMAC_DUMMY_VEC);
-
-	gprs_rlcmac_enc_prepare_pkt_ctrl_ack(&ul_block, ul_tbf->tbf.gre->tlli);
-	rc = osmo_gprs_rlcmac_encode_uplink(&bv, &ul_block);
-	if (rc < 0) {
-		LOGPTBFUL(ul_tbf, LOGL_ERROR, "Encoding of Packet Control ACK failed (%d)\n", rc);
-		goto free_ret;
-	}
-	LOGPTBFUL(ul_tbf, LOGL_DEBUG, "Tx Packet Control Ack\n");
-
-	return msg;
-
-free_ret:
-	msgb_free(msg);
-	return NULL;
-}
-
 bool gprs_rlcmac_ul_tbf_have_data(const struct gprs_rlcmac_ul_tbf *ul_tbf)
 {
 	return (ul_tbf->llc_tx_msg && msgb_length(ul_tbf->llc_tx_msg) > 0) ||
