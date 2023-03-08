@@ -47,6 +47,7 @@ libosmo_gprs_rlcmac_la_SOURCES = \
 	tbf_ul.c \
 	tbf_ul_fsm.c \
 	tbf_ul_ass_fsm.c \
+	tbf_dl_ass_fsm.c \
 	ts_44_060.c \
 	ts_44_064.c \
 	misc.c \

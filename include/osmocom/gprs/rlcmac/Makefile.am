@@ -18,6 +18,7 @@ noinst_HEADERS = \
 	tbf_ul.h \
 	tbf_ul_fsm.h \
 	tbf_ul_ass_fsm.h \
+	tbf_dl_ass_fsm.h \
 	types_private.h \
 	$(NULL)
 

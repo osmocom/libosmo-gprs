@@ -25,6 +25,7 @@
 #include <osmocom/gprs/rlcmac/rlcmac_prim.h>
 #include <osmocom/gprs/rlcmac/rlcmac_private.h>
 #include <osmocom/gprs/rlcmac/tbf_dl.h>
+#include <osmocom/gprs/rlcmac/tbf_dl_ass_fsm.h>
 #include <osmocom/gprs/rlcmac/tbf_ul_fsm.h>
 #include <osmocom/gprs/rlcmac/tbf_ul.h>
 #include <osmocom/gprs/rlcmac/gre.h>
@@ -32,6 +33,7 @@
 struct gprs_rlcmac_entity *gprs_rlcmac_entity_alloc(uint32_t tlli)
 {
 	struct gprs_rlcmac_entity *gre;
+	int rc;
 
 	gre = talloc_zero(g_ctx, struct gprs_rlcmac_entity);
 	if (!gre)
@@ -43,6 +45,10 @@ struct gprs_rlcmac_entity *gprs_rlcmac_entity_alloc(uint32_t tlli)
 	gprs_rlcmac_llc_queue_set_codel_params(gre->llc_queue,
 					       g_ctx->cfg.codel.use,
 					       g_ctx->cfg.codel.interval_msec);
+
+	rc = gprs_rlcmac_tbf_dl_ass_fsm_constructor(&gre->dl_tbf_dl_ass_fsm, gre);
+	if (rc < 0)
+		goto err_free_gre;
 
 	gre->tlli = tlli;
 	llist_add_tail(&gre->entry, &g_ctx->gre_list);
@@ -59,6 +65,7 @@ void gprs_rlcmac_entity_free(struct gprs_rlcmac_entity *gre)
 	if (!gre)
 		return;
 
+	gprs_rlcmac_tbf_dl_ass_fsm_destructor(&gre->dl_tbf_dl_ass_fsm);
 	gprs_rlcmac_dl_tbf_free(gre->dl_tbf);
 	gprs_rlcmac_ul_tbf_free(gre->ul_tbf);
 	gprs_rlcmac_llc_queue_free(gre->llc_queue);

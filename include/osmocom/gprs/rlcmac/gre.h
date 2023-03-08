@@ -3,6 +3,7 @@
 
 #include <osmocom/gprs/rlcmac/rlcmac.h>
 #include <osmocom/gprs/rlcmac/llc_queue.h>
+#include <osmocom/gprs/rlcmac/tbf_dl_ass_fsm.h>
 
 struct gprs_rlcmac_dl_tbf;
 struct gprs_rlcmac_ul_tbf;
@@ -12,6 +13,9 @@ struct gprs_rlcmac_entity {
 	uint32_t tlli;
 
 	struct gprs_rlcmac_llc_queue *llc_queue;
+
+	/* Manage TBF Starting Time delay during TBF assignment: */
+	struct gprs_rlcmac_tbf_dl_ass_fsm_ctx dl_tbf_dl_ass_fsm;
 
 	struct gprs_rlcmac_dl_tbf *dl_tbf;
 	struct gprs_rlcmac_ul_tbf *ul_tbf;

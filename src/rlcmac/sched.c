@@ -38,6 +38,7 @@ struct tbf_sched_ctrl_candidates {
 	struct gprs_rlcmac_ul_tbf *poll_ul_ack_new_ul_tbf; /* 9.3.2.4.2  (answer with PKT RES REQ) */
 	struct gprs_rlcmac_ul_tbf *poll_ul_ack; /* 11.2.2 (answer with PKT CTRL ACK) */
 	struct gprs_rlcmac_ul_tbf *poll_ul_ass; /* (answer Pkt UL ASS with PKT CTRL ACK) */
+	struct gprs_rlcmac_tbf *poll_dl_ass; /* (answer Pkt DL ASS with PKT CTRL ACK) */
 	struct gprs_rlcmac_ul_tbf *ul_ass;	/* PCU grants USF/SBA: transmit Pkt Res Req (2phase access)*/
 };
 
@@ -79,7 +80,7 @@ static void get_ctrl_msg_tbf_candidates(const struct gprs_rlcmac_rts_block_ind *
 			tbfs->poll_ul_ass = tbf_as_ul_tbf(node->tbf);
 			break;
 		case GPRS_RLCMAC_PDCH_ULC_POLL_DL_ASS:
-			/* TODO */
+			tbfs->poll_dl_ass = node->tbf;
 			break;
 		case GPRS_RLCMAC_PDCH_ULC_POLL_UL_ACK:
 			/* TS 44.060: 9.3.2.4.2 If the PACKET UPLINK ACK/NACK message
@@ -203,6 +204,13 @@ static struct msgb *sched_select_ctrl_msg(const struct gprs_rlcmac_rts_block_ind
 		gprs_rlcmac_ul_tbf_free(tbfs->poll_ul_ack);
 		return msg;
 	}
+	if (tbfs->poll_dl_ass) {
+		LOGRLCMAC(LOGL_DEBUG, "(ts=%u,fn=%u,usf=%u) Tx Pkt Control Ack (DL ASS poll)\n",
+			  bi->ts, bi->fn, bi->usf);
+		msg = gprs_rlcmac_tbf_create_pkt_ctrl_ack(tbfs->poll_dl_ass);
+		if (msg)
+			return msg;
+	}
 	if (tbfs->poll_ul_ass) {
 		LOGRLCMAC(LOGL_DEBUG, "(ts=%u,fn=%u,usf=%u) Tx Pkt Control Ack (UL ASS poll)\n",
 			  bi->ts, bi->fn, bi->usf);
@@ -259,9 +267,12 @@ static struct msgb *sched_select_ul_dummy_ctrl_blk(const struct gprs_rlcmac_rts_
 static void rts_tick(const struct gprs_rlcmac_rts_block_ind *bi)
 {
 	struct gprs_rlcmac_entity *gre;
+
 	llist_for_each_entry(gre, &g_ctx->gre_list, entry) {
 		if (gre->ul_tbf && gprs_rlcmac_tbf_ul_ass_waiting_tbf_starting_time(gre->ul_tbf))
 			gprs_rlcmac_tbf_ul_ass_fn_tick(gre->ul_tbf, bi->fn, bi->ts);
+		if (gprs_rlcmac_tbf_start_pending(&gre->dl_tbf_dl_ass_fsm))
+			gprs_rlcmac_tbf_start_fn_tick(&gre->dl_tbf_dl_ass_fsm, bi->fn, bi->ts);
 	}
 }
 
