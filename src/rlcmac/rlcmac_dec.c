@@ -25,6 +25,9 @@
 #include <osmocom/gsm/gsm0502.h>
 #include <osmocom/gsm/gsm_utils.h>
 
+#include <osmocom/gsm/gsm0502.h>
+#include <osmocom/gsm/gsm_utils.h>
+
 #include <osmocom/gprs/rlcmac/rlcmac_private.h>
 #include <osmocom/gprs/rlcmac/rlcmac_dec.h>
 #include <osmocom/gprs/rlcmac/rlc.h>
