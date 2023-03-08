@@ -362,6 +362,8 @@ int gprs_rlcmac_prim_call_up_cb(struct osmo_gprs_rlcmac_prim *rlcmac_prim)
 	/* Special return value '1' means: do not free */
 	if (rc != 1)
 		msgb_free(rlcmac_prim->oph.msg);
+	else
+		rc = 0;
 	return rc;
 }
 
@@ -452,6 +454,8 @@ int gprs_rlcmac_prim_call_down_cb(struct osmo_gprs_rlcmac_prim *rlcmac_prim)
 	/* Special return value '1' means: do not free */
 	if (rc != 1)
 		msgb_free(rlcmac_prim->oph.msg);
+	else
+		rc = 0;
 	return rc;
 }
 
@@ -559,5 +563,7 @@ int osmo_gprs_rlcmac_prim_lower_up(struct osmo_gprs_rlcmac_prim *rlcmac_prim)
 	/* Special return value '1' means: do not free */
 	if (rc != 1)
 		msgb_free(msg);
+	else
+		rc = 0;
 	return rc;
 }
