@@ -183,6 +183,8 @@ int gprs_llc_prim_call_down_cb(struct osmo_gprs_llc_prim *llc_prim)
 	/* Special return value '1' means: do not free */
 	if (rc != 1)
 		msgb_free(llc_prim->oph.msg);
+	else
+		rc = 0;
 	return rc;
 }
 
@@ -212,5 +214,7 @@ int osmo_gprs_llc_prim_lower_up(struct osmo_gprs_llc_prim *llc_prim)
 	/* Special return value '1' means: do not free */
 	if (rc != 1)
 		msgb_free(msg);
+	else
+		rc = 0;
 	return rc;
 }
