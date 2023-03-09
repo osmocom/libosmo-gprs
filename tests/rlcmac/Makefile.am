@@ -1,8 +1,11 @@
+AM_CPPFLAGS = \
+	-I$(top_srcdir)/include/ \
+	$(NULL)
+
 AM_CFLAGS = \
 	-Wall \
 	$(LIBOSMOGSM_CFLAGS) \
 	$(LIBOSMOCORE_CFLAGS) \
-	-I$(top_srcdir)/include/ \
 	$(NULL)
 
 AM_LDFLAGS = \
