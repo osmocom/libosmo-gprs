@@ -14,11 +14,6 @@ AM_CFLAGS = \
 	$(LIBOSMOCORE_CFLAGS) \
 	$(NULL)
 
-AM_LDFLAGS = \
-	$(LIBOSMOGSM_LIBS) \
-	$(LIBOSMOCORE_LIBS) \
-	$(NULL)
-
 lib_LTLIBRARIES = \
 	libosmo-gprs-rlcmac.la \
 	$(NULL)
