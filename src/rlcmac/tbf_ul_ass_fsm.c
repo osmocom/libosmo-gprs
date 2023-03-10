@@ -407,6 +407,7 @@ static void st_wait_tbf_starting_time2(struct osmo_fsm_inst *fi, uint32_t event,
 		} else {
 			tbf_ul_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ASS_ST_COMPL);
 		}
+		break;
 	case GPRS_RLCMAC_TBF_UL_ASS_EV_TBF_STARTING_TIME:
 		tbf_ul_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ASS_ST_COMPL);
 		break;
