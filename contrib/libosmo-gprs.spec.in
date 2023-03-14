@@ -41,6 +41,24 @@ Requires:       libosmo-csn1-0 = %{version}
 This package provides development files for compiling a program using
 libosmo-csn1 - CSN.1 (Concrete Syntax Notation 1) codec.
 
+%package -n libosmo-gprs-gmm0
+Summary:        Osmocom GPRS GMM library
+License:        AGPL-3.0-or-later
+Group:          System/Libraries
+
+%description -n libosmo-gprs-gmm0
+This package provides GMM (GPRS Mobility Management) layer for (E)GPRS.
+
+%package -n libosmo-gprs-gmm-devel
+Summary:        Development files for libosmo-gprs-gmm
+License:        AGPL-3.0-or-later
+Group:          Development/Libraries/C and C++
+Requires:       libosmo-gprs-gmm0 = %{version}
+
+%description -n libosmo-gprs-gmm-devel
+This package provides development files for compiling a program using
+libosmo-gprs-gmm - GMM (GPRS Mobility Management) layer for (E)GPRS.
+
 %package -n libosmo-gprs-llc0
 Summary:        Osmocom GPRS LLC library
 License:        AGPL-3.0-or-later
@@ -114,6 +132,8 @@ make %{?_smp_mflags} check || (find . -name testsuite.log -exec cat {} +)
 
 %post   -n libosmo-csn1-0 -p /sbin/ldconfig
 %postun -n libosmo-csn1-0 -p /sbin/ldconfig
+%post   -n libosmo-gprs-gmm0 -p /sbin/ldconfig
+%postun -n libosmo-gprs-gmm0 -p /sbin/ldconfig
 %post   -n libosmo-gprs-llc0 -p /sbin/ldconfig
 %postun -n libosmo-gprs-llc0 -p /sbin/ldconfig
 %post   -n libosmo-gprs-rlcmac0 -p /sbin/ldconfig
@@ -130,6 +150,17 @@ make %{?_smp_mflags} check || (find . -name testsuite.log -exec cat {} +)
 %_includedir/%name/osmocom/csn1
 %_libdir/libosmo-csn1.so
 %_libdir/pkgconfig/libosmo-csn1.pc
+
+%files -n libosmo-gprs-gmm0
+%_libdir/libosmo-gprs-gmm.so.0*
+
+%files -n libosmo-gprs-gmm-devel
+%dir %_includedir/%name
+%dir %_includedir/%name/osmocom
+%dir %_includedir/%name/osmocom/gprs
+%_includedir/%name/osmocom/gprs/gmm
+%_libdir/libosmo-gprs-gmm.so
+%_libdir/pkgconfig/libosmo-gprs-gmm.pc
 
 %files -n libosmo-gprs-llc0
 %_libdir/libosmo-gprs-llc.so.0*

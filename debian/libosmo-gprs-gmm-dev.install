@@ -1,0 +1,5 @@
+usr/include/osmocom/gprs/gmm
+usr/lib/*/libosmo-gprs-gmm*.a
+usr/lib/*/libosmo-gprs-gmm*.so
+usr/lib/*/libosmo-gprs-gmm*.la
+usr/lib/*/pkgconfig/libosmo-gprs-gmm.pc

@@ -43,6 +43,31 @@ Depends: libosmo-csn1-0 (= ${binary:Version}),
 	 ${misc:Depends}
 Description: Development headers and libraries for the Osmocom CSN.1 codec
 
+Package: libosmo-gprs-gmm0
+Section: libs
+Architecture: any
+Multi-Arch: same
+Pre-Depends: ${misc:Pre-Depends}
+Depends: ${misc:Depends},
+	 ${shlibs:Depends}
+Description: Osmocom GMM (GPRS Mobility Management) layer for GPRS and EGPRS
+
+Package: libosmo-gprs-gmm-dbg
+Architecture: any
+Section: debug
+Multi-Arch: same
+Depends: libosmo-gprs-gmm0 (= ${binary:Version}),
+	 ${misc:Depends}
+Description: Debug symbols for libosmo-gprs-gmm
+
+Package: libosmo-gprs-gmm-dev
+Architecture: any
+Multi-Arch: same
+Section: libdevel
+Depends: libosmo-gprs-gmm0 (= ${binary:Version}),
+	 ${misc:Depends}
+Description: Development headers and libraries for libosmo-gprs-gmm
+
 Package: libosmo-gprs-llc0
 Section: libs
 Architecture: any

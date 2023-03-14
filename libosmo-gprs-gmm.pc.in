@@ -1,0 +1,12 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: Osmocom [E]GPRS GMM (GPRS Mobility Management) Library
+Description: C Utility Library
+Version: @VERSION@
+Requires: libosmocore
+Libs: -L${libdir} -losmo-gprs-gmm
+Libs.private: -ltalloc
+Cflags: -I${includedir}/
