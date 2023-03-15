@@ -21,6 +21,7 @@
 #include <osmocom/core/logging.h>
 #include <osmocom/core/utils.h>
 #include <osmocom/gprs/gmm/gmm.h>
+#include <osmocom/gprs/gmm/gmm_ms_fsm.h>
 
 int g_gmm_log_cat[_OSMO_GPRS_GMM_LOGC_MAX] = { [0 ... _OSMO_GPRS_GMM_LOGC_MAX - 1] = DLGLOBAL };
 
@@ -28,4 +29,6 @@ void osmo_gprs_gmm_set_log_cat(enum osmo_gprs_gmm_log_cat logc, int logc_num)
 {
 	OSMO_ASSERT(logc < _OSMO_GPRS_GMM_LOGC_MAX);
 	g_gmm_log_cat[logc] = logc_num;
+
+	gprs_gmm_ms_fsm_set_log_cat(logc_num);
 }

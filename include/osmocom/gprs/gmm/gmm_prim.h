@@ -13,12 +13,15 @@
 
 #include <osmocom/core/utils.h>
 #include <osmocom/core/prim.h>
+#include <osmocom/gsm/protocol/gsm_23_003.h>
 #include <osmocom/gprs/gmm/gmm.h>
+
+struct osmo_gprs_llc_prim;
 
 /* 3GPP TS 24.007 (index, "GMMR") */
 enum osmo_gprs_gmm_prim_sap {
 	OSMO_GPRS_GMM_SAP_GMMREG, /* 6.6 */
-	OSMO_GPRS_GMM_SAP_GMMRR, /* GSM only */
+	OSMO_GPRS_GMM_SAP_GMMRR, /* 9.3.2, GSM only */
 	OSMO_GPRS_GMM_SAP_GMMAS, /* UMTS only */
 	OSMO_GPRS_GMM_SAP_LLGMM,
 	OSMO_GPRS_GMM_SAP_GMMSM,
@@ -33,7 +36,7 @@ static inline const char *osmo_gprs_gmm_prim_sap_name(enum osmo_gprs_gmm_prim_sa
 	return get_value_string(osmo_gprs_gmm_prim_sap_names, val);
 }
 
-/* 6.6 Registration Services for GPRS-Services */
+/* 3GPP TS 24.007 Section 6.6 Registration Services for GPRS-Services */
 enum osmo_gprs_gmm_gmmreg_prim_type {
 	OSMO_GPRS_GMM_GMMREG_ATTACH,	/* Req/Cnf/Rej */
 	OSMO_GPRS_GMM_GMMREG_DETACH,	/* Req/Cnf/Ind */
@@ -44,6 +47,16 @@ static inline const char *osmo_gprs_gmm_gmmreg_prim_type_name(enum osmo_gprs_gmm
 	return get_value_string(osmo_gprs_gmm_gmmreg_prim_type_names, val);
 }
 
+/* Attach type 10.5.5.2 */
+enum osmo_gprs_gmm_attach_type {
+	/* 0 is reserved */
+	OSMO_GPRS_GMM_ATTACH_TYPE_GPRS = 1,
+	OSMO_GPRS_GMM_ATTACH_TYPE_COMBINED_OLD = 2, /* Table 10.5.135b NOTE 1 */
+	OSMO_GPRS_GMM_ATTACH_TYPE_COMBINED = 3,
+	OSMO_GPRS_GMM_ATTACH_TYPE_EMERGENCY = 4,
+	/* others: reserved, interpreted as OSMO_GPRS_GMM_ATTACH_TYPE_GPRS */
+};
+
 /* Parameters for OSMO_GPRS_GMM_GMMREG_* prims */
 struct osmo_gprs_gmm_gmmreg_prim {
 	/* Common fields */
@@ -51,6 +64,12 @@ struct osmo_gprs_gmm_gmmreg_prim {
 	union {
 		/* OSMO_GPRS_GMM_GMMREG_ATTACH | Req, 6.6.1.1 */
 		struct {
+			enum osmo_gprs_gmm_attach_type attach_type;
+			uint32_t ptmsi;
+			bool attach_with_imsi;
+			char imsi[OSMO_IMSI_BUF_SIZE];
+			char imei[GSM23003_IMEI_NUM_DIGITS + 1];
+			char imeisv[GSM23003_IMEISV_NUM_DIGITS+1];
 			/* attach-type, READY-timer, STANDBY-timer */
 		} attach_req;
 		/* OSMO_GPRS_GMM_GMMREG_ATTACH | Cnf 6.6.1.2 / Rej 6.6.1.3 */
@@ -80,10 +99,83 @@ struct osmo_gprs_gmm_gmmreg_prim {
 	};
 };
 
+/* TS 24.007 Section 9.3.2 "Service primitives for GMMRR-SAP (GSM only)"
+ * Same as enum osmo_gprs_rlcmac_gmmrr_prim_type.
+ */
+enum osmo_gprs_gmm_gmmrr_prim_type {
+	OSMO_GPRS_GMM_GMMRR_ASSIGN,	/* Req: newTLLI  */
+	OSMO_GPRS_GMM_GMMRR_PAGE,	/* Ind: TLLI */
+};
+extern const struct value_string osmo_gprs_gmm_gmmrr_prim_type_names[];
+static inline const char *osmo_gprs_gmm_gmmrr_prim_type_name(enum osmo_gprs_gmm_gmmrr_prim_type val)
+{
+	return get_value_string(osmo_gprs_gmm_gmmrr_prim_type_names, val);
+}
+
+/* Parameters for OSMO_GPRS_GMM_GMMRR_* prims
+ * Same as struct osmo_gprs_rlcmac_gmmrr_prim.
+ */
+struct osmo_gprs_gmm_gmmrr_prim {
+	/* Common fields (none) */
+	union {
+		/* OSMO_GPRS_GMM_GMMRR_ASSIGN | Req */
+		struct {
+			uint32_t new_tlli;
+		} assign_req;
+		/* OSMO_GPRS_GMM_GMMRR_PAGE | Ind */
+		struct {
+			uint32_t tlli;
+		} page_ind;
+	};
+};
+
+/* TS 24.007 Section 9.5.1 "Service primitives for GMMSM-SAP"
+ */
+enum osmo_gprs_gmm_gmmsm_prim_type {
+	OSMO_GPRS_GMM_GMMSM_ESTABLISH,	/* Req, Cnf/Rej */
+	OSMO_GPRS_GMM_GMMSM_RELEASE,	/* Ind */
+	OSMO_GPRS_GMM_GMMSM_UNITDATA,	/* Req, Ind */
+};
+extern const struct value_string osmo_gprs_gmm_gmmsm_prim_type_names[];
+static inline const char *osmo_gprs_gmm_gmmsm_prim_type_name(enum osmo_gprs_gmm_gmmsm_prim_type val)
+{
+	return get_value_string(osmo_gprs_gmm_gmmsm_prim_type_names, val);
+}
+
+/* Parameters for OSMO_GPRS_GMM_GMMSM_* prims
+ */
+struct osmo_gprs_gmm_gmmsm_prim {
+	/* Common fields (none) */
+	union {
+		/* OSMO_GPRS_GMM_GMMSM_ESTABLISH | Req */
+		struct {
+		} establish_req;
+		/* OSMO_GPRS_GMM_GMMSM_ESTABLISH | Cnf/Rej */
+		struct {
+			uint8_t cause;
+		} establish_cnf;
+		/* OSMO_GPRS_GMM_GMMSM_RELEASE | Ind */
+		struct {
+		} page_ind;
+		/* OSMO_GPRS_GMM_GMMSM_UNITDATA | Req */
+		struct {
+			uint8_t *smpdu;
+			uint16_t smpdu_len;
+		} unitdata_req;
+		/* OSMO_GPRS_GMM_GMMSM_UNITDATA | Ind */
+		struct {
+			uint8_t *smpdu;
+			uint16_t smpdu_len;
+		} unitdata_ind;
+	};
+};
+
 struct osmo_gprs_gmm_prim {
 	struct osmo_prim_hdr oph;
 	union {
 		struct osmo_gprs_gmm_gmmreg_prim gmmreg;
+		struct osmo_gprs_gmm_gmmrr_prim gmmrr;
+		struct osmo_gprs_gmm_gmmsm_prim gmmsm;
 	};
 };
 
@@ -93,10 +185,22 @@ void osmo_gprs_gmm_prim_set_up_cb(osmo_gprs_gmm_prim_up_cb up_cb, void *up_user_
 typedef int (*osmo_gprs_gmm_prim_down_cb)(struct osmo_gprs_gmm_prim *gmm_prim, void *down_user_data);
 void osmo_gprs_gmm_prim_set_down_cb(osmo_gprs_gmm_prim_down_cb down_cb, void *down_user_data);
 
+
+typedef int (*osmo_gprs_gmm_prim_llc_down_cb)(struct osmo_gprs_llc_prim *llc_prim, void *llc_down_user_data);
+void osmo_gprs_gmm_prim_set_llc_down_cb(osmo_gprs_gmm_prim_llc_down_cb llc_down_cb, void *llc_down_user_data);
+
 int osmo_gprs_gmm_prim_upper_down(struct osmo_gprs_gmm_prim *gmm_prim);
 int osmo_gprs_gmm_prim_lower_up(struct osmo_gprs_gmm_prim *gmm_prim);
+int osmo_gprs_gmm_prim_llc_lower_up(struct osmo_gprs_llc_prim *llc_prim);
 
 const char *osmo_gprs_gmm_prim_name(const struct osmo_gprs_gmm_prim *gmm_prim);
 
 /* Alloc primitive for GMMREG SAP: */
 struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmreg_attach_req(void);
+
+/* Alloc primitive for GMMRR SAP: */
+struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmrr_page_ind(uint32_t tlli);
+
+/* Alloc primitive for GMMSM SAP: */
+struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmsm_establish_req(void);
+struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmsm_unitdata_req(uint8_t *smpdu, unsigned int smpdu_len);

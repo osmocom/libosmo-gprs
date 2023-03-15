@@ -61,7 +61,9 @@ struct osmo_gprs_rlcmac_grr_prim {
 	};
 };
 
-/* TS 24.007 Section 9.3.2 "Service primitives for GMMRR-SAP (GSM only)" */
+/* TS 24.007 Section 9.3.2 "Service primitives for GMMRR-SAP (GSM only)"
+ * Same as enum osmo_gprs_gmm_gmmrr_prim_type.
+ */
 enum osmo_gprs_rlcmac_gmmrr_prim_type {
 	OSMO_GPRS_RLCMAC_GMMRR_ASSIGN,	/* Req: newTLLI  */
 	OSMO_GPRS_RLCMAC_GMMRR_PAGE,	/* Ind: TLLI */
@@ -73,7 +75,9 @@ static inline const char *osmo_gprs_rlcmac_gmmrr_prim_type_name(enum osmo_gprs_r
 	return get_value_string(osmo_gprs_rlcmac_gmmrr_prim_type_names, val);
 }
 
-/* Parameters for OSMO_GPRS_RLCMAC_GRR_* prims */
+/* Parameters for OSMO_GPRS_RLCMAC_GRR_* prims.
+ * Same as struct osmo_gprs_gmm_gmmrr_prim.
+ */
 struct osmo_gprs_rlcmac_gmmrr_prim {
 	/* Common fields (none) */
 	union {

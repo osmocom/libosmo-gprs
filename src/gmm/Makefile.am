@@ -20,6 +20,8 @@ lib_LTLIBRARIES = \
 
 libosmo_gprs_gmm_la_SOURCES = \
 	gmm.c \
+	gmm_ms_fsm.c \
+	gmm_pdu.c \
 	gmm_prim.c \
 	misc.c \
 	$(NULL)
@@ -31,6 +33,7 @@ libosmo_gprs_gmm_la_LDFLAGS = \
 	$(NULL)
 
 libosmo_gprs_gmm_la_LIBADD = \
+	$(top_builddir)/src/llc/libosmo-gprs-llc.la \
 	$(LIBOSMOCORE_LIBS) \
 	$(LIBOSMOGSM_LIBS) \
 	-lm \
