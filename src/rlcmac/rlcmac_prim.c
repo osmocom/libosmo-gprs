@@ -491,6 +491,12 @@ static int rlcmac_prim_handle_l1ctl_pdch_data_ind(struct osmo_gprs_rlcmac_prim *
 		return -EINVAL;
 	}
 
+	/* TODO: handle PTCCH/D (Packet Timing Control CHannel) blocks */
+	if ((rlcmac_prim->l1ctl.pdch_data_ind.fn % 104) == 12) {
+		LOGRLCMAC(LOGL_DEBUG, "Dropping PTCCH/D block (not implemented)\n");
+		return 0;
+	}
+
 	if (gprs_rlcmac_mcs_is_gprs(cs))
 		return gprs_rlcmac_handle_gprs_dl_block(rlcmac_prim, cs);
 
