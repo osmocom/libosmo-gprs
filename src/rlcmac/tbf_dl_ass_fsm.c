@@ -98,7 +98,6 @@ static int handle_pkt_dl_ass(struct gprs_rlcmac_tbf_dl_ass_fsm_ctx *ctx, const s
 {
 
 	const Packet_Downlink_Assignment_t *dlass = &d->dl_block->u.Packet_Downlink_Assignment;
-	unsigned int i;
 
 	if (dlass->Exist_DOWNLINK_TFI_ASSIGNMENT)
 		ctx->alloc.dl_tfi = dlass->DOWNLINK_TFI_ASSIGNMENT;
@@ -110,7 +109,7 @@ static int handle_pkt_dl_ass(struct gprs_rlcmac_tbf_dl_ass_fsm_ctx *ctx, const s
 		ctx->tbf_starting_time = TBF_Starting_Frame_Number_to_fn(&dlass->TBF_Starting_Time, d->fn);
 
 	ctx->alloc.num_ts = 0;
-	for (i = 0; i < 8; i++) {
+	for (unsigned int i = 0; i < ARRAY_SIZE(ctx->alloc.ts); i++) {
 		ctx->alloc.ts[i].allocated = (dlass->TIMESLOT_ALLOCATION >> i) & 0x01;
 		if (ctx->alloc.ts[i].allocated)
 			ctx->alloc.num_ts++;
