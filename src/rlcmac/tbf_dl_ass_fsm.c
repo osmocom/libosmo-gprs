@@ -110,7 +110,7 @@ static int handle_pkt_dl_ass(struct gprs_rlcmac_tbf_dl_ass_fsm_ctx *ctx, const s
 
 	ctx->alloc.num_ts = 0;
 	for (unsigned int i = 0; i < ARRAY_SIZE(ctx->alloc.ts); i++) {
-		ctx->alloc.ts[i].allocated = (dlass->TIMESLOT_ALLOCATION >> i) & 0x01;
+		ctx->alloc.ts[i].allocated = (dlass->TIMESLOT_ALLOCATION >> (7 - i)) & 0x01;
 		if (ctx->alloc.ts[i].allocated)
 			ctx->alloc.num_ts++;
 	}
