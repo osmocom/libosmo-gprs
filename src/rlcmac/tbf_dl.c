@@ -85,10 +85,9 @@ void gprs_rlcmac_dl_tbf_free(struct gprs_rlcmac_dl_tbf *dl_tbf)
 
 static uint8_t dl_tbf_dl_slotmask(struct gprs_rlcmac_dl_tbf *dl_tbf)
 {
-	uint8_t i;
 	uint8_t dl_slotmask = 0;
 
-	for (i = 0; i < 8; i++) {
+	for (unsigned int i = 0; i < ARRAY_SIZE(dl_tbf->cur_alloc.ts); i++) {
 		if (dl_tbf->cur_alloc.ts[i].allocated)
 			dl_slotmask |= (1 << i);
 	}
