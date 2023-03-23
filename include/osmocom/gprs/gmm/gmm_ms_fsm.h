@@ -1,6 +1,7 @@
 #pragma once
 
 #include <osmocom/core/fsm.h>
+#include <osmocom/gprs/gmm/gmm_prim.h>
 
 struct gprs_gmm_entity;
 
@@ -29,7 +30,8 @@ enum gprs_gmm_ms_fsm_events {
 	GPRS_GMM_MS_EV_ATTACH_REQUESTED,
 	GPRS_GMM_MS_EV_ATTACH_REJECTED,
 	GPRS_GMM_MS_EV_ATTACH_ACCEPTED,
-	GPRS_GMM_MS_EV_DETACH_REQUESTED, /* poweroff or network initiated */
+	GPRS_GMM_MS_EV_DETACH_REQUESTED, /* also network initiated. data: ptr to enum osmo_gprs_gmm_detach_ms_type */
+	GPRS_GMM_MS_EV_DETACH_REQUESTED_POWEROFF,
 	GPRS_GMM_MS_EV_DETACH_ACCEPTED,
 	GPRS_GMM_MS_EV_SR_REQUESTED, /* (Iu only) */
 	GPRS_GMM_MS_EV_SR_REJECTED, /* (Iu only) */
@@ -43,6 +45,8 @@ enum gprs_gmm_ms_fsm_events {
 struct gprs_gmm_ms_fsm_ctx {
 	struct osmo_fsm_inst *fi;
 	struct gprs_gmm_entity *gmme;
+	/* Type of last initiated detach: */
+	enum osmo_gprs_gmm_detach_ms_type detach_type;
 };
 
 int gprs_gmm_ms_fsm_init(void);

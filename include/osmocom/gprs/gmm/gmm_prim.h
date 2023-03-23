@@ -56,6 +56,43 @@ enum osmo_gprs_gmm_attach_type {
 	OSMO_GPRS_GMM_ATTACH_TYPE_EMERGENCY = 4,
 	/* others: reserved, interpreted as OSMO_GPRS_GMM_ATTACH_TYPE_GPRS */
 };
+extern const struct value_string osmo_gprs_gmm_attach_type_names[];
+static inline const char *osmo_gprs_gmm_attach_ms_type_name(enum osmo_gprs_gmm_attach_type val)
+{
+	return get_value_string(osmo_gprs_gmm_attach_type_names, val);
+}
+
+/* Detach type 10.5.5.5 */
+enum osmo_gprs_gmm_detach_poweroff_type {
+	/* 0 is reserved */
+	OSMO_GPRS_GMM_DETACH_POWEROFF_TYPE_NORMAL = 0,
+	OSMO_GPRS_GMM_DETACH_POWEROFF_TYPE_POWEROFF = 1,
+};
+enum osmo_gprs_gmm_detach_ms_type {
+	/* 0 is reserved */
+	OSMO_GPRS_GMM_DETACH_MS_TYPE_GPRS = 1,
+	OSMO_GPRS_GMM_DETACH_MS_TYPE_IMSI = 2,
+	OSMO_GPRS_GMM_DETACH_MS_TYPE_COMBINED = 3,
+	/* others: reserved, interpreted as OSMO_GPRS_GMM_DETACH_TYPE_COMBINED */
+};
+extern const struct value_string osmo_gprs_gmm_detach_ms_type_names[];
+static inline const char *osmo_gprs_gmm_detach_ms_type_name(enum osmo_gprs_gmm_detach_ms_type val)
+{
+	return get_value_string(osmo_gprs_gmm_detach_ms_type_names, val);
+}
+
+enum osmo_gprs_gmm_detach_network_type {
+	/* 0 is reserved */
+	OSMO_GPRS_GMM_DETACH_NETWORK_TYPE_REATTACH_REQUIRED = 1,
+	OSMO_GPRS_GMM_DETACH_NETWORK_TYPE_REATTACH_NOT_REQUIRED = 2,
+	OSMO_GPRS_GMM_DETACH_NETWORK_TYPE_IMSI = 3,
+	/* others: reserved, interpreted as OSMO_GPRS_GMM_DETACH_TYPE_REATTACH_NOT_REQUIRED */
+};
+extern const struct value_string osmo_gprs_gmm_detach_network_type_names[];
+static inline const char *osmo_gprs_gmm_detach_network_type_name(enum osmo_gprs_gmm_detach_network_type val)
+{
+	return get_value_string(osmo_gprs_gmm_detach_network_type_names, val);
+}
 
 /* Parameters for OSMO_GPRS_GMM_GMMREG_* prims */
 struct osmo_gprs_gmm_gmmreg_prim {
@@ -86,15 +123,17 @@ struct osmo_gprs_gmm_gmmreg_prim {
 		} attach_cnf;
 		/* OSMO_GPRS_GMM_GMMREG_DETACH | Req, 6.6.1.4 */
 		struct {
-			/* detach-type, power-off/normal-detach  */
+			uint32_t ptmsi;
+			enum osmo_gprs_gmm_detach_ms_type detach_type;
+			enum osmo_gprs_gmm_detach_poweroff_type poweroff_type;
 		} detach_req;
 		/* OSMO_GPRS_GMM_GMMREG_DETACH | Cnf, 6.6.1.5 */
 		struct {
-			/* detach-type */
+			enum osmo_gprs_gmm_detach_ms_type detach_type;
 		} detach_cnf;
 		/* OSMO_GPRS_GMM_GMMREG_DETACH | Ind, , 6.6.1.6 */
 		struct {
-			/* detach-type */
+			enum osmo_gprs_gmm_detach_ms_type detach_type;
 		} detach_ind;
 	};
 };
@@ -197,6 +236,7 @@ const char *osmo_gprs_gmm_prim_name(const struct osmo_gprs_gmm_prim *gmm_prim);
 
 /* Alloc primitive for GMMREG SAP: */
 struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmreg_attach_req(void);
+struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmreg_detach_req(void);
 
 /* Alloc primitive for GMMRR SAP: */
 struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmrr_page_ind(uint32_t tlli);

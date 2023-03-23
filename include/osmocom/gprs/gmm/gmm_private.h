@@ -17,6 +17,9 @@
 #include <osmocom/gprs/gmm/gmm_prim.h>
 #include <osmocom/gprs/gmm/gmm_ms_fsm.h>
 
+/* 3GPP TS 44.064 § 8.3 TLLI assignment procedures */
+#define GPRS_GMM_TLLI_UNASSIGNED (0xffffffff)
+
 extern int g_gmm_log_cat[_OSMO_GPRS_GMM_LOGC_MAX];
 
 #define LOGGMM(lvl, fmt, args...) LOGP(g_gmm_log_cat[OSMO_GPRS_GMM_LOGC_GMM], lvl, fmt, ## args)
@@ -86,6 +89,9 @@ int gprs_gmm_rx(struct gprs_gmm_entity *gmme, struct gsm48_hdr *gh, unsigned int
 int gprs_gmm_tx_att_req(struct gprs_gmm_entity *gmme,
 			enum osmo_gprs_gmm_attach_type attach_type,
 			bool attach_with_imsi);
+int gprs_gmm_tx_detach_req(struct gprs_gmm_entity *gmme,
+			   enum osmo_gprs_gmm_detach_ms_type detach_type,
+			   enum osmo_gprs_gmm_detach_poweroff_type poweroff_type);
 
 #define LOGGMME(snme, level, fmt, args...) \
 	LOGGMM(level, "GMME(PTMSI-%08x) " fmt, \

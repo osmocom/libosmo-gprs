@@ -39,9 +39,6 @@ static void st_gmm_ms_null(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 	case GPRS_GMM_MS_EV_ENABLE_GPRS_MODE:
 		gmm_ms_fsm_state_chg(fi, GPRS_GMM_MS_ST_DEREGISTERED);
 		break;
-	case GPRS_GMM_MS_EV_DETACH_REQUESTED:
-		gmm_ms_fsm_state_chg(fi, GPRS_GMM_MS_ST_DEREGISTERED);
-		break;
 	default:
 		OSMO_ASSERT(0);
 	}
@@ -55,9 +52,6 @@ static void st_gmm_ms_deregistered(struct osmo_fsm_inst *fi, uint32_t event, voi
 		break;
 	case GPRS_GMM_MS_EV_ATTACH_REQUESTED:
 		gmm_ms_fsm_state_chg(fi, GPRS_GMM_MS_ST_REGISTERED_INITIATED);
-		break;
-	case GPRS_GMM_MS_EV_DETACH_REQUESTED:
-		gmm_ms_fsm_state_chg(fi, GPRS_GMM_MS_ST_DEREGISTERED);
 		break;
 	default:
 		OSMO_ASSERT(0);
@@ -84,6 +78,7 @@ static void st_gmm_ms_registered_initiated(struct osmo_fsm_inst *fi, uint32_t ev
 
 static void st_gmm_ms_registered(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
+	struct gprs_gmm_ms_fsm_ctx *ctx = (struct gprs_gmm_ms_fsm_ctx *)fi->priv;
 	switch (event) {
 	case GPRS_GMM_MS_EV_SR_REQUESTED:
 		gmm_ms_fsm_state_chg(fi, GPRS_GMM_MS_ST_REGISTERED);
@@ -92,6 +87,7 @@ static void st_gmm_ms_registered(struct osmo_fsm_inst *fi, uint32_t event, void 
 		gmm_ms_fsm_state_chg(fi, GPRS_GMM_MS_ST_RAU_INITIATED);
 		break;
 	case GPRS_GMM_MS_EV_DETACH_REQUESTED:
+		ctx->detach_type = *((enum osmo_gprs_gmm_detach_ms_type *)data);
 		gmm_ms_fsm_state_chg(fi, GPRS_GMM_MS_ST_DEREGISTERED_INITIATED);
 		break;
 	default:
@@ -108,9 +104,6 @@ static void st_gmm_ms_deregistered_initiated(struct osmo_fsm_inst *fi, uint32_t 
 		break;
 	case GPRS_GMM_MS_EV_RAU_ACCEPTED:
 		gmm_ms_fsm_state_chg(fi, GPRS_GMM_MS_ST_REGISTERED);
-		break;
-	case GPRS_GMM_MS_EV_DETACH_REQUESTED:
-		gmm_ms_fsm_state_chg(fi, GPRS_GMM_MS_ST_DEREGISTERED);
 		break;
 	default:
 		OSMO_ASSERT(0);
@@ -129,9 +122,6 @@ static void st_gmm_ms_rau_initiated(struct osmo_fsm_inst *fi, uint32_t event, vo
 	case GPRS_GMM_MS_EV_RAU_ACCEPTED:
 		gmm_ms_fsm_state_chg(fi, GPRS_GMM_MS_ST_REGISTERED);
 		break;
-	case GPRS_GMM_MS_EV_DETACH_REQUESTED:
-		gmm_ms_fsm_state_chg(fi, GPRS_GMM_MS_ST_DEREGISTERED);
-		break;
 	default:
 		OSMO_ASSERT(0);
 	}
@@ -146,7 +136,15 @@ static void st_gmm_ms_sr_initiated(struct osmo_fsm_inst *fi, uint32_t event, voi
 	case GPRS_GMM_MS_EV_SR_ACCEPTED:
 		gmm_ms_fsm_state_chg(fi, GPRS_GMM_MS_ST_REGISTERED);
 		break;
-	case GPRS_GMM_MS_EV_DETACH_REQUESTED:
+	default:
+		OSMO_ASSERT(0);
+	}
+}
+
+void gmm_ms_fsm_allstate_action(struct osmo_fsm_inst *fi, uint32_t event, void *data)
+{
+	switch (event) {
+	case GPRS_GMM_MS_EV_DETACH_REQUESTED_POWEROFF:
 		gmm_ms_fsm_state_chg(fi, GPRS_GMM_MS_ST_DEREGISTERED);
 		break;
 	default:
@@ -157,8 +155,7 @@ static void st_gmm_ms_sr_initiated(struct osmo_fsm_inst *fi, uint32_t event, voi
 static struct osmo_fsm_state gmm_ms_fsm_states[] = {
 	[GPRS_GMM_MS_ST_NULL] = {
 		.in_event_mask =
-			X(GPRS_GMM_MS_EV_ENABLE_GPRS_MODE)|
-			X(GPRS_GMM_MS_EV_DETACH_REQUESTED),
+			X(GPRS_GMM_MS_EV_ENABLE_GPRS_MODE),
 		.out_state_mask =
 			X(GPRS_GMM_MS_ST_DEREGISTERED),
 		.name = "Null",
@@ -167,8 +164,7 @@ static struct osmo_fsm_state gmm_ms_fsm_states[] = {
 	[GPRS_GMM_MS_ST_DEREGISTERED] = {
 		.in_event_mask =
 			X(GPRS_GMM_MS_EV_DISABLE_GPRS_MODE) |
-			X(GPRS_GMM_MS_EV_ATTACH_REQUESTED) |
-			X(GPRS_GMM_MS_EV_DETACH_REQUESTED),
+			X(GPRS_GMM_MS_EV_ATTACH_REQUESTED),
 		.out_state_mask =
 			X(GPRS_GMM_MS_ST_NULL) |
 			X(GPRS_GMM_MS_ST_REGISTERED_INITIATED)|
@@ -192,7 +188,6 @@ static struct osmo_fsm_state gmm_ms_fsm_states[] = {
 		.in_event_mask =
 			X(GPRS_GMM_MS_EV_SR_REQUESTED) |
 			X(GPRS_GMM_MS_EV_RAU_REQUESTED) |
-			X(GPRS_GMM_MS_EV_DETACH_REQUESTED) |
 			X(GPRS_GMM_MS_EV_DETACH_REQUESTED),
 		.out_state_mask =
 			X(GPRS_GMM_MS_ST_REGISTERED) |
@@ -206,19 +201,17 @@ static struct osmo_fsm_state gmm_ms_fsm_states[] = {
 		.in_event_mask =
 			X(GPRS_GMM_MS_EV_DETACH_ACCEPTED) |
 			X(GPRS_GMM_MS_EV_LOW_LVL_FAIL) |
-			X(GPRS_GMM_MS_EV_RAU_ACCEPTED) |
-			X(GPRS_GMM_MS_EV_DETACH_REQUESTED),
+			X(GPRS_GMM_MS_EV_RAU_ACCEPTED),
 		.out_state_mask =
 			X(GPRS_GMM_MS_ST_REGISTERED) |
 			X(GPRS_GMM_MS_ST_DEREGISTERED),
 		.name = "DeregisteredInitiated",
-		.action = st_gmm_ms_sr_initiated,
+		.action = st_gmm_ms_deregistered_initiated,
 	},
 	[GPRS_GMM_MS_ST_RAU_INITIATED] = {
 		.in_event_mask =
 			X(GPRS_GMM_MS_EV_RAU_REJECTED) |
-			X(GPRS_GMM_MS_EV_RAU_ACCEPTED) |
-			X(GPRS_GMM_MS_EV_DETACH_REQUESTED),
+			X(GPRS_GMM_MS_EV_RAU_ACCEPTED),
 		.out_state_mask =
 			X(GPRS_GMM_MS_ST_REGISTERED) |
 			X(GPRS_GMM_MS_ST_DEREGISTERED_INITIATED) |
@@ -229,13 +222,12 @@ static struct osmo_fsm_state gmm_ms_fsm_states[] = {
 	[GPRS_GMM_MS_ST_SR_INITIATED] = {
 		.in_event_mask =
 			X(GPRS_GMM_MS_EV_SR_REJECTED) |
-			X(GPRS_GMM_MS_EV_SR_ACCEPTED) |
-			X(GPRS_GMM_MS_EV_DETACH_REQUESTED),
+			X(GPRS_GMM_MS_EV_SR_ACCEPTED),
 		.out_state_mask =
 			X(GPRS_GMM_MS_ST_REGISTERED) |
 			X(GPRS_GMM_MS_ST_DEREGISTERED),
-		.name = "DeregisteredInitiated",
-		.action = st_gmm_ms_deregistered_initiated,
+		.name = "SRInitiated",
+		.action = st_gmm_ms_sr_initiated,
 	},
 };
 
@@ -246,6 +238,7 @@ const struct value_string gmm_ms_fsm_event_names[] = {
 	{ GPRS_GMM_MS_EV_ATTACH_REJECTED,	"ATTACH_REJECTED" },
 	{ GPRS_GMM_MS_EV_ATTACH_ACCEPTED,	"ATTACH_ACCEPTED" },
 	{ GPRS_GMM_MS_EV_DETACH_REQUESTED,	"DETACH_REQUESTED" },
+	{ GPRS_GMM_MS_EV_DETACH_REQUESTED_POWEROFF, "DETACH_REQUESTED_POWEROFF" },
 	{ GPRS_GMM_MS_EV_DETACH_ACCEPTED,	"DETACH_ACCEPTED" },
 	{ GPRS_GMM_MS_EV_SR_REQUESTED,		"SR_REQUESTED" },
 	{ GPRS_GMM_MS_EV_SR_REJECTED,		"SR_REJECTED" },
@@ -267,6 +260,8 @@ struct osmo_fsm gmm_ms_fsm = {
 	.states = gmm_ms_fsm_states,
 	.num_states = ARRAY_SIZE(gmm_ms_fsm_states),
 	.event_names = gmm_ms_fsm_event_names,
+	.allstate_event_mask = X(GPRS_GMM_MS_EV_DETACH_REQUESTED_POWEROFF),
+	.allstate_action = gmm_ms_fsm_allstate_action,
 	.log_subsys = DLGLOBAL, /* updated dynamically through gprs_gmm_ms_fsm_set_log_cat() */
 	.timer_cb = gmm_ms_fsm_timer_cb,
 };

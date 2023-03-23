@@ -65,6 +65,28 @@ const struct value_string osmo_gprs_gmm_gmmsm_prim_type_names[] = {
 	{ 0, NULL }
 };
 
+const struct value_string osmo_gprs_gmm_attach_type_names[] = {
+	{ OSMO_GPRS_GMM_ATTACH_TYPE_GPRS,	"GPRS attach" },
+	{ OSMO_GPRS_GMM_ATTACH_TYPE_COMBINED_OLD, "Combined GPRS/IMSI attach (old protocol version)" },
+	{ OSMO_GPRS_GMM_ATTACH_TYPE_COMBINED,	"Combined GPRS/IMSI attach" },
+	{ OSMO_GPRS_GMM_ATTACH_TYPE_EMERGENCY,	"Emergency attach" },
+	{ 0, NULL }
+};
+
+const struct value_string osmo_gprs_gmm_detach_ms_type_names[] = {
+	{ OSMO_GPRS_GMM_DETACH_MS_TYPE_GPRS,	"GPRS detach" },
+	{ OSMO_GPRS_GMM_DETACH_MS_TYPE_IMSI,	"IMSI detach" },
+	{ OSMO_GPRS_GMM_DETACH_MS_TYPE_COMBINED, "Combined GPRS/IMSI detach" },
+	{ 0, NULL }
+};
+
+const struct value_string osmo_gprs_gmm_detach_network_type_names[] = {
+	{ OSMO_GPRS_GMM_DETACH_NETWORK_TYPE_REATTACH_REQUIRED,		"Re-attach required" },
+	{ OSMO_GPRS_GMM_DETACH_NETWORK_TYPE_REATTACH_NOT_REQUIRED,	"Re-attach not required" },
+	{ OSMO_GPRS_GMM_DETACH_NETWORK_TYPE_IMSI,			"IMSI detach (after VLR failure)" },
+	{ 0, NULL }
+};
+
 const char *osmo_gprs_gmm_prim_name(const struct osmo_gprs_gmm_prim *gmm_prim)
 {
 	static char name_buf[256];
@@ -357,9 +379,31 @@ static int gprs_gmm_prim_handle_gmmreg_attach_req(struct osmo_gprs_gmm_prim *gmm
 static int gprs_gmm_prim_handle_gmmreg_detach_req(struct osmo_gprs_gmm_prim *gmm_prim)
 {
 	int rc;
+	struct gprs_gmm_entity *gmme = gprs_gmm_find_gmme_by_tlli(gmm_prim->gmmreg.detach_req.ptmsi);
 
-	rc = gprs_gmm_prim_handle_unsupported(gmm_prim);
+	if (!gmme) {
+		LOGGMM(LOGL_ERROR, "Rx GMMREG-DETACH.req for unknown PTMSI=0x%08x\n",
+		       gmm_prim->gmmreg.detach_req.ptmsi);
+		return -EINVAL;
+	}
 
+	switch (gmm_prim->gmmreg.detach_req.poweroff_type) {
+	case OSMO_GPRS_GMM_DETACH_POWEROFF_TYPE_NORMAL:
+		/* C.3 MS initiated DETACH, GPRS only */
+		rc = osmo_fsm_inst_dispatch(gmme->ms_fsm.fi, GPRS_GMM_MS_EV_DETACH_REQUESTED,
+					    &gmm_prim->gmmreg.detach_req.detach_type);
+		break;
+	case OSMO_GPRS_GMM_DETACH_POWEROFF_TYPE_POWEROFF:
+		/* C.4 POWER-OFF DETACH, GPRS only */
+		rc = osmo_fsm_inst_dispatch(gmme->ms_fsm.fi, GPRS_GMM_MS_EV_DETACH_REQUESTED_POWEROFF, NULL);
+		break;
+	default:
+		OSMO_ASSERT(0);
+	}
+
+	rc = gprs_gmm_tx_detach_req(gmme,
+				    gmm_prim->gmmreg.detach_req.detach_type,
+				    gmm_prim->gmmreg.detach_req.poweroff_type);
 	return rc;
 }
 

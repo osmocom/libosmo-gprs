@@ -328,3 +328,42 @@ int gprs_gmm_build_ciph_auth_resp(struct gprs_gmm_entity *gmme, bool imeisv_requ
 	/* TODO: Optional IEs, eg Authentication parameter */
 	return rc;
 }
+
+int gprs_gmm_build_detach_req(struct gprs_gmm_entity *gmme,
+			      enum osmo_gprs_gmm_detach_ms_type detach_type,
+			      enum osmo_gprs_gmm_detach_poweroff_type poweroff_type,
+			      struct msgb *msg)
+{
+	struct gsm48_hdr *gh;
+	uint8_t byte;
+	struct osmo_mobile_identity mi;
+	uint8_t *l;
+	int rc;
+
+	gh = (struct gsm48_hdr *) msgb_put(msg, sizeof(*gh));
+	gh->proto_discr = GSM48_PDISC_MM_GPRS;
+	gh->msg_type = GSM48_MT_GMM_DETACH_REQ;
+
+	/* Detach type 10.5.5.5 + Spare half octet 10.5.1.8 */
+	byte = ((detach_type & 0x07) << 5) | (poweroff_type & 0x01) << 4;
+	msgb_put_u8(msg, byte);
+
+	/* DRX parameter 10.5.5.6 */
+	memcpy(msgb_put(msg, sizeof(drx_param_def)),
+	       &drx_param_def,
+	       sizeof(drx_param_def));
+
+	/* P-TMSI, Mobile identity 10.5.1.4 */
+	mi = (struct osmo_mobile_identity){
+		.type = GSM_MI_TYPE_TMSI,
+		.tmsi = gmme->ptmsi,
+	};
+	l = msgb_put(msg, 1); /* len */
+	rc = osmo_mobile_identity_encode_msgb(msg, &mi, false);
+	if (rc < 0)
+		return -EINVAL;
+	*l = rc;
+
+	/* TODO: optional fields: P-TMSI signature 10.5.5.8a */
+	return 0;
+}

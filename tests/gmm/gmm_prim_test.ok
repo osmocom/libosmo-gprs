@@ -7,4 +7,7 @@ test_gmm_prim_up_cb(): Rx GMMREG-ATTACH.confirm accepted=1 rej_cause=0
 test_gmm_prim_llc_down_cb(): Rx LLGM-ASSIGN.request TLLI=0x00000000
 test_gmm_prim_down_cb(): Rx GMRR-ASSIGN.request new_tlli=0xea711b41
 test_gmm_prim_llc_down_cb(): Rx LL-UNITDATA.request TLLI=0xea711b41 SAPI=GMM l3=[08 03 ]
+test_gmm_prim_llc_down_cb(): Rx LL-UNITDATA.request TLLI=0xea711b41 SAPI=GMM l3=[08 05 20 0a 00 05 f4 ea 71 1b 41 ]
+test_gmm_prim_llc_down_cb(): Rx LLGM-ASSIGN.request TLLI=0x00000000
+test_gmm_prim_up_cb(): Rx GMMREG-DETACH.confirm detach_type='GPRS detach'
 ==== test_gmm_prim_ms() [end] ====

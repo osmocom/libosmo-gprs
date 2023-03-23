@@ -133,6 +133,10 @@ static uint8_t pdu_gmm_att_acc[] = {
 0xea, 0x71, 0x1b, 0x41
 };
 
+static uint8_t pdu_gmm_detach_acc[] = {
+0x08, 0x06, 0x00
+};
+
 int test_gmm_prim_up_cb(struct osmo_gprs_gmm_prim *gmm_prim, void *user_data)
 {
 	const char *pdu_name = osmo_gprs_gmm_prim_name(gmm_prim);
@@ -144,6 +148,10 @@ int test_gmm_prim_up_cb(struct osmo_gprs_gmm_prim *gmm_prim, void *user_data)
 			printf("%s(): Rx %s accepted=%u rej_cause=%u\n", __func__, pdu_name,
 			       gmm_prim->gmmreg.attach_cnf.accepted,
 			       gmm_prim->gmmreg.attach_cnf.rej.cause);
+			break;
+		case OSMO_PRIM(OSMO_GPRS_GMM_GMMREG_DETACH, PRIM_OP_CONFIRM):
+			printf("%s(): Rx %s detach_type='%s'\n", __func__, pdu_name,
+			       osmo_gprs_gmm_detach_ms_type_name(gmm_prim->gmmreg.detach_cnf.detach_type));
 			break;
 		default:
 			printf("%s(): Unexpected Rx %s\n", __func__, pdu_name);
@@ -217,13 +225,12 @@ static void test_gmm_prim_ms(void)
 
 	/* MS sends GMM Attach Req */
 	gmm_prim = osmo_gprs_gmm_prim_alloc_gmmreg_attach_req();
+	OSMO_ASSERT(gmm_prim);
 	gmm_prim->gmmreg.attach_req.attach_type = OSMO_GPRS_GMM_ATTACH_TYPE_GPRS;
 	gmm_prim->gmmreg.attach_req.ptmsi = ptmsi;
 	OSMO_STRLCPY_ARRAY(gmm_prim->gmmreg.attach_req.imsi, imsi);
 	OSMO_STRLCPY_ARRAY(gmm_prim->gmmreg.attach_req.imei, imei);
 	OSMO_STRLCPY_ARRAY(gmm_prim->gmmreg.attach_req.imeisv, imeisv);
-
-	OSMO_ASSERT(gmm_prim);
 	rc = osmo_gprs_gmm_prim_upper_down(gmm_prim);
 	OSMO_ASSERT(rc == 0);
 
@@ -243,6 +250,24 @@ static void test_gmm_prim_ms(void)
 
 	/* Network sends GMM Attach Accept */
 	llc_prim = gprs_llc_prim_alloc_ll_unitdata_ind(tlli, OSMO_GPRS_LLC_SAPI_GMM, (uint8_t *)pdu_gmm_att_acc, sizeof(pdu_gmm_att_acc));
+	OSMO_ASSERT(llc_prim);
+	rc = osmo_gprs_gmm_prim_llc_lower_up(llc_prim);
+	OSMO_ASSERT(rc == 0);
+	/* As a result, MS answers GMM Attach Complete */
+
+	/* ... */
+
+	/* DETACH */
+	gmm_prim = osmo_gprs_gmm_prim_alloc_gmmreg_detach_req();
+	OSMO_ASSERT(gmm_prim);
+	gmm_prim->gmmreg.detach_req.detach_type = OSMO_GPRS_GMM_DETACH_MS_TYPE_GPRS;
+	gmm_prim->gmmreg.detach_req.poweroff_type = OSMO_GPRS_GMM_DETACH_POWEROFF_TYPE_NORMAL;
+	gmm_prim->gmmreg.detach_req.ptmsi = ptmsi;
+	rc = osmo_gprs_gmm_prim_upper_down(gmm_prim);
+	OSMO_ASSERT(rc == 0);
+
+	/* Network sends GMM Detach Accept */
+	llc_prim = gprs_llc_prim_alloc_ll_unitdata_ind(tlli, OSMO_GPRS_LLC_SAPI_GMM, (uint8_t *)pdu_gmm_detach_acc, sizeof(pdu_gmm_detach_acc));
 	OSMO_ASSERT(llc_prim);
 	rc = osmo_gprs_gmm_prim_llc_lower_up(llc_prim);
 	OSMO_ASSERT(rc == 0);

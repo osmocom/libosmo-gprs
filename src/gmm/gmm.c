@@ -179,6 +179,18 @@ static int gprs_gmm_submit_gmmreg_attach_cnf(struct gprs_gmm_entity *gmme, bool 
 	return rc;
 }
 
+static int gprs_gmm_submit_gmmreg_detach_cnf(struct gprs_gmm_entity *gmme)
+{
+	struct osmo_gprs_gmm_prim *gmm_prim_tx;
+	int rc;
+
+	gmm_prim_tx = gprs_gmm_prim_alloc_gmmreg_detach_cnf();
+	gmm_prim_tx->gmmreg.detach_cnf.detach_type = gmme->ms_fsm.detach_type;
+
+	rc = gprs_gmm_prim_call_up_cb(gmm_prim_tx);
+	return rc;
+}
+
 static int gprs_gmm_submit_gmmrr_assing_req(struct gprs_gmm_entity *gmme)
 {
 	struct osmo_gprs_gmm_prim *gmm_prim_tx;
@@ -340,6 +352,39 @@ static int gprs_gmm_tx_att_compl(struct gprs_gmm_entity *gmme)
 	return rc;
 }
 
+/* Tx GMM Detach Request (mobile originating detach), 9.4.5.2 */
+int gprs_gmm_tx_detach_req(struct gprs_gmm_entity *gmme,
+			   enum osmo_gprs_gmm_detach_ms_type detach_type,
+			   enum osmo_gprs_gmm_detach_poweroff_type poweroff_type)
+{
+	struct osmo_gprs_llc_prim *llc_prim;
+	int rc;
+	struct msgb *msg;
+
+	LOGGMME(gmme, LOGL_INFO, "Tx GMM DETACH REQUEST (MO)\n");
+	llc_prim = osmo_gprs_llc_prim_alloc_ll_unitdata_req(
+			gmme->ptmsi, OSMO_GPRS_LLC_SAPI_GMM, NULL, GPRS_GMM_ALLOC_SIZE);
+	msg = llc_prim->oph.msg;
+	msg->l3h = msg->tail;
+	rc = gprs_gmm_build_detach_req(gmme, detach_type, poweroff_type, msg);
+	if (rc < 0) {
+		msgb_free(msg);
+		return -EBADMSG;
+	}
+	llc_prim->ll.l3_pdu = msg->l3h;
+	llc_prim->ll.l3_pdu_len = msgb_l3len(msg);
+	/* TODO:
+	llc_prim->ll.qos_params[3];
+	llc_prim->ll.radio_prio;
+	llc_prim->ll.apply_gea;
+	llc_prim->ll.apply_gia;
+	*/
+
+	rc = gprs_gmm_prim_call_llc_down_cb(llc_prim);
+
+	return rc;
+}
+
 static int gprs_gmm_rx_att_ack(struct gprs_gmm_entity *gmme, struct gsm48_hdr *gh, unsigned int len)
 {
 	struct gsm48_attach_ack *aa;
@@ -411,6 +456,41 @@ static int gprs_gmm_rx_att_rej(struct gprs_gmm_entity *gmme, struct gsm48_hdr *g
 {
 	LOGGMME(gmme, LOGL_ERROR, "Rx GMM ATTACH REJECT not implemented!\n");
 	return 0; /* TODO */
+}
+
+/* Rx GMM Detach Accept (mobile originating detach), 9.4.6.2 */
+static int gprs_gmm_rx_detach_accept(struct gprs_gmm_entity *gmme, struct gsm48_hdr *gh, unsigned int len)
+{
+	int rc;
+
+	if (len < sizeof(*gh) + 1) {
+		LOGGMME(gmme, LOGL_ERROR, "Rx GMM DETACH ACCEPT (MO) with wrong size %u\n", len);
+		goto rejected;
+	}
+
+	bool force_standby_indicated = (gh->data[0] >> 4) == 0x01;
+
+	LOGGMME(gmme, LOGL_DEBUG, "Rx GMM DETACH ACCEPT (MO) force_standby_indicated=%s\n",
+		force_standby_indicated ? "true" : "false");
+
+	/* TODO: submit GMMSM-RELEASE-IND */
+
+	/* Submit LLGMM-ASSIGN-REQ as per TS 24.007 Annex C.3 */
+	gmme->ptmsi = GPRS_GMM_TLLI_UNASSIGNED;
+	rc = gprs_gmm_submit_llgmm_assing_req(gmme);
+	if (rc < 0)
+		goto rejected;
+
+	/* Submit GMMREG-DETACH-CNF as per TS 24.007 Annex C.3 */
+	rc = gprs_gmm_submit_gmmreg_detach_cnf(gmme);
+	if (rc < 0)
+		goto rejected;
+
+	rc = osmo_fsm_inst_dispatch(gmme->ms_fsm.fi, GPRS_GMM_MS_EV_DETACH_ACCEPTED, NULL);
+	return rc;
+
+rejected:
+	return -EINVAL; /* TODO: what to do on error? */
 }
 
 /* Rx GMM Identity Request, 9.2.10 */
@@ -487,6 +567,9 @@ int gprs_gmm_rx(struct gprs_gmm_entity *gmme, struct gsm48_hdr *gh, unsigned int
 		break;
 	case GSM48_MT_GMM_ATTACH_REJ:
 		rc = gprs_gmm_rx_att_rej(gmme, gh, len);
+		break;
+	case GSM48_MT_GMM_DETACH_ACK:
+		rc = gprs_gmm_rx_detach_accept(gmme, gh, len);
 		break;
 	case GSM48_MT_GMM_ID_REQ:
 		rc = gprs_gmm_rx_id_req(gmme, gh, len);
