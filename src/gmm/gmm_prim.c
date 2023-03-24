@@ -271,45 +271,51 @@ static inline struct osmo_gprs_gmm_prim *gmm_prim_gmmsm_alloc(enum osmo_gprs_gmm
 }
 
 /* 3GPP TS 24.007 9.5.1.1 GMMSM-ESTABLISH-REQ:*/
-struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmsm_establish_req(void)
+struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmsm_establish_req(uint32_t id)
 {
 	struct osmo_gprs_gmm_prim *gmm_prim;
 	gmm_prim = gmm_prim_gmmsm_alloc(OSMO_GPRS_GMM_GMMSM_ESTABLISH, PRIM_OP_REQUEST, 0);
+	gmm_prim->gmmsm.sess_id = id;
 	return gmm_prim;
 }
 
 /* 3GPP TS 24.007 9.5.1.2 GMMSM-ESTABLISH-CNF:*/
-struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmsm_establish_cnf(uint8_t cause)
+struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmsm_establish_cnf(uint32_t id, uint8_t cause)
 {
 	struct osmo_gprs_gmm_prim *gmm_prim;
 	gmm_prim = gmm_prim_gmmsm_alloc(OSMO_GPRS_GMM_GMMSM_ESTABLISH, PRIM_OP_CONFIRM, 0);
-	gmm_prim->gmmsm.establish_cnf.cause = cause;
+	gmm_prim->gmmsm.sess_id = id;
+	gmm_prim->gmmsm.establish_cnf.accepted = (cause == 0);
+	gmm_prim->gmmsm.establish_cnf.rej.cause = cause;
 	return gmm_prim;
 }
 
 /* 3GPP TS 24.007 9.5.1.4 GMMSM-RELEASE-IND:*/
-struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmsm_release_ind(void)
+struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmsm_release_ind(uint32_t id)
 {
 	struct osmo_gprs_gmm_prim *gmm_prim;
 	gmm_prim = gmm_prim_gmmsm_alloc(OSMO_GPRS_GMM_GMMSM_RELEASE, PRIM_OP_INDICATION, 0);
+	gmm_prim->gmmsm.sess_id = id;
 	return gmm_prim;
 }
 
-/* 3GPP TS 24.007 9.5.1.5 GMMRSM-UNITDATA-REQ:*/
-struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmsm_unitdata_req(uint8_t *smpdu, unsigned int smpdu_len)
+/* 3GPP TS 24.007 9.5.1.5 GMMSM-UNITDATA-REQ:*/
+struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmsm_unitdata_req(uint32_t id, uint8_t *smpdu, unsigned int smpdu_len)
 {
 	struct osmo_gprs_gmm_prim *gmm_prim;
 	gmm_prim = gmm_prim_gmmsm_alloc(OSMO_GPRS_GMM_GMMSM_UNITDATA, PRIM_OP_REQUEST, smpdu_len);
+	gmm_prim->gmmsm.sess_id = id;
 	gmm_prim->gmmsm.unitdata_req.smpdu = smpdu;
 	gmm_prim->gmmsm.unitdata_req.smpdu_len = smpdu_len;
 	return gmm_prim;
 }
 
-/* 3GPP TS 24.007 9.5.1.6 GMMRSM-UNITDATA-IND:*/
-struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmsm_unitdata_ind(uint8_t *smpdu, unsigned int smpdu_len)
+/* 3GPP TS 24.007 9.5.1.6 GMMSM-UNITDATA-IND:*/
+struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmsm_unitdata_ind(uint32_t id, uint8_t *smpdu, unsigned int smpdu_len)
 {
 	struct osmo_gprs_gmm_prim *gmm_prim;
 	gmm_prim = gmm_prim_gmmsm_alloc(OSMO_GPRS_GMM_GMMSM_UNITDATA, PRIM_OP_INDICATION, smpdu_len);
+	gmm_prim->gmmsm.sess_id = id;
 	gmm_prim->gmmsm.unitdata_ind.smpdu = smpdu;
 	gmm_prim->gmmsm.unitdata_ind.smpdu_len = smpdu_len;
 	return gmm_prim;
@@ -363,15 +369,10 @@ static int gprs_gmm_prim_handle_gmmreg_attach_req(struct osmo_gprs_gmm_prim *gmm
 	if (gmm_prim->gmmreg.attach_req.imeisv[0] != '\0')
 		OSMO_STRLCPY_ARRAY(gmme->imeisv, gmm_prim->gmmreg.attach_req.imeisv);
 
-	rc = gprs_gmm_tx_att_req(gmme,
-				 gmm_prim->gmmreg.attach_req.attach_type,
-				 gmm_prim->gmmreg.attach_req.attach_with_imsi);
-
-	if (rc < 0)
-		return rc;
-
-	rc = osmo_fsm_inst_dispatch(gmme->ms_fsm.fi, GPRS_GMM_MS_EV_ATTACH_REQUESTED, NULL);
-
+	rc = gprs_gmm_ms_fsm_ctx_request_attach(&gmme->ms_fsm,
+						gmm_prim->gmmreg.attach_req.attach_type,
+						gmm_prim->gmmreg.attach_req.attach_with_imsi,
+						true, 0);
 	return rc;
 }
 
@@ -387,23 +388,9 @@ static int gprs_gmm_prim_handle_gmmreg_detach_req(struct osmo_gprs_gmm_prim *gmm
 		return -EINVAL;
 	}
 
-	switch (gmm_prim->gmmreg.detach_req.poweroff_type) {
-	case OSMO_GPRS_GMM_DETACH_POWEROFF_TYPE_NORMAL:
-		/* C.3 MS initiated DETACH, GPRS only */
-		rc = osmo_fsm_inst_dispatch(gmme->ms_fsm.fi, GPRS_GMM_MS_EV_DETACH_REQUESTED,
-					    &gmm_prim->gmmreg.detach_req.detach_type);
-		break;
-	case OSMO_GPRS_GMM_DETACH_POWEROFF_TYPE_POWEROFF:
-		/* C.4 POWER-OFF DETACH, GPRS only */
-		rc = osmo_fsm_inst_dispatch(gmme->ms_fsm.fi, GPRS_GMM_MS_EV_DETACH_REQUESTED_POWEROFF, NULL);
-		break;
-	default:
-		OSMO_ASSERT(0);
-	}
-
-	rc = gprs_gmm_tx_detach_req(gmme,
-				    gmm_prim->gmmreg.detach_req.detach_type,
-				    gmm_prim->gmmreg.detach_req.poweroff_type);
+	rc = gprs_gmm_ms_fsm_ctx_request_detach(&gmme->ms_fsm,
+						gmm_prim->gmmreg.detach_req.detach_type,
+						gmm_prim->gmmreg.detach_req.poweroff_type);
 	return rc;
 }
 
@@ -428,9 +415,26 @@ static int gprs_gmm_prim_handle_gmmreg(struct osmo_gprs_gmm_prim *gmm_prim)
 static int gprs_gmm_prim_handle_gmmsm_establish_req(struct osmo_gprs_gmm_prim *gmm_prim)
 {
 	int rc;
+	struct gprs_gmm_entity *gmme;
 
-	rc = gprs_gmm_prim_handle_unsupported(gmm_prim);
+	gmme = llist_first_entry_or_null(&g_ctx->gmme_list, struct gprs_gmm_entity, list);
+	if (!gmme) {
+		gmme = gprs_gmm_gmme_alloc();
+		OSMO_ASSERT(gmme);
+	}
+	gmme->ptmsi = gmm_prim->gmmsm.establish_req.ptmsi;
+	if (gmm_prim->gmmsm.establish_req.imsi[0] != '\0')
+		OSMO_STRLCPY_ARRAY(gmme->imsi, gmm_prim->gmmsm.establish_req.imsi);
+	if (gmm_prim->gmmsm.establish_req.imei[0] != '\0')
+		OSMO_STRLCPY_ARRAY(gmme->imei, gmm_prim->gmmsm.establish_req.imei);
+	if (gmm_prim->gmmsm.establish_req.imeisv[0] != '\0')
+		OSMO_STRLCPY_ARRAY(gmme->imeisv, gmm_prim->gmmsm.establish_req.imeisv);
 
+	rc = gprs_gmm_ms_fsm_ctx_request_attach(&gmme->ms_fsm,
+						gmm_prim->gmmsm.establish_req.attach_type,
+						gmm_prim->gmmsm.establish_req.attach_with_imsi,
+						false,
+						gmm_prim->gmmsm.sess_id);
 	return rc;
 }
 

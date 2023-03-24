@@ -114,6 +114,24 @@ Requires:       libosmo-gprs-sndcp0 = %{version}
 This package provides development files for compiling a program using
 libosmo-gprs-sndcp - SNDCP (Subnetwork Dependent Convergence Protocol) layer for (E)GPRS.
 
+%package -n libosmo-gprs-sm0
+Summary:        Osmocom GPRS SM library
+License:        AGPL-3.0-or-later
+Group:          System/Libraries
+
+%description -n libosmo-gprs-sm0
+This package provides SM (Session Management) layer for (E)GPRS.
+
+%package -n libosmo-gprs-sm-devel
+Summary:        Development files for libosmo-gprs-sm
+License:        AGPL-3.0-or-later
+Group:          Development/Libraries/C and C++
+Requires:       libosmo-gprs-sm0 = %{version}
+
+%description -n libosmo-gprs-sm-devel
+This package provides development files for compiling a program using
+libosmo-gprs-sm - SM (Session Management) layer for (E)GPRS.
+
 %prep
 %setup -q
 
@@ -140,6 +158,8 @@ make %{?_smp_mflags} check || (find . -name testsuite.log -exec cat {} +)
 %postun -n libosmo-gprs-rlcmac0 -p /sbin/ldconfig
 %post   -n libosmo-gprs-sndcp0 -p /sbin/ldconfig
 %postun -n libosmo-gprs-sndcp0 -p /sbin/ldconfig
+%post   -n libosmo-gprs-sm0 -p /sbin/ldconfig
+%postun -n libosmo-gprs-sm0 -p /sbin/ldconfig
 
 %files -n libosmo-csn1-0
 %_libdir/libosmo-csn1.so.0*
@@ -194,5 +214,16 @@ make %{?_smp_mflags} check || (find . -name testsuite.log -exec cat {} +)
 %_includedir/%name/osmocom/gprs/sndcp
 %_libdir/libosmo-gprs-sndcp.so
 %_libdir/pkgconfig/libosmo-gprs-sndcp.pc
+
+%files -n libosmo-gprs-sm0
+%_libdir/libosmo-gprs-sm.so.0*
+
+%files -n libosmo-gprs-sm-devel
+%dir %_includedir/%name
+%dir %_includedir/%name/osmocom
+%dir %_includedir/%name/osmocom/gprs
+%_includedir/%name/osmocom/gprs/sm
+%_libdir/libosmo-gprs-sm.so
+%_libdir/pkgconfig/libosmo-gprs-sm.pc
 
 %changelog

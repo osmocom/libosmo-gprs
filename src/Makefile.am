@@ -4,4 +4,5 @@ SUBDIRS = \
 	rlcmac \
 	sndcp \
 	gmm \
+	sm \
 	$(NULL)

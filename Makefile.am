@@ -18,6 +18,7 @@ pkgconfig_DATA = \
 	libosmo-gprs-gmm.pc \
 	libosmo-gprs-llc.pc \
 	libosmo-gprs-rlcmac.pc \
+	libosmo-gprs-sm.pc \
 	libosmo-gprs-sndcp.pc \
 	$(NULL)
 

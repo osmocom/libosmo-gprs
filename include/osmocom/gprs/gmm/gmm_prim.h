@@ -184,14 +184,30 @@ static inline const char *osmo_gprs_gmm_gmmsm_prim_type_name(enum osmo_gprs_gmm_
 /* Parameters for OSMO_GPRS_GMM_GMMSM_* prims
  */
 struct osmo_gprs_gmm_gmmsm_prim {
-	/* Common fields (none) */
+	/* Common fields */
+	uint32_t sess_id;
 	union {
 		/* OSMO_GPRS_GMM_GMMSM_ESTABLISH | Req */
 		struct {
+			enum osmo_gprs_gmm_attach_type attach_type;
+			uint32_t ptmsi;
+			bool attach_with_imsi;
+			char imsi[OSMO_IMSI_BUF_SIZE];
+			char imei[GSM23003_IMEI_NUM_DIGITS + 1];
+			char imeisv[GSM23003_IMEISV_NUM_DIGITS+1];
+			/* attach-type, READY-timer, STANDBY-timer */
 		} establish_req;
 		/* OSMO_GPRS_GMM_GMMSM_ESTABLISH | Cnf/Rej */
 		struct {
-			uint8_t cause;
+			bool accepted;
+			union {
+				struct {
+					/* PLMNs MT-caps, attach-type. */
+				} acc;
+				struct {
+					uint8_t cause;
+				} rej;
+			};
 		} establish_cnf;
 		/* OSMO_GPRS_GMM_GMMSM_RELEASE | Ind */
 		struct {
@@ -242,5 +258,5 @@ struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmreg_detach_req(void);
 struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmrr_page_ind(uint32_t tlli);
 
 /* Alloc primitive for GMMSM SAP: */
-struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmsm_establish_req(void);
-struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmsm_unitdata_req(uint8_t *smpdu, unsigned int smpdu_len);
+struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmsm_establish_req(uint32_t id);
+struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmsm_unitdata_req(uint32_t id, uint8_t *smpdu, unsigned int smpdu_len);

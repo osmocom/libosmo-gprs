@@ -77,9 +77,9 @@ struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmreg_detach_cnf(void);
 
 struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmrr_assign_req(uint32_t new_tlli);
 
-struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmsm_establish_cnf(uint8_t cause);
-struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmrr_release_ind(void);
-struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmsm_unitdata_ind(uint8_t *smpdu, unsigned int smpdu_len);
+struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmsm_establish_cnf(uint32_t id, uint8_t cause);
+struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmrr_release_ind(uint32_t id);
+struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmsm_unitdata_ind(uint32_t id, uint8_t *smpdu, unsigned int smpdu_len);
 
 /* gmm.c: */
 struct gprs_gmm_entity *gprs_gmm_gmme_alloc(void);
@@ -92,6 +92,9 @@ int gprs_gmm_tx_att_req(struct gprs_gmm_entity *gmme,
 int gprs_gmm_tx_detach_req(struct gprs_gmm_entity *gmme,
 			   enum osmo_gprs_gmm_detach_ms_type detach_type,
 			   enum osmo_gprs_gmm_detach_poweroff_type poweroff_type);
+
+int gprs_gmm_submit_gmmreg_attach_cnf(struct gprs_gmm_entity *gmme, bool accepted, uint8_t cause);
+int gprs_gmm_submit_gmmsm_establish_cnf(struct gprs_gmm_entity *gmme, uint32_t sess_id, bool accepted, uint8_t cause);
 
 #define LOGGMME(snme, level, fmt, args...) \
 	LOGGMM(level, "GMME(PTMSI-%08x) " fmt, \

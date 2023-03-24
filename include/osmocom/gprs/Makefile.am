@@ -3,4 +3,5 @@ SUBDIRS = \
 	llc \
 	rlcmac \
 	sndcp \
+	sm \
 	$(NULL)

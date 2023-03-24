@@ -158,6 +158,23 @@ int test_gmm_prim_up_cb(struct osmo_gprs_gmm_prim *gmm_prim, void *user_data)
 			OSMO_ASSERT(0)
 		}
 		break;
+	case OSMO_GPRS_GMM_SAP_GMMSM:
+		switch (OSMO_PRIM_HDR(&gmm_prim->oph)) {
+		case OSMO_PRIM(OSMO_GPRS_GMM_GMMSM_ESTABLISH, PRIM_OP_CONFIRM):
+			printf("%s(): Rx %s sess_id=%u accepted=%u rej_cause=%u\n", __func__, pdu_name,
+			       gmm_prim->gmmsm.sess_id,
+			       gmm_prim->gmmsm.establish_cnf.accepted,
+			       gmm_prim->gmmsm.establish_cnf.rej.cause);
+			break;
+		//case OSMO_PRIM(OSMO_GPRS_GMM_GMMSM_DETACH, PRIM_OP_CONFIRM):
+		//	printf("%s(): Rx %s detach_type='%s'\n", __func__, pdu_name,
+		//	       osmo_gprs_gmm_detach_ms_type_name(gmm_prim->gmmsm.detach_cnf.detach_type));
+		//	break;
+		default:
+			printf("%s(): Unexpected Rx %s\n", __func__, pdu_name);
+			OSMO_ASSERT(0)
+		}
+		break;
 	default:
 		printf("%s(): Unexpected Rx %s\n", __func__, pdu_name);
 		OSMO_ASSERT(0);
@@ -202,7 +219,8 @@ int test_gmm_prim_llc_down_cb(struct osmo_gprs_llc_prim *llc_prim, void *user_da
 	return 0;
 }
 
-static void test_gmm_prim_ms(void)
+/* Test explicit GPRS attach through GMMREG, TS 24.007 Annex C.1 */
+static void test_gmm_prim_ms_gmmreg(void)
 {
 	struct osmo_gprs_gmm_prim *gmm_prim;
 	struct osmo_gprs_llc_prim *llc_prim;
@@ -254,6 +272,7 @@ static void test_gmm_prim_ms(void)
 	rc = osmo_gprs_gmm_prim_llc_lower_up(llc_prim);
 	OSMO_ASSERT(rc == 0);
 	/* As a result, MS answers GMM Attach Complete */
+	/* As a result, MS submits GMMREG ATTACH.cnf */
 
 	/* ... */
 
@@ -272,6 +291,70 @@ static void test_gmm_prim_ms(void)
 	rc = osmo_gprs_gmm_prim_llc_lower_up(llc_prim);
 	OSMO_ASSERT(rc == 0);
 	/* As a result, MS answers GMM Attach Complete */
+
+	printf("==== %s() [end] ====\n", __func__);
+}
+
+/* Test implicit GPRS attach through SM (ACT PDP CTX), TS 24.007 Annex C.3 */
+static void test_gmm_prim_ms_gmmsm(void)
+{
+	struct osmo_gprs_gmm_prim *gmm_prim;
+	struct osmo_gprs_llc_prim *llc_prim;
+	int rc;
+	uint32_t ptmsi = 0x00000000;
+	uint32_t tlli = 0x00000000;
+	char *imsi = "1234567890";
+	char *imei = "42342342342342";
+	char *imeisv = "4234234234234275";
+	uint32_t sess_id = 1234;
+
+	printf("==== %s() [start] ====\n", __func__);
+
+	rc = osmo_gprs_gmm_init(OSMO_GPRS_GMM_LOCATION_MS);
+	OSMO_ASSERT(rc == 0);
+	osmo_gprs_gmm_enable_gprs(true);
+
+	osmo_gprs_gmm_prim_set_up_cb(test_gmm_prim_up_cb, NULL);
+	osmo_gprs_gmm_prim_set_down_cb(test_gmm_prim_down_cb, NULL);
+	osmo_gprs_gmm_prim_set_llc_down_cb(test_gmm_prim_llc_down_cb, NULL);
+
+	/* MS sends primitive to active a PDP ctx: */
+	gmm_prim = osmo_gprs_gmm_prim_alloc_gmmsm_establish_req(sess_id);
+	OSMO_ASSERT(gmm_prim);
+	gmm_prim->gmmsm.establish_req.attach_type = OSMO_GPRS_GMM_ATTACH_TYPE_GPRS;
+	gmm_prim->gmmsm.establish_req.ptmsi = ptmsi;
+	OSMO_STRLCPY_ARRAY(gmm_prim->gmmsm.establish_req.imsi, imsi);
+	OSMO_STRLCPY_ARRAY(gmm_prim->gmmsm.establish_req.imei, imei);
+	OSMO_STRLCPY_ARRAY(gmm_prim->gmmsm.establish_req.imeisv, imeisv);
+	rc = osmo_gprs_gmm_prim_upper_down(gmm_prim);
+	OSMO_ASSERT(rc == 0);
+	/* MS sends GMM Attach Req first since its not eyt attached */
+
+	/* Network answers with GMM Identity Req: */
+	llc_prim = gprs_llc_prim_alloc_ll_unitdata_ind(tlli, OSMO_GPRS_LLC_SAPI_GMM, (uint8_t *)pdu_gmm_identity_req, sizeof(pdu_gmm_identity_req));
+	OSMO_ASSERT(llc_prim);
+	rc = osmo_gprs_gmm_prim_llc_lower_up(llc_prim);
+	OSMO_ASSERT(rc == 0);
+	/* As a result, MS answers GMM Identity Resp */
+
+	/* Network sends GMM Ciph Auth Req */
+	llc_prim = gprs_llc_prim_alloc_ll_unitdata_ind(tlli, OSMO_GPRS_LLC_SAPI_GMM, (uint8_t *)pdu_gmm_auth_ciph_req, sizeof(pdu_gmm_auth_ciph_req));
+	OSMO_ASSERT(llc_prim);
+	rc = osmo_gprs_gmm_prim_llc_lower_up(llc_prim);
+	OSMO_ASSERT(rc == 0);
+	/* As a result, MS answers GMM Ciph Auth Resp */
+
+	/* Network sends GMM Attach Accept */
+	llc_prim = gprs_llc_prim_alloc_ll_unitdata_ind(tlli, OSMO_GPRS_LLC_SAPI_GMM, (uint8_t *)pdu_gmm_att_acc, sizeof(pdu_gmm_att_acc));
+	OSMO_ASSERT(llc_prim);
+	rc = osmo_gprs_gmm_prim_llc_lower_up(llc_prim);
+	OSMO_ASSERT(rc == 0);
+	/* As a result, MS answers GMM Attach Complete */
+	/* As a result, MS submits GMMSM Establish.cnf */
+
+	/* ... */
+
+	/* DEACT: TODO */
 
 	printf("==== %s() [end] ====\n", __func__);
 }
@@ -296,7 +379,8 @@ int main(int argc, char *argv[])
 	log_set_print_level(osmo_stderr_target, 1);
 	log_set_use_color(osmo_stderr_target, 0);
 
-	test_gmm_prim_ms();
+	test_gmm_prim_ms_gmmreg();
+	test_gmm_prim_ms_gmmsm();
 
 	talloc_free(tall_ctx);
 }

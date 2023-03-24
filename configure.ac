@@ -79,6 +79,7 @@ AC_CONFIG_FILES([libosmo-csn1.pc
 		 libosmo-gprs-llc.pc
 		 libosmo-gprs-rlcmac.pc
 		 libosmo-gprs-sndcp.pc
+		 libosmo-gprs-sm.pc
 		 include/Makefile
 		 include/osmocom/Makefile
 		 include/osmocom/csn1/Makefile
@@ -87,17 +88,20 @@ AC_CONFIG_FILES([libosmo-csn1.pc
 		 include/osmocom/gprs/llc/Makefile
 		 include/osmocom/gprs/rlcmac/Makefile
 		 include/osmocom/gprs/sndcp/Makefile
+		 include/osmocom/gprs/sm/Makefile
 		 src/Makefile
 		 src/csn1/Makefile
 		 src/gmm/Makefile
 		 src/llc/Makefile
 		 src/rlcmac/Makefile
 		 src/sndcp/Makefile
+		 src/sm/Makefile
 		 tests/Makefile
 		 tests/gmm/Makefile
 		 tests/llc/Makefile
 		 tests/rlcmac/Makefile
 		 tests/sndcp/Makefile
+		 tests/sm/Makefile
 		 Makefile
 		 contrib/libosmo-gprs.spec])
 AC_OUTPUT

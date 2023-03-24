@@ -57,6 +57,13 @@ cat $abs_srcdir/rlcmac/rlcmac_prim_test.err > experr
 AT_CHECK([$abs_top_builddir/tests/rlcmac/rlcmac_prim_test], [0], [expout], [experr])
 AT_CLEANUP
 
+AT_SETUP([sm/sm_prim])
+AT_KEYWORDS([sm sm_prim])
+cat $abs_srcdir/sm/sm_prim_test.ok > expout
+cat $abs_srcdir/sm/sm_prim_test.err > experr
+AT_CHECK([$abs_top_builddir/tests/sm/sm_prim_test], [0], [expout], [experr])
+AT_CLEANUP
+
 AT_SETUP([sndcp/sndcp_prim])
 AT_KEYWORDS([sndcp sndcp_prim])
 cat $abs_srcdir/sndcp/sndcp_prim_test.ok > expout

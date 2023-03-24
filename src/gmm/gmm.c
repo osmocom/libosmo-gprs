@@ -176,7 +176,7 @@ struct gprs_gmm_entity *gprs_gmm_find_gmme_by_tlli(uint32_t tlli)
 	return NULL;
 }
 
-static int gprs_gmm_submit_gmmreg_attach_cnf(struct gprs_gmm_entity *gmme, bool accepted, uint8_t cause)
+int gprs_gmm_submit_gmmreg_attach_cnf(struct gprs_gmm_entity *gmme, bool accepted, uint8_t cause)
 {
 	struct osmo_gprs_gmm_prim *gmm_prim_tx;
 	int rc;
@@ -196,7 +196,18 @@ static int gprs_gmm_submit_gmmreg_detach_cnf(struct gprs_gmm_entity *gmme)
 	int rc;
 
 	gmm_prim_tx = gprs_gmm_prim_alloc_gmmreg_detach_cnf();
-	gmm_prim_tx->gmmreg.detach_cnf.detach_type = gmme->ms_fsm.detach_type;
+	gmm_prim_tx->gmmreg.detach_cnf.detach_type = gmme->ms_fsm.detach.type;
+
+	rc = gprs_gmm_prim_call_up_cb(gmm_prim_tx);
+	return rc;
+}
+
+int gprs_gmm_submit_gmmsm_establish_cnf(struct gprs_gmm_entity *gmme, uint32_t sess_id, bool accepted, uint8_t cause)
+{
+	struct osmo_gprs_gmm_prim *gmm_prim_tx;
+	int rc;
+
+	gmm_prim_tx = gprs_gmm_prim_alloc_gmmsm_establish_cnf(sess_id, cause);
 
 	rc = gprs_gmm_prim_call_up_cb(gmm_prim_tx);
 	return rc;
@@ -434,11 +445,6 @@ static int gprs_gmm_rx_att_ack(struct gprs_gmm_entity *gmme, struct gsm48_hdr *g
 			gmme->ptmsi = mi.tmsi;
 		}
 	}
-
-	/* Submit GMMREG-ATTACH-CNF as per TS 24.007 Annex C.1 */
-	rc = gprs_gmm_submit_gmmreg_attach_cnf(gmme, true, 0);
-	if (rc < 0)
-		goto rejected;
 
 	/* Submit LLGMM-ASSIGN-REQ as per TS 24.007 Annex C.1 */
 	rc = gprs_gmm_submit_llgmm_assing_req(gmme);
