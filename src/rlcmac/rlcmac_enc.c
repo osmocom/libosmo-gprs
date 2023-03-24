@@ -389,7 +389,7 @@ void gprs_rlcmac_enc_prepare_pkt_downlink_ack_nack(RlcMacUplink_t *block, const 
 	int rc;
 
 	memset(block, 0, sizeof(*block));
-	ack->MESSAGE_TYPE = OSMO_GPRS_RLCMAC_UL_MSGT_PACKET_RESOURCE_REQUEST;
+	ack->MESSAGE_TYPE = OSMO_GPRS_RLCMAC_UL_MSGT_PACKET_DOWNLINK_ACK_NACK;
 	ack->PayloadType = GPRS_RLCMAC_PT_CONTROL_BLOCK;
 	ack->R = 0; /* MS sent channel request message once */
 
