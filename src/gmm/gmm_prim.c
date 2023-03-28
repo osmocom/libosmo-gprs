@@ -263,7 +263,7 @@ struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmrr_page_ind(uint32_t tlli
 
 /*** GMMSM ***/
 
-static inline struct osmo_gprs_gmm_prim *gmm_prim_gmmsm_alloc(enum osmo_gprs_gmm_gmmrr_prim_type type,
+static inline struct osmo_gprs_gmm_prim *gmm_prim_gmmsm_alloc(enum osmo_gprs_gmm_gmmsm_prim_type type,
 							      enum osmo_prim_operation operation,
 							      unsigned int extra_size)
 {
@@ -274,7 +274,7 @@ static inline struct osmo_gprs_gmm_prim *gmm_prim_gmmsm_alloc(enum osmo_gprs_gmm
 struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmsm_establish_req(void)
 {
 	struct osmo_gprs_gmm_prim *gmm_prim;
-	gmm_prim = gmm_prim_gmmrr_alloc(OSMO_GPRS_GMM_GMMSM_ESTABLISH, PRIM_OP_REQUEST, 0);
+	gmm_prim = gmm_prim_gmmsm_alloc(OSMO_GPRS_GMM_GMMSM_ESTABLISH, PRIM_OP_REQUEST, 0);
 	return gmm_prim;
 }
 
@@ -282,16 +282,16 @@ struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmsm_establish_req(void)
 struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmsm_establish_cnf(uint8_t cause)
 {
 	struct osmo_gprs_gmm_prim *gmm_prim;
-	gmm_prim = gmm_prim_gmmrr_alloc(OSMO_GPRS_GMM_GMMSM_ESTABLISH, PRIM_OP_CONFIRM, 0);
+	gmm_prim = gmm_prim_gmmsm_alloc(OSMO_GPRS_GMM_GMMSM_ESTABLISH, PRIM_OP_CONFIRM, 0);
 	gmm_prim->gmmsm.establish_cnf.cause = cause;
 	return gmm_prim;
 }
 
 /* 3GPP TS 24.007 9.5.1.4 GMMSM-RELEASE-IND:*/
-struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmrr_release_ind(void)
+struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmsm_release_ind(void)
 {
 	struct osmo_gprs_gmm_prim *gmm_prim;
-	gmm_prim = gmm_prim_gmmrr_alloc(OSMO_GPRS_GMM_GMMSM_RELEASE, PRIM_OP_INDICATION, 0);
+	gmm_prim = gmm_prim_gmmsm_alloc(OSMO_GPRS_GMM_GMMSM_RELEASE, PRIM_OP_INDICATION, 0);
 	return gmm_prim;
 }
 
@@ -299,7 +299,7 @@ struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmrr_release_ind(void)
 struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmsm_unitdata_req(uint8_t *smpdu, unsigned int smpdu_len)
 {
 	struct osmo_gprs_gmm_prim *gmm_prim;
-	gmm_prim = gmm_prim_gmmrr_alloc(OSMO_GPRS_GMM_GMMSM_UNITDATA, PRIM_OP_REQUEST, 0);
+	gmm_prim = gmm_prim_gmmsm_alloc(OSMO_GPRS_GMM_GMMSM_UNITDATA, PRIM_OP_REQUEST, smpdu_len);
 	gmm_prim->gmmsm.unitdata_req.smpdu = smpdu;
 	gmm_prim->gmmsm.unitdata_req.smpdu_len = smpdu_len;
 	return gmm_prim;
@@ -309,7 +309,7 @@ struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmsm_unitdata_req(uint8_t *
 struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmsm_unitdata_ind(uint8_t *smpdu, unsigned int smpdu_len)
 {
 	struct osmo_gprs_gmm_prim *gmm_prim;
-	gmm_prim = gmm_prim_gmmrr_alloc(OSMO_GPRS_GMM_GMMSM_UNITDATA, PRIM_OP_INDICATION, 0);
+	gmm_prim = gmm_prim_gmmsm_alloc(OSMO_GPRS_GMM_GMMSM_UNITDATA, PRIM_OP_INDICATION, smpdu_len);
 	gmm_prim->gmmsm.unitdata_ind.smpdu = smpdu;
 	gmm_prim->gmmsm.unitdata_ind.smpdu_len = smpdu_len;
 	return gmm_prim;

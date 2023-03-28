@@ -195,7 +195,7 @@ struct osmo_gprs_gmm_gmmsm_prim {
 		} establish_cnf;
 		/* OSMO_GPRS_GMM_GMMSM_RELEASE | Ind */
 		struct {
-		} page_ind;
+		} release_ind;
 		/* OSMO_GPRS_GMM_GMMSM_UNITDATA | Req */
 		struct {
 			uint8_t *smpdu;
