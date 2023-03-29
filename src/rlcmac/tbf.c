@@ -21,6 +21,7 @@
 
 #include <osmocom/gprs/rlcmac/tbf.h>
 #include <osmocom/gprs/rlcmac/tbf_ul.h>
+#include <osmocom/gprs/rlcmac/tbf_dl.h>
 #include <osmocom/gprs/rlcmac/gre.h>
 #include <osmocom/gprs/rlcmac/pdch_ul_controller.h>
 
@@ -43,5 +44,6 @@ void gprs_rlcmac_tbf_free(struct gprs_rlcmac_tbf *tbf)
 {
 	if (tbf->direction == GPRS_RLCMAC_TBF_DIR_UL)
 		gprs_rlcmac_ul_tbf_free(tbf_as_ul_tbf(tbf));
-	/* else: TODO dl_tbf not yet implemented */
+	else
+		gprs_rlcmac_dl_tbf_free(tbf_as_dl_tbf(tbf));
 }
