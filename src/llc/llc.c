@@ -121,6 +121,16 @@ static const struct gprs_llc_params llc_default_params[NUM_SAPIS] = {
 	},
 };
 
+static void gprs_llc_ctx_free(void)
+{
+	struct gprs_llc_llme *llme;
+
+	while ((llme = llist_first_entry_or_null(&g_ctx->llme_list, struct gprs_llc_llme, list)))
+		gprs_llc_llme_free(llme);
+
+	talloc_free(g_ctx);
+}
+
 int osmo_gprs_llc_init(enum osmo_gprs_llc_location location, const char *cipher_plugin_path)
 {
 	int rc;
@@ -132,7 +142,7 @@ int osmo_gprs_llc_init(enum osmo_gprs_llc_location location, const char *cipher_
 	}
 
 	if (g_ctx)
-		talloc_free(g_ctx);
+		gprs_llc_ctx_free();
 
 	g_ctx = talloc_zero(NULL, struct gprs_llc_ctx);
 	g_ctx->location = location;
