@@ -150,6 +150,7 @@ void gprs_gmm_gmme_free(struct gprs_gmm_entity *gmme)
 		return;
 
 	LOGGMME(gmme, LOGL_DEBUG, "free()\n");
+	gprs_gmm_ms_fsm_ctx_release(&gmme->ms_fsm);
 	llist_del(&gmme->list);
 	talloc_free(gmme);
 }

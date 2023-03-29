@@ -53,3 +53,4 @@ int gprs_gmm_ms_fsm_init(void);
 void gprs_gmm_ms_fsm_set_log_cat(int logcat);
 
 int gprs_gmm_ms_fsm_ctx_init(struct gprs_gmm_ms_fsm_ctx *ctx, struct gprs_gmm_entity *gmme);
+void gprs_gmm_ms_fsm_ctx_release(struct gprs_gmm_ms_fsm_ctx *ctx);

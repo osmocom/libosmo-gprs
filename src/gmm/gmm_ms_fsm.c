@@ -289,3 +289,8 @@ int gprs_gmm_ms_fsm_ctx_init(struct gprs_gmm_ms_fsm_ctx *ctx, struct gprs_gmm_en
 
 	return 0;
 }
+
+void gprs_gmm_ms_fsm_ctx_release(struct gprs_gmm_ms_fsm_ctx *ctx)
+{
+	osmo_fsm_inst_free(ctx->fi);
+}
