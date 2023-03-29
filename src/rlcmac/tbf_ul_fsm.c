@@ -69,12 +69,15 @@ static uint8_t ul_tbf_ul_slotmask(struct gprs_rlcmac_ul_tbf *ul_tbf)
 	return ul_slotmask;
 }
 
-static int configure_ul_tbf(struct gprs_rlcmac_tbf_ul_fsm_ctx *ctx)
+static int configure_ul_tbf(struct gprs_rlcmac_tbf_ul_fsm_ctx *ctx, bool release)
 {
 	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
-	uint8_t ul_slotmask = ul_tbf_ul_slotmask(ctx->ul_tbf);
+	uint8_t ul_slotmask;
 
-	LOGPFSML(ctx->fi, LOGL_INFO, "Send L1CTL-CF_UL_TBF.req ul_slotmask=0x%02x\n", ul_slotmask);
+	ul_slotmask = release ? 0 : ul_tbf_ul_slotmask(ctx->ul_tbf);
+
+	LOGPFSML(ctx->fi, LOGL_INFO, "Send L1CTL-CF_UL_TBF.req ul_tbf_nr=%u ul_slotmask=0x%02x %s\n",
+		 ctx->tbf->nr, ul_slotmask, release ? "(release)" : "(reconf)");
 	rlcmac_prim = gprs_rlcmac_prim_alloc_l1ctl_cfg_ul_tbf_req(ctx->tbf->nr, ul_slotmask);
 	return gprs_rlcmac_prim_call_down_cb(rlcmac_prim);
 }
@@ -124,7 +127,7 @@ static void st_new_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_state)
 	/* Mark everything we transmitted so far as NACKed: */
 	gprs_rlcmac_rlc_ul_window_mark_for_resend(ctx->ul_tbf->ulw);
 	/* Make sure the lower layers realize this tbf_nr has no longer any assigned resource: */
-	configure_ul_tbf(ctx);
+	configure_ul_tbf(ctx, false);
 }
 
 static void st_new(struct osmo_fsm_inst *fi, uint32_t event, void *data)
@@ -145,7 +148,7 @@ static void st_wait_assign(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 	switch (event) {
 	case GPRS_RLCMAC_TBF_UL_EV_UL_ASS_COMPL:
 		/* Configure UL TBF on the lower MAC side: */
-		configure_ul_tbf(ctx);
+		configure_ul_tbf(ctx, false);
 		tbf_ul_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ST_FLOW);
 		break;
 	default:
@@ -243,6 +246,7 @@ static void st_finished(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 	}
 }
 
+/* Waiting for scheduler to transmit PKT CTRL ACK for the already received UL ACK/NACK FinalAck=1 */
 static void st_releasing(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	//struct gprs_rlcmac_tbf_ul_fsm_ctx *ctx = (struct gprs_rlcmac_tbf_ul_fsm_ctx *)fi->priv;
@@ -379,6 +383,10 @@ int gprs_rlcmac_tbf_ul_fsm_constructor(struct gprs_rlcmac_ul_tbf *ul_tbf)
 void gprs_rlcmac_tbf_ul_fsm_destructor(struct gprs_rlcmac_ul_tbf *ul_tbf)
 {
 	struct gprs_rlcmac_tbf_ul_fsm_ctx *ctx = &ul_tbf->state_fsm;
+
+	/* Make sure the lower layers realize this tbf_nr has no longer any assigned resource: */
+	configure_ul_tbf(ctx, true);
+
 	osmo_fsm_inst_free(ctx->fi);
 	ctx->fi = NULL;
 }
