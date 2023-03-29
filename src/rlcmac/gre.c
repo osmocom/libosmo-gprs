@@ -21,6 +21,10 @@
 
 #include <stdbool.h>
 
+#include <osmocom/core/bitvec.h>
+#include <osmocom/core/msgb.h>
+#include <osmocom/gsm/protocol/gsm_04_08.h>
+
 #include <osmocom/gprs/rlcmac/rlcmac.h>
 #include <osmocom/gprs/rlcmac/rlcmac_prim.h>
 #include <osmocom/gprs/rlcmac/rlcmac_private.h>
@@ -29,6 +33,7 @@
 #include <osmocom/gprs/rlcmac/tbf_ul_fsm.h>
 #include <osmocom/gprs/rlcmac/tbf_ul.h>
 #include <osmocom/gprs/rlcmac/gre.h>
+#include <osmocom/gprs/rlcmac/rlcmac_enc.h>
 
 struct gprs_rlcmac_entity *gprs_rlcmac_entity_alloc(uint32_t tlli)
 {
@@ -130,4 +135,39 @@ int gprs_rlcmac_entity_llc_enqueue(struct gprs_rlcmac_entity *gre, uint8_t *ll_p
 	}
 
 	return rc;
+}
+
+struct msgb *gprs_rlcmac_gre_create_pkt_ctrl_ack(const struct gprs_rlcmac_entity *gre)
+{
+	struct msgb *msg;
+	struct bitvec bv;
+	RlcMacUplink_t ul_block;
+	int rc;
+
+	OSMO_ASSERT(gre);
+
+	msg = msgb_alloc(GSM_MACBLOCK_LEN, "pkt_ctrl_ack");
+	if (!msg)
+		return NULL;
+
+	/* Initialize a bit vector that uses allocated msgb as the data buffer. */
+	bv = (struct bitvec){
+		.data = msgb_put(msg, GSM_MACBLOCK_LEN),
+		.data_len = GSM_MACBLOCK_LEN,
+	};
+	bitvec_unhex(&bv, GPRS_RLCMAC_DUMMY_VEC);
+
+	gprs_rlcmac_enc_prepare_pkt_ctrl_ack(&ul_block, gre->tlli);
+	rc = osmo_gprs_rlcmac_encode_uplink(&bv, &ul_block);
+	if (rc < 0) {
+		LOGGRE(gre, LOGL_ERROR, "Encoding of Packet Control ACK failed (%d)\n", rc);
+		goto free_ret;
+	}
+	LOGGRE(gre, LOGL_DEBUG, "Tx Packet Control Ack\n");
+
+	return msg;
+
+free_ret:
+	msgb_free(msg);
+	return NULL;
 }

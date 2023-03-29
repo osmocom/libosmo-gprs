@@ -400,12 +400,12 @@ static int gprs_rlcmac_handle_pkt_dl_ass(const struct osmo_gprs_rlcmac_prim *rlc
 	};
 	rc = gprs_rlcmac_tbf_start_from_pacch(&gre->dl_tbf_dl_ass_fsm, &ev_data);
 
-	if (tbf && dl_block->SP) {
+	if (dl_block->SP) {
 		uint32_t poll_fn = rrbp2fn(rlcmac_prim->l1ctl.pdch_data_ind.fn, dl_block->RRBP);
 		gprs_rlcmac_pdch_ulc_reserve(g_ctx->sched.ulc[rlcmac_prim->l1ctl.pdch_data_ind.ts_nr],
 					     poll_fn,
 					     GPRS_RLCMAC_PDCH_ULC_POLL_DL_ASS,
-					     tbf);
+					     gre);
 	}
 	return rc;
 }

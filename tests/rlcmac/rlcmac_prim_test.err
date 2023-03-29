@@ -61,7 +61,7 @@ DLGLOBAL INFO UL_TBF{FINISHED}: state_chg to RELEASING
 DLGLOBAL DEBUG Register POLL (TS=7 FN=21, reason=UL_ACK)
 DLGLOBAL DEBUG Rx from lower layers: L1CTL-PDCH_RTS.indication
 DLGLOBAL DEBUG (ts=7,fn=21,usf=0) Tx Pkt Control Ack (UL ACK/NACK poll)
-DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Tx Packet Control Ack
+DLGLOBAL DEBUG GRE(00002342) Tx Packet Control Ack
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: Deallocated
 DLGLOBAL INFO UL_TBF{RELEASING}: Deallocated
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-PDCH_DATA.request
@@ -755,7 +755,7 @@ DLGLOBAL INFO UL_TBF{ASSIGN}: state_chg to FLOW
 DLGLOBAL INFO UL_TBF_ASS{COMPLETED}: state_chg to IDLE
 DLGLOBAL DEBUG Rx from lower layers: L1CTL-PDCH_RTS.indication
 DLGLOBAL DEBUG (ts=7,fn=43,usf=2) Tx Pkt Control Ack (UL ASS poll)
-DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00000001) Tx Packet Control Ack
+DLGLOBAL DEBUG GRE(00000001) Tx Packet Control Ack
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-PDCH_DATA.request
 DLGLOBAL DEBUG Rx from lower layers: L1CTL-PDCH_RTS.indication
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00000001) Sending new block at BSN 0, CS=CS-2

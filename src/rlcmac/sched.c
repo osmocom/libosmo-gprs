@@ -38,7 +38,7 @@ struct tbf_sched_ctrl_candidates {
 	struct gprs_rlcmac_ul_tbf *poll_ul_ack_new_ul_tbf; /* 9.3.2.4.2  (answer with PKT RES REQ) */
 	struct gprs_rlcmac_ul_tbf *poll_ul_ack; /* 11.2.2 (answer with PKT CTRL ACK) */
 	struct gprs_rlcmac_ul_tbf *poll_ul_ass; /* (answer Pkt UL ASS with PKT CTRL ACK) */
-	struct gprs_rlcmac_tbf *poll_dl_ass; /* (answer Pkt DL ASS with PKT CTRL ACK) */
+	struct gprs_rlcmac_entity *poll_dl_ass; /* (answer Pkt DL ASS with PKT CTRL ACK) */
 	struct gprs_rlcmac_ul_tbf *ul_ass;	/* PCU grants USF/SBA: transmit Pkt Res Req (2phase access)*/
 };
 
@@ -80,7 +80,7 @@ static void get_ctrl_msg_tbf_candidates(const struct gprs_rlcmac_rts_block_ind *
 			tbfs->poll_ul_ass = tbf_as_ul_tbf(node->tbf);
 			break;
 		case GPRS_RLCMAC_PDCH_ULC_POLL_DL_ASS:
-			tbfs->poll_dl_ass = node->tbf;
+			tbfs->poll_dl_ass = node->gre;
 			break;
 		case GPRS_RLCMAC_PDCH_ULC_POLL_UL_ACK:
 			/* TS 44.060: 9.3.2.4.2 If the PACKET UPLINK ACK/NACK message
@@ -199,7 +199,7 @@ static struct msgb *sched_select_ctrl_msg(const struct gprs_rlcmac_rts_block_ind
 	if (tbfs->poll_ul_ack) {
 		LOGRLCMAC(LOGL_DEBUG, "(ts=%u,fn=%u,usf=%u) Tx Pkt Control Ack (UL ACK/NACK poll)\n",
 			  bi->ts, bi->fn, bi->usf);
-		msg = gprs_rlcmac_tbf_create_pkt_ctrl_ack(ul_tbf_as_tbf(tbfs->poll_ul_ack));
+		msg = gprs_rlcmac_gre_create_pkt_ctrl_ack(ul_tbf_as_tbf(tbfs->poll_ul_ack)->gre);
 		/* Last UL message, freeing */
 		gprs_rlcmac_ul_tbf_free(tbfs->poll_ul_ack);
 		return msg;
@@ -207,14 +207,14 @@ static struct msgb *sched_select_ctrl_msg(const struct gprs_rlcmac_rts_block_ind
 	if (tbfs->poll_dl_ass) {
 		LOGRLCMAC(LOGL_DEBUG, "(ts=%u,fn=%u,usf=%u) Tx Pkt Control Ack (DL ASS poll)\n",
 			  bi->ts, bi->fn, bi->usf);
-		msg = gprs_rlcmac_tbf_create_pkt_ctrl_ack(tbfs->poll_dl_ass);
+		msg = gprs_rlcmac_gre_create_pkt_ctrl_ack(tbfs->poll_dl_ass);
 		if (msg)
 			return msg;
 	}
 	if (tbfs->poll_ul_ass) {
 		LOGRLCMAC(LOGL_DEBUG, "(ts=%u,fn=%u,usf=%u) Tx Pkt Control Ack (UL ASS poll)\n",
 			  bi->ts, bi->fn, bi->usf);
-		msg = gprs_rlcmac_tbf_create_pkt_ctrl_ack(ul_tbf_as_tbf(tbfs->poll_ul_ass));
+		msg = gprs_rlcmac_gre_create_pkt_ctrl_ack(ul_tbf_as_tbf(tbfs->poll_ul_ass)->gre);
 		if (msg)
 			return msg;
 	}

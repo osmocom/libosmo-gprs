@@ -124,11 +124,11 @@ static int gprs_rlcmac_pdch_ulc_add_node(struct gprs_rlcmac_pdch_ulc *ulc, struc
 
 int gprs_rlcmac_pdch_ulc_reserve(struct gprs_rlcmac_pdch_ulc *ulc, uint32_t fn,
 				 enum gprs_rlcmac_pdch_ulc_poll_reason reason,
-				 struct gprs_rlcmac_tbf *tbf)
+				 void *data)
 {
 	struct gprs_rlcmac_pdch_ulc_node *item = _alloc_node(ulc, fn);
 	item->reason = reason;
-	item->tbf = tbf;
+	item->data = data;
 	LOGRLCMAC(LOGL_DEBUG, "Register POLL (TS=%u FN=%u, reason=%s)\n",
 		  ulc->ts_nr, item->fn,
 		  get_value_string(gprs_rlcmac_pdch_ulc_poll_reason_names, item->reason));

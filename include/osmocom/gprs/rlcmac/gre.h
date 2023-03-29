@@ -31,5 +31,7 @@ bool gprs_rlcmac_entity_have_tx_data_queued(const struct gprs_rlcmac_entity *gre
 int gprs_rlcmac_entity_llc_enqueue(struct gprs_rlcmac_entity *gre, uint8_t *ll_pdu, unsigned int ll_pdu_len,
 				   enum osmo_gprs_rlcmac_llc_sapi sapi, uint8_t radio_prio);
 
+struct msgb *gprs_rlcmac_gre_create_pkt_ctrl_ack(const struct gprs_rlcmac_entity *gre);
+
 #define LOGGRE(gre, level, fmt, args...) \
 	LOGRLCMAC(level, "GRE(%08x) " fmt, (gre)->tlli, ## args)

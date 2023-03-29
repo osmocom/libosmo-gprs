@@ -28,8 +28,6 @@ void gprs_rlcmac_tbf_destructor(struct gprs_rlcmac_tbf *tbf);
 
 void gprs_rlcmac_tbf_free(struct gprs_rlcmac_tbf *tbf);
 
-struct msgb *gprs_rlcmac_tbf_create_pkt_ctrl_ack(const struct gprs_rlcmac_tbf *tbf);
-
 #define LOGPTBF(tbf, lvl, fmt, args...) \
 	LOGP(g_rlcmac_log_cat[tbf->direction == GPRS_RLCMAC_TBF_DIR_DL ? \
 			      OSMO_GPRS_RLCMAC_LOGC_TBFDL : \

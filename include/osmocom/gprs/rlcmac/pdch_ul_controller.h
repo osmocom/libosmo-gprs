@@ -21,7 +21,8 @@
 #include <osmocom/core/linuxrbtree.h>
 #include <osmocom/core/utils.h>
 
-struct gprs_rlcmac_dl_tbf;
+struct gprs_rlcmac_gre;
+struct gprs_rlcmac_tbf;
 
 struct gprs_rlcmac_pdch_ulc {
 	uint8_t ts_nr;
@@ -43,12 +44,16 @@ struct gprs_rlcmac_pdch_ulc_node {
 	struct rb_node node;	/*! entry in gprs_rlcmac_pdch_ulc->tree_root */
 	uint32_t fn;
 	enum gprs_rlcmac_pdch_ulc_poll_reason reason;
-	struct gprs_rlcmac_tbf *tbf;
+	union {
+		struct gprs_rlcmac_tbf *tbf;
+		struct gprs_rlcmac_entity *gre;
+		void *data;
+	};
 };
 
 struct gprs_rlcmac_pdch_ulc *gprs_rlcmac_pdch_ulc_alloc(void *ctx, uint8_t ts_nr);
 
-int gprs_rlcmac_pdch_ulc_reserve(struct gprs_rlcmac_pdch_ulc *ulc, uint32_t fn, enum gprs_rlcmac_pdch_ulc_poll_reason reason, struct gprs_rlcmac_tbf *tbf);
+int gprs_rlcmac_pdch_ulc_reserve(struct gprs_rlcmac_pdch_ulc *ulc, uint32_t fn, enum gprs_rlcmac_pdch_ulc_poll_reason reason, void *data);
 
 struct gprs_rlcmac_pdch_ulc_node *gprs_rlcmac_pdch_ulc_get_node(struct gprs_rlcmac_pdch_ulc *ulc, uint32_t fn);
 struct gprs_rlcmac_pdch_ulc_node *gprs_rlcmac_pdch_ulc_pop_node(struct gprs_rlcmac_pdch_ulc *ulc, uint32_t fn);
