@@ -78,6 +78,16 @@ static struct osmo_tdef T_defs_gmm[] = {
 	{ 0 } /* empty item at the end */
 };
 
+static void gprs_gmm_ctx_free(void)
+{
+	struct gprs_gmm_entity *gmme;
+
+	while ((gmme = llist_first_entry_or_null(&g_ctx->gmme_list, struct gprs_gmm_entity, list)))
+		gprs_gmm_gmme_free(gmme);
+
+	talloc_free(g_ctx);
+}
+
 int osmo_gprs_gmm_init(enum osmo_gprs_gmm_location location)
 {
 	bool first_init = true;
@@ -86,7 +96,7 @@ int osmo_gprs_gmm_init(enum osmo_gprs_gmm_location location)
 
 	if (g_ctx) {
 		first_init = false;
-		talloc_free(g_ctx);
+		gprs_gmm_ctx_free();
 	}
 
 	g_ctx = talloc_zero(NULL, struct gprs_gmm_ctx);
