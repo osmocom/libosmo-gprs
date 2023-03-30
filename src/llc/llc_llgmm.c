@@ -79,7 +79,7 @@ static inline struct osmo_gprs_llc_prim *llc_prim_llgmm_alloc(enum osmo_gprs_llc
 							     enum osmo_prim_operation operation,
 							     unsigned int l3_len)
 {
-	return gprs_llc_prim_alloc(OSMO_GPRS_LLC_SAP_LLGM, type, operation, l3_len);
+	return gprs_llc_prim_alloc(OSMO_GPRS_LLC_SAP_LLGMM, type, operation, l3_len);
 }
 
 /* 7.2.1.1 LLGMM-ASSIGN.req (MS/SGSN):*/

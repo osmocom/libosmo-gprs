@@ -33,7 +33,7 @@
 #define LLC_MSGB_HEADROOM 0
 
 const struct value_string osmo_gprs_llc_prim_sap_names[] = {
-	{ OSMO_GPRS_LLC_SAP_LLGM,	"LLGM" },
+	{ OSMO_GPRS_LLC_SAP_LLGMM,	"LLGMM" },
 	{ OSMO_GPRS_LLC_SAP_LL,		"LL" },
 	{ OSMO_GPRS_LLC_SAP_GRR,	"GRR" },
 	{ OSMO_GPRS_LLC_SAP_BSSGP,	"BSSGP" },
@@ -48,7 +48,7 @@ const char *osmo_gprs_llc_prim_name(const struct osmo_gprs_llc_prim *llc_prim)
 	const char *type;
 
 	switch (llc_prim->oph.sap) {
-	case OSMO_GPRS_LLC_SAP_LLGM:
+	case OSMO_GPRS_LLC_SAP_LLGMM:
 		type = osmo_gprs_llc_llgmm_prim_type_name(llc_prim->oph.primitive);
 		break;
 	case OSMO_GPRS_LLC_SAP_LL:
@@ -157,7 +157,7 @@ int osmo_gprs_llc_prim_upper_down(struct osmo_gprs_llc_prim *llc_prim)
 	LOGLLC(LOGL_INFO, "Rx from upper layers: %s\n", osmo_gprs_llc_prim_name(llc_prim));
 
 	switch (llc_prim->oph.sap) {
-	case OSMO_GPRS_LLC_SAP_LLGM:
+	case OSMO_GPRS_LLC_SAP_LLGMM:
 		rc = gprs_llc_prim_llgmm_upper_down(llc_prim);
 		break;
 	case OSMO_GPRS_LLC_SAP_LL:

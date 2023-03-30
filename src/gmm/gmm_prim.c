@@ -643,7 +643,7 @@ int osmo_gprs_gmm_prim_llc_lower_up(struct osmo_gprs_llc_prim *llc_prim)
 	LOGGMM(LOGL_INFO, "Rx from lower layers: %s\n", osmo_gprs_llc_prim_name(llc_prim));
 
 	switch (llc_prim->oph.sap) {
-	case OSMO_GPRS_LLC_SAP_LLGM:
+	case OSMO_GPRS_LLC_SAP_LLGMM:
 		rc = gprs_gmm_prim_handle_llgmm(llc_prim);
 		break;
 	case OSMO_GPRS_LLC_SAP_LL:

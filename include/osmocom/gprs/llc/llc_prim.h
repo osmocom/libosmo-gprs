@@ -12,7 +12,7 @@
 
 /* Section 7.1.0 */
 enum osmo_gprs_llc_prim_sap {
-	OSMO_GPRS_LLC_SAP_LLGM,
+	OSMO_GPRS_LLC_SAP_LLGMM,
 	OSMO_GPRS_LLC_SAP_LL,
 	OSMO_GPRS_LLC_SAP_GRR,
 	OSMO_GPRS_LLC_SAP_BSSGP,

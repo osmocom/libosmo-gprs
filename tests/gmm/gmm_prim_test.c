@@ -204,7 +204,7 @@ int test_gmm_prim_llc_down_cb(struct osmo_gprs_llc_prim *llc_prim, void *user_da
 	const char *pdu_name = osmo_gprs_llc_prim_name(llc_prim);
 
 	switch (llc_prim->oph.sap) {
-	case OSMO_GPRS_LLC_SAP_LLGM:
+	case OSMO_GPRS_LLC_SAP_LLGMM:
 		printf("%s(): Rx %s TLLI=0x%08x\n", __func__, pdu_name, llc_prim->llgmm.tlli);
 		break;
 	case OSMO_GPRS_LLC_SAP_LL:
