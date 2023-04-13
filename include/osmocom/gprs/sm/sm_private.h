@@ -168,7 +168,7 @@ int gprs_sm_tx_act_pdp_ctx_req(struct gprs_sm_entity *sme);
 int gprs_sm_rx(struct gprs_sm_entity *sme, struct gsm48_hdr *gh, unsigned int len);
 
 
-#define LOGMS(snme, level, fmt, args...) \
+#define LOGMS(ms, level, fmt, args...) \
 	LOGSM(level, "MS(ID-%u) " fmt, \
 	      ms->ms_id, \
 	      ## args)
