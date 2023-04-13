@@ -244,18 +244,18 @@ int gprs_llc_prim_ll_upper_down(struct osmo_gprs_llc_prim *llc_prim)
 	int rc;
 	switch (OSMO_PRIM_HDR(&llc_prim->oph)) {
 	case OSMO_PRIM(OSMO_GPRS_LLC_LL_XID, PRIM_OP_REQUEST):
-		OSMO_ASSERT(g_ctx->location == OSMO_GPRS_LLC_LOCATION_MS ||
-			    g_ctx->location == OSMO_GPRS_LLC_LOCATION_SGSN);
+		OSMO_ASSERT(g_llc_ctx->location == OSMO_GPRS_LLC_LOCATION_MS ||
+			    g_llc_ctx->location == OSMO_GPRS_LLC_LOCATION_SGSN);
 		rc = llc_prim_handle_ll_xid_req(llc_prim);
 		break;
 	case OSMO_PRIM(OSMO_GPRS_LLC_LL_XID, PRIM_OP_RESPONSE):
-		OSMO_ASSERT(g_ctx->location == OSMO_GPRS_LLC_LOCATION_MS ||
-			    g_ctx->location == OSMO_GPRS_LLC_LOCATION_SGSN);
+		OSMO_ASSERT(g_llc_ctx->location == OSMO_GPRS_LLC_LOCATION_MS ||
+			    g_llc_ctx->location == OSMO_GPRS_LLC_LOCATION_SGSN);
 		rc = llc_prim_handle_ll_xid_resp(llc_prim);
 		break;
 	case OSMO_PRIM(OSMO_GPRS_LLC_LL_UNITDATA, PRIM_OP_REQUEST):
-		OSMO_ASSERT(g_ctx->location == OSMO_GPRS_LLC_LOCATION_MS ||
-			    g_ctx->location == OSMO_GPRS_LLC_LOCATION_SGSN);
+		OSMO_ASSERT(g_llc_ctx->location == OSMO_GPRS_LLC_LOCATION_MS ||
+			    g_llc_ctx->location == OSMO_GPRS_LLC_LOCATION_SGSN);
 		rc = llc_prim_handle_ll_unitdata_req(llc_prim);
 		break;
 	/* TODO: others */

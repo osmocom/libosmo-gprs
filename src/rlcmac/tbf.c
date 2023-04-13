@@ -36,8 +36,8 @@ void gprs_rlcmac_tbf_constructor(struct gprs_rlcmac_tbf *tbf,
 void gprs_rlcmac_tbf_destructor(struct gprs_rlcmac_tbf *tbf)
 {
 	unsigned int i;
-	for (i = 0; i < ARRAY_SIZE(g_ctx->sched.ulc); i++)
-		gprs_rlcmac_pdch_ulc_release_tbf(g_ctx->sched.ulc[i], tbf);
+	for (i = 0; i < ARRAY_SIZE(g_rlcmac_ctx->sched.ulc); i++)
+		gprs_rlcmac_pdch_ulc_release_tbf(g_rlcmac_ctx->sched.ulc[i], tbf);
 }
 
 void gprs_rlcmac_tbf_free(struct gprs_rlcmac_tbf *tbf)

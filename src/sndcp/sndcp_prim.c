@@ -99,22 +99,22 @@ static int sndcp_snsm_cb_dummy(struct osmo_gprs_sndcp_prim *sndcp_prim, void *us
 /* Set callback used by SNDCP layer to push primitives to higher layers in protocol stack */
 void osmo_gprs_sndcp_prim_set_up_cb(osmo_gprs_sndcp_prim_up_cb up_cb, void *up_user_data)
 {
-	g_ctx->sndcp_up_cb = up_cb;
-	g_ctx->sndcp_up_cb_user_data = up_user_data;
+	g_sndcp_ctx->sndcp_up_cb = up_cb;
+	g_sndcp_ctx->sndcp_up_cb_user_data = up_user_data;
 }
 
 /* Set callback used by SNDCP layer to push primitives to lower layers in protocol stack */
 void osmo_gprs_sndcp_prim_set_down_cb(osmo_gprs_sndcp_prim_down_cb down_cb, void *down_user_data)
 {
-	g_ctx->sndcp_down_cb = down_cb;
-	g_ctx->sndcp_down_cb_user_data = down_user_data;
+	g_sndcp_ctx->sndcp_down_cb = down_cb;
+	g_sndcp_ctx->sndcp_down_cb_user_data = down_user_data;
 }
 
 /* Set callback used by SNDCP layer to push primitives to SM sublayer */
 void osmo_gprs_sndcp_prim_set_snsm_cb(osmo_gprs_sndcp_prim_snsm_cb snsm_cb, void *snsm_user_data)
 {
-	g_ctx->sndcp_snsm_cb = snsm_cb;
-	g_ctx->sndcp_snsm_cb_user_data = snsm_user_data;
+	g_sndcp_ctx->sndcp_snsm_cb = snsm_cb;
+	g_sndcp_ctx->sndcp_snsm_cb_user_data = snsm_user_data;
 }
 
 /********************************
@@ -289,10 +289,10 @@ static int gprs_sndcp_prim_handle_llc_ll_unsupported(struct osmo_gprs_llc_prim *
 int gprs_sndcp_prim_call_up_cb(struct osmo_gprs_sndcp_prim *sndcp_prim)
 {
 	int rc;
-	if (g_ctx->sndcp_up_cb)
-		rc = g_ctx->sndcp_up_cb(sndcp_prim, g_ctx->sndcp_up_cb_user_data);
+	if (g_sndcp_ctx->sndcp_up_cb)
+		rc = g_sndcp_ctx->sndcp_up_cb(sndcp_prim, g_sndcp_ctx->sndcp_up_cb_user_data);
 	else
-		rc = sndcp_up_cb_dummy(sndcp_prim, g_ctx->sndcp_up_cb_user_data);
+		rc = sndcp_up_cb_dummy(sndcp_prim, g_sndcp_ctx->sndcp_up_cb_user_data);
 	msgb_free(sndcp_prim->oph.msg);
 	return rc;
 }
@@ -395,7 +395,7 @@ ret_free:
 int osmo_gprs_sndcp_prim_upper_down(struct osmo_gprs_sndcp_prim *sndcp_prim)
 {
 	int rc;
-	OSMO_ASSERT(g_ctx);
+	OSMO_ASSERT(g_sndcp_ctx);
 
 	LOGSNDCP(LOGL_INFO, "Rx from upper layers: %s\n", osmo_gprs_sndcp_prim_name(sndcp_prim));
 
@@ -428,10 +428,10 @@ int osmo_gprs_sndcp_prim_upper_down(struct osmo_gprs_sndcp_prim *sndcp_prim)
 int gprs_sndcp_prim_call_down_cb(struct osmo_gprs_llc_prim *llc_prim)
 {
 	int rc;
-	if (g_ctx->sndcp_down_cb)
-		rc = g_ctx->sndcp_down_cb(llc_prim, g_ctx->sndcp_down_cb_user_data);
+	if (g_sndcp_ctx->sndcp_down_cb)
+		rc = g_sndcp_ctx->sndcp_down_cb(llc_prim, g_sndcp_ctx->sndcp_down_cb_user_data);
 	else
-		rc = sndcp_down_cb_dummy(llc_prim, g_ctx->sndcp_down_cb_user_data);
+		rc = sndcp_down_cb_dummy(llc_prim, g_sndcp_ctx->sndcp_down_cb_user_data);
 	msgb_free(llc_prim->oph.msg);
 	return rc;
 }
@@ -515,7 +515,7 @@ int gprs_sndcp_prim_lower_up_llc_ll(struct osmo_gprs_llc_prim *llc_prim)
 /* SNDCP lower layers (LLC) push SNDCP primitive up to SNDCP layer: */
 int osmo_gprs_sndcp_prim_lower_up(struct osmo_gprs_llc_prim *llc_prim)
 {
-	OSMO_ASSERT(g_ctx);
+	OSMO_ASSERT(g_sndcp_ctx);
 	OSMO_ASSERT(llc_prim);
 	struct msgb *msg = llc_prim->oph.msg;
 	int rc;
@@ -545,10 +545,10 @@ int osmo_gprs_sndcp_prim_lower_up(struct osmo_gprs_llc_prim *llc_prim)
 int gprs_sndcp_prim_call_snsm_cb(struct osmo_gprs_sndcp_prim *sndcp_prim)
 {
 	int rc;
-	if (g_ctx->sndcp_snsm_cb)
-		rc = g_ctx->sndcp_snsm_cb(sndcp_prim, g_ctx->sndcp_snsm_cb_user_data);
+	if (g_sndcp_ctx->sndcp_snsm_cb)
+		rc = g_sndcp_ctx->sndcp_snsm_cb(sndcp_prim, g_sndcp_ctx->sndcp_snsm_cb_user_data);
 	else
-		rc = sndcp_snsm_cb_dummy(sndcp_prim, g_ctx->sndcp_snsm_cb_user_data);
+		rc = sndcp_snsm_cb_dummy(sndcp_prim, g_sndcp_ctx->sndcp_snsm_cb_user_data);
 	msgb_free(sndcp_prim->oph.msg);
 	return rc;
 }
@@ -646,7 +646,7 @@ static int gprs_sndcp_prim_handle_sndcp_snsm_stop_assign_ind(struct osmo_gprs_sn
 int osmo_gprs_sndcp_prim_dispatch_snsm(struct osmo_gprs_sndcp_prim *sndcp_prim)
 {
 	int rc;
-	OSMO_ASSERT(g_ctx);
+	OSMO_ASSERT(g_sndcp_ctx);
 	OSMO_ASSERT(sndcp_prim);
 	struct msgb *msg = sndcp_prim->oph.msg;
 

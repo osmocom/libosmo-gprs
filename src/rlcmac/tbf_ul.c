@@ -48,7 +48,7 @@ struct gprs_rlcmac_ul_tbf *gprs_rlcmac_ul_tbf_alloc(struct gprs_rlcmac_entity *g
 	if (rc < 0)
 		goto err_state_fsm_destruct;
 
-	ul_tbf->tbf.nr = g_ctx->next_ul_tbf_nr++;
+	ul_tbf->tbf.nr = g_rlcmac_ctx->next_ul_tbf_nr++;
 	ul_tbf->tx_cs = GPRS_RLCMAC_CS_1;
 
 	ul_tbf->ulw = gprs_rlcmac_rlc_ul_window_alloc(ul_tbf);
@@ -121,8 +121,8 @@ unsigned int gprs_rlcmac_ul_tbf_n3104_max(const struct gprs_rlcmac_ul_tbf *ul_tb
 	/* 3GPP TS 44.060 13.3:
 	 * N3104_MAX = 3 * (BS_CV_MAX + 3) * number of uplink timeslots assigned */
 	/* If we didn't receive SI13 yet, use maximum value bs_cv_max in range 0..15 */
-	uint8_t bs_cv_max = g_ctx->si13_available ?
-				g_ctx->si13ro.u.PBCCH_Not_present.GPRS_Cell_Options.BS_CV_MAX :
+	uint8_t bs_cv_max = g_rlcmac_ctx->si13_available ?
+				g_rlcmac_ctx->si13ro.u.PBCCH_Not_present.GPRS_Cell_Options.BS_CV_MAX :
 				15;
 	return 3 * (bs_cv_max + 3) * ul_tbf->cur_alloc.num_ts;
 }
@@ -522,7 +522,7 @@ static int take_next_bsn(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rl
 		if (ul_tbf->tbf.is_egprs) {
 			/* Table 8.1.1.2 and Table 8.1.1.1 of 44.060 */
 			blk->cs_current_trans = gprs_rlcmac_get_retx_mcs(blk->cs_init, tx_cs,
-									 g_ctx->cfg.egprs_arq_type == GPRS_RLCMAC_EGPRS_ARQ1);
+									 g_rlcmac_ctx->cfg.egprs_arq_type == GPRS_RLCMAC_EGPRS_ARQ1);
 
 			LOGPTBFUL(ul_tbf, LOGL_DEBUG,
 				  "initial_cs_dl(%s) last_mcs(%s) demanded_mcs(%s) cs_trans(%s) arq_type(%d) bsn(%d)\n",
@@ -530,7 +530,7 @@ static int take_next_bsn(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rl
 				  gprs_rlcmac_mcs_name(blk->cs_last),
 				  gprs_rlcmac_mcs_name(tx_cs),
 				  gprs_rlcmac_mcs_name(blk->cs_current_trans),
-				  g_ctx->cfg.egprs_arq_type, bsn);
+				  g_rlcmac_ctx->cfg.egprs_arq_type, bsn);
 
 			/* TODO: Need to remove this check when MCS-8 -> MCS-6
 			 * transistion is handled.
@@ -571,7 +571,7 @@ static int take_next_bsn(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rl
 			  force_data_len != -1 ? " (forced)" : "");
 
 		bsn = create_new_bsn(ul_tbf, bi, tx_cs);
-	} else if (g_ctx->cfg.ul_tbf_preemptive_retransmission &&
+	} else if (g_rlcmac_ctx->cfg.ul_tbf_preemptive_retransmission &&
 		   !gprs_rlcmac_rlc_ul_window_window_empty(ul_tbf->ulw)) {
 		/* The window contains unacked packages, but not acked.
 		 * Mark unacked bsns as RESEND */

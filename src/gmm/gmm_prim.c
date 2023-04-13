@@ -133,22 +133,22 @@ static int gmm_llc_down_cb_dummy(struct osmo_gprs_llc_prim *llc_prim, void *user
 /* Set callback used by GMM layer to push primitives to higher layers in protocol stack */
 void osmo_gprs_gmm_prim_set_up_cb(osmo_gprs_gmm_prim_up_cb up_cb, void *up_user_data)
 {
-	g_ctx->gmm_up_cb = up_cb;
-	g_ctx->gmm_up_cb_user_data = up_user_data;
+	g_gmm_ctx->gmm_up_cb = up_cb;
+	g_gmm_ctx->gmm_up_cb_user_data = up_user_data;
 }
 
 /* Set callback used by GMM layer to push primitives to lower layers in protocol stack */
 void osmo_gprs_gmm_prim_set_down_cb(osmo_gprs_gmm_prim_down_cb down_cb, void *down_user_data)
 {
-	g_ctx->gmm_down_cb = down_cb;
-	g_ctx->gmm_down_cb_user_data = down_user_data;
+	g_gmm_ctx->gmm_down_cb = down_cb;
+	g_gmm_ctx->gmm_down_cb_user_data = down_user_data;
 }
 
 /* Set callback used by GMM layer to push primitives to LLC lower layer in protocol stack */
 void osmo_gprs_gmm_prim_set_llc_down_cb(osmo_gprs_gmm_prim_llc_down_cb llc_down_cb, void *llc_down_user_data)
 {
-	g_ctx->gmm_llc_down_cb = llc_down_cb;
-	g_ctx->gmm_llc_down_cb_user_data = llc_down_user_data;
+	g_gmm_ctx->gmm_llc_down_cb = llc_down_cb;
+	g_gmm_ctx->gmm_llc_down_cb_user_data = llc_down_user_data;
 }
 
 /********************************
@@ -342,10 +342,10 @@ static int gprs_gmm_prim_handle_llc_unsupported(struct osmo_gprs_llc_prim *llc_p
 int gprs_gmm_prim_call_up_cb(struct osmo_gprs_gmm_prim *gmm_prim)
 {
 	int rc;
-	if (g_ctx->gmm_up_cb)
-		rc = g_ctx->gmm_up_cb(gmm_prim, g_ctx->gmm_up_cb_user_data);
+	if (g_gmm_ctx->gmm_up_cb)
+		rc = g_gmm_ctx->gmm_up_cb(gmm_prim, g_gmm_ctx->gmm_up_cb_user_data);
 	else
-		rc = gmm_up_cb_dummy(gmm_prim, g_ctx->gmm_up_cb_user_data);
+		rc = gmm_up_cb_dummy(gmm_prim, g_gmm_ctx->gmm_up_cb_user_data);
 	msgb_free(gmm_prim->oph.msg);
 	return rc;
 }
@@ -356,7 +356,7 @@ static int gprs_gmm_prim_handle_gmmreg_attach_req(struct osmo_gprs_gmm_prim *gmm
 	int rc;
 	struct gprs_gmm_entity *gmme;
 
-	gmme = llist_first_entry_or_null(&g_ctx->gmme_list, struct gprs_gmm_entity, list);
+	gmme = llist_first_entry_or_null(&g_gmm_ctx->gmme_list, struct gprs_gmm_entity, list);
 	if (!gmme) {
 		gmme = gprs_gmm_gmme_alloc();
 		OSMO_ASSERT(gmme);
@@ -417,7 +417,7 @@ static int gprs_gmm_prim_handle_gmmsm_establish_req(struct osmo_gprs_gmm_prim *g
 	int rc;
 	struct gprs_gmm_entity *gmme;
 
-	gmme = llist_first_entry_or_null(&g_ctx->gmme_list, struct gprs_gmm_entity, list);
+	gmme = llist_first_entry_or_null(&g_gmm_ctx->gmme_list, struct gprs_gmm_entity, list);
 	if (!gmme) {
 		gmme = gprs_gmm_gmme_alloc();
 		OSMO_ASSERT(gmme);
@@ -501,10 +501,10 @@ int osmo_gprs_gmm_prim_upper_down(struct osmo_gprs_gmm_prim *gmm_prim)
 int gprs_gmm_prim_call_down_cb(struct osmo_gprs_gmm_prim *gmm_prim)
 {
 	int rc;
-	if (g_ctx->gmm_down_cb)
-		rc = g_ctx->gmm_down_cb(gmm_prim, g_ctx->gmm_down_cb_user_data);
+	if (g_gmm_ctx->gmm_down_cb)
+		rc = g_gmm_ctx->gmm_down_cb(gmm_prim, g_gmm_ctx->gmm_down_cb_user_data);
 	else
-		rc = gmm_down_cb_dummy(gmm_prim, g_ctx->gmm_down_cb_user_data);
+		rc = gmm_down_cb_dummy(gmm_prim, g_gmm_ctx->gmm_down_cb_user_data);
 	msgb_free(gmm_prim->oph.msg);
 	return rc;
 }
@@ -527,7 +527,7 @@ static int gprs_gmm_prim_handle_gmmrr(struct osmo_gprs_gmm_prim *gmm_prim)
 /* GMM lower layers (LLC) push GMM primitive up to GMM layer: */
 int osmo_gprs_gmm_prim_lower_up(struct osmo_gprs_gmm_prim *gmm_prim)
 {
-	OSMO_ASSERT(g_ctx);
+	OSMO_ASSERT(g_gmm_ctx);
 	OSMO_ASSERT(gmm_prim);
 	struct msgb *msg = gmm_prim->oph.msg;
 	int rc;
@@ -554,10 +554,10 @@ int osmo_gprs_gmm_prim_lower_up(struct osmo_gprs_gmm_prim *gmm_prim)
 int gprs_gmm_prim_call_llc_down_cb(struct osmo_gprs_llc_prim *llc_prim)
 {
 	int rc;
-	if (g_ctx->gmm_llc_down_cb)
-		rc = g_ctx->gmm_llc_down_cb(llc_prim, g_ctx->gmm_llc_down_cb_user_data);
+	if (g_gmm_ctx->gmm_llc_down_cb)
+		rc = g_gmm_ctx->gmm_llc_down_cb(llc_prim, g_gmm_ctx->gmm_llc_down_cb_user_data);
 	else
-		rc = gmm_llc_down_cb_dummy(llc_prim, g_ctx->gmm_llc_down_cb_user_data);
+		rc = gmm_llc_down_cb_dummy(llc_prim, g_gmm_ctx->gmm_llc_down_cb_user_data);
 	/* Special return value '1' means: do not free */
 	if (rc != 1)
 		msgb_free(llc_prim->oph.msg);
@@ -635,7 +635,7 @@ static int gprs_gmm_prim_handle_ll(struct osmo_gprs_llc_prim *llc_prim)
 /* GMM lower layers (LLC) push GMM primitive up to GMM layer: */
 int osmo_gprs_gmm_prim_llc_lower_up(struct osmo_gprs_llc_prim *llc_prim)
 {
-	OSMO_ASSERT(g_ctx);
+	OSMO_ASSERT(g_gmm_ctx);
 	OSMO_ASSERT(llc_prim);
 	struct msgb *msg = llc_prim->oph.msg;
 	int rc;

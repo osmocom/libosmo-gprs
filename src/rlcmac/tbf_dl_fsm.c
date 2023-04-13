@@ -47,7 +47,7 @@ static const struct osmo_tdef_state_timeout tbf_dl_fsm_timeouts[32] = {
  #define tbf_dl_fsm_state_chg(fi, NEXT_STATE) \
 	osmo_tdef_fsm_inst_state_chg(fi, NEXT_STATE, \
 				     tbf_dl_fsm_timeouts, \
-				     g_ctx->T_defs, \
+				     g_rlcmac_ctx->T_defs, \
 				     -1)
 
 static void st_new(struct osmo_fsm_inst *fi, uint32_t event, void *data)

@@ -32,15 +32,15 @@
 #include <osmocom/gprs/sndcp/sndcp_private.h>
 #include <osmocom/gprs/llc/llc_prim.h>
 
-struct gprs_sndcp_ctx *g_ctx;
+struct gprs_sndcp_ctx *g_sndcp_ctx;
 
 int osmo_gprs_sndcp_init(void)
 {
-	if (g_ctx)
-		talloc_free(g_ctx);
+	if (g_sndcp_ctx)
+		talloc_free(g_sndcp_ctx);
 
-	g_ctx = talloc_zero(NULL, struct gprs_sndcp_ctx);
-	INIT_LLIST_HEAD(&g_ctx->snme_list);
+	g_sndcp_ctx = talloc_zero(NULL, struct gprs_sndcp_ctx);
+	INIT_LLIST_HEAD(&g_sndcp_ctx->snme_list);
 	return 0;
 }
 
@@ -48,12 +48,12 @@ struct gprs_sndcp_mgmt_entity *gprs_sndcp_snme_alloc(uint32_t tlli)
 {
 	struct gprs_sndcp_mgmt_entity *snme;
 
-	snme = talloc_zero(g_ctx, struct gprs_sndcp_mgmt_entity);
+	snme = talloc_zero(g_sndcp_ctx, struct gprs_sndcp_mgmt_entity);
 	if (!snme)
 		return NULL;
 
 	snme->tlli = tlli;
-	llist_add(&snme->list, &g_ctx->snme_list);
+	llist_add(&snme->list, &g_sndcp_ctx->snme_list);
 
 	return snme;
 }
@@ -73,7 +73,7 @@ struct gprs_sndcp_mgmt_entity *gprs_sndcp_snme_find_by_tlli(uint32_t tlli)
 {
 	struct gprs_sndcp_mgmt_entity *snme;
 
-	llist_for_each_entry(snme, &g_ctx->snme_list, list) {
+	llist_for_each_entry(snme, &g_sndcp_ctx->snme_list, list) {
 		if (snme->tlli == tlli)
 			return snme;
 	}
@@ -111,7 +111,7 @@ struct gprs_sndcp_entity *gprs_sndcp_sne_alloc(struct gprs_sndcp_mgmt_entity *sn
 {
 	struct gprs_sndcp_entity *sne;
 
-	sne = talloc_zero(g_ctx, struct gprs_sndcp_entity);
+	sne = talloc_zero(g_sndcp_ctx, struct gprs_sndcp_entity);
 	if (!sne)
 		return NULL;
 
@@ -172,7 +172,7 @@ static int defrag_enqueue(struct gprs_sndcp_entity *sne, uint8_t seg_nr,
 {
 	struct defrag_queue_entry *dqe;
 
-	dqe = talloc_zero(g_ctx, struct defrag_queue_entry);
+	dqe = talloc_zero(g_sndcp_ctx, struct defrag_queue_entry);
 	if (!dqe)
 		return -ENOMEM;
 	dqe->data = talloc_zero_size(dqe, data_len);
@@ -323,7 +323,7 @@ static int defrag_segments(struct gprs_sndcp_entity *sne)
 	 * hands it off to the correct GTP tunnel + GGSN via gtp_data_req() */
 
 	/* Decompress packet */
-	if (any_pcomp_or_dcomp_active(g_ctx)) {
+	if (any_pcomp_or_dcomp_active(g_sndcp_ctx)) {
 		expnd = decompress_segment(sne, msg, npdu, npdu_len, &npdu_len);
 		if (!expnd) {
 			rc = -EIO;
@@ -542,7 +542,7 @@ int gprs_sndcp_sne_handle_sn_unitdata_req(struct gprs_sndcp_entity *sne, uint8_t
 	LOGSNE(sne, "===================================================\n");
 	debug_ip_packet(npdu, npdu_len, 0, __func__ "()");
 #endif
-	if (any_pcomp_or_dcomp_active(g_ctx)) {
+	if (any_pcomp_or_dcomp_active(g_sndcp_ctx)) {
 
 		/* Apply header compression */
 		rc = gprs_sndcp_pcomp_compress(msg->data, msg->len, &pcomp,
@@ -810,8 +810,8 @@ int gprs_sndcp_sne_handle_llc_ll_unitdata_ind(struct gprs_sndcp_entity *sne, str
 	 * hands it off to the correct GTP tunnel + GGSN via gtp_data_req() */
 
 	/* Decompress packet */
-	if (any_pcomp_or_dcomp_active(g_ctx)) {
-		expnd = decompress_segment(sne, g_ctx, npdu, npdu_len, (unsigned int *)&npdu_len);
+	if (any_pcomp_or_dcomp_active(g_sndcp_ctx)) {
+		expnd = decompress_segment(sne, g_sndcp_ctx, npdu, npdu_len, (unsigned int *)&npdu_len);
 		if (!expnd) {
 			rc = -EIO;
 			goto ret_free;
@@ -825,7 +825,7 @@ int gprs_sndcp_sne_handle_llc_ll_unitdata_ind(struct gprs_sndcp_entity *sne, str
 	rc = gprs_sndcp_prim_call_up_cb(sndcp_prim_tx);
 
 ret_free:
-	if (any_pcomp_or_dcomp_active(g_ctx))
+	if (any_pcomp_or_dcomp_active(g_sndcp_ctx))
 		talloc_free(expnd);
 	return rc;
 }
@@ -846,7 +846,7 @@ static int gprs_sndcp_snme_handle_pcomp_entities(struct gprs_sndcp_mgmt_entity *
 	/* Process proposed parameters */
 	switch (comp_field->algo.pcomp) {
 	case RFC_1144:
-		if (g_ctx->cfg.pcomp_rfc1144_passive_accept
+		if (g_sndcp_ctx->cfg.pcomp_rfc1144_passive_accept
 		    && comp_field->rfc1144_params->nsapi_len > 0) {
 			LOGSNME(snme, LOGL_DEBUG, "Accepting RFC1144 header compression...\n");
 			gprs_sndcp_comp_add(snme, snme->comp.proto, comp_field);
@@ -888,7 +888,7 @@ static int gprs_sndcp_snme_handle_dcomp_entities(struct gprs_sndcp_mgmt_entity *
 	/* Process proposed parameters */
 	switch (comp_field->algo.dcomp) {
 	case V42BIS:
-		if (g_ctx->cfg.dcomp_v42bis_passive_accept &&
+		if (g_sndcp_ctx->cfg.dcomp_v42bis_passive_accept &&
 		    comp_field->v42bis_params->nsapi_len > 0) {
 			LOGSNME(snme, LOGL_DEBUG, "Accepting V.42bis data compression...\n");
 			gprs_sndcp_comp_add(snme, snme->comp.data, comp_field);

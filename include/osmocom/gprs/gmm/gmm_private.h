@@ -46,7 +46,7 @@ struct gprs_gmm_ctx {
 	struct llist_head gmme_list; /* list of struct gprs_gmm_entity->list */
 };
 
-extern struct gprs_gmm_ctx *g_ctx;
+extern struct gprs_gmm_ctx *g_gmm_ctx;
 
 /* GMM Entity: */
 struct gprs_gmm_entity {

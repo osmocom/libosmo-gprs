@@ -53,7 +53,7 @@ static const struct osmo_tdef_state_timeout tbf_ul_fsm_timeouts[32] = {
  #define tbf_ul_fsm_state_chg(fi, NEXT_STATE) \
 	osmo_tdef_fsm_inst_state_chg(fi, NEXT_STATE, \
 				     tbf_ul_fsm_timeouts, \
-				     g_ctx->T_defs, \
+				     g_rlcmac_ctx->T_defs, \
 				     -1)
 
 static uint8_t ul_tbf_ul_slotmask(struct gprs_rlcmac_ul_tbf *ul_tbf)
@@ -110,7 +110,7 @@ static void arm_T3182_if_needed(struct gprs_rlcmac_tbf_ul_fsm_ctx *ctx)
 			    (osmo_timer_pending(&fi->timer) && fi->T == 3182));
 		LOGPFSML(ctx->fi, LOGL_INFO, "Last UL block sent (CV=0), start T3182\n");
 		fi->T = 3182;
-		val_sec = osmo_tdef_get(g_ctx->T_defs, fi->T, OSMO_TDEF_S, -1);
+		val_sec = osmo_tdef_get(g_rlcmac_ctx->T_defs, fi->T, OSMO_TDEF_S, -1);
 		osmo_timer_schedule(&fi->timer, val_sec, 0);
 	}
 }
@@ -169,7 +169,7 @@ static void st_flow(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 		if (ctx->ul_tbf->ul_ass_fsm.ass_type == GPRS_RLCMAC_TBF_UL_ASS_TYPE_1PHASE) {
 			LOGPFSML(ctx->fi, LOGL_INFO, "First UL block sent (1 phase access), start T3166\n");
 			fi->T = 3166;
-			val_sec = osmo_tdef_get(g_ctx->T_defs, fi->T, OSMO_TDEF_S, -1);
+			val_sec = osmo_tdef_get(g_rlcmac_ctx->T_defs, fi->T, OSMO_TDEF_S, -1);
 			osmo_timer_schedule(&fi->timer, val_sec, 0);
 		}
 		break;

@@ -40,7 +40,7 @@ struct gprs_rlcmac_entity *gprs_rlcmac_entity_alloc(uint32_t tlli)
 	struct gprs_rlcmac_entity *gre;
 	int rc;
 
-	gre = talloc_zero(g_ctx, struct gprs_rlcmac_entity);
+	gre = talloc_zero(g_rlcmac_ctx, struct gprs_rlcmac_entity);
 	if (!gre)
 		return NULL;
 
@@ -48,15 +48,15 @@ struct gprs_rlcmac_entity *gprs_rlcmac_entity_alloc(uint32_t tlli)
 	if (!gre->llc_queue)
 		goto err_free_gre;
 	gprs_rlcmac_llc_queue_set_codel_params(gre->llc_queue,
-					       g_ctx->cfg.codel.use,
-					       g_ctx->cfg.codel.interval_msec);
+					       g_rlcmac_ctx->cfg.codel.use,
+					       g_rlcmac_ctx->cfg.codel.interval_msec);
 
 	rc = gprs_rlcmac_tbf_dl_ass_fsm_constructor(&gre->dl_tbf_dl_ass_fsm, gre);
 	if (rc < 0)
 		goto err_free_gre;
 
 	gre->tlli = tlli;
-	llist_add_tail(&gre->entry, &g_ctx->gre_list);
+	llist_add_tail(&gre->entry, &g_rlcmac_ctx->gre_list);
 
 	return gre;
 

@@ -40,7 +40,7 @@
 
 #define GPRS_CODEL_SLOW_INTERVAL_MS 4000
 
-struct gprs_rlcmac_ctx *g_ctx;
+struct gprs_rlcmac_ctx *g_rlcmac_ctx;
 
 /* TS 44.060 Table 13.1.1 */
 static struct osmo_tdef T_defs_rlcmac[] = {
@@ -56,10 +56,10 @@ static void gprs_rlcmac_ctx_free(void)
 {
 	struct gprs_rlcmac_entity *gre;
 
-	while ((gre = llist_first_entry_or_null(&g_ctx->gre_list, struct gprs_rlcmac_entity, entry)))
+	while ((gre = llist_first_entry_or_null(&g_rlcmac_ctx->gre_list, struct gprs_rlcmac_entity, entry)))
 		gprs_rlcmac_entity_free(gre);
 
-	talloc_free(g_ctx);
+	talloc_free(g_rlcmac_ctx);
 }
 
 int osmo_gprs_rlcmac_init(enum osmo_gprs_rlcmac_location location)
@@ -69,48 +69,48 @@ int osmo_gprs_rlcmac_init(enum osmo_gprs_rlcmac_location location)
 	unsigned int i;
 	OSMO_ASSERT(location == OSMO_GPRS_RLCMAC_LOCATION_MS || location == OSMO_GPRS_RLCMAC_LOCATION_PCU)
 
-	if (g_ctx) {
+	if (g_rlcmac_ctx) {
 		gprs_rlcmac_ctx_free();
 		first_init = false;
 	}
 
-	g_ctx = talloc_zero(NULL, struct gprs_rlcmac_ctx);
-	g_ctx->cfg.location = location;
-	g_ctx->cfg.codel.use = true;
-	g_ctx->cfg.codel.interval_msec = GPRS_CODEL_SLOW_INTERVAL_MS;
-	g_ctx->cfg.egprs_arq_type = GPRS_RLCMAC_EGPRS_ARQ1;
-	g_ctx->cfg.ul_tbf_preemptive_retransmission = true;
-	g_ctx->T_defs = T_defs_rlcmac;
-	INIT_LLIST_HEAD(&g_ctx->gre_list);
+	g_rlcmac_ctx = talloc_zero(NULL, struct gprs_rlcmac_ctx);
+	g_rlcmac_ctx->cfg.location = location;
+	g_rlcmac_ctx->cfg.codel.use = true;
+	g_rlcmac_ctx->cfg.codel.interval_msec = GPRS_CODEL_SLOW_INTERVAL_MS;
+	g_rlcmac_ctx->cfg.egprs_arq_type = GPRS_RLCMAC_EGPRS_ARQ1;
+	g_rlcmac_ctx->cfg.ul_tbf_preemptive_retransmission = true;
+	g_rlcmac_ctx->T_defs = T_defs_rlcmac;
+	INIT_LLIST_HEAD(&g_rlcmac_ctx->gre_list);
 
-	osmo_tdefs_reset(g_ctx->T_defs);
+	osmo_tdefs_reset(g_rlcmac_ctx->T_defs);
 
 	if (first_init) {
 		rc = gprs_rlcmac_tbf_dl_ass_fsm_init();
 		if (rc != 0) {
-			TALLOC_FREE(g_ctx);
+			TALLOC_FREE(g_rlcmac_ctx);
 			return rc;
 		}
 		rc = gprs_rlcmac_tbf_dl_fsm_init();
 		if (rc != 0) {
-			TALLOC_FREE(g_ctx);
+			TALLOC_FREE(g_rlcmac_ctx);
 			return rc;
 		}
 		rc = gprs_rlcmac_tbf_ul_fsm_init();
 		if (rc != 0) {
-			TALLOC_FREE(g_ctx);
+			TALLOC_FREE(g_rlcmac_ctx);
 			return rc;
 		}
 		rc = gprs_rlcmac_tbf_ul_ass_fsm_init();
 		if (rc != 0) {
-			TALLOC_FREE(g_ctx);
+			TALLOC_FREE(g_rlcmac_ctx);
 			return rc;
 		}
 	}
 
-	for (i = 0; i < ARRAY_SIZE(g_ctx->sched.ulc); i++) {
-		g_ctx->sched.ulc[i] = gprs_rlcmac_pdch_ulc_alloc(g_ctx, i);
-		OSMO_ASSERT(g_ctx->sched.ulc[i]);
+	for (i = 0; i < ARRAY_SIZE(g_rlcmac_ctx->sched.ulc); i++) {
+		g_rlcmac_ctx->sched.ulc[i] = gprs_rlcmac_pdch_ulc_alloc(g_rlcmac_ctx, i);
+		OSMO_ASSERT(g_rlcmac_ctx->sched.ulc[i]);
 	}
 
 	return 0;
@@ -126,8 +126,8 @@ int osmo_gprs_rlcmac_set_codel_params(bool use, unsigned int interval_msec)
 	if (interval_msec == 0)
 		interval_msec = GPRS_CODEL_SLOW_INTERVAL_MS;
 
-	g_ctx->cfg.codel.use = use;
-	g_ctx->cfg.codel.interval_msec = interval_msec;
+	g_rlcmac_ctx->cfg.codel.use = use;
+	g_rlcmac_ctx->cfg.codel.interval_msec = interval_msec;
 	return 0;
 }
 
@@ -135,7 +135,7 @@ struct gprs_rlcmac_entity *gprs_rlcmac_find_entity_by_tlli(uint32_t tlli)
 {
 	struct gprs_rlcmac_entity *gre;
 
-	llist_for_each_entry(gre, &g_ctx->gre_list, entry) {
+	llist_for_each_entry(gre, &g_rlcmac_ctx->gre_list, entry) {
 		if (gre->tlli == tlli)
 			return gre;
 	}
@@ -146,7 +146,7 @@ struct gprs_rlcmac_dl_tbf *gprs_rlcmac_find_dl_tbf_by_tfi(uint8_t dl_tfi)
 {
 	struct gprs_rlcmac_entity *gre;
 
-	llist_for_each_entry(gre, &g_ctx->gre_list, entry) {
+	llist_for_each_entry(gre, &g_rlcmac_ctx->gre_list, entry) {
 		if (!gre->dl_tbf)
 			continue;
 		if (gre->dl_tbf->cur_alloc.dl_tfi != dl_tfi)
@@ -160,7 +160,7 @@ struct gprs_rlcmac_ul_tbf *gprs_rlcmac_find_ul_tbf_by_tfi(uint8_t ul_tfi)
 {
 	struct gprs_rlcmac_entity *gre;
 
-	llist_for_each_entry(gre, &g_ctx->gre_list, entry) {
+	llist_for_each_entry(gre, &g_rlcmac_ctx->gre_list, entry) {
 		if (!gre->ul_tbf)
 			continue;
 		if (gre->ul_tbf->cur_alloc.ul_tfi != ul_tfi)
@@ -182,7 +182,7 @@ static int gprs_rlcmac_handle_ccch_imm_ass_ul_tbf(uint8_t ts_nr, uint32_t fn, co
 		.iaro = iaro
 	};
 
-	llist_for_each_entry(gre, &g_ctx->gre_list, entry) {
+	llist_for_each_entry(gre, &g_rlcmac_ctx->gre_list, entry) {
 		ul_tbf = gre->ul_tbf;
 		if (!ul_tbf)
 			continue;
@@ -309,9 +309,9 @@ int gprs_rlcmac_handle_bcch_si13(const struct gsm48_system_information_type_13 *
 	int rc;
 
 	LOGRLCMAC(LOGL_DEBUG, "Rx SI13 from lower layers\n");
-	memcpy(g_ctx->si13, si13, GSM_MACBLOCK_LEN);
+	memcpy(g_rlcmac_ctx->si13, si13, GSM_MACBLOCK_LEN);
 
-	rc = osmo_gprs_rlcmac_decode_si13ro(&g_ctx->si13ro, si13->rest_octets,
+	rc = osmo_gprs_rlcmac_decode_si13ro(&g_rlcmac_ctx->si13ro, si13->rest_octets,
 					    GSM_MACBLOCK_LEN - offsetof(struct gsm48_system_information_type_13, rest_octets));
 	if (rc < 0) {
 		LOGRLCMAC(LOGL_ERROR, "Error decoding SI13: %s\n",
@@ -319,16 +319,16 @@ int gprs_rlcmac_handle_bcch_si13(const struct gsm48_system_information_type_13 *
 		return rc;
 	}
 
-	g_ctx->si13_available = true;
+	g_rlcmac_ctx->si13_available = true;
 
 	/* Update tdef for T3168:
 	 * TS 44.060 Table 12.24.2: Range: 0 to 7. The timeout value is given as the binary value plus one in units of 500 ms. */
-	osmo_tdef_set(g_ctx->T_defs, 3168,
-		      (g_ctx->si13ro.u.PBCCH_Not_present.GPRS_Cell_Options.T3168 + 1) * 500,
+	osmo_tdef_set(g_rlcmac_ctx->T_defs, 3168,
+		      (g_rlcmac_ctx->si13ro.u.PBCCH_Not_present.GPRS_Cell_Options.T3168 + 1) * 500,
 		      OSMO_TDEF_MS);
 
 	/* TODO: Update tdef for T3192 as per TS 44.060 Table 12.24.2
-	 * osmo_tdef_set(g_ctx->T_defs, 3192, si13ro.u.PBCCH_Not_present.GPRS_Cell_Options.T3192, enum osmo_tdef_unit val_unit);
+	 * osmo_tdef_set(g_rlcmac_ctx->T_defs, 3192, si13ro.u.PBCCH_Not_present.GPRS_Cell_Options.T3192, enum osmo_tdef_unit val_unit);
 	 */
 
 	return rc;
@@ -402,7 +402,7 @@ static int gprs_rlcmac_handle_pkt_dl_ass(const struct osmo_gprs_rlcmac_prim *rlc
 
 	if (dl_block->SP) {
 		uint32_t poll_fn = rrbp2fn(rlcmac_prim->l1ctl.pdch_data_ind.fn, dl_block->RRBP);
-		gprs_rlcmac_pdch_ulc_reserve(g_ctx->sched.ulc[rlcmac_prim->l1ctl.pdch_data_ind.ts_nr],
+		gprs_rlcmac_pdch_ulc_reserve(g_rlcmac_ctx->sched.ulc[rlcmac_prim->l1ctl.pdch_data_ind.ts_nr],
 					     poll_fn,
 					     GPRS_RLCMAC_PDCH_ULC_POLL_DL_ASS,
 					     gre);
@@ -429,7 +429,7 @@ static int gprs_rlcmac_handle_pkt_ul_ack_nack(const struct osmo_gprs_rlcmac_prim
 	/* If RRBP contains valid data, schedule a response (PKT CONTROL ACK or PKT RESOURCE REQ). */
 	if (dl_block->SP) {
 		uint32_t poll_fn = rrbp2fn(rlcmac_prim->l1ctl.pdch_data_ind.fn, dl_block->RRBP);
-		gprs_rlcmac_pdch_ulc_reserve(g_ctx->sched.ulc[rlcmac_prim->l1ctl.pdch_data_ind.ts_nr], poll_fn,
+		gprs_rlcmac_pdch_ulc_reserve(g_rlcmac_ctx->sched.ulc[rlcmac_prim->l1ctl.pdch_data_ind.ts_nr], poll_fn,
 					     GPRS_RLCMAC_PDCH_ULC_POLL_UL_ACK,
 					     ul_tbf_as_tbf(ul_tbf));
 	}
@@ -485,11 +485,11 @@ static int gprs_rlcmac_handle_gprs_dl_ctrl_block(const struct osmo_gprs_rlcmac_p
 	size_t max_len = gprs_rlcmac_mcs_max_bytes_dl(GPRS_RLCMAC_CS_1);
 	int rc;
 
-	bv = bitvec_alloc(max_len, g_ctx);
+	bv = bitvec_alloc(max_len, g_rlcmac_ctx);
 	OSMO_ASSERT(bv);
 	bitvec_unpack(bv, rlcmac_prim->l1ctl.pdch_data_ind.data);
 
-	dl_ctrl_block = (RlcMacDownlink_t *)talloc_zero(g_ctx, RlcMacDownlink_t);
+	dl_ctrl_block = (RlcMacDownlink_t *)talloc_zero(g_rlcmac_ctx, RlcMacDownlink_t);
 	OSMO_ASSERT(dl_ctrl_block);
 	rc = osmo_gprs_rlcmac_decode_downlink(bv, dl_ctrl_block);
 	if (rc < 0) {

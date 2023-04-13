@@ -89,7 +89,7 @@ struct gprs_sm_ctx {
 	uint32_t next_sess_id;
 };
 
-extern struct gprs_sm_ctx *g_ctx;
+extern struct gprs_sm_ctx *g_sm_ctx;
 
 /* SM Entity, PDP CTX */
 struct gprs_sm_entity {

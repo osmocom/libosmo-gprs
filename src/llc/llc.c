@@ -34,7 +34,7 @@
 #include <osmocom/gprs/llc/llc_private.h>
 
 
-struct gprs_llc_ctx *g_ctx;
+struct gprs_llc_ctx *g_llc_ctx;
 
 const struct value_string gprs_llc_llme_state_names[] = {
 	{ OSMO_GPRS_LLC_LLMS_UNASSIGNED,	"UNASSIGNED" },
@@ -125,10 +125,10 @@ static void gprs_llc_ctx_free(void)
 {
 	struct gprs_llc_llme *llme;
 
-	while ((llme = llist_first_entry_or_null(&g_ctx->llme_list, struct gprs_llc_llme, list)))
+	while ((llme = llist_first_entry_or_null(&g_llc_ctx->llme_list, struct gprs_llc_llme, list)))
 		gprs_llc_llme_free(llme);
 
-	talloc_free(g_ctx);
+	talloc_free(g_llc_ctx);
 }
 
 int osmo_gprs_llc_init(enum osmo_gprs_llc_location location, const char *cipher_plugin_path)
@@ -141,12 +141,12 @@ int osmo_gprs_llc_init(enum osmo_gprs_llc_location location, const char *cipher_
 		return rc;
 	}
 
-	if (g_ctx)
+	if (g_llc_ctx)
 		gprs_llc_ctx_free();
 
-	g_ctx = talloc_zero(NULL, struct gprs_llc_ctx);
-	g_ctx->location = location;
-	INIT_LLIST_HEAD(&g_ctx->llme_list);
+	g_llc_ctx = talloc_zero(NULL, struct gprs_llc_ctx);
+	g_llc_ctx->location = location;
+	INIT_LLIST_HEAD(&g_llc_ctx->llme_list);
 	return 0;
 }
 
@@ -167,7 +167,7 @@ struct gprs_llc_llme *gprs_llc_llme_alloc(uint32_t tlli)
 	struct gprs_llc_llme *llme;
 	uint32_t i;
 
-	llme = talloc_zero(g_ctx, struct gprs_llc_llme);
+	llme = talloc_zero(g_llc_ctx, struct gprs_llc_llme);
 	if (!llme)
 		return NULL;
 
@@ -180,7 +180,7 @@ struct gprs_llc_llme *gprs_llc_llme_alloc(uint32_t tlli)
 	for (i = 0; i < ARRAY_SIZE(llme->lle); i++)
 		lle_init(llme, i);
 
-	llist_add(&llme->list, &g_ctx->llme_list);
+	llist_add(&llme->list, &g_llc_ctx->llme_list);
 
 	//llme->comp.proto = gprs_sndcp_comp_alloc(llme);
 	//llme->comp.data = gprs_sndcp_comp_alloc(llme);
@@ -203,7 +203,7 @@ struct gprs_llc_llme *gprs_llc_find_llme_by_tlli(uint32_t tlli)
 {
 	struct gprs_llc_llme *llme;
 
-	llist_for_each_entry(llme, &g_ctx->llme_list, list) {
+	llist_for_each_entry(llme, &g_llc_ctx->llme_list, list) {
 		if (llme->tlli == tlli || llme->old_tlli == tlli)
 			return llme;
 	}
@@ -319,7 +319,7 @@ int gprs_llc_lle_tx_ui(struct gprs_llc_lle *lle, uint8_t *l3_pdu, size_t l3_pdu_
 	/* TODO: we are probably missing the ciphering enc part, see osmo-sgsn apply_gea() */
 
 	/* LLC payload is put directly below: */
-	if (g_ctx->location == OSMO_GPRS_LLC_LOCATION_SGSN)
+	if (g_llc_ctx->location == OSMO_GPRS_LLC_LOCATION_SGSN)
 		llc_prim = gprs_llc_prim_alloc_bssgp_dl_unitdata_req(lle->llme->tlli, NULL, 4096 - sizeof(llc_prim));
 	else
 		llc_prim = gprs_llc_prim_alloc_grr_unitdata_req(lle->llme->tlli, NULL, 4096 - sizeof(llc_prim));
@@ -333,7 +333,7 @@ int gprs_llc_lle_tx_ui(struct gprs_llc_lle *lle, uint8_t *l3_pdu, size_t l3_pdu_
 		return rc;
 	}
 
-	if (g_ctx->location == OSMO_GPRS_LLC_LOCATION_SGSN) {
+	if (g_llc_ctx->location == OSMO_GPRS_LLC_LOCATION_SGSN) {
 		llc_prim->bssgp.ll_pdu = msgb_l3(msg);
 		llc_prim->bssgp.ll_pdu_len = msgb_l3len(msg);
 	} else {

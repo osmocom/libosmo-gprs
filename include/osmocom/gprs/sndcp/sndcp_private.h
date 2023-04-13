@@ -97,7 +97,7 @@ struct gprs_sndcp_ctx {
 	struct gprs_sndcp_ctx_cfg cfg;
 };
 
-extern struct gprs_sndcp_ctx *g_ctx;
+extern struct gprs_sndcp_ctx *g_sndcp_ctx;
 
 
 /* A fragment queue header, maintaining list of fragments for one N-PDU */

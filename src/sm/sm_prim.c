@@ -87,22 +87,22 @@ static int sm_gmm_down_cb_dummy(struct osmo_gprs_gmm_prim *gmm_prim, void *user_
 /* Set callback used by SM layer to push primitives to higher layers in protocol stack */
 void osmo_gprs_sm_prim_set_up_cb(osmo_gprs_sm_prim_up_cb up_cb, void *up_user_data)
 {
-	g_ctx->sm_up_cb = up_cb;
-	g_ctx->sm_up_cb_user_data = up_user_data;
+	g_sm_ctx->sm_up_cb = up_cb;
+	g_sm_ctx->sm_up_cb_user_data = up_user_data;
 }
 
 /* Set callback used by SM layer to push primitives to lower layers in protocol stack */
 void osmo_gprs_sm_prim_set_down_cb(osmo_gprs_sm_prim_down_cb down_cb, void *down_user_data)
 {
-	g_ctx->sm_down_cb = down_cb;
-	g_ctx->sm_down_cb_user_data = down_user_data;
+	g_sm_ctx->sm_down_cb = down_cb;
+	g_sm_ctx->sm_down_cb_user_data = down_user_data;
 }
 
 /* Set callback used by SM layer to push primitives to GMM lower layer in protocol stack */
 void osmo_gprs_sm_prim_set_gmm_down_cb(osmo_gprs_sm_prim_gmm_down_cb gmm_down_cb, void *gmm_down_user_data)
 {
-	g_ctx->sm_gmm_down_cb = gmm_down_cb;
-	g_ctx->sm_gmm_down_cb_user_data = gmm_down_user_data;
+	g_sm_ctx->sm_gmm_down_cb = gmm_down_cb;
+	g_sm_ctx->sm_gmm_down_cb_user_data = gmm_down_user_data;
 }
 
 /********************************
@@ -193,10 +193,10 @@ static int gprs_sm_prim_handle_gmm_unsupported(struct osmo_gprs_gmm_prim *gmm_pr
 int gprs_sm_prim_call_up_cb(struct osmo_gprs_sm_prim *sm_prim)
 {
 	int rc;
-	if (g_ctx->sm_up_cb)
-		rc = g_ctx->sm_up_cb(sm_prim, g_ctx->sm_up_cb_user_data);
+	if (g_sm_ctx->sm_up_cb)
+		rc = g_sm_ctx->sm_up_cb(sm_prim, g_sm_ctx->sm_up_cb_user_data);
 	else
-		rc = sm_up_cb_dummy(sm_prim, g_ctx->sm_up_cb_user_data);
+		rc = sm_up_cb_dummy(sm_prim, g_sm_ctx->sm_up_cb_user_data);
 	msgb_free(sm_prim->oph.msg);
 	return rc;
 }
@@ -304,10 +304,10 @@ int osmo_gprs_sm_prim_upper_down(struct osmo_gprs_sm_prim *sm_prim)
 int gprs_sm_prim_call_down_cb(struct osmo_gprs_sm_prim *sm_prim)
 {
 	int rc;
-	if (g_ctx->sm_down_cb)
-		rc = g_ctx->sm_down_cb(sm_prim, g_ctx->sm_down_cb_user_data);
+	if (g_sm_ctx->sm_down_cb)
+		rc = g_sm_ctx->sm_down_cb(sm_prim, g_sm_ctx->sm_down_cb_user_data);
 	else
-		rc = sm_down_cb_dummy(sm_prim, g_ctx->sm_down_cb_user_data);
+		rc = sm_down_cb_dummy(sm_prim, g_sm_ctx->sm_down_cb_user_data);
 	msgb_free(sm_prim->oph.msg);
 	return rc;
 }
@@ -315,7 +315,7 @@ int gprs_sm_prim_call_down_cb(struct osmo_gprs_sm_prim *sm_prim)
 /* SM lower layers (GMM) push SM primitive up to SM layer: */
 int osmo_gprs_sm_prim_lower_up(struct osmo_gprs_sm_prim *sm_prim)
 {
-	OSMO_ASSERT(g_ctx);
+	OSMO_ASSERT(g_sm_ctx);
 	OSMO_ASSERT(sm_prim);
 	struct msgb *msg = sm_prim->oph.msg;
 	int rc;
@@ -339,10 +339,10 @@ int osmo_gprs_sm_prim_lower_up(struct osmo_gprs_sm_prim *sm_prim)
 int gprs_sm_prim_call_gmm_down_cb(struct osmo_gprs_gmm_prim *gmm_prim)
 {
 	int rc;
-	if (g_ctx->sm_gmm_down_cb)
-		rc = g_ctx->sm_gmm_down_cb(gmm_prim, g_ctx->sm_gmm_down_cb_user_data);
+	if (g_sm_ctx->sm_gmm_down_cb)
+		rc = g_sm_ctx->sm_gmm_down_cb(gmm_prim, g_sm_ctx->sm_gmm_down_cb_user_data);
 	else
-		rc = sm_gmm_down_cb_dummy(gmm_prim, g_ctx->sm_gmm_down_cb_user_data);
+		rc = sm_gmm_down_cb_dummy(gmm_prim, g_sm_ctx->sm_gmm_down_cb_user_data);
 	/* Special return value '1' means: do not free */
 	if (rc != 1)
 		msgb_free(gmm_prim->oph.msg);
@@ -412,7 +412,7 @@ static int gprs_sm_prim_handle_gmmsm(struct osmo_gprs_gmm_prim *gmm_prim)
 /* SM lower layers (GMM) push SM primitive up to SM layer: */
 int osmo_gprs_sm_prim_gmm_lower_up(struct osmo_gprs_gmm_prim *gmm_prim)
 {
-	OSMO_ASSERT(g_ctx);
+	OSMO_ASSERT(g_sm_ctx);
 	OSMO_ASSERT(gmm_prim);
 	struct msgb *msg = gmm_prim->oph.msg;
 	int rc;

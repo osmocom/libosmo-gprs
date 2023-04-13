@@ -66,7 +66,7 @@ static const struct osmo_tdef_state_timeout tbf_ul_ass_fsm_timeouts[32] = {
  #define tbf_ul_ass_fsm_state_chg(fi, NEXT_STATE) \
 	osmo_tdef_fsm_inst_state_chg(fi, NEXT_STATE, \
 				     tbf_ul_ass_fsm_timeouts, \
-				     g_ctx->T_defs, \
+				     g_rlcmac_ctx->T_defs, \
 				     -1)
 
 static struct msgb *create_pkt_resource_req(const struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *ctx,
@@ -363,7 +363,7 @@ static void st_wait_pkt_ul_ass(struct osmo_fsm_inst *fi, uint32_t event, void *d
 		/* If RRBP contains valid data, schedule a response (PKT CONTROL ACK or PKT RESOURCE REQ). */
 		if (d->dl_block->SP) {
 			uint32_t poll_fn = rrbp2fn(d->fn, d->dl_block->RRBP);
-			gprs_rlcmac_pdch_ulc_reserve(g_ctx->sched.ulc[d->ts_nr], poll_fn,
+			gprs_rlcmac_pdch_ulc_reserve(g_rlcmac_ctx->sched.ulc[d->ts_nr], poll_fn,
 						GPRS_RLCMAC_PDCH_ULC_POLL_UL_ASS,
 						ul_tbf_as_tbf(ctx->ul_tbf));
 		}
@@ -396,7 +396,7 @@ static void st_wait_tbf_starting_time2(struct osmo_fsm_inst *fi, uint32_t event,
 		/* If RRBP contains valid data, schedule a response (PKT CONTROL ACK or PKT RESOURCE REQ). */
 		if (d->dl_block->SP) {
 			uint32_t poll_fn = rrbp2fn(d->fn, d->dl_block->RRBP);
-			gprs_rlcmac_pdch_ulc_reserve(g_ctx->sched.ulc[d->ts_nr], poll_fn,
+			gprs_rlcmac_pdch_ulc_reserve(g_rlcmac_ctx->sched.ulc[d->ts_nr], poll_fn,
 						GPRS_RLCMAC_PDCH_ULC_POLL_UL_ASS,
 						ul_tbf_as_tbf(ctx->ul_tbf));
 		}

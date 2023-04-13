@@ -33,7 +33,7 @@
 #include <osmocom/gprs/sm/sm_ms_fsm.h>
 #include <osmocom/gprs/sm/sm_pdu.h>
 
-struct gprs_sm_ctx *g_ctx;
+struct gprs_sm_ctx *g_sm_ctx;
 
 /* TS 24.008 */
 static struct osmo_tdef T_defs_sm[] = {
@@ -45,10 +45,10 @@ static void gprs_sm_ctx_free(void)
 {
 	struct gprs_sm_ms *ms;
 
-	while ((ms = llist_first_entry_or_null(&g_ctx->ms_list, struct gprs_sm_ms, list)))
+	while ((ms = llist_first_entry_or_null(&g_sm_ctx->ms_list, struct gprs_sm_ms, list)))
 		gprs_sm_ms_free(ms);
 
-	talloc_free(g_ctx);
+	talloc_free(g_sm_ctx);
 }
 
 int osmo_gprs_sm_init(enum osmo_gprs_sm_location location)
@@ -57,22 +57,22 @@ int osmo_gprs_sm_init(enum osmo_gprs_sm_location location)
 	int rc;
 	OSMO_ASSERT(location == OSMO_GPRS_SM_LOCATION_MS || location == OSMO_GPRS_SM_LOCATION_NETWORK)
 
-	if (g_ctx) {
+	if (g_sm_ctx) {
 		first_init = false;
 		gprs_sm_ctx_free();
 	}
 
-	g_ctx = talloc_zero(NULL, struct gprs_sm_ctx);
-	g_ctx->location = location;
-	g_ctx->T_defs = T_defs_sm;
-	INIT_LLIST_HEAD(&g_ctx->ms_list);
+	g_sm_ctx = talloc_zero(NULL, struct gprs_sm_ctx);
+	g_sm_ctx->location = location;
+	g_sm_ctx->T_defs = T_defs_sm;
+	INIT_LLIST_HEAD(&g_sm_ctx->ms_list);
 
-	osmo_tdefs_reset(g_ctx->T_defs);
+	osmo_tdefs_reset(g_sm_ctx->T_defs);
 
 	if (first_init) {
 		rc = gprs_sm_ms_fsm_init();
 		if (rc != 0) {
-			TALLOC_FREE(g_ctx);
+			TALLOC_FREE(g_sm_ctx);
 			return rc;
 		}
 	}
@@ -83,13 +83,13 @@ struct gprs_sm_ms *gprs_sm_ms_alloc(uint32_t ms_id)
 {
 	struct gprs_sm_ms *ms;
 
-	ms = talloc_zero(g_ctx, struct gprs_sm_ms);
+	ms = talloc_zero(g_sm_ctx, struct gprs_sm_ms);
 	if (!ms)
 		return NULL;
 
 	ms->ms_id = ms_id;
 
-	llist_add(&ms->list, &g_ctx->ms_list);
+	llist_add(&ms->list, &g_sm_ctx->ms_list);
 
 	return ms;
 }
@@ -113,7 +113,7 @@ struct gprs_sm_ms *gprs_sm_find_ms_by_id(uint32_t ms_id)
 {
 	struct gprs_sm_ms *ms;
 
-	llist_for_each_entry(ms, &g_ctx->ms_list, list) {
+	llist_for_each_entry(ms, &g_sm_ctx->ms_list, list) {
 		if (ms->ms_id == ms_id)
 			return ms;
 	}
@@ -123,12 +123,12 @@ struct gprs_sm_ms *gprs_sm_find_ms_by_id(uint32_t ms_id)
 struct gprs_sm_entity *gprs_sm_entity_alloc(struct gprs_sm_ms *ms, uint32_t nsapi)
 {
 	struct gprs_sm_entity *sme;
-	sme = talloc_zero(g_ctx, struct gprs_sm_entity);
+	sme = talloc_zero(g_sm_ctx, struct gprs_sm_entity);
 	if (!sme)
 		return NULL;
 
 	sme->ms = ms;
-	sme->sess_id = g_ctx->next_sess_id++;
+	sme->sess_id = g_sm_ctx->next_sess_id++;
 	sme->nsapi = nsapi;
 
 	if (gprs_sm_ms_fsm_ctx_init(&sme->ms_fsm, sme) < 0) {
@@ -157,7 +157,7 @@ struct gprs_sm_entity *gprs_sm_find_sme_by_sess_id(uint32_t sess_id)
 	struct gprs_sm_ms *ms;
 	unsigned int i;
 
-	llist_for_each_entry(ms, &g_ctx->ms_list, list) {
+	llist_for_each_entry(ms, &g_sm_ctx->ms_list, list) {
 		for (i = 0; i < ARRAY_SIZE(ms->pdp); i++) {
 			if (!ms->pdp[i])
 				continue;

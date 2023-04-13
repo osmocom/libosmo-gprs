@@ -72,7 +72,7 @@ static void get_ctrl_msg_tbf_candidates(const struct gprs_rlcmac_rts_block_ind *
 	struct gprs_rlcmac_ul_tbf *ul_tbf;
 	struct gprs_rlcmac_pdch_ulc_node *node;
 
-	node = gprs_rlcmac_pdch_ulc_get_node(g_ctx->sched.ulc[bi->ts], bi->fn);
+	node = gprs_rlcmac_pdch_ulc_get_node(g_rlcmac_ctx->sched.ulc[bi->ts], bi->fn);
 	if (node) {
 		switch (node->reason) {
 		case GPRS_RLCMAC_PDCH_ULC_POLL_UL_ASS:
@@ -116,11 +116,11 @@ static void get_ctrl_msg_tbf_candidates(const struct gprs_rlcmac_rts_block_ind *
 			/* TODO */
 			break;
 		}
-		gprs_rlcmac_pdch_ulc_release_node(g_ctx->sched.ulc[bi->ts], node);
+		gprs_rlcmac_pdch_ulc_release_node(g_rlcmac_ctx->sched.ulc[bi->ts], node);
 	}
 
 	/* Iterate over UL TBFs: */
-	llist_for_each_entry(gre, &g_ctx->gre_list, entry) {
+	llist_for_each_entry(gre, &g_rlcmac_ctx->gre_list, entry) {
 		if (!gre->ul_tbf)
 			continue;
 		ul_tbf = gre->ul_tbf;
@@ -134,7 +134,7 @@ static void get_ctrl_msg_tbf_candidates(const struct gprs_rlcmac_rts_block_ind *
 static struct gprs_rlcmac_ul_tbf *find_requested_ul_tbf_for_data(const struct gprs_rlcmac_rts_block_ind *bi)
 {
 	struct gprs_rlcmac_entity *gre;
-	llist_for_each_entry(gre, &g_ctx->gre_list, entry) {
+	llist_for_each_entry(gre, &g_rlcmac_ctx->gre_list, entry) {
 		if (!gre->ul_tbf)
 			continue;
 		if (gprs_rlcmac_ul_tbf_data_rts(gre->ul_tbf, bi))
@@ -146,7 +146,7 @@ static struct gprs_rlcmac_ul_tbf *find_requested_ul_tbf_for_data(const struct gp
 static struct gprs_rlcmac_ul_tbf *find_requested_ul_tbf_for_dummy(const struct gprs_rlcmac_rts_block_ind *bi)
 {
 	struct gprs_rlcmac_entity *gre;
-	llist_for_each_entry(gre, &g_ctx->gre_list, entry) {
+	llist_for_each_entry(gre, &g_rlcmac_ctx->gre_list, entry) {
 		if (!gre->ul_tbf)
 			continue;
 		if (gprs_rlcmac_ul_tbf_dummy_rts(gre->ul_tbf, bi))
@@ -268,7 +268,7 @@ static void rts_tick(const struct gprs_rlcmac_rts_block_ind *bi)
 {
 	struct gprs_rlcmac_entity *gre;
 
-	llist_for_each_entry(gre, &g_ctx->gre_list, entry) {
+	llist_for_each_entry(gre, &g_rlcmac_ctx->gre_list, entry) {
 		if (gre->ul_tbf && gprs_rlcmac_tbf_ul_ass_waiting_tbf_starting_time(gre->ul_tbf))
 			gprs_rlcmac_tbf_ul_ass_fn_tick(gre->ul_tbf, bi->fn, bi->ts);
 		if (gprs_rlcmac_tbf_start_pending(&gre->dl_tbf_dl_ass_fsm))
@@ -307,6 +307,6 @@ tx_msg:
 	msgb_free(msg);
 
 ret_rc:
-	gprs_rlcmac_pdch_ulc_expire_fn(g_ctx->sched.ulc[bi->ts], bi->fn);
+	gprs_rlcmac_pdch_ulc_expire_fn(g_rlcmac_ctx->sched.ulc[bi->ts], bi->fn);
 	return rc;
 }

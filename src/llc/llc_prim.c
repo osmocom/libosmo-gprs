@@ -83,15 +83,15 @@ static int llc_down_cb_dummy(struct osmo_gprs_llc_prim *llc_prim, void *user_dat
 /* Set callback used by LLC layer to push primitives to higher layers in protocol stack */
 void osmo_gprs_llc_prim_set_up_cb(osmo_gprs_llc_prim_up_cb up_cb, void *up_user_data)
 {
-	g_ctx->llc_up_cb = up_cb;
-	g_ctx->llc_up_cb_user_data = up_user_data;
+	g_llc_ctx->llc_up_cb = up_cb;
+	g_llc_ctx->llc_up_cb_user_data = up_user_data;
 }
 
 /* Set callback used by LLC layer to push primitives to lower layers in protocol stack */
 void osmo_gprs_llc_prim_set_down_cb(osmo_gprs_llc_prim_down_cb down_cb, void *down_user_data)
 {
-	g_ctx->llc_down_cb = down_cb;
-	g_ctx->llc_down_cb_user_data = down_user_data;
+	g_llc_ctx->llc_down_cb = down_cb;
+	g_llc_ctx->llc_down_cb_user_data = down_user_data;
 }
 
 /********************************
@@ -138,10 +138,10 @@ int gprs_llc_prim_handle_unsupported(struct osmo_gprs_llc_prim *llc_prim)
 int gprs_llc_prim_call_up_cb(struct osmo_gprs_llc_prim *llc_prim)
 {
 	int rc;
-	if (g_ctx->llc_up_cb)
-		rc = g_ctx->llc_up_cb(llc_prim, g_ctx->llc_up_cb_user_data);
+	if (g_llc_ctx->llc_up_cb)
+		rc = g_llc_ctx->llc_up_cb(llc_prim, g_llc_ctx->llc_up_cb_user_data);
 	else
-		rc = llc_up_cb_dummy(llc_prim, g_ctx->llc_up_cb_user_data);
+		rc = llc_up_cb_dummy(llc_prim, g_llc_ctx->llc_up_cb_user_data);
 	/* Special return value '1' means: do not free */
 	if (rc != 1)
 		msgb_free(llc_prim->oph.msg);
@@ -152,7 +152,7 @@ int gprs_llc_prim_call_up_cb(struct osmo_gprs_llc_prim *llc_prim)
 int osmo_gprs_llc_prim_upper_down(struct osmo_gprs_llc_prim *llc_prim)
 {
 	int rc;
-	OSMO_ASSERT(g_ctx);
+	OSMO_ASSERT(g_llc_ctx);
 
 	LOGLLC(LOGL_INFO, "Rx from upper layers: %s\n", osmo_gprs_llc_prim_name(llc_prim));
 
@@ -176,10 +176,10 @@ int osmo_gprs_llc_prim_upper_down(struct osmo_gprs_llc_prim *llc_prim)
 int gprs_llc_prim_call_down_cb(struct osmo_gprs_llc_prim *llc_prim)
 {
 	int rc;
-	if (g_ctx->llc_down_cb)
-		rc = g_ctx->llc_down_cb(llc_prim, g_ctx->llc_down_cb_user_data);
+	if (g_llc_ctx->llc_down_cb)
+		rc = g_llc_ctx->llc_down_cb(llc_prim, g_llc_ctx->llc_down_cb_user_data);
 	else
-		rc = llc_down_cb_dummy(llc_prim, g_ctx->llc_down_cb_user_data);
+		rc = llc_down_cb_dummy(llc_prim, g_llc_ctx->llc_down_cb_user_data);
 	/* Special return value '1' means: do not free */
 	if (rc != 1)
 		msgb_free(llc_prim->oph.msg);
@@ -191,7 +191,7 @@ int gprs_llc_prim_call_down_cb(struct osmo_gprs_llc_prim *llc_prim)
 /* LLC lower layers push LLC primitive up to LLC layer: */
 int osmo_gprs_llc_prim_lower_up(struct osmo_gprs_llc_prim *llc_prim)
 {
-	OSMO_ASSERT(g_ctx);
+	OSMO_ASSERT(g_llc_ctx);
 	OSMO_ASSERT(llc_prim);
 	struct msgb *msg = llc_prim->oph.msg;
 	int rc;
@@ -200,11 +200,11 @@ int osmo_gprs_llc_prim_lower_up(struct osmo_gprs_llc_prim *llc_prim)
 
 	switch (llc_prim->oph.sap) {
 	case OSMO_GPRS_LLC_SAP_GRR:
-		OSMO_ASSERT(g_ctx->location == OSMO_GPRS_LLC_LOCATION_MS);
+		OSMO_ASSERT(g_llc_ctx->location == OSMO_GPRS_LLC_LOCATION_MS);
 		rc = gprs_llc_prim_lower_up_grr(llc_prim);
 		break;
 	case OSMO_GPRS_LLC_SAP_BSSGP:
-		OSMO_ASSERT(g_ctx->location == OSMO_GPRS_LLC_LOCATION_SGSN);
+		OSMO_ASSERT(g_llc_ctx->location == OSMO_GPRS_LLC_LOCATION_SGSN);
 		rc = gprs_llc_prim_lower_up_bssgp(llc_prim);
 		break;
 	default:

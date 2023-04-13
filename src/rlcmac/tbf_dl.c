@@ -42,7 +42,7 @@ struct gprs_rlcmac_dl_tbf *gprs_rlcmac_dl_tbf_alloc(struct gprs_rlcmac_entity *g
 	if (rc < 0)
 		goto err_tbf_destruct;
 
-	dl_tbf->tbf.nr = g_ctx->next_dl_tbf_nr++;
+	dl_tbf->tbf.nr = g_rlcmac_ctx->next_dl_tbf_nr++;
 
 	dl_tbf->dlw = gprs_rlcmac_rlc_dl_window_alloc(dl_tbf);
 	OSMO_ASSERT(dl_tbf->dlw);
@@ -298,7 +298,7 @@ int gprs_rlcmac_dl_tbf_rcv_data_block(struct gprs_rlcmac_dl_tbf *dl_tbf,
 	/* If RRBP contains valid data, schedule a DL ACK/NACK. */
 	if (rlc->es_p) {
 		uint32_t poll_fn = rrbp2fn(fn, rlc->rrbp);
-		gprs_rlcmac_pdch_ulc_reserve(g_ctx->sched.ulc[ts_nr], poll_fn,
+		gprs_rlcmac_pdch_ulc_reserve(g_rlcmac_ctx->sched.ulc[ts_nr], poll_fn,
 					     GPRS_RLCMAC_PDCH_ULC_POLL_DL_ACK,
 					     dl_tbf_as_tbf(dl_tbf));
 	}

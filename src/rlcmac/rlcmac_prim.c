@@ -112,15 +112,15 @@ static int rlcmac_down_cb_dummy(struct osmo_gprs_rlcmac_prim *rlcmac_prim, void 
 /* Set callback used by LLC layer to push primitives to higher layers in protocol stack */
 void osmo_gprs_rlcmac_prim_set_up_cb(osmo_gprs_rlcmac_prim_up_cb up_cb, void *up_user_data)
 {
-	g_ctx->rlcmac_up_cb = up_cb;
-	g_ctx->rlcmac_up_cb_user_data = up_user_data;
+	g_rlcmac_ctx->rlcmac_up_cb = up_cb;
+	g_rlcmac_ctx->rlcmac_up_cb_user_data = up_user_data;
 }
 
 /* Set callback used by LLC layer to push primitives to lower layers in protocol stack */
 void osmo_gprs_rlcmac_prim_set_down_cb(osmo_gprs_rlcmac_prim_down_cb down_cb, void *down_user_data)
 {
-	g_ctx->rlcmac_down_cb = down_cb;
-	g_ctx->rlcmac_down_cb_user_data = down_user_data;
+	g_rlcmac_ctx->rlcmac_down_cb = down_cb;
+	g_rlcmac_ctx->rlcmac_down_cb_user_data = down_user_data;
 }
 
 /********************************
@@ -355,10 +355,10 @@ static int rlcmac_prim_handle_grr_unitdata_req(struct osmo_gprs_rlcmac_prim *rlc
 int gprs_rlcmac_prim_call_up_cb(struct osmo_gprs_rlcmac_prim *rlcmac_prim)
 {
 	int rc;
-	if (g_ctx->rlcmac_up_cb)
-		rc = g_ctx->rlcmac_up_cb(rlcmac_prim, g_ctx->rlcmac_up_cb_user_data);
+	if (g_rlcmac_ctx->rlcmac_up_cb)
+		rc = g_rlcmac_ctx->rlcmac_up_cb(rlcmac_prim, g_rlcmac_ctx->rlcmac_up_cb_user_data);
 	else
-		rc = rlcmac_up_cb_dummy(rlcmac_prim, g_ctx->rlcmac_up_cb_user_data);
+		rc = rlcmac_up_cb_dummy(rlcmac_prim, g_rlcmac_ctx->rlcmac_up_cb_user_data);
 	/* Special return value '1' means: do not free */
 	if (rc != 1)
 		msgb_free(rlcmac_prim->oph.msg);
@@ -447,10 +447,10 @@ int gprs_rlcmac_prim_call_down_cb(struct osmo_gprs_rlcmac_prim *rlcmac_prim)
 
 	LOGRLCMAC(LOGL_DEBUG, "Tx to lower layers: %s\n", osmo_gprs_rlcmac_prim_name(rlcmac_prim));
 
-	if (g_ctx->rlcmac_down_cb)
-		rc = g_ctx->rlcmac_down_cb(rlcmac_prim, g_ctx->rlcmac_down_cb_user_data);
+	if (g_rlcmac_ctx->rlcmac_down_cb)
+		rc = g_rlcmac_ctx->rlcmac_down_cb(rlcmac_prim, g_rlcmac_ctx->rlcmac_down_cb_user_data);
 	else
-		rc = rlcmac_down_cb_dummy(rlcmac_prim, g_ctx->rlcmac_down_cb_user_data);
+		rc = rlcmac_down_cb_dummy(rlcmac_prim, g_rlcmac_ctx->rlcmac_down_cb_user_data);
 	/* Special return value '1' means: do not free */
 	if (rc != 1)
 		msgb_free(rlcmac_prim->oph.msg);
@@ -551,7 +551,7 @@ static int gprs_rlcmac_prim_l1ctl_lower_up(struct osmo_gprs_rlcmac_prim *rlcmac_
 
 int osmo_gprs_rlcmac_prim_lower_up(struct osmo_gprs_rlcmac_prim *rlcmac_prim)
 {
-	OSMO_ASSERT(g_ctx);
+	OSMO_ASSERT(g_rlcmac_ctx);
 	OSMO_ASSERT(rlcmac_prim);
 	struct msgb *msg = rlcmac_prim->oph.msg;
 	int rc;

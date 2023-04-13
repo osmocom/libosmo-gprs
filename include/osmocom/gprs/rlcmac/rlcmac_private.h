@@ -82,7 +82,7 @@ struct gprs_rlcmac_ctx {
 	SI13_RestOctets_t si13ro;
 };
 
-extern struct gprs_rlcmac_ctx *g_ctx;
+extern struct gprs_rlcmac_ctx *g_rlcmac_ctx;
 
 /* rlcmac.c */
 struct gprs_rlcmac_entity *gprs_rlcmac_find_entity_by_tlli(uint32_t tlli);

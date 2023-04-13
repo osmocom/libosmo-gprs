@@ -273,7 +273,7 @@ struct gprs_llc_ctx {
 	struct llist_head llme_list;
 };
 
-extern struct gprs_llc_ctx *g_ctx;
+extern struct gprs_llc_ctx *g_llc_ctx;
 
 /* llc_bssgp.c */
 int gprs_llc_prim_lower_up_bssgp(struct osmo_gprs_llc_prim *llc_prim);
@@ -367,7 +367,7 @@ static inline int gprs_llc_is_retransmit(uint16_t nu, uint16_t vur)
 /* 6.2.2 Command/Response bit (C/R) */
 static inline bool gprs_llc_received_cr_is_cmd(uint8_t cr)
 {
-	if (g_ctx->location == OSMO_GPRS_LLC_LOCATION_SGSN)
+	if (g_llc_ctx->location == OSMO_GPRS_LLC_LOCATION_SGSN)
 		return !cr; /*received from MS */
 	else
 		return !!cr; /*received from SGSN */
@@ -376,7 +376,7 @@ static inline bool gprs_llc_received_cr_is_cmd(uint8_t cr)
 
 static inline void gprs_llc_encode_is_cmd_as_cr(bool is_cmd, uint32_t *flags)
 {
-	if (g_ctx->location == OSMO_GPRS_LLC_LOCATION_SGSN)
+	if (g_llc_ctx->location == OSMO_GPRS_LLC_LOCATION_SGSN)
 		*flags |= OSMO_GPRS_LLC_PDU_F_CMD_RSP; /*Transmit to MS */
 	else
 		*flags &= ~OSMO_GPRS_LLC_PDU_F_CMD_RSP; /* Transmit to SGSN */

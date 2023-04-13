@@ -55,7 +55,7 @@ static const struct osmo_tdef_state_timeout tbf_dl_ass_fsm_timeouts[32] = {
  #define tbf_dl_ass_fsm_state_chg(fi, NEXT_STATE) \
 	osmo_tdef_fsm_inst_state_chg(fi, NEXT_STATE, \
 				     tbf_dl_ass_fsm_timeouts, \
-				     g_ctx->T_defs, \
+				     g_rlcmac_ctx->T_defs, \
 				     -1)
 
 static int handle_imm_ass(struct gprs_rlcmac_tbf_dl_ass_fsm_ctx *ctx, const struct tbf_start_ev_rx_ccch_imm_ass_ctx *d)

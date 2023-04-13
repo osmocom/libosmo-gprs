@@ -34,7 +34,7 @@
 #include <osmocom/gprs/gmm/gmm_pdu.h>
 
 
-struct gprs_gmm_ctx *g_ctx;
+struct gprs_gmm_ctx *g_gmm_ctx;
 
 /* Section 11.2.2 / Table 11.3 GPRS Mobility management timers - MS side */
 #define GSM0408_T3310_SECS	15
@@ -82,10 +82,10 @@ static void gprs_gmm_ctx_free(void)
 {
 	struct gprs_gmm_entity *gmme;
 
-	while ((gmme = llist_first_entry_or_null(&g_ctx->gmme_list, struct gprs_gmm_entity, list)))
+	while ((gmme = llist_first_entry_or_null(&g_gmm_ctx->gmme_list, struct gprs_gmm_entity, list)))
 		gprs_gmm_gmme_free(gmme);
 
-	talloc_free(g_ctx);
+	talloc_free(g_gmm_ctx);
 }
 
 int osmo_gprs_gmm_init(enum osmo_gprs_gmm_location location)
@@ -94,22 +94,22 @@ int osmo_gprs_gmm_init(enum osmo_gprs_gmm_location location)
 	int rc;
 	OSMO_ASSERT(location == OSMO_GPRS_GMM_LOCATION_MS || location == OSMO_GPRS_GMM_LOCATION_NETWORK)
 
-	if (g_ctx) {
+	if (g_gmm_ctx) {
 		first_init = false;
 		gprs_gmm_ctx_free();
 	}
 
-	g_ctx = talloc_zero(NULL, struct gprs_gmm_ctx);
-	g_ctx->location = location;
-	g_ctx->T_defs = T_defs_gmm;
-	INIT_LLIST_HEAD(&g_ctx->gmme_list);
+	g_gmm_ctx = talloc_zero(NULL, struct gprs_gmm_ctx);
+	g_gmm_ctx->location = location;
+	g_gmm_ctx->T_defs = T_defs_gmm;
+	INIT_LLIST_HEAD(&g_gmm_ctx->gmme_list);
 
-	osmo_tdefs_reset(g_ctx->T_defs);
+	osmo_tdefs_reset(g_gmm_ctx->T_defs);
 
 	if (first_init) {
 		rc = gprs_gmm_ms_fsm_init();
 		if (rc != 0) {
-			TALLOC_FREE(g_ctx);
+			TALLOC_FREE(g_gmm_ctx);
 			return rc;
 		}
 	}
@@ -124,15 +124,15 @@ void osmo_gprs_gmm_enable_gprs(bool enable_gprs)
 	struct gprs_gmm_entity *gmme;
 	int ev;
 
-	if (g_ctx->gprs_enabled == enable_gprs)
+	if (g_gmm_ctx->gprs_enabled == enable_gprs)
 		return;
 
-	g_ctx->gprs_enabled = enable_gprs;
+	g_gmm_ctx->gprs_enabled = enable_gprs;
 
 	/* Inform all existing MS: */
 	ev = enable_gprs ? GPRS_GMM_MS_EV_ENABLE_GPRS_MODE :
 			   GPRS_GMM_MS_EV_DISABLE_GPRS_MODE;
-	llist_for_each_entry(gmme, &g_ctx->gmme_list, list)
+	llist_for_each_entry(gmme, &g_gmm_ctx->gmme_list, list)
 		osmo_fsm_inst_dispatch(gmme->ms_fsm.fi, ev, NULL);
 }
 
@@ -140,7 +140,7 @@ struct gprs_gmm_entity *gprs_gmm_gmme_alloc(void)
 {
 	struct gprs_gmm_entity *gmme;
 
-	gmme = talloc_zero(g_ctx, struct gprs_gmm_entity);
+	gmme = talloc_zero(g_gmm_ctx, struct gprs_gmm_entity);
 	if (!gmme)
 		return NULL;
 
@@ -151,10 +151,10 @@ struct gprs_gmm_entity *gprs_gmm_gmme_alloc(void)
 
 	/* Initialize timers to default values. They may be overwritten by the
 	 * network later on: */
-	gmme->t3302 = osmo_tdef_get(g_ctx->T_defs, 3302, OSMO_TDEF_S, -1);
-	gmme->t3346 = osmo_tdef_get(g_ctx->T_defs, 3346, OSMO_TDEF_S, -1);
+	gmme->t3302 = osmo_tdef_get(g_gmm_ctx->T_defs, 3302, OSMO_TDEF_S, -1);
+	gmme->t3346 = osmo_tdef_get(g_gmm_ctx->T_defs, 3346, OSMO_TDEF_S, -1);
 
-	llist_add(&gmme->list, &g_ctx->gmme_list);
+	llist_add(&gmme->list, &g_gmm_ctx->gmme_list);
 
 	return gmme;
 }
@@ -174,7 +174,7 @@ struct gprs_gmm_entity *gprs_gmm_find_gmme_by_tlli(uint32_t tlli)
 {
 	struct gprs_gmm_entity *gmme;
 
-	llist_for_each_entry(gmme, &g_ctx->gmme_list, list) {
+	llist_for_each_entry(gmme, &g_gmm_ctx->gmme_list, list) {
 		if (gmme->ptmsi == tlli || gmme->old_ptmsi == tlli)
 			return gmme;
 	}
