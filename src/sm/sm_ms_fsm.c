@@ -75,6 +75,13 @@ static void st_sm_ms_pdp_active_pending(struct osmo_fsm_inst *fi, uint32_t event
 		gprs_sm_submit_smreg_pdp_act_cnf(ctx->sme, *((enum gsm48_gsm_cause *)data));
 		break;
 	case GPRS_SM_MS_EV_RX_ACT_PDP_CTX_ACC:
+		gprs_sm_submit_snsm_act_ind(ctx->sme);
+		/* Submitting SMREG-PDP-ACT-CNF is delayed until ,
+		 * SNSM-ACTIVATE-RSP (GPRS_SM_MS_EV_NSAPI_ACTIVATED) is received
+		 * from SNDCP, see TS 24.007 C.6 */
+		break;
+	case GPRS_SM_MS_EV_NSAPI_ACTIVATED:
+		/* see TS 24.007 C.6 */
 		sm_ms_fsm_state_chg(fi, GPRS_SM_MS_ST_PDP_ACTIVE);
 		gprs_sm_submit_smreg_pdp_act_cnf(ctx->sme, (enum gsm48_gsm_cause)0);
 		break;
@@ -176,7 +183,8 @@ static struct osmo_fsm_state sm_ms_fsm_states[] = {
 			X(GPRS_SM_MS_EV_RX_GMM_ESTABLISH_CNF) |
 			X(GPRS_SM_MS_EV_RX_GMM_ESTABLISH_REJ) |
 			X(GPRS_SM_MS_EV_RX_ACT_PDP_CTX_REJ) |
-			X(GPRS_SM_MS_EV_RX_ACT_PDP_CTX_ACC),
+			X(GPRS_SM_MS_EV_RX_ACT_PDP_CTX_ACC) |
+			X(GPRS_SM_MS_EV_NSAPI_ACTIVATED),
 		.out_state_mask =
 			X(GPRS_SM_MS_ST_PDP_INACTIVE) |
 			X(GPRS_SM_MS_ST_PDP_ACTIVE_PENDING) |
@@ -225,6 +233,7 @@ const struct value_string sm_ms_fsm_event_names[] = {
 	{ GPRS_SM_MS_EV_TX_ACT_PDP_CTX_REQ,	"TX_ACT_PDP_CTX_REQ" },
 	{ GPRS_SM_MS_EV_RX_ACT_PDP_CTX_REJ,	"RX_ACT_PDP_CTX_REJ" },
 	{ GPRS_SM_MS_EV_RX_ACT_PDP_CTX_ACC,	"RX_ACT_PDP_CTX_ACC" },
+	{ GPRS_SM_MS_EV_NSAPI_ACTIVATED,	"NSAPI_ACTIVATED" },
 	{ GPRS_SM_MS_EV_TX_DEACT_PDP_CTX_REQ,	"TX_DEACT_PDP_CTX_REQ" },
 	{ GPRS_SM_MS_EV_RX_DEACT_PDP_CTX_REQ,	"RX_DEACT_PDP_CTX_REQ" },
 	{ GPRS_SM_MS_EV_RX_DEACT_PDP_CTX_ACC,	"RX_DEACT_PDP_CTX_ACC" },

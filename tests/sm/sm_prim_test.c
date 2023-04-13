@@ -31,6 +31,8 @@
 
 #include <osmocom/gprs/gmm/gmm_prim.h>
 #include <osmocom/gprs/gmm/gmm_private.h>
+#include <osmocom/gprs/sndcp/sndcp_prim.h>
+#include <osmocom/gprs/sndcp/sndcp_private.h>
 #include <osmocom/gprs/sm/sm.h>
 #include <osmocom/gprs/sm/sm_prim.h>
 
@@ -130,7 +132,29 @@ int test_sm_prim_up_cb(struct osmo_gprs_sm_prim *sm_prim, void *user_data)
 			break;
 		default:
 			printf("%s(): Unexpected Rx %s\n", __func__, pdu_name);
-			OSMO_ASSERT(0)
+			OSMO_ASSERT(0);
+		}
+		break;
+	default:
+		printf("%s(): Unexpected Rx %s\n", __func__, pdu_name);
+		OSMO_ASSERT(0);
+	}
+	return 0;
+}
+
+int test_sm_prim_sndcp_up_cb(struct osmo_gprs_sndcp_prim *sndcp_prim, void *user_data)
+{
+	const char *pdu_name = osmo_gprs_sndcp_prim_name(sndcp_prim);
+
+	switch (sndcp_prim->oph.sap) {
+	case OSMO_GPRS_SNDCP_SAP_SNSM:
+		switch (OSMO_PRIM_HDR(&sndcp_prim->oph)) {
+		case OSMO_PRIM(OSMO_GPRS_SNDCP_SNSM_ACTIVATE, PRIM_OP_INDICATION):
+			printf("%s(): Rx %s\n", __func__, pdu_name);
+			break;
+		default:
+			printf("%s(): Unexpected Rx %s\n", __func__, pdu_name);
+			OSMO_ASSERT(0);
 		}
 		break;
 	default:
@@ -152,7 +176,7 @@ int test_sm_prim_down_cb(struct osmo_gprs_sm_prim *sm_prim, void *user_data)
 			break;
 		default:
 			printf("%s(): Unexpected Rx %s\n", __func__, pdu_name);
-			OSMO_ASSERT(0)
+			OSMO_ASSERT(0);
 		}
 		break;
 	default:
@@ -199,6 +223,7 @@ static void test_sm_prim_ms(void)
 {
 	struct osmo_gprs_sm_prim *sm_prim;
 	struct osmo_gprs_gmm_prim *gmm_prim;
+	struct osmo_gprs_sndcp_prim *sndcp_prim;
 	int rc;
 	uint8_t nsapi = 6;
 	enum osmo_gprs_sm_llc_sapi llc_sapi = OSMO_GPRS_SM_LLC_SAPI_SAPI3;
@@ -217,6 +242,7 @@ static void test_sm_prim_ms(void)
 	OSMO_ASSERT(rc == 0);
 
 	osmo_gprs_sm_prim_set_up_cb(test_sm_prim_up_cb, NULL);
+	osmo_gprs_sm_prim_set_sndcp_up_cb(test_sm_prim_sndcp_up_cb, NULL);
 	osmo_gprs_sm_prim_set_down_cb(test_sm_prim_down_cb, NULL);
 	osmo_gprs_sm_prim_set_gmm_down_cb(test_sm_prim_gmm_down_cb, NULL);
 
@@ -252,6 +278,15 @@ static void test_sm_prim_ms(void)
 							  sizeof(pdu_sm_act_pdp_ctx_acc));
 	OSMO_ASSERT(gmm_prim);
 	rc = osmo_gprs_sm_prim_gmm_lower_up(gmm_prim);
+	OSMO_ASSERT(rc == 0);
+
+	/* SM layer will trigger SNSM-ACTIVATE.ind to SNDCP layer here. Now,
+	* SNDCP is expected to do XID config and once done, answer with
+	* SNSM-ACTIVATE.rsp: */
+
+	sndcp_prim = gprs_sndcp_prim_alloc_snsm_activate_rsp(ptmsi, nsapi);
+	OSMO_ASSERT(sndcp_prim);
+	rc = osmo_gprs_sm_prim_sndcp_upper_down(sndcp_prim);
 	OSMO_ASSERT(rc == 0);
 
 	printf("==== %s() [end] ====\n", __func__);

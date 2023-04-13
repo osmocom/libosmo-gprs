@@ -27,6 +27,8 @@
 #include <osmocom/core/tdef.h>
 #include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
 
+#include <osmocom/gprs/sndcp/sndcp_prim.h>
+
 #include <osmocom/gprs/sm/sm.h>
 #include <osmocom/gprs/sm/sm_prim.h>
 #include <osmocom/gprs/sm/sm_private.h>
@@ -120,6 +122,17 @@ struct gprs_sm_ms *gprs_sm_find_ms_by_id(uint32_t ms_id)
 	return NULL;
 }
 
+struct gprs_sm_ms *gprs_sm_find_ms_by_tlli(uint32_t tlli)
+{
+	struct gprs_sm_ms *ms;
+
+	llist_for_each_entry(ms, &g_sm_ctx->ms_list, list) {
+		if (ms->gmm.ptmsi == tlli)
+			return ms;
+	}
+	return NULL;
+}
+
 struct gprs_sm_entity *gprs_sm_entity_alloc(struct gprs_sm_ms *ms, uint32_t nsapi)
 {
 	struct gprs_sm_entity *sme;
@@ -199,6 +212,23 @@ int gprs_sm_submit_smreg_pdp_act_cnf(const struct gprs_sm_entity *sme, enum gsm4
 		sm_prim_tx->smreg.pdp_act_cnf.rej.cause = cause;
 
 	rc = gprs_sm_prim_call_up_cb(sm_prim_tx);
+	return rc;
+}
+
+
+int gprs_sm_submit_snsm_act_ind(const struct gprs_sm_entity *sme)
+{
+	struct osmo_gprs_sndcp_prim *sndcp_prim_tx;
+	int rc;
+
+	sndcp_prim_tx = osmo_gprs_sndcp_prim_alloc_snsm_activate_ind(
+				sme->ms->gmm.ptmsi,
+				sme->nsapi,
+				sme->llc_sapi);
+	//sndcp_prim_tx->snsm.activat_ind.qos_params = ; /* TODO */
+	//sndcp_prim_tx->snsm.activat_ind.radio_prio = 0; /* TODO */
+
+	rc = gprs_sm_prim_call_sndcp_up_cb(sndcp_prim_tx);
 	return rc;
 }
 

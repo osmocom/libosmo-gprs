@@ -72,6 +72,9 @@ struct gprs_sm_ctx {
 	osmo_gprs_sm_prim_up_cb sm_up_cb;
 	void *sm_up_cb_user_data;
 
+	osmo_gprs_sm_prim_sndcp_up_cb sm_sndcp_up_cb;
+	void *sm_sndcp_up_cb_user_data;
+
 	osmo_gprs_sm_prim_down_cb sm_down_cb;
 	void *sm_down_cb_user_data;
 
@@ -145,6 +148,7 @@ static inline struct gprs_sm_entity *gprs_sm_ms_get_pdp_ctx(struct gprs_sm_ms *m
 int gprs_sm_prim_call_up_cb(struct osmo_gprs_sm_prim *sm_prim);
 int gprs_sm_prim_call_down_cb(struct osmo_gprs_sm_prim *sm_prim);
 int gprs_sm_prim_call_gmm_down_cb(struct osmo_gprs_gmm_prim *gmm_prim);
+int gprs_sm_prim_call_sndcp_up_cb(struct osmo_gprs_sndcp_prim *sndcp_prim);
 
 struct osmo_gprs_sm_prim *gprs_sm_prim_alloc_smreg_pdp_act_cnf(void);
 struct osmo_gprs_sm_prim *gprs_sm_prim_alloc_smreg_pdp_act_ind(void);
@@ -153,6 +157,7 @@ struct osmo_gprs_sm_prim *gprs_sm_prim_alloc_smreg_pdp_act_ind(void);
 struct gprs_sm_ms *gprs_sm_ms_alloc(uint32_t ms_id);
 void gprs_sm_ms_free(struct gprs_sm_ms *ms);
 struct gprs_sm_ms *gprs_sm_find_ms_by_id(uint32_t ms_id);
+struct gprs_sm_ms *gprs_sm_find_ms_by_tlli(uint32_t tlli);
 
 struct gprs_sm_entity *gprs_sm_entity_alloc(struct gprs_sm_ms *ms, uint32_t nsapi);
 void gprs_sm_entity_free(struct gprs_sm_entity *sme);
@@ -160,6 +165,7 @@ struct gprs_sm_entity *gprs_sm_find_sme_by_sess_id(uint32_t sess_id);
 
 int gprs_sm_submit_gmmsm_assign_req(const struct gprs_sm_entity *sme);
 int gprs_sm_submit_smreg_pdp_act_cnf(const struct gprs_sm_entity *sme, enum gsm48_gsm_cause cause);
+int gprs_sm_submit_snsm_act_ind(const struct gprs_sm_entity *sme);
 int gprs_sm_tx_act_pdp_ctx_req(struct gprs_sm_entity *sme);
 int gprs_sm_rx(struct gprs_sm_entity *sme, struct gsm48_hdr *gh, unsigned int len);
 

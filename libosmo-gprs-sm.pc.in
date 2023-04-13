@@ -6,7 +6,7 @@ includedir=@includedir@
 Name: Osmocom [E]GPRS SM (Session Management) Library
 Description: C Utility Library
 Version: @VERSION@
-Requires: libosmo-gprs-gmm libosmocore
+Requires: libosmo-gprs-gmm libosmo-gprs-sndcp libosmocore
 Libs: -L${libdir} -losmo-gprs-sm
 Libs.private: -ltalloc
 Cflags: -I${includedir}/

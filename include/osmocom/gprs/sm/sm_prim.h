@@ -18,6 +18,7 @@
 
 
 struct osmo_gprs_gmm_prim;
+struct osmo_gprs_sndcp_prim;
 
 /* 3GPP TS 24.007 */
 enum osmo_gprs_sm_prim_sap {
@@ -191,6 +192,9 @@ struct osmo_gprs_sm_prim {
 typedef int (*osmo_gprs_sm_prim_up_cb)(struct osmo_gprs_sm_prim *sm_prim, void *up_user_data);
 void osmo_gprs_sm_prim_set_up_cb(osmo_gprs_sm_prim_up_cb up_cb, void *up_user_data);
 
+typedef int (*osmo_gprs_sm_prim_sndcp_up_cb)(struct osmo_gprs_sndcp_prim *sndcp_prim, void *sndcp_up_user_data);
+void osmo_gprs_sm_prim_set_sndcp_up_cb(osmo_gprs_sm_prim_sndcp_up_cb sndcp_up_cb, void *sndcp_up_user_data);
+
 typedef int (*osmo_gprs_sm_prim_down_cb)(struct osmo_gprs_sm_prim *sm_prim, void *down_user_data);
 void osmo_gprs_sm_prim_set_down_cb(osmo_gprs_sm_prim_down_cb down_cb, void *down_user_data);
 
@@ -198,6 +202,7 @@ typedef int (*osmo_gprs_sm_prim_gmm_down_cb)(struct osmo_gprs_gmm_prim *gmm_prim
 void osmo_gprs_sm_prim_set_gmm_down_cb(osmo_gprs_sm_prim_gmm_down_cb gmm_down_cb, void *gmm_down_user_data);
 
 int osmo_gprs_sm_prim_upper_down(struct osmo_gprs_sm_prim *sm_prim);
+int osmo_gprs_sm_prim_sndcp_upper_down(struct osmo_gprs_sndcp_prim *sndcp_prim);
 int osmo_gprs_sm_prim_lower_up(struct osmo_gprs_sm_prim *sm_prim);
 int osmo_gprs_sm_prim_gmm_lower_up(struct osmo_gprs_gmm_prim *gmm_prim);
 

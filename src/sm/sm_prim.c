@@ -30,6 +30,7 @@
 #include <osmocom/gprs/sm/sm_prim.h>
 #include <osmocom/gprs/sm/sm_private.h>
 #include <osmocom/gprs/gmm/gmm_prim.h>
+#include <osmocom/gprs/sndcp/sndcp_prim.h>
 
 #define SM_MSGB_HEADROOM 0
 
@@ -72,6 +73,12 @@ static int sm_up_cb_dummy(struct osmo_gprs_sm_prim *sm_prim, void *user_data)
 	return 0;
 }
 
+static int sm_sndcp_up_cb_dummy(struct osmo_gprs_sndcp_prim *sndcp_prim, void *user_data)
+{
+	LOGSM(LOGL_INFO, "%s(%s)\n", __func__, osmo_gprs_sndcp_prim_name(sndcp_prim));
+	return 0;
+}
+
 static int sm_down_cb_dummy(struct osmo_gprs_sm_prim *sm_prim, void *user_data)
 {
 	LOGSM(LOGL_INFO, "%s(%s)\n", __func__, osmo_gprs_sm_prim_name(sm_prim));
@@ -89,6 +96,13 @@ void osmo_gprs_sm_prim_set_up_cb(osmo_gprs_sm_prim_up_cb up_cb, void *up_user_da
 {
 	g_sm_ctx->sm_up_cb = up_cb;
 	g_sm_ctx->sm_up_cb_user_data = up_user_data;
+}
+
+/* Set callback used by SM layer to push primitives to SNDCP higher layer in protocol stack */
+void osmo_gprs_sm_prim_set_sndcp_up_cb(osmo_gprs_sm_prim_sndcp_up_cb sndcp_up_cb, void *sndcp_up_user_data)
+{
+	g_sm_ctx->sm_sndcp_up_cb = sndcp_up_cb;
+	g_sm_ctx->sm_sndcp_up_cb_user_data = sndcp_up_user_data;
 }
 
 /* Set callback used by SM layer to push primitives to lower layers in protocol stack */
@@ -183,6 +197,13 @@ static int gprs_sm_prim_handle_gmm_unsupported(struct osmo_gprs_gmm_prim *gmm_pr
 {
 	LOGSM(LOGL_ERROR, "Unsupported gmm_prim! %s\n", osmo_gprs_gmm_prim_name(gmm_prim));
 	msgb_free(gmm_prim->oph.msg);
+	return -ENOTSUP;
+}
+
+static int gprs_sm_prim_handle_sndcp_unsupported(struct osmo_gprs_sndcp_prim *sndcp_prim)
+{
+	LOGSM(LOGL_ERROR, "Unsupported sndcp_prim! %s\n", osmo_gprs_sndcp_prim_name(sndcp_prim));
+	msgb_free(sndcp_prim->oph.msg);
 	return -ENOTSUP;
 }
 
@@ -292,6 +313,93 @@ int osmo_gprs_sm_prim_upper_down(struct osmo_gprs_sm_prim *sm_prim)
 	/* Special return value '1' means: do not free */
 	if (rc != 1)
 		msgb_free(sm_prim->oph.msg);
+	else
+		rc = 0;
+	return rc;
+}
+
+/* SM layer pushes SNDCP primitive up to higher layers (SNSM): */
+int gprs_sm_prim_call_sndcp_up_cb(struct osmo_gprs_sndcp_prim *sndcp_prim)
+{
+	int rc;
+	if (g_sm_ctx->sm_sndcp_up_cb)
+		rc = g_sm_ctx->sm_sndcp_up_cb(sndcp_prim, g_sm_ctx->sm_sndcp_up_cb_user_data);
+	else
+		rc = sm_sndcp_up_cb_dummy(sndcp_prim, g_sm_ctx->sm_sndcp_up_cb_user_data);
+	/* Special return value '1' means: do not free */
+	if (rc != 1)
+		msgb_free(sndcp_prim->oph.msg);
+	else
+		rc = 0;
+	return rc;
+}
+
+/* TS 24.007 6.6.1.1 SMREG-Attach.request:*/
+static int gprs_sm_prim_handle_snsm_act_resp(struct osmo_gprs_sndcp_prim *sndcp_prim)
+{
+	int rc;
+	struct gprs_sm_ms *ms;
+	struct gprs_sm_entity *sme;
+
+	ms = gprs_sm_find_ms_by_tlli(sndcp_prim->snsm.tlli);
+	if (!ms) {
+		LOGSM(LOGL_ERROR, "Rx %s: Unable to find MS with TLLI=0x%08x\n",
+		      osmo_gprs_sndcp_prim_name(sndcp_prim), sndcp_prim->snsm.tlli);
+		return -ENOENT;
+	}
+
+	sme = gprs_sm_ms_get_pdp_ctx(ms, sndcp_prim->snsm.activate_rsp.nsapi);
+	if (!sme) {
+		LOGMS(ms, LOGL_ERROR, "Rx %s: Unable to find NSAPI=%u\n",
+		      osmo_gprs_sndcp_prim_name(sndcp_prim),
+		      sndcp_prim->snsm.activate_rsp.nsapi);
+		return -ENOENT;
+	}
+
+	rc = osmo_fsm_inst_dispatch(sme->ms_fsm.fi, GPRS_SM_MS_EV_NSAPI_ACTIVATED, NULL);
+	return rc;
+}
+
+/* SNDCP higher layers push SNDCP primitive (SNSM) down to SM layer: */
+static int gprs_sm_prim_handle_sndcp_snsm(struct osmo_gprs_sndcp_prim *sndcp_prim)
+{
+	int rc;
+
+	switch (OSMO_PRIM_HDR(&sndcp_prim->oph)) {
+	case OSMO_PRIM(OSMO_GPRS_SNDCP_SNSM_ACTIVATE, PRIM_OP_RESPONSE):
+		rc = gprs_sm_prim_handle_snsm_act_resp(sndcp_prim);
+		break;
+	case OSMO_PRIM(OSMO_GPRS_SNDCP_SNSM_DEACTIVATE, PRIM_OP_RESPONSE):
+	case OSMO_PRIM(OSMO_GPRS_SNDCP_SNSM_MODIFY, PRIM_OP_RESPONSE):
+	case OSMO_PRIM(OSMO_GPRS_SNDCP_SNSM_STATUS, PRIM_OP_REQUEST):
+	case OSMO_PRIM(OSMO_GPRS_SNDCP_SNSM_SEQUENCE, PRIM_OP_RESPONSE):
+	case OSMO_PRIM(OSMO_GPRS_SNDCP_SNSM_STOP_ASSIGN, PRIM_OP_RESPONSE):
+	default:
+		rc = gprs_sm_prim_handle_sndcp_unsupported(sndcp_prim);
+	}
+	return rc;
+}
+
+/* SM higher layers push SM primitive down to SM layer: */
+int osmo_gprs_sm_prim_sndcp_upper_down(struct osmo_gprs_sndcp_prim *sndcp_prim)
+{
+	int rc;
+
+	LOGSM(LOGL_INFO, "Rx from SNDCP layer: %s\n", osmo_gprs_sndcp_prim_name(sndcp_prim));
+
+
+	switch (sndcp_prim->oph.sap) {
+	case OSMO_GPRS_SNDCP_SAP_SNSM:
+		rc = gprs_sm_prim_handle_sndcp_snsm(sndcp_prim);
+		break;
+	default:
+		rc = gprs_sm_prim_handle_sndcp_unsupported(sndcp_prim);
+		rc = 1;
+	}
+
+	/* Special return value '1' means: do not free */
+	if (rc != 1)
+		msgb_free(sndcp_prim->oph.msg);
 	else
 		rc = 0;
 	return rc;

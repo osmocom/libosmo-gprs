@@ -34,6 +34,7 @@ libosmo_gprs_sm_la_LDFLAGS = \
 
 libosmo_gprs_sm_la_LIBADD = \
 	$(top_builddir)/src/gmm/libosmo-gprs-gmm.la \
+	$(top_builddir)/src/sndcp/libosmo-gprs-sndcp.la \
 	$(LIBOSMOCORE_LIBS) \
 	$(LIBOSMOGSM_LIBS) \
 	-lm \
