@@ -59,11 +59,11 @@ struct gprs_gmm_ctx *g_ctx;
 /* TS 24.008 */
 static struct osmo_tdef T_defs_gmm[] = {
 	{ .T=3302, .default_val=GSM0408_T3302_SECS, .desc = "" },
-	{ .T=3310, .default_val=GSM0408_T3310_SECS, .desc = "" },
+	{ .T=3310, .default_val=GSM0408_T3310_SECS, .desc = "Tattach" },
 	{ .T=3311, .default_val=GSM0408_T3311_SECS, .desc = "" },
-	{ .T=3312, .default_val=GSM0408_T3312_SECS, .desc = "" },
-	{ .T=3314, .default_val=GSM0408_T3314_SECS, .desc="READY timer. Forced to STANDBY on expiry timer (s)" },
-	{ .T=3316, .default_val=GSM0408_T3316_SECS, .desc = "" },
+	{ .T=3312, .default_val=GSM0408_T3312_SECS, .desc = "Periodic RA Update timer (s)" },
+	{ .T=3314, .default_val=GSM0408_T3314_SECS, .desc = "READY timer. Forced to STANDBY on expiry timer (s)" },
+	{ .T=3316, .default_val=GSM0408_T3316_SECS, .desc = "AA-Ready timer (s)" },
 	{ .T=3317, .default_val=GSM0408_T3317_SECS, .desc = "" },
 	{ .T=3318, .default_val=GSM0408_T3318_SECS, .desc = "" },
 	{ .T=3319, .default_val=GSM0408_T3319_SECS, .desc = "" },

@@ -55,6 +55,8 @@ struct gprs_gmm_ms_fsm_ctx {
 		/* Session Ids waiting for attach to happen during implicit_att: */
 		uint32_t sess_id[16];
 		uint8_t num_sess_id;
+		/* Retransmission of ATTACH REQUEST (T3310) */
+		uint8_t req_attempts;
 	} attach;
 
 	/* Info about last initiated detach: */

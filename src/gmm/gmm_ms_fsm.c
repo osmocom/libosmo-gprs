@@ -25,13 +25,39 @@
 #include <osmocom/gprs/gmm/gmm_ms_fsm.h>
 #include <osmocom/gprs/gmm/gmm.h>
 #include <osmocom/gprs/gmm/gmm_private.h>
+#include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
 
 #define X(s) (1 << (s))
 
-static const struct osmo_tdef_state_timeout gmm_ms_fsm_timeouts[32] = {};
+static const struct osmo_tdef_state_timeout gmm_ms_fsm_timeouts[32] = {
+	[GPRS_GMM_MS_ST_NULL] =				{},
+	[GPRS_GMM_MS_ST_DEREGISTERED] =			{},
+	[GPRS_GMM_MS_ST_REGISTERED_INITIATED] =		{ .T = 3310 },
+	[GPRS_GMM_MS_ST_REGISTERED] =			{},
+	[GPRS_GMM_MS_ST_DEREGISTERED_INITIATED] =	{},
+	[GPRS_GMM_MS_ST_RAU_INITIATED] =		{},
+	[GPRS_GMM_MS_ST_SR_INITIATED] =			{},
+
+};
 
 #define gmm_ms_fsm_state_chg(fi, NEXT_STATE) \
 	osmo_tdef_fsm_inst_state_chg(fi, NEXT_STATE, gmm_ms_fsm_timeouts, g_ctx->T_defs, -1)
+
+
+static int reinit_attach_proc(struct gprs_gmm_ms_fsm_ctx *ctx)
+{
+	unsigned long val_sec;
+
+	OSMO_ASSERT(ctx->fi->state == GPRS_GMM_MS_ST_REGISTERED_INITIATED);
+
+	/* Rearm T3110 */
+	OSMO_ASSERT(ctx->fi->T == 3110);
+	val_sec = osmo_tdef_get(g_ctx->T_defs, ctx->fi->T, OSMO_TDEF_S, -1);
+	osmo_timer_schedule(&ctx->fi->timer, val_sec, 0);
+	return gprs_gmm_tx_att_req(ctx->gmme,
+			    ctx->attach.type,
+			    ctx->attach.with_imsi);
+}
 
 static void st_gmm_ms_null(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
@@ -76,17 +102,36 @@ static void st_gmm_ms_deregistered(struct osmo_fsm_inst *fi, uint32_t event, voi
 static void st_gmm_ms_registered_initiated(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	struct gprs_gmm_ms_fsm_ctx *ctx = (struct gprs_gmm_ms_fsm_ctx *)fi->priv;
+	uint8_t cause;
 	int rc;
 
 	switch (event) {
 	case GPRS_GMM_MS_EV_ATTACH_REQUESTED:
 		/* Upper layers request us to retry attaching: */
-		rc = gprs_gmm_tx_att_req(ctx->gmme,
-					 ctx->attach.type,
-					 ctx->attach.with_imsi);
+		reinit_attach_proc(ctx);
 		break;
 	case GPRS_GMM_MS_EV_ATTACH_REJECTED:
 	case GPRS_GMM_MS_EV_LOW_LVL_FAIL:
+		/* TODO: in AttachReject, take cause from rx msg. */
+		cause = (event == GPRS_GMM_MS_EV_LOW_LVL_FAIL) ?
+			GMM_CAUSE_MAC_FAIL : GMM_CAUSE_NET_FAIL;
+		if (ctx->attach.explicit_att) {
+			/* Submit GMMREG-ATTACH-REJ as per TS 24.007 Annex C.1 */
+			rc = gprs_gmm_submit_gmmreg_attach_cnf(ctx->gmme, false, cause);
+			if (rc < 0)
+				return;
+		}
+		if (ctx->attach.implicit_att) {
+			/* Submit GMMSM-ESTABLISH-CNF as per TS 24.007 Annex C.3 */
+			unsigned int i;
+			for (i = 0; i < ctx->attach.num_sess_id; i++) {
+				rc = gprs_gmm_submit_gmmsm_establish_cnf(ctx->gmme,
+									 ctx->attach.sess_id[i],
+									 false, cause);
+				if (rc < 0)
+					return;
+			}
+		}
 		gmm_ms_fsm_state_chg(fi, GPRS_GMM_MS_ST_DEREGISTERED);
 		break;
 	case GPRS_GMM_MS_EV_ATTACH_ACCEPTED:
@@ -113,6 +158,13 @@ static void st_gmm_ms_registered_initiated(struct osmo_fsm_inst *fi, uint32_t ev
 	default:
 		OSMO_ASSERT(0);
 	}
+}
+
+static void st_gmm_ms_registered_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_state)
+{
+	struct gprs_gmm_ms_fsm_ctx *ctx = (struct gprs_gmm_ms_fsm_ctx *)fi->priv;
+
+	ctx->attach.req_attempts = 0;
 }
 
 static void st_gmm_ms_registered(struct osmo_fsm_inst *fi, uint32_t event, void *data)
@@ -234,6 +286,7 @@ static struct osmo_fsm_state gmm_ms_fsm_states[] = {
 			X(GPRS_GMM_MS_ST_DEREGISTERED_INITIATED) |
 			X(GPRS_GMM_MS_ST_DEREGISTERED),
 		.name = "Registered",
+		.onenter = st_gmm_ms_registered_on_enter,
 		.action = st_gmm_ms_registered,
 	},
 	[GPRS_GMM_MS_ST_DEREGISTERED_INITIATED] = {
@@ -291,6 +344,26 @@ const struct value_string gmm_ms_fsm_event_names[] = {
 
 int gmm_ms_fsm_timer_cb(struct osmo_fsm_inst *fi)
 {
+	struct gprs_gmm_ms_fsm_ctx *ctx = (struct gprs_gmm_ms_fsm_ctx *)fi->priv;
+
+	switch (fi->T) {
+	case 3310:
+		/* TS 23.008 clause 4.7.3.1.5 c) */
+		ctx->attach.req_attempts++;
+		LOGPFSML(ctx->fi, LOGL_INFO, "T3310 timeout attempts=%u\n", ctx->attach.req_attempts);
+		OSMO_ASSERT(fi->state == GPRS_GMM_MS_ST_REGISTERED_INITIATED);
+		if (ctx->attach.req_attempts == 4) {
+			/* "On the fifth expiry of timer T3310, the MS shall
+			 *  abort the GPRS attach procedure" */
+			LOGPFSML(ctx->fi, LOGL_NOTICE, "GPRS attach procedure failure (T3310 timeout attempts=%u)\n", ctx->attach.req_attempts);
+			osmo_fsm_inst_dispatch(ctx->fi, GPRS_GMM_MS_EV_LOW_LVL_FAIL, NULL);
+			return 0;
+		}
+		reinit_attach_proc(ctx);
+		break;
+	default:
+		OSMO_ASSERT(0);
+	}
 	return 0;
 }
 
