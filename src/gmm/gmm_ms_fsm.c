@@ -111,10 +111,11 @@ static void st_gmm_ms_registered_initiated(struct osmo_fsm_inst *fi, uint32_t ev
 		reinit_attach_proc(ctx);
 		break;
 	case GPRS_GMM_MS_EV_ATTACH_REJECTED:
+		cause = *(uint8_t *)data;
+		/* fall-through */
 	case GPRS_GMM_MS_EV_LOW_LVL_FAIL:
-		/* TODO: in AttachReject, take cause from rx msg. */
-		cause = (event == GPRS_GMM_MS_EV_LOW_LVL_FAIL) ?
-			GMM_CAUSE_MAC_FAIL : GMM_CAUSE_NET_FAIL;
+		if (event == GPRS_GMM_MS_EV_LOW_LVL_FAIL)
+			cause = GMM_CAUSE_MAC_FAIL;
 		if (ctx->attach.explicit_att) {
 			/* Submit GMMREG-ATTACH-REJ as per TS 24.007 Annex C.1 */
 			rc = gprs_gmm_submit_gmmreg_attach_cnf(ctx->gmme, false, cause);

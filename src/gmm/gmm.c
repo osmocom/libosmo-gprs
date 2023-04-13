@@ -149,6 +149,11 @@ struct gprs_gmm_entity *gprs_gmm_gmme_alloc(void)
 		return NULL;
 	}
 
+	/* Initialize timers to default values. They may be overwritten by the
+	 * network later on: */
+	gmme->t3302 = osmo_tdef_get(g_ctx->T_defs, 3302, OSMO_TDEF_S, -1);
+	gmme->t3346 = osmo_tdef_get(g_ctx->T_defs, 3346, OSMO_TDEF_S, -1);
+
 	llist_add(&gmme->list, &g_ctx->gmme_list);
 
 	return gmme;
@@ -444,6 +449,9 @@ static int gprs_gmm_rx_att_ack(struct gprs_gmm_entity *gmme, struct gsm48_hdr *g
 			gmme->old_ptmsi = gmme->ptmsi;
 			gmme->ptmsi = mi.tmsi;
 		}
+
+		if (TLVP_PRES_LEN(&tp, GSM48_IE_GMM_TIMER_T3302, 1))
+			gmme->t3302 = *TLVP_VAL(&tp, GSM48_IE_GMM_TIMER_T3302);
 	}
 
 	/* Submit LLGMM-ASSIGN-REQ as per TS 24.007 Annex C.1 */
@@ -468,11 +476,45 @@ rejected:
 	return -EINVAL; /* TODO: what to do on error? */
 }
 
-
+/* Rx GMM Attach Reject, 9.4.4 */
 static int gprs_gmm_rx_att_rej(struct gprs_gmm_entity *gmme, struct gsm48_hdr *gh, unsigned int len)
 {
-	LOGGMME(gmme, LOGL_ERROR, "Rx GMM ATTACH REJECT not implemented!\n");
-	return 0; /* TODO */
+	uint8_t *arej = &gh->data[0];
+	struct tlv_parsed tp;
+	uint8_t cause;
+	int rc;
+
+	if (len < sizeof(*gh) + 1) {
+		LOGGMME(gmme, LOGL_ERROR, "Rx GMM ATTACH REJECT with wrong size %u\n", len);
+		goto rejected;
+	}
+
+	cause = *arej;
+	arej++;
+
+	LOGGMME(gmme, LOGL_DEBUG, "Rx GMM ATTACH REJECT cause='%s' (%u)\n",
+		get_value_string(gsm48_gmm_cause_names, cause), cause);
+
+	if (len > sizeof(*gh) + 1) {
+		rc = gprs_gmm_tlv_parse(&tp, arej, len - (sizeof(*gh) + 1));
+		if (rc < 0) {
+			LOGGMME(gmme, LOGL_ERROR, "Rx GMM ATTACH REJECT: failed to parse TLVs %d\n", rc);
+			goto rejected;
+		}
+
+		if (TLVP_PRES_LEN(&tp, GSM48_IE_GMM_TIMER_T3302, 1))
+			gmme->t3302 = *TLVP_VAL(&tp, GSM48_IE_GMM_TIMER_T3302);
+
+		if (TLVP_PRES_LEN(&tp, GSM48_IE_GMM_TIMER_T3302, 1))
+			gmme->t3346 = *TLVP_VAL(&tp, GSM48_IE_GMM_TIMER_T3346);
+	}
+
+	rc = osmo_fsm_inst_dispatch(gmme->ms_fsm.fi, GPRS_GMM_MS_EV_ATTACH_REJECTED, &cause);
+
+	return rc;
+
+rejected:
+	return -EINVAL;
 }
 
 /* Rx GMM Detach Accept (mobile originating detach), 9.4.6.2 */

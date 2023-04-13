@@ -65,6 +65,9 @@ struct gprs_gmm_entity {
 
 	uint8_t gea; /* GEA/0 = 0, GEA/1 = 1, ... */
 	uint8_t kc[16]; /* max 16 * 8 = 128 bits */
+
+	unsigned long t3302;
+	unsigned long t3346;
 };
 
 /* gmm_prim.c: */
