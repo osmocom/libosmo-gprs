@@ -88,7 +88,7 @@ int test_sndcp_prim_snsm_cb(struct osmo_gprs_sndcp_prim *sndcp_prim, void *user_
 {
 	const char *npdu_name = osmo_gprs_sndcp_prim_name(sndcp_prim);
 
-	if (sndcp_prim->oph.sap != OSMO_GPRS_SNDCP_SAP_SN) {
+	if (sndcp_prim->oph.sap != OSMO_GPRS_SNDCP_SAP_SNSM) {
 		printf("%s(): Unexpected Rx %s\n", __func__, npdu_name);
 		OSMO_ASSERT(0);
 	}
