@@ -53,6 +53,9 @@ struct gprs_sndcp_mgmt_entity *gprs_sndcp_snme_alloc(uint32_t tlli)
 		return NULL;
 
 	snme->tlli = tlli;
+	snme->comp.proto = gprs_sndcp_comp_alloc(snme);
+	snme->comp.data = gprs_sndcp_comp_alloc(snme);
+
 	llist_add(&snme->list, &g_sndcp_ctx->snme_list);
 
 	return snme;
@@ -698,8 +701,8 @@ int gprs_sndcp_sne_handle_sn_xid_req(struct gprs_sndcp_entity *sne, const struct
 	 * get rid of possible leftovers from a previous session */
 	gprs_sndcp_comp_free(sne->snme->comp.proto);
 	gprs_sndcp_comp_free(sne->snme->comp.data);
-	sne->snme->comp.proto = gprs_sndcp_comp_alloc(sne);
-	sne->snme->comp.data = gprs_sndcp_comp_alloc(sne);
+	sne->snme->comp.proto = gprs_sndcp_comp_alloc(sne->snme);
+	sne->snme->comp.data = gprs_sndcp_comp_alloc(sne->snme);
 
 	/* Generate compression parameter bytestream */
 	sne->l3xid_req_len = gprs_sndcp_sne_gen_sndcp_xid(sne, l3params, sizeof(l3params), sndcp_prim);
