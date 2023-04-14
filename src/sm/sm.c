@@ -212,6 +212,10 @@ int gprs_sm_submit_smreg_pdp_act_cnf(const struct gprs_sm_entity *sme, enum gsm4
 		sm_prim_tx->smreg.pdp_act_cnf.acc.pdp_addr_ietf_type = sme->pdp_addr_ietf_type;
 		memcpy(&sm_prim_tx->smreg.pdp_act_cnf.acc.pdp_addr_v4, &sme->pdp_addr_v4, sizeof(sme->pdp_addr_v4));
 		memcpy(&sm_prim_tx->smreg.pdp_act_cnf.acc.pdp_addr_v6, &sme->pdp_addr_v6, sizeof(sme->pdp_addr_v6));
+		sm_prim_tx->smreg.pdp_act_cnf.acc.radio_prio = sme->radio_prio;
+		sm_prim_tx->smreg.pdp_act_cnf.acc.qos_len = sme->qos_len;
+		if (sme->qos_len)
+			memcpy(sm_prim_tx->smreg.pdp_act_cnf.acc.qos, &sme->qos, sme->qos_len);
 	} else {
 		sm_prim_tx->smreg.pdp_act_cnf.rej.cause = cause;
 	}
@@ -269,10 +273,8 @@ static int gprs_sm_rx_act_pdp_ack(struct gprs_sm_entity *sme,
 {
 	struct tlv_parsed tp;
 	int rc;
-	uint8_t radio_prio, llc_sapi;
 	uint8_t *ofs = (uint8_t *)gh;
 	uint8_t qos_len;
-	uint8_t *qos;
 
 	ofs += sizeof(*gh);
 	//uint8_t transaction_id = gsm48_hdr_trans_id(gh);
@@ -281,22 +283,25 @@ static int gprs_sm_rx_act_pdp_ack(struct gprs_sm_entity *sme,
 
 	if (len < (ofs + 2) - (uint8_t *)gh)
 		goto tooshort;
-	llc_sapi = *ofs++;
+	sme->llc_sapi = *ofs++;
 	qos_len = *ofs++;
+
+	if (qos_len > ARRAY_SIZE(sme->qos)) {
+		LOGSME(sme, LOGL_ERROR,
+		       "Rx SM Activate PDP Context Accept: QoS size too big! %u\n", qos_len);
+		goto rejected;
+	}
 
 	if (len < (ofs + qos_len) - (uint8_t *)gh)
 		goto tooshort;
-	qos = ofs;
+	memcpy(sme->qos, ofs, qos_len);
+
 	ofs += qos_len;
 
 	if (len < (ofs + 1) - (uint8_t *)gh)
 		goto tooshort;
 
-	radio_prio = *ofs++;
-
-	(void)llc_sapi;
-	(void)qos;
-	(void)radio_prio;
+	sme->radio_prio = *ofs++;
 
 	if (len > ofs - (uint8_t *)gh) {
 		rc = gprs_sm_tlv_parse(&tp, ofs, len - (ofs - (uint8_t *)gh));

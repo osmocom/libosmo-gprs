@@ -103,6 +103,7 @@ struct gprs_sm_entity {
 	struct osmo_sockaddr pdp_addr_v4;
 	struct osmo_sockaddr pdp_addr_v6;
 
+	uint8_t radio_prio;	/* TS 24.008 10.5.7.2 */
 	uint8_t qos[OSMO_GPRS_SM_QOS_MAXLEN];
 	uint8_t qos_len;
 
