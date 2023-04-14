@@ -208,6 +208,10 @@ int gprs_sm_submit_smreg_pdp_act_cnf(const struct gprs_sm_entity *sme, enum gsm4
 	sm_prim_tx->smreg.ms_id = sme->ms->ms_id;
 	sm_prim_tx->smreg.pdp_act_cnf.accepted = (cause != 0);
 	sm_prim_tx->smreg.pdp_act_cnf.nsapi = sme->nsapi;
+	sm_prim_tx->smreg.pdp_act_cnf.pco_len = sme->pco_len;
+	if (sme->pco_len)
+		memcpy(sm_prim_tx->smreg.pdp_act_cnf.pco, &sme->pco, sme->pco_len);
+
 	if (sm_prim_tx->smreg.pdp_act_cnf.accepted) {
 		sm_prim_tx->smreg.pdp_act_cnf.acc.pdp_addr_ietf_type = sme->pdp_addr_ietf_type;
 		memcpy(&sm_prim_tx->smreg.pdp_act_cnf.acc.pdp_addr_v4, &sme->pdp_addr_v4, sizeof(sme->pdp_addr_v4));
@@ -318,6 +322,17 @@ static int gprs_sm_rx_act_pdp_ack(struct gprs_sm_entity *sme,
 					&sme->pdp_addr_v4, &sme->pdp_addr_v6);
 			if (rc < 0)
 				goto rejected;
+		}
+
+		if (TLVP_PRESENT(&tp, GSM48_IE_GSM_PROTO_CONF_OPT)) {
+			if (TLVP_LEN(&tp, GSM48_IE_GSM_PROTO_CONF_OPT) > ARRAY_SIZE(sme->pco)) {
+				LOGSME(sme, LOGL_ERROR,
+				       "Rx SM Activate PDP Context Accept: PCO size too big! %u\n", qos_len);
+				goto rejected;
+			}
+			sme->pco_len = TLVP_LEN(&tp, GSM48_IE_GSM_PROTO_CONF_OPT);
+			if (sme->pco_len)
+				memcpy(sme->pco, TLVP_VAL(&tp, GSM48_IE_GSM_PROTO_CONF_OPT), sme->pco_len);
 		}
 	}
 
