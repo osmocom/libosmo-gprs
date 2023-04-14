@@ -43,8 +43,12 @@ enum gprs_sm_pdp_addr_etsi_type {
 
 struct gprs_sm_pdp_addr {
 #if OSMO_IS_LITTLE_ENDIAN
-	uint8_t spare:4,
-		organization:4; /* enum gprs_sm_pdp_addr_org */
+	uint8_t organization:4, /* enum gprs_sm_pdp_addr_org */
+		spare:4;
+#elif OSMO_IS_BIG_ENDIAN
+/* auto-generated from the little endian part above (libosmocore/contrib/struct_endianness.py) */
+	uint8_t spare:4, organization:4;
+#endif
 	uint8_t type; /* osmo_gprs_sm_pdp_addr_{etsi,ietf}_type */
 	union {
 		/* IPv4 */
@@ -54,14 +58,6 @@ struct gprs_sm_pdp_addr {
 		uint8_t addr6[16];
 
 		/* IPv4v6 */
-#elif OSMO_IS_BIG_ENDIAN
-/* auto-generated from the little endian part above (libosmocore/contrib/struct_endianness.py) */
-	uint8_t organization:4, spare:4;
-	uint8_t type;
-	union {
-		uint32_t addr;
-		uint8_t addr6[16];
-#endif
 		struct {
 			uint32_t addr;
 			uint8_t addr6[16];

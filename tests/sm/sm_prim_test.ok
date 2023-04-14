@@ -1,5 +1,5 @@
 ==== test_sm_prim_ms() [start] ====
 test_sm_prim_gmm_down_cb(): Rx GMMSM-ESTABLISH.request sess_id=0
-test_sm_prim_gmm_down_cb(): Rx GMMSM-UNITDATA.request sess_id=0 SMPDU=[8a 41 06 03 01 00 06 10 21 00 00 00 00 28 04 27 01 00 ]
+test_sm_prim_gmm_down_cb(): Rx GMMSM-UNITDATA.request sess_id=0 SMPDU=[8a 41 06 03 01 00 06 01 21 00 00 00 00 28 04 27 01 00 ]
 test_sm_prim_up_cb(): Rx SMREG-PDP_ACTIVATE.confirm
 ==== test_sm_prim_ms() [end] ====
