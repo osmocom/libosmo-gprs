@@ -54,6 +54,30 @@ static inline struct osmo_gprs_llc_prim *llc_prim_ll_alloc(enum osmo_gprs_llc_ll
 	return gprs_llc_prim_alloc(OSMO_GPRS_LLC_SAP_LL, type, operation, l3_len);
 }
 
+/* 7.2.2.2 LL-ESTABLISH.req (MS/SGSN) */
+struct osmo_gprs_llc_prim *osmo_gprs_llc_prim_alloc_ll_establish_req(uint32_t tlli, enum osmo_gprs_llc_sapi ll_sapi, uint8_t *l3_par, unsigned int l3_par_len)
+{
+	struct osmo_gprs_llc_prim *llc_prim;
+	llc_prim = llc_prim_ll_alloc(OSMO_GPRS_LLC_LL_ESTABLISH, PRIM_OP_REQUEST, l3_par_len);
+	llc_prim->ll.tlli = tlli;
+	llc_prim->ll.sapi = ll_sapi;
+	llc_prim->ll.l3_pdu = l3_par;
+	llc_prim->ll.l3_pdu_len = l3_par_len;
+	return llc_prim;
+}
+
+/* 7.2.2.2 LL-ESTABLISH.cnf (MS/SGSN) */
+struct osmo_gprs_llc_prim *gprs_llc_prim_alloc_ll_establish_cnf(uint32_t tlli, enum osmo_gprs_llc_sapi ll_sapi, uint8_t *l3_par, unsigned int l3_par_len)
+{
+	struct osmo_gprs_llc_prim *llc_prim;
+	llc_prim = llc_prim_ll_alloc(OSMO_GPRS_LLC_LL_ESTABLISH, PRIM_OP_CONFIRM, l3_par_len);
+	llc_prim->ll.tlli = tlli;
+	llc_prim->ll.sapi = ll_sapi;
+	llc_prim->ll.l3_pdu = l3_par;
+	llc_prim->ll.l3_pdu_len = l3_par_len;
+	return llc_prim;
+}
+
 /* 7.2.2.4 LL-XID.req (MS/SGSN) */
 struct osmo_gprs_llc_prim *osmo_gprs_llc_prim_alloc_ll_xid_req(uint32_t tlli, enum osmo_gprs_llc_sapi ll_sapi, uint8_t *l3_par, unsigned int l3_par_len)
 {
@@ -172,6 +196,28 @@ int gprs_llc_lle_submit_prim_ll_xid_cnf(struct gprs_llc_lle *lle,
  * Handling from upper layers:
  ********************************/
 
+/* 7.2.2.2 LL-ESTABLISH.req (MS/SGSN):*/
+static int llc_prim_handle_ll_establish_req(struct osmo_gprs_llc_prim *llc_prim)
+{
+	int rc = 0;
+	struct gprs_llc_lle *lle;
+
+	lle = gprs_llc_find_lle_by_tlli_sapi(llc_prim->ll.tlli, llc_prim->ll.sapi);
+	if (!lle) {
+		LOGLLC(LOGL_NOTICE, "Rx %s: Unknown TLLI 0x%08x SAPI 0x%02x\n",
+		       osmo_gprs_llc_prim_name(llc_prim), llc_prim->ll.tlli,
+		       llc_prim->ll.sapi);
+		rc = -ENOKEY;
+		goto ret_free;
+	}
+
+	rc = gprs_llc_lle_tx_sabm(lle, llc_prim->ll.l3_pdu, llc_prim->ll.l3_pdu_len);
+
+ret_free:
+	msgb_free(llc_prim->oph.msg);
+	return rc;
+}
+
  /* 7.2.2.4 LL-XID.req (MS/SGSN):*/
 static int llc_prim_handle_ll_xid_req(struct osmo_gprs_llc_prim *llc_prim)
 {
@@ -243,6 +289,11 @@ int gprs_llc_prim_ll_upper_down(struct osmo_gprs_llc_prim *llc_prim)
 {
 	int rc;
 	switch (OSMO_PRIM_HDR(&llc_prim->oph)) {
+	case OSMO_PRIM(OSMO_GPRS_LLC_LL_ESTABLISH, PRIM_OP_REQUEST):
+		OSMO_ASSERT(g_llc_ctx->location == OSMO_GPRS_LLC_LOCATION_MS ||
+			    g_llc_ctx->location == OSMO_GPRS_LLC_LOCATION_SGSN);
+		rc = llc_prim_handle_ll_establish_req(llc_prim);
+		break;
 	case OSMO_PRIM(OSMO_GPRS_LLC_LL_XID, PRIM_OP_REQUEST):
 		OSMO_ASSERT(g_llc_ctx->location == OSMO_GPRS_LLC_LOCATION_MS ||
 			    g_llc_ctx->location == OSMO_GPRS_LLC_LOCATION_SGSN);

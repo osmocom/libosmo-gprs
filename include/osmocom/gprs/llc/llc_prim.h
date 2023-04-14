@@ -284,6 +284,8 @@ struct osmo_gprs_llc_prim *osmo_gprs_llc_prim_alloc_llgm_assign_req(uint32_t tll
 struct osmo_gprs_llc_prim *osmo_gprs_llc_prim_alloc_llgm_reset_req(uint32_t tlli);
 
 /* Alloc primitive for LL SAP: */
+struct osmo_gprs_llc_prim *osmo_gprs_llc_prim_alloc_ll_establish_req(uint32_t tlli, enum osmo_gprs_llc_sapi ll_sapi,
+								     uint8_t *l3_par, unsigned int l3_par_len);
 struct osmo_gprs_llc_prim *osmo_gprs_llc_prim_alloc_ll_xid_req(uint32_t tlli, enum osmo_gprs_llc_sapi ll_sapi,
 							       uint8_t *l3_par, unsigned int l3_par_len);
 struct osmo_gprs_llc_prim *osmo_gprs_llc_prim_alloc_ll_xid_resp(uint32_t tlli, enum osmo_gprs_llc_sapi ll_sapi,

@@ -13,6 +13,8 @@ DLGLOBAL NOTICE LLME(ffffffff/e1c5d364){UNASSIGNED} LLGM Assign pre (e1c5d364 =>
 DLGLOBAL NOTICE LLME(e1c5d364/e1c5d364){ASSIGNED} LLGM Assign post (e1c5d364 => e1c5d364)
 DLGLOBAL INFO Rx from upper layers: LLGMM-RESET.request
 DLGLOBAL INFO LLME(e1c5d364/e1c5d364){ASSIGNED} LLGMM-RESET.request
+DLGLOBAL INFO Rx from upper layers: LL-ESTABLISH.request
+DLGLOBAL ERROR LLE(e1c5d364/e1c5d364,SNDCP3){UNASSIGNED} Tx SABM: ABM mode not supported yet!
 DLGLOBAL INFO Rx from upper layers: LL-XID.request
 DLGLOBAL NOTICE LLE(e1c5d364/e1c5d364,SNDCP3){UNASSIGNED} Sending XID type L3-Params (30 bytes) request to MS...
 DLGLOBAL INFO Rx from upper layers: LL-UNITDATA.request

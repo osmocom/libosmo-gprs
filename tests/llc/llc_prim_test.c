@@ -231,6 +231,11 @@ static void test_llc_prim_sgsn(void)
 	OSMO_ASSERT(rc == 0);
 
 	char xid_l3_pars[] = "xid-l3-dummy-buffer";
+	llc_prim = osmo_gprs_llc_prim_alloc_ll_establish_req(tlli, OSMO_GPRS_LLC_SAPI_SNDCP3, (uint8_t *)xid_l3_pars, sizeof(xid_l3_pars));
+	OSMO_ASSERT(llc_prim);
+	rc = osmo_gprs_llc_prim_upper_down(llc_prim);
+	OSMO_ASSERT(rc == -ENOTSUP); /* ABM mode not supported yet. */
+
 	llc_prim = osmo_gprs_llc_prim_alloc_ll_xid_req(tlli, OSMO_GPRS_LLC_SAPI_SNDCP3, (uint8_t *)xid_l3_pars, sizeof(xid_l3_pars));
 	OSMO_ASSERT(llc_prim);
 	rc = osmo_gprs_llc_prim_upper_down(llc_prim);

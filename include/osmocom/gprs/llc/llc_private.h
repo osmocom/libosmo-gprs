@@ -287,6 +287,8 @@ struct osmo_gprs_llc_prim *gprs_llc_prim_alloc_grr_unitdata_req(
 
 /* llc_ll.c */
 int gprs_llc_prim_ll_upper_down(struct osmo_gprs_llc_prim *llc_prim);
+struct osmo_gprs_llc_prim *gprs_llc_prim_alloc_ll_establish_cnf(uint32_t tlli, enum osmo_gprs_llc_sapi ll_sapi,
+								uint8_t *l3_par, unsigned int l3_par_len);
 struct osmo_gprs_llc_prim *gprs_llc_prim_alloc_ll_xid_ind(uint32_t tlli, enum osmo_gprs_llc_sapi ll_sapi,
 							  uint8_t *l3_par, unsigned int l3_par_len);
 struct osmo_gprs_llc_prim *gprs_llc_prim_alloc_ll_xid_cnf(uint32_t tlli, enum osmo_gprs_llc_sapi ll_sapi,
@@ -312,6 +314,7 @@ struct gprs_llc_lle *gprs_llc_lle_for_rx_by_tlli_sapi(const uint32_t tlli,
 int gprs_llc_lle_rx_unitdata_ind(struct gprs_llc_lle *lle, uint8_t *ll_pdu, size_t ll_pdu_len,
 				 struct gprs_llc_pdu_decoded *pdu_dec);
 void gprs_llc_llme_free(struct gprs_llc_llme *llme);
+int gprs_llc_lle_tx_sabm(struct gprs_llc_lle *lle, uint8_t *l3par, unsigned int l3par_len);
 int gprs_llc_lle_tx_xid(const struct gprs_llc_lle *lle, uint8_t *xid_payload, unsigned int xid_payload_len, bool is_cmd);
 int gprs_llc_lle_tx_xid_req(struct gprs_llc_lle *lle, uint8_t *l3par, unsigned int l3par_len);
 int gprs_llc_lle_tx_xid_resp(struct gprs_llc_lle *lle, uint8_t *l3par, unsigned int l3par_len);

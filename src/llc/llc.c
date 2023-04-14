@@ -432,6 +432,13 @@ static int gprs_llc_lle_generate_xid(struct gprs_llc_lle *lle, uint8_t *bytes, i
 	return rc;
 }
 
+/* LL-ESTABLISH negotiation (See also: TS 101 351, Section 7.2.2.2) */
+int gprs_llc_lle_tx_sabm(struct gprs_llc_lle *lle, uint8_t *l3par, unsigned int l3par_len)
+{
+	LOGLLE(lle, LOGL_ERROR, "Tx SABM: ABM mode not supported yet!\n");
+	return -ENOTSUP;
+}
+
 /* Set of LL-XID negotiation (See also: TS 101 351, Section 7.2.2.4) */
 int gprs_llc_lle_tx_xid_req(struct gprs_llc_lle *lle, uint8_t *l3par, unsigned int l3par_len)
 {
