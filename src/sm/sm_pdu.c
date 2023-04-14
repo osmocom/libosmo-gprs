@@ -24,6 +24,7 @@
 #include <osmocom/core/msgb.h>
 #include <osmocom/core/bitvec.h>
 #include <osmocom/core/endian.h>
+#include <osmocom/core/socket.h>
 #include <osmocom/gsm/tlv.h>
 #include <osmocom/gsm/protocol/gsm_04_08.h>
 #include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
@@ -78,6 +79,78 @@ static uint8_t gprs_sm_pdp_addr_enc_ietf(struct gprs_sm_pdp_addr *out,
 		out->addr = pdp_addr_v4->u.sin.sin_addr.s_addr;
 		return 2 + sizeof(out->both.addr);
 	}
+}
+
+int gprs_sm_pdp_addr_dec(const struct gprs_sm_pdp_addr *pdp_addr,
+			 uint16_t pdp_addr_len,
+			 enum osmo_gprs_sm_pdp_addr_ietf_type *pdp_addr_ietf_type,
+			 struct osmo_sockaddr *osa4,
+			 struct osmo_sockaddr *osa6)
+{
+
+	OSMO_ASSERT(pdp_addr);
+	OSMO_ASSERT(pdp_addr_ietf_type);
+	OSMO_ASSERT(osa4);
+	OSMO_ASSERT(osa6);
+
+	memset(osa4, 0, sizeof(*osa4));
+	memset(osa6, 0, sizeof(*osa6));
+	osa4->u.sa.sa_family = AF_UNSPEC;
+	osa6->u.sa.sa_family = AF_UNSPEC;
+
+	switch (pdp_addr->organization) {
+	case GPRS_SM_PDP_ADDR_ORG_IETF:
+		break;
+	case GPRS_SM_PDP_ADDR_ORG_ETSI:
+	default:
+		LOGSM(LOGL_INFO, "Unsupported PDP address organization %u\n", pdp_addr->organization);
+		return -EINVAL;
+	}
+
+	pdp_addr_len -= 2;
+	switch (pdp_addr->type) {
+	case OSMO_GPRS_SM_PDP_ADDR_IETF_IPV4:
+		if (pdp_addr_len == sizeof(pdp_addr->addr)) {
+			osa4->u.sa.sa_family = AF_INET;
+			osa4->u.sin.sin_addr.s_addr = pdp_addr->addr;
+		} else if (pdp_addr_len != 0) {
+			LOGSM(LOGL_INFO, "Wrong IPv4 PDP address length %u\n", pdp_addr_len);
+			return -EINVAL;
+		}
+		break;
+	case OSMO_GPRS_SM_PDP_ADDR_IETF_IPV6:
+		if (pdp_addr_len == sizeof(pdp_addr->addr6)) {
+			osa6->u.sa.sa_family = AF_INET6;
+			memcpy(osa6->u.sin6.sin6_addr.s6_addr, pdp_addr->addr6, sizeof(pdp_addr->addr6));
+		} else if (pdp_addr_len != 0) {
+			LOGSM(LOGL_INFO, "Wrong IPv6 PDP address length %u\n", pdp_addr_len);
+			return -EINVAL;
+		}
+		break;
+	case OSMO_GPRS_SM_PDP_ADDR_IETF_IPV4V6:
+		if (pdp_addr_len == sizeof(pdp_addr->addr)) {
+			osa4->u.sa.sa_family = AF_INET;
+			osa4->u.sin.sin_addr.s_addr = pdp_addr->both.addr;
+		} else if (pdp_addr_len == sizeof(pdp_addr->both.addr6)) {
+			osa6->u.sa.sa_family = AF_INET6;
+			memcpy(osa6->u.sin6.sin6_addr.s6_addr, pdp_addr->both.addr6, sizeof(pdp_addr->both.addr6));
+		} else if (pdp_addr_len == sizeof(pdp_addr->both)) {
+			osa4->u.sa.sa_family = AF_INET;
+			osa4->u.sin.sin_addr.s_addr = pdp_addr->both.addr;
+			osa6->u.sa.sa_family = AF_INET6;
+			memcpy(osa6->u.sin6.sin6_addr.s6_addr, pdp_addr->both.addr6, sizeof(pdp_addr->both.addr6));
+		} else if (pdp_addr_len != 0) {
+			LOGSM(LOGL_INFO, "Wrong IPv4v6 PDP address length %u\n", pdp_addr_len);
+			return -EINVAL;
+		}
+		break;
+	default:
+		LOGSM(LOGL_INFO, "No IPv4 or IPv6\n");
+		return -EINVAL;
+	}
+	*pdp_addr_ietf_type = pdp_addr->type;
+
+	return 0;
 }
 
 /* Chapter 9.4.1: Attach request */

@@ -79,7 +79,9 @@ struct osmo_gprs_sm_smreg_prim {
 			uint8_t pco_len;
 			union {
 				struct {
-					struct osmo_sockaddr pdp_addr;
+					enum osmo_gprs_sm_pdp_addr_ietf_type pdp_addr_ietf_type;
+					struct osmo_sockaddr pdp_addr_v4;
+					struct osmo_sockaddr pdp_addr_v6;
 					uint8_t qos[OSMO_GPRS_SM_QOS_MAXLEN];
 					uint8_t qos_len;
 				} acc;

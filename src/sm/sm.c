@@ -208,8 +208,13 @@ int gprs_sm_submit_smreg_pdp_act_cnf(const struct gprs_sm_entity *sme, enum gsm4
 	sm_prim_tx->smreg.ms_id = sme->ms->ms_id;
 	sm_prim_tx->smreg.pdp_act_cnf.accepted = (cause != 0);
 	sm_prim_tx->smreg.pdp_act_cnf.nsapi = sme->nsapi;
-	if (!sm_prim_tx->smreg.pdp_act_cnf.accepted)
+	if (sm_prim_tx->smreg.pdp_act_cnf.accepted) {
+		sm_prim_tx->smreg.pdp_act_cnf.acc.pdp_addr_ietf_type = sme->pdp_addr_ietf_type;
+		memcpy(&sm_prim_tx->smreg.pdp_act_cnf.acc.pdp_addr_v4, &sme->pdp_addr_v4, sizeof(sme->pdp_addr_v4));
+		memcpy(&sm_prim_tx->smreg.pdp_act_cnf.acc.pdp_addr_v6, &sme->pdp_addr_v6, sizeof(sme->pdp_addr_v6));
+	} else {
 		sm_prim_tx->smreg.pdp_act_cnf.rej.cause = cause;
+	}
 
 	rc = gprs_sm_prim_call_up_cb(sm_prim_tx);
 	return rc;
@@ -289,15 +294,27 @@ static int gprs_sm_rx_act_pdp_ack(struct gprs_sm_entity *sme,
 
 	radio_prio = *ofs++;
 
-	rc = gprs_sm_tlv_parse(&tp, ofs, len - (ofs - (uint8_t *)gh));
-	if (rc < 0) {
-		LOGSME(sme, LOGL_ERROR, "Rx SM Activate PDP Context Accept: failed to parse TLVs %d\n", rc);
-		goto rejected;
-	}
-
 	(void)llc_sapi;
 	(void)qos;
 	(void)radio_prio;
+
+	if (len > ofs - (uint8_t *)gh) {
+		rc = gprs_sm_tlv_parse(&tp, ofs, len - (ofs - (uint8_t *)gh));
+		if (rc < 0) {
+			LOGSME(sme, LOGL_ERROR, "Rx SM Activate PDP Context Accept: failed to parse TLVs %d\n", rc);
+			goto rejected;
+		}
+
+		if (TLVP_PRESENT(&tp, GSM48_IE_GSM_PDP_ADDR)) {
+			rc = gprs_sm_pdp_addr_dec(
+					(const struct gprs_sm_pdp_addr *)TLVP_VAL(&tp, GSM48_IE_GSM_PDP_ADDR),
+					TLVP_LEN(&tp, GSM48_IE_GSM_PDP_ADDR),
+					&sme->pdp_addr_ietf_type,
+					&sme->pdp_addr_v4, &sme->pdp_addr_v6);
+			if (rc < 0)
+				goto rejected;
+		}
+	}
 
 	rc = osmo_fsm_inst_dispatch(sme->ms_fsm.fi, GPRS_SM_MS_EV_RX_ACT_PDP_CTX_ACC, NULL);
 	if (rc < 0)
