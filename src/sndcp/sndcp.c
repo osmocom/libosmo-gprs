@@ -148,7 +148,7 @@ struct gprs_sndcp_entity *gprs_sndcp_sne_by_dlci_nsapi(uint32_t tlli, uint8_t ll
 		return NULL;
 
 	sne = gprs_sndcp_snme_get_sne(snme, nsapi);
-	if (sne->llc_sapi != llc_sapi)
+	if (!sne || sne->llc_sapi != llc_sapi)
 		return NULL;
 	return sne;
 }
