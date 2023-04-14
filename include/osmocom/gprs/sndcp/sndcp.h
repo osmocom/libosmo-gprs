@@ -5,7 +5,13 @@
 #include <stdint.h>
 #include <stddef.h>
 
-int osmo_gprs_sndcp_init(void);
+enum osmo_gprs_sndcp_location {
+	OSMO_GPRS_SNDCP_LOCATION_UNSET,
+	OSMO_GPRS_SNDCP_LOCATION_MS,
+	OSMO_GPRS_SNDCP_LOCATION_NET,
+};
+
+int osmo_gprs_sndcp_init(enum osmo_gprs_sndcp_location location);
 
 enum osmo_gprs_sndcp_log_cat {
 	OSMO_GPRS_SNDCP_LOGC_SNDCP,

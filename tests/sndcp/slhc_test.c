@@ -262,7 +262,7 @@ int main(int argc, char **argv)
 	log_ctx = talloc_named_const(ctx, 0, "log");
 	osmo_init_logging2(log_ctx, &info);
 
-	rc = osmo_gprs_sndcp_init();
+	rc = osmo_gprs_sndcp_init(OSMO_GPRS_SNDCP_LOCATION_MS);
 	OSMO_ASSERT(rc == 0);
 	osmo_gprs_sndcp_set_log_cat(OSMO_GPRS_SNDCP_LOGC_SNDCP, DSNDCP);
 	osmo_gprs_sndcp_set_log_cat(OSMO_GPRS_SNDCP_LOGC_SLHC, DSLHC);

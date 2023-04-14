@@ -83,6 +83,7 @@ struct gprs_sndcp_ctx_cfg {
 };
 
 struct gprs_sndcp_ctx {
+	enum osmo_gprs_sndcp_location location;
 	osmo_gprs_sndcp_prim_up_cb sndcp_up_cb;
 	void *sndcp_up_cb_user_data;
 
@@ -157,6 +158,10 @@ struct gprs_sndcp_entity {
 	/* The defragmentation queue */
 	struct gprs_sndcp_defrag_state defrag;
 
+	/* Whether we have an XID Request in transit which was originated by upper layers (TS 24.007 C.6): */
+	bool xid_req_in_transit_orig_snsm_activate_ind; /* origin = SNSM-ACTIVATE.ind */
+	bool xid_req_in_transit_orig_sn_xid_req; /* origin = SN-XID.req */
+
 	/* Copy of the XID fields array we have sent with the last
 	 * originated XID-Request. NULL if not existing (and l3xid_req_len = 0) */
 	uint8_t *l3xid_req;
@@ -196,16 +201,22 @@ static inline struct gprs_sndcp_entity *gprs_sndcp_snme_get_sne(struct gprs_sndc
 /* sndcp_prim.c: */
 struct osmo_gprs_sndcp_prim *gprs_sndcp_prim_alloc_sn_unitdata_ind(uint32_t tlli, uint8_t sapi, uint8_t nsapi, uint8_t *npdu, size_t npdu_len);
 struct osmo_gprs_sndcp_prim *gprs_sndcp_prim_alloc_sn_xid_ind(uint32_t tlli, uint8_t sapi, uint8_t nsapi);
+struct osmo_gprs_sndcp_prim *gprs_sndcp_prim_alloc_sn_xid_cnf(uint32_t tlli, uint8_t sapi, uint8_t nsapi);
 struct osmo_gprs_sndcp_prim *gprs_sndcp_prim_alloc_snsm_activate_rsp(uint32_t tlli, uint8_t nsapi);
 int gprs_sndcp_prim_call_up_cb(struct osmo_gprs_sndcp_prim *sndcp_prim);
 int gprs_sndcp_prim_call_down_cb(struct osmo_gprs_llc_prim *llc_prim);
+int gprs_sndcp_prim_call_snsm_cb(struct osmo_gprs_sndcp_prim *sndcp_prim);
 
 /* sndcp.c: */
 struct gprs_sndcp_mgmt_entity *gprs_sndcp_snme_alloc(uint32_t tlli);
 struct gprs_sndcp_mgmt_entity *gprs_sndcp_snme_find_by_tlli(uint32_t tlli);
 struct gprs_sndcp_entity *gprs_sndcp_sne_alloc(struct gprs_sndcp_mgmt_entity *snme, uint8_t llc_sapi, uint8_t nsapi);
 void gprs_sndcp_sne_free(struct gprs_sndcp_entity *sne);
+struct gprs_sndcp_entity *gprs_sndcp_sne_by_dlci(uint32_t tlli, uint8_t llc_sapi);
 struct gprs_sndcp_entity *gprs_sndcp_sne_by_dlci_nsapi(uint32_t tlli, uint8_t llc_sapi, uint8_t nsapi);
+int gprs_sndcp_sne_submit_llc_ll_establish_req(struct gprs_sndcp_entity *sne);
+int gprs_sndcp_sne_submit_llc_ll_xid_req(struct gprs_sndcp_entity *sne);
+int gprs_sndcp_sne_submit_snsm_activate_rsp(struct gprs_sndcp_entity *sne);
 int gprs_sndcp_sne_handle_llc_ll_unitdata_ind(struct gprs_sndcp_entity *sne,
 					  struct sndcp_common_hdr *sch, uint16_t len);
 int gprs_sndcp_snme_handle_llc_ll_xid_ind(struct gprs_sndcp_mgmt_entity *snme, uint32_t sapi, uint8_t *l3params, unsigned int l3params_len);

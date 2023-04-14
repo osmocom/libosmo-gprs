@@ -206,7 +206,7 @@ struct osmo_gprs_sndcp_prim *osmo_gprs_sndcp_prim_alloc_sn_xid_req(uint32_t tlli
 	return sndcp_prim;
 }
 
-/* 5.1.1.5 SN-XID.indication */
+/* 5.1.1.6 SN-XID.indication */
 struct osmo_gprs_sndcp_prim *gprs_sndcp_prim_alloc_sn_xid_ind(uint32_t tlli, uint8_t sapi, uint8_t nsapi)
 {
 	struct osmo_gprs_sndcp_prim *sndcp_prim;
@@ -225,6 +225,17 @@ struct osmo_gprs_sndcp_prim *osmo_gprs_sndcp_prim_alloc_sn_xid_rsp(uint32_t tlli
 	sndcp_prim->sn.tlli = tlli;
 	sndcp_prim->sn.sapi = sapi;
 	sndcp_prim->sn.xid_rsp.nsapi = nsapi;
+	return sndcp_prim;
+}
+
+/* 5.1.1.8 SN-XID.confirmation */
+struct osmo_gprs_sndcp_prim *gprs_sndcp_prim_alloc_sn_xid_cnf(uint32_t tlli, uint8_t sapi, uint8_t nsapi)
+{
+	struct osmo_gprs_sndcp_prim *sndcp_prim;
+	sndcp_prim = sndcp_prim_sn_alloc(OSMO_GPRS_SNDCP_SN_XID, PRIM_OP_CONFIRM, 0);
+	sndcp_prim->sn.tlli = tlli;
+	sndcp_prim->sn.sapi = sapi;
+	sndcp_prim->sn.xid_ind.nsapi = nsapi;
 	return sndcp_prim;
 }
 
@@ -456,6 +467,23 @@ static int gprs_sndcp_prim_handle_llc_ll_unitdata_ind(struct osmo_gprs_llc_prim 
 	return rc;
 }
 
+static int gprs_sndcp_prim_handle_llc_ll_establish_cnf(struct osmo_gprs_llc_prim *llc_prim)
+{
+	int rc;
+	struct gprs_sndcp_entity *sne;
+
+	sne = gprs_sndcp_sne_by_dlci(llc_prim->ll.tlli, llc_prim->ll.sapi);
+	if (!sne) {
+		LOGSNDCP(LOGL_ERROR, "Message for non-existing SNDCP Entity "
+			 "(TLLI=%08x, SAPI=%u)\n",
+			 llc_prim->ll.tlli, llc_prim->ll.sapi);
+		return -EIO;
+	}
+
+	rc = gprs_sndcp_sne_submit_snsm_activate_rsp(sne);
+	return rc;
+}
+
 static int gprs_sndcp_prim_handle_llc_ll_xid_ind(struct osmo_gprs_llc_prim *llc_prim)
 {
 	int rc;
@@ -500,6 +528,9 @@ int gprs_sndcp_prim_lower_up_llc_ll(struct osmo_gprs_llc_prim *llc_prim)
 	case OSMO_PRIM(OSMO_GPRS_LLC_LL_UNITDATA, PRIM_OP_INDICATION):
 		rc = gprs_sndcp_prim_handle_llc_ll_unitdata_ind(llc_prim);
 		break;
+	case OSMO_PRIM(OSMO_GPRS_LLC_LL_ESTABLISH, PRIM_OP_CONFIRM):
+		rc = gprs_sndcp_prim_handle_llc_ll_establish_cnf(llc_prim);
+		break;
 	case OSMO_PRIM(OSMO_GPRS_LLC_LL_XID, PRIM_OP_INDICATION):
 		rc = gprs_sndcp_prim_handle_llc_ll_xid_ind(llc_prim);
 		break;
@@ -528,6 +559,7 @@ int osmo_gprs_sndcp_prim_lower_up(struct osmo_gprs_llc_prim *llc_prim)
 		break;
 	default:
 		rc = gprs_sndcp_prim_handle_llc_ll_unsupported(llc_prim);
+		rc = 1;
 	}
 
 	/* Special return value '1' means: do not free */
@@ -561,6 +593,7 @@ static int gprs_sndcp_prim_handle_sndcp_snsm_activate_ind(struct osmo_gprs_sndcp
 	uint8_t sapi = sndcp_prim->snsm.activate_ind.sapi;
 	uint8_t nsapi = sndcp_prim->snsm.activate_ind.nsapi;
 	struct gprs_sndcp_mgmt_entity *snme;
+	struct gprs_sndcp_entity *sne;
 
 	LOGSNDCP(LOGL_INFO, "SNSM-ACTIVATE.ind (TLLI=%08x, SAPI=%u, NSAPI=%u)\n",
 		 tlli, sapi, nsapi);
@@ -568,23 +601,36 @@ static int gprs_sndcp_prim_handle_sndcp_snsm_activate_ind(struct osmo_gprs_sndcp
 	snme = gprs_sndcp_snme_find_by_tlli(tlli);
 	if (!snme) {
 		snme = gprs_sndcp_snme_alloc(tlli);
-	} else if (gprs_sndcp_snme_get_sne(snme, nsapi)) {
-		LOGSNDCP(LOGL_ERROR, "Trying to ACTIVATE already-existing entity "
-			 "(TLLI=%08x, SAPI=%u, NSAPI=%u)\n",
-			 tlli, sapi, nsapi);
-		return -EEXIST;
+		if (!snme) {
+			LOGSNDCP(LOGL_ERROR, "Out of memory during ACTIVATE\n");
+			return -ENOMEM;
+		}
 	}
 
-	if (!snme) {
-		LOGSNDCP(LOGL_ERROR, "Out of memory during ACTIVATE\n");
-		return -ENOMEM;
+	if (!(sne = gprs_sndcp_snme_get_sne(snme, nsapi))) {
+		sne = gprs_sndcp_sne_alloc(snme, sapi, nsapi);
+		if (!sne) {
+			LOGSNME(snme, LOGL_ERROR, "Out of memory during ACTIVATE\n");
+			return -ENOMEM;
+		}
 	}
 
-	if (!gprs_sndcp_sne_alloc(snme, sapi, nsapi)) {
-		LOGSNDCP(LOGL_ERROR, "Out of memory during ACTIVATE\n");
-		return -ENOMEM;
-	}
+	/* Nothing to do below if we are not MS. In NET mode, we wait for
+	 * LL-ESTABLISH-IND or LL-XID-IND. */
+	if (g_sndcp_ctx->location != OSMO_GPRS_SNDCP_LOCATION_MS)
+		return 0;
 
+	/* TODO: when supporting and using LLC ABM mode, flow should go through
+	 * LL-ESTABLISH.req, as per TS 24.007 C.6 "No LLC link exists yet,
+	 * establish a link and exchange XID"
+	 *
+	* rc = gprs_sndcp_sne_submit_llc_ll_establish_req(sne);
+	* return rc;
+	*/
+
+	/* TS 24.007 C.6 "LLC link exists already, only XID exchange" */
+	sne->xid_req_in_transit_orig_snsm_activate_ind = true;
+	rc = gprs_sndcp_sne_submit_llc_ll_xid_req(sne);
 	return rc;
 }
 

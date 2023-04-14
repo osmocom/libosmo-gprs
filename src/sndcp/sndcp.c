@@ -34,12 +34,13 @@
 
 struct gprs_sndcp_ctx *g_sndcp_ctx;
 
-int osmo_gprs_sndcp_init(void)
+int osmo_gprs_sndcp_init(enum osmo_gprs_sndcp_location location)
 {
 	if (g_sndcp_ctx)
 		talloc_free(g_sndcp_ctx);
 
 	g_sndcp_ctx = talloc_zero(NULL, struct gprs_sndcp_ctx);
+	g_sndcp_ctx->location = location;
 	INIT_LLIST_HEAD(&g_sndcp_ctx->snme_list);
 	return 0;
 }
@@ -142,6 +143,27 @@ void gprs_sndcp_sne_free(struct gprs_sndcp_entity *sne)
 	talloc_free(sne);
 }
 
+struct gprs_sndcp_entity *gprs_sndcp_sne_by_dlci(uint32_t tlli, uint8_t llc_sapi)
+{
+	struct gprs_sndcp_mgmt_entity *snme = gprs_sndcp_snme_find_by_tlli(tlli);
+	struct gprs_sndcp_entity *sne;
+	unsigned int i;
+
+	if (!snme)
+		return NULL;
+
+	for (i = 0; i < ARRAY_SIZE(snme->sne); i++) {
+		sne = snme->sne[i];
+		if (!sne)
+			continue;
+		if (sne->llc_sapi != llc_sapi)
+			continue;
+		return sne;
+	}
+
+	return NULL;
+}
+
 struct gprs_sndcp_entity *gprs_sndcp_sne_by_dlci_nsapi(uint32_t tlli, uint8_t llc_sapi, uint8_t nsapi)
 {
 	struct gprs_sndcp_mgmt_entity *snme = gprs_sndcp_snme_find_by_tlli(tlli);
@@ -154,6 +176,52 @@ struct gprs_sndcp_entity *gprs_sndcp_sne_by_dlci_nsapi(uint32_t tlli, uint8_t ll
 	if (!sne || sne->llc_sapi != llc_sapi)
 		return NULL;
 	return sne;
+}
+
+int gprs_sndcp_sne_submit_llc_ll_establish_req(struct gprs_sndcp_entity *sne)
+{
+	struct osmo_gprs_llc_prim *llc_prim_tx;
+	int rc;
+
+	llc_prim_tx = osmo_gprs_llc_prim_alloc_ll_establish_req(sne->snme->tlli, sne->llc_sapi,
+								sne->l3xid_req, sne->l3xid_req_len);
+	OSMO_ASSERT(llc_prim_tx);
+	rc = gprs_sndcp_prim_call_down_cb(llc_prim_tx);
+	return rc;
+}
+
+int gprs_sndcp_sne_submit_llc_ll_xid_req(struct gprs_sndcp_entity *sne)
+{
+	struct osmo_gprs_llc_prim *llc_prim_tx;
+	int rc;
+
+	llc_prim_tx = osmo_gprs_llc_prim_alloc_ll_xid_req(sne->snme->tlli, sne->llc_sapi,
+							  sne->l3xid_req, sne->l3xid_req_len);
+	OSMO_ASSERT(llc_prim_tx);
+	rc = gprs_sndcp_prim_call_down_cb(llc_prim_tx);
+	return rc;
+}
+
+int gprs_sndcp_sne_submit_sn_xid_cnf(struct gprs_sndcp_entity *sne)
+{
+	struct osmo_gprs_sndcp_prim *sndcp_prim_tx;
+	int rc;
+
+	sndcp_prim_tx = gprs_sndcp_prim_alloc_sn_xid_cnf(sne->snme->tlli, sne->llc_sapi, sne->nsapi);
+	OSMO_ASSERT(sndcp_prim_tx);
+	rc = gprs_sndcp_prim_call_up_cb(sndcp_prim_tx);
+	return rc;
+}
+
+int gprs_sndcp_sne_submit_snsm_activate_rsp(struct gprs_sndcp_entity *sne)
+{
+	struct osmo_gprs_sndcp_prim *sndcp_prim_tx;
+	int rc;
+
+	sndcp_prim_tx = gprs_sndcp_prim_alloc_snsm_activate_rsp(sne->snme->tlli, sne->nsapi);
+	OSMO_ASSERT(sndcp_prim_tx);
+	rc = gprs_sndcp_prim_call_snsm_cb(sndcp_prim_tx);
+	return rc;
 }
 
 /* Check if any compression parameters are set in the sgsn configuration */
@@ -695,7 +763,6 @@ int gprs_sndcp_sne_handle_sn_xid_req(struct gprs_sndcp_entity *sne, const struct
 {
 	int rc;
 	uint8_t l3params[1024];
-	struct osmo_gprs_llc_prim *llc_prim_tx;
 
 	/* Wipe off all compression entities and their states to
 	 * get rid of possible leftovers from a previous session */
@@ -714,12 +781,9 @@ int gprs_sndcp_sne_handle_sn_xid_req(struct gprs_sndcp_entity *sne, const struct
 		talloc_free(sne->l3xid_req);
 		sne->l3xid_req = NULL;
 	}
+	sne->xid_req_in_transit_orig_sn_xid_req = true;
 
-	llc_prim_tx = osmo_gprs_llc_prim_alloc_ll_xid_req(sne->snme->tlli, sne->llc_sapi,
-							  sne->l3xid_req, sne->l3xid_req_len);
-	OSMO_ASSERT(llc_prim_tx);
-	rc = gprs_sndcp_prim_call_down_cb(llc_prim_tx);
-
+	rc = gprs_sndcp_sne_submit_llc_ll_xid_req(sne);
 	return rc;
 }
 
@@ -1020,8 +1084,6 @@ int gprs_sndcp_snme_handle_llc_ll_xid_cnf(struct gprs_sndcp_mgmt_entity *snme, u
 		if (sne_i->llc_sapi != sapi)
 			continue;
 		LOGSNE(sne_i, LOGL_DEBUG, "LL-XID.cnf: Found SNE SAPI=%u\n", sapi);
-		if (!sne_i->l3xid_req || sne_i->l3xid_req_len == 0)
-			continue;
 		sne = sne_i;
 		break;
 	}
@@ -1030,38 +1092,56 @@ int gprs_sndcp_snme_handle_llc_ll_xid_cnf(struct gprs_sndcp_mgmt_entity *snme, u
 		return -EINVAL;
 	}
 
-	/* Parse SNDCP-CID XID-Field */
-	comp_fields_req = gprs_sndcp_parse_xid(NULL, sne, sne->l3xid_req, sne->l3xid_req_len, NULL);
-	if (!comp_fields_req)
-		return -EINVAL;
+	if (sne->l3xid_req && sne->l3xid_req_len > 0) {
+		/* Parse SNDCP-CID XID-Field */
+		comp_fields_req = gprs_sndcp_parse_xid(NULL, sne, sne->l3xid_req, sne->l3xid_req_len, NULL);
+		if (!comp_fields_req)
+			return -EINVAL;
 
-	/* Parse SNDCP-CID XID-Field */
-	comp_fields_conf = gprs_sndcp_parse_xid(NULL, sne, l3params, l3params_len, comp_fields_req);
-	if (!comp_fields_conf) {
-		talloc_free(comp_fields_req);
-		return -EINVAL;
-	}
-
-	LOGSNDCP(LOGL_DEBUG, "LL-XID.cnf response comp_fields:\n");
-	gprs_sndcp_dump_comp_fields(comp_fields_conf, LOGL_DEBUG);
-
-	/* Handle compression entities */
-	llist_for_each_entry(comp_field, comp_fields_conf, list) {
-		compclass = gprs_sndcp_get_compression_class(comp_field);
-		if (compclass == SNDCP_XID_PROTOCOL_COMPRESSION)
-			rc = gprs_sndcp_snme_handle_pcomp_entities(snme, sapi, comp_field);
-		else if (compclass == SNDCP_XID_DATA_COMPRESSION)
-			rc = gprs_sndcp_snme_handle_dcomp_entities(snme, sapi, comp_field);
-		else {
-			gprs_sndcp_comp_delete(snme->comp.proto, comp_field->entity);
-			gprs_sndcp_comp_delete(snme->comp.data, comp_field->entity);
-			rc = 0;
+		/* Parse SNDCP-CID XID-Field */
+		comp_fields_conf = gprs_sndcp_parse_xid(NULL, sne, l3params, l3params_len, comp_fields_req);
+		if (!comp_fields_conf) {
+			talloc_free(comp_fields_req);
+			return -EINVAL;
 		}
-		if (rc < 0)
-			break;
+
+		LOGSNDCP(LOGL_DEBUG, "LL-XID.cnf response comp_fields:\n");
+		gprs_sndcp_dump_comp_fields(comp_fields_conf, LOGL_DEBUG);
+
+		/* Handle compression entities */
+		llist_for_each_entry(comp_field, comp_fields_conf, list) {
+			compclass = gprs_sndcp_get_compression_class(comp_field);
+			if (compclass == SNDCP_XID_PROTOCOL_COMPRESSION)
+				rc = gprs_sndcp_snme_handle_pcomp_entities(snme, sapi, comp_field);
+			else if (compclass == SNDCP_XID_DATA_COMPRESSION)
+				rc = gprs_sndcp_snme_handle_dcomp_entities(snme, sapi, comp_field);
+			else {
+				gprs_sndcp_comp_delete(snme->comp.proto, comp_field->entity);
+				gprs_sndcp_comp_delete(snme->comp.data, comp_field->entity);
+				rc = 0;
+			}
+			if (rc < 0)
+				break;
+		}
+
+		talloc_free(comp_fields_req);
+		talloc_free(comp_fields_conf);
 	}
 
-	talloc_free(comp_fields_req);
-	talloc_free(comp_fields_conf);
+	/* Originated by SNSM-ACTIVATE.ind: */
+	if (sne->xid_req_in_transit_orig_snsm_activate_ind) {
+		sne->xid_req_in_transit_orig_snsm_activate_ind = false;
+		rc = gprs_sndcp_sne_submit_snsm_activate_rsp(sne);
+	}
+	/* Originated by SN-XID.req: */
+	if (sne->xid_req_in_transit_orig_sn_xid_req) {
+		sne->xid_req_in_transit_orig_sn_xid_req = false;
+		rc = gprs_sndcp_sne_submit_sn_xid_cnf(sne);
+	}
+
+	/* TODO:
+	* gprs_sndcp_prim_alloc_sn_xid_cnf() SN-XID-CNF if SN-XID-REQ pending
+	* gprs_sndcp_prim_alloc_snsm_activate_rsp() SNSM-ACTIVATE-RSP if SNSM-ACTIVATE-IND pending
+	*/
 	return rc;
 }

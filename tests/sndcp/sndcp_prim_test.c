@@ -93,7 +93,15 @@ int test_sndcp_prim_snsm_cb(struct osmo_gprs_sndcp_prim *sndcp_prim, void *user_
 		OSMO_ASSERT(0);
 	}
 
-	printf("%s(): Rx %s\n", __func__, npdu_name);
+	switch (OSMO_PRIM_HDR(&sndcp_prim->oph)) {
+	case OSMO_PRIM(OSMO_GPRS_SNDCP_SNSM_ACTIVATE, PRIM_OP_RESPONSE):
+		printf("%s(): Rx %s\n", __func__, npdu_name);
+		break;
+	default:
+		printf("%s(): Unexpected Rx %s\n", __func__, npdu_name);
+		OSMO_ASSERT(0);
+	}
+
 	return 0;
 }
 
@@ -113,7 +121,7 @@ static const  uint8_t sndcp_xid[] = {
 	0x01, 0x05, 0x00, 0x06, 0x00, 0x07, 0x01, 0x07, 0x00, 0x08, 0x01, 0x08,
 	0x80, 0x00, 0x04, 0x12, 0x00, 0x40, 0x07 };
 
-static void test_sndcp_prim(void)
+static void test_sndcp_prim_net(void)
 {
 	struct osmo_gprs_sndcp_prim *sndcp_prim;
 	struct osmo_gprs_llc_prim *llc_prim;
@@ -124,32 +132,21 @@ static void test_sndcp_prim(void)
 	int rc;
 	printf("==== %s() [start] ====\n", __func__);
 
-	rc = osmo_gprs_sndcp_init();
+	rc = osmo_gprs_sndcp_init(OSMO_GPRS_SNDCP_LOCATION_NET);
 	OSMO_ASSERT(rc == 0);
 
 	osmo_gprs_sndcp_prim_set_up_cb(test_sndcp_prim_up_cb, NULL);
 	osmo_gprs_sndcp_prim_set_down_cb(test_sndcp_prim_down_cb, NULL);
 	osmo_gprs_sndcp_prim_set_snsm_cb(test_sndcp_prim_snsm_cb, NULL);
 
-	/* SNSM-ACTIVATE.Ind: */
+	/* SNSM-ACTIVATE.Ind, internally submits LL-XID.Req (it would submit
+	 * LL-ESTABLISH.Req in ABM mode if we supported it): */
 	sndcp_prim = osmo_gprs_sndcp_prim_alloc_snsm_activate_ind(tlli, nsapi, ll_sapi);
 	OSMO_ASSERT(sndcp_prim);
 	rc = osmo_gprs_sndcp_prim_dispatch_snsm(sndcp_prim);
 	OSMO_ASSERT(rc == 0);
 
-	/* Submit SN-XID.Req, triggers rx of LL-XID.Req: */
-	sndcp_prim = osmo_gprs_sndcp_prim_alloc_sn_xid_req(tlli, ll_sapi, nsapi);
-	OSMO_ASSERT(sndcp_prim);
-	sndcp_prim->sn.xid_req.pcomp_rfc1144.active = true;
-	sndcp_prim->sn.xid_req.pcomp_rfc1144.s01 = 7;
-	rc = osmo_gprs_sndcp_prim_upper_down(sndcp_prim);
-	OSMO_ASSERT(rc == 0);
-
-	/* Submit LL-XID.Cnf, triggers rx of LL-XID.cnf */
-	llc_prim = gprs_llc_prim_alloc_ll_xid_cnf(tlli, ll_sapi, (uint8_t *)sndcp_xid, sizeof(sndcp_xid));
-	OSMO_ASSERT(llc_prim);
-	rc = osmo_gprs_sndcp_prim_lower_up(llc_prim);
-	OSMO_ASSERT(rc == 0);
+	/* Id we supported and use ABM: Submit LL-ESTABLISH.Ind, triggers rx of  LL-ESTABLISH.Rsp */
 
 	/* Submit LL-XID.Ind, triggers rx of SN-XID.Ind: */
 	llc_prim = gprs_llc_prim_alloc_ll_xid_ind(tlli, ll_sapi, (uint8_t *)sndcp_xid, sizeof(sndcp_xid));
@@ -177,7 +174,84 @@ static void test_sndcp_prim(void)
 
 
 	/* TODO: SN-XID REQ / IND / RESP / CONF
-	 * TODO: Other primitivbes coming from LLC layer
+	 * TODO: Other primitives coming from LLC layer
+	 */
+
+	/* SNSM-DEACTIVATE.Ind: */
+	sndcp_prim = osmo_gprs_sndcp_prim_alloc_snsm_deactivate_ind(tlli, nsapi);
+	OSMO_ASSERT(sndcp_prim);
+	rc = osmo_gprs_sndcp_prim_dispatch_snsm(sndcp_prim);
+	OSMO_ASSERT(rc == 0);
+
+	printf("==== %s() [end] ====\n", __func__);
+}
+
+static void test_sndcp_prim_ms(void)
+{
+	struct osmo_gprs_sndcp_prim *sndcp_prim;
+	struct osmo_gprs_llc_prim *llc_prim;
+	const uint32_t tlli = 0xe1c5d364;
+	const enum osmo_gprs_llc_sapi ll_sapi = OSMO_GPRS_LLC_SAPI_SNDCP3;
+	const uint8_t nsapi = 0x05;
+	uint8_t sndcp_data[1024];
+	int rc;
+	printf("==== %s() [start] ====\n", __func__);
+
+	rc = osmo_gprs_sndcp_init(OSMO_GPRS_SNDCP_LOCATION_MS);
+	OSMO_ASSERT(rc == 0);
+
+	osmo_gprs_sndcp_prim_set_up_cb(test_sndcp_prim_up_cb, NULL);
+	osmo_gprs_sndcp_prim_set_down_cb(test_sndcp_prim_down_cb, NULL);
+	osmo_gprs_sndcp_prim_set_snsm_cb(test_sndcp_prim_snsm_cb, NULL);
+
+	/* SNSM-ACTIVATE.Ind, internally submits LL-XID.Req (it would submit
+	 * LL-ESTABLISH.Req in ABM mode if we supported it): */
+	sndcp_prim = osmo_gprs_sndcp_prim_alloc_snsm_activate_ind(tlli, nsapi, ll_sapi);
+	OSMO_ASSERT(sndcp_prim);
+	rc = osmo_gprs_sndcp_prim_dispatch_snsm(sndcp_prim);
+	OSMO_ASSERT(rc == 0);
+
+	/* Id we supported and use ABM: Submit LL-ESTABLISH.Cnf, triggers rx of SNSM-ACTIVATE.Rsp */
+	//llc_prim = gprs_llc_prim_alloc_ll_establish_cnf(tlli, ll_sapi, (uint8_t *)sndcp_xid, sizeof(sndcp_xid));
+	//OSMO_ASSERT(llc_prim);
+	//rc = osmo_gprs_sndcp_prim_lower_up(llc_prim);
+	//OSMO_ASSERT(rc == 0);
+
+	/* Network answers XID req, Submit LL-XID.Cnf, triggers rx of SNSM-ACTIVATE-RSP */
+	llc_prim = gprs_llc_prim_alloc_ll_xid_cnf(tlli, ll_sapi, (uint8_t *)sndcp_xid, sizeof(sndcp_xid));
+	OSMO_ASSERT(llc_prim);
+	rc = osmo_gprs_sndcp_prim_lower_up(llc_prim);
+	OSMO_ASSERT(rc == 0);
+
+	/* Submit SN-XID.Req from upper layers, triggers rx of LL-XID.Req: */
+	sndcp_prim = osmo_gprs_sndcp_prim_alloc_sn_xid_req(tlli, ll_sapi, nsapi);
+	OSMO_ASSERT(sndcp_prim);
+	sndcp_prim->sn.xid_req.pcomp_rfc1144.active = true;
+	sndcp_prim->sn.xid_req.pcomp_rfc1144.s01 = 7;
+	rc = osmo_gprs_sndcp_prim_upper_down(sndcp_prim);
+	OSMO_ASSERT(rc == 0);
+
+	/* Submit LL-XID.Cnf, triggers rx of SN-XID.cnf */
+	llc_prim = gprs_llc_prim_alloc_ll_xid_cnf(tlli, ll_sapi, (uint8_t *)sndcp_xid, sizeof(sndcp_xid));
+	OSMO_ASSERT(llc_prim);
+	rc = osmo_gprs_sndcp_prim_lower_up(llc_prim);
+	OSMO_ASSERT(rc == 0);
+
+	OSMO_ASSERT(osmo_hexparse(sndcp_data_hex, sndcp_data, sizeof(sndcp_data)) > 0);
+	llc_prim = gprs_llc_prim_alloc_ll_unitdata_ind(tlli, ll_sapi, (uint8_t *)sndcp_data, sizeof(sndcp_data));
+	OSMO_ASSERT(llc_prim);
+	rc = osmo_gprs_sndcp_prim_lower_up(llc_prim);
+	OSMO_ASSERT(rc == 0);
+
+	char ndpu_data[] = "some-npdu-data-like-an-ip-pkt";
+	sndcp_prim = osmo_gprs_sndcp_prim_alloc_sn_unitdata_req(tlli, ll_sapi, nsapi, (uint8_t *)ndpu_data, sizeof(ndpu_data));
+	OSMO_ASSERT(sndcp_prim);
+	rc = osmo_gprs_sndcp_prim_upper_down(sndcp_prim);
+	OSMO_ASSERT(rc == 0);
+
+
+	/* TODO: SN-XID REQ / IND / RESP / CONF
+	 * TODO: Other primitives coming from LLC layer
 	 */
 
 	/* SNSM-DEACTIVATE.Ind: */
@@ -208,7 +282,8 @@ int main(int argc, char *argv[])
 	log_set_print_level(osmo_stderr_target, 1);
 	log_set_use_color(osmo_stderr_target, 0);
 
-	test_sndcp_prim();
+	test_sndcp_prim_net();
+	test_sndcp_prim_ms();
 
 	talloc_free(tall_ctx);
 }
