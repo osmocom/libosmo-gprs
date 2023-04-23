@@ -92,7 +92,7 @@ DLGLOBAL INFO UL_TBF_ASS{COMPLETED}: state_chg to IDLE
 DLGLOBAL INFO UL_TBF{FLOW}: Timeout of T3164
 DLGLOBAL INFO UL_TBF{FLOW}: T3164 timeout attempts=1
 DLGLOBAL INFO UL_TBF{FLOW}: state_chg to NEW
-DLGLOBAL INFO UL_TBF{NEW}: Send L1CTL-CF_UL_TBF.req ul_tbf_nr=0 ul_slotmask=0x00 (reconf)
+DLGLOBAL INFO UL_TBF{NEW}: Send L1CTL-CF_UL_TBF.req ul_tbf_nr=0 ul_slotmask=0x00 (release)
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-CFG_UL_TBF.request
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: Received Event START
 DLGLOBAL INFO UL_TBF{NEW}: Received Event UL_ASS_START
@@ -113,7 +113,7 @@ DLGLOBAL INFO UL_TBF_ASS{COMPLETED}: state_chg to IDLE
 DLGLOBAL INFO UL_TBF{FLOW}: Timeout of T3164
 DLGLOBAL INFO UL_TBF{FLOW}: T3164 timeout attempts=2
 DLGLOBAL INFO UL_TBF{FLOW}: state_chg to NEW
-DLGLOBAL INFO UL_TBF{NEW}: Send L1CTL-CF_UL_TBF.req ul_tbf_nr=0 ul_slotmask=0x00 (reconf)
+DLGLOBAL INFO UL_TBF{NEW}: Send L1CTL-CF_UL_TBF.req ul_tbf_nr=0 ul_slotmask=0x00 (release)
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-CFG_UL_TBF.request
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: Received Event START
 DLGLOBAL INFO UL_TBF{NEW}: Received Event UL_ASS_START
@@ -134,7 +134,7 @@ DLGLOBAL INFO UL_TBF_ASS{COMPLETED}: state_chg to IDLE
 DLGLOBAL INFO UL_TBF{FLOW}: Timeout of T3164
 DLGLOBAL INFO UL_TBF{FLOW}: T3164 timeout attempts=3
 DLGLOBAL INFO UL_TBF{FLOW}: state_chg to NEW
-DLGLOBAL INFO UL_TBF{NEW}: Send L1CTL-CF_UL_TBF.req ul_tbf_nr=0 ul_slotmask=0x00 (reconf)
+DLGLOBAL INFO UL_TBF{NEW}: Send L1CTL-CF_UL_TBF.req ul_tbf_nr=0 ul_slotmask=0x00 (release)
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-CFG_UL_TBF.request
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: Received Event START
 DLGLOBAL INFO UL_TBF{NEW}: Received Event UL_ASS_START
@@ -198,7 +198,7 @@ DLGLOBAL DEBUG Tx to lower layers: L1CTL-PDCH_DATA.request
 DLGLOBAL INFO UL_TBF{FLOW}: Timeout of T3166
 DLGLOBAL INFO UL_TBF{FLOW}: T3166 timeout attempts=1
 DLGLOBAL INFO UL_TBF{FLOW}: state_chg to NEW
-DLGLOBAL INFO UL_TBF{NEW}: Send L1CTL-CF_UL_TBF.req ul_tbf_nr=0 ul_slotmask=0x00 (reconf)
+DLGLOBAL INFO UL_TBF{NEW}: Send L1CTL-CF_UL_TBF.req ul_tbf_nr=0 ul_slotmask=0x00 (release)
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-CFG_UL_TBF.request
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: Received Event START
 DLGLOBAL INFO UL_TBF{NEW}: Received Event UL_ASS_START
@@ -230,7 +230,7 @@ DLGLOBAL DEBUG Tx to lower layers: L1CTL-PDCH_DATA.request
 DLGLOBAL INFO UL_TBF{FLOW}: Timeout of T3166
 DLGLOBAL INFO UL_TBF{FLOW}: T3166 timeout attempts=2
 DLGLOBAL INFO UL_TBF{FLOW}: state_chg to NEW
-DLGLOBAL INFO UL_TBF{NEW}: Send L1CTL-CF_UL_TBF.req ul_tbf_nr=0 ul_slotmask=0x00 (reconf)
+DLGLOBAL INFO UL_TBF{NEW}: Send L1CTL-CF_UL_TBF.req ul_tbf_nr=0 ul_slotmask=0x00 (release)
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-CFG_UL_TBF.request
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: Received Event START
 DLGLOBAL INFO UL_TBF{NEW}: Received Event UL_ASS_START
@@ -262,7 +262,7 @@ DLGLOBAL DEBUG Tx to lower layers: L1CTL-PDCH_DATA.request
 DLGLOBAL INFO UL_TBF{FLOW}: Timeout of T3166
 DLGLOBAL INFO UL_TBF{FLOW}: T3166 timeout attempts=3
 DLGLOBAL INFO UL_TBF{FLOW}: state_chg to NEW
-DLGLOBAL INFO UL_TBF{NEW}: Send L1CTL-CF_UL_TBF.req ul_tbf_nr=0 ul_slotmask=0x00 (reconf)
+DLGLOBAL INFO UL_TBF{NEW}: Send L1CTL-CF_UL_TBF.req ul_tbf_nr=0 ul_slotmask=0x00 (release)
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-CFG_UL_TBF.request
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: Received Event START
 DLGLOBAL INFO UL_TBF{NEW}: Received Event UL_ASS_START
@@ -417,7 +417,7 @@ DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) msg block (BSN 0, CS-2): 3c 01 01 00 0
 DLGLOBAL NOTICE TBF(UL:NR-0:TLLI-00002342) N3104_MAX (9) reached
 DLGLOBAL INFO UL_TBF{FINISHED}: Received Event N3104_MAX
 DLGLOBAL INFO UL_TBF{FINISHED}: state_chg to NEW
-DLGLOBAL INFO UL_TBF{NEW}: Send L1CTL-CF_UL_TBF.req ul_tbf_nr=0 ul_slotmask=0x00 (reconf)
+DLGLOBAL INFO UL_TBF{NEW}: Send L1CTL-CF_UL_TBF.req ul_tbf_nr=0 ul_slotmask=0x00 (release)
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-CFG_UL_TBF.request
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: Received Event START
 DLGLOBAL INFO UL_TBF{NEW}: Received Event UL_ASS_START

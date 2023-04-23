@@ -127,7 +127,7 @@ static void st_new_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_state)
 	/* Mark everything we transmitted so far as NACKed: */
 	gprs_rlcmac_rlc_ul_window_mark_for_resend(ctx->ul_tbf->ulw);
 	/* Make sure the lower layers realize this tbf_nr has no longer any assigned resource: */
-	configure_ul_tbf(ctx, false);
+	configure_ul_tbf(ctx, true);
 }
 
 static void st_new(struct osmo_fsm_inst *fi, uint32_t event, void *data)
