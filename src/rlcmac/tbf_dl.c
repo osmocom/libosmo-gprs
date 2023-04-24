@@ -100,7 +100,7 @@ int gprs_rlcmac_dl_tbf_configure_l1ctl(struct gprs_rlcmac_dl_tbf *dl_tbf)
 	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
 	uint8_t dl_slotmask = dl_tbf_dl_slotmask(dl_tbf);
 
-	 LOGPTBFDL(dl_tbf, LOGL_INFO, "Send L1CTL-CF_DL_TBF.req dl_slotmask=0x%02x dl_tfi=%u\n",
+	 LOGPTBFDL(dl_tbf, LOGL_INFO, "Send L1CTL-CFG_DL_TBF.req dl_slotmask=0x%02x dl_tfi=%u\n",
 		   dl_slotmask, dl_tbf->cur_alloc.dl_tfi);
 	rlcmac_prim = gprs_rlcmac_prim_alloc_l1ctl_cfg_dl_tbf_req(dl_tbf->tbf.nr,
 								  dl_slotmask,

@@ -76,7 +76,7 @@ static int configure_ul_tbf(struct gprs_rlcmac_tbf_ul_fsm_ctx *ctx, bool release
 
 	ul_slotmask = release ? 0 : ul_tbf_ul_slotmask(ctx->ul_tbf);
 
-	LOGPFSML(ctx->fi, LOGL_INFO, "Send L1CTL-CF_UL_TBF.req ul_tbf_nr=%u ul_slotmask=0x%02x %s\n",
+	LOGPFSML(ctx->fi, LOGL_INFO, "Send L1CTL-CFG_UL_TBF.req ul_tbf_nr=%u ul_slotmask=0x%02x %s\n",
 		 ctx->tbf->nr, ul_slotmask, release ? "(release)" : "(reconf)");
 	rlcmac_prim = gprs_rlcmac_prim_alloc_l1ctl_cfg_ul_tbf_req(ctx->tbf->nr, ul_slotmask);
 	return gprs_rlcmac_prim_call_down_cb(rlcmac_prim);
