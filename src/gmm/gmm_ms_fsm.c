@@ -50,8 +50,8 @@ static int reinit_attach_proc(struct gprs_gmm_ms_fsm_ctx *ctx)
 
 	OSMO_ASSERT(ctx->fi->state == GPRS_GMM_MS_ST_REGISTERED_INITIATED);
 
-	/* Rearm T3110 */
-	OSMO_ASSERT(ctx->fi->T == 3110);
+	/* Rearm T3310 */
+	OSMO_ASSERT(ctx->fi->T == 3310);
 	val_sec = osmo_tdef_get(g_gmm_ctx->T_defs, ctx->fi->T, OSMO_TDEF_S, -1);
 	osmo_timer_schedule(&ctx->fi->timer, val_sec, 0);
 	return gprs_gmm_tx_att_req(ctx->gmme,
