@@ -346,7 +346,10 @@ int gprs_gmm_prim_call_up_cb(struct osmo_gprs_gmm_prim *gmm_prim)
 		rc = g_gmm_ctx->gmm_up_cb(gmm_prim, g_gmm_ctx->gmm_up_cb_user_data);
 	else
 		rc = gmm_up_cb_dummy(gmm_prim, g_gmm_ctx->gmm_up_cb_user_data);
-	msgb_free(gmm_prim->oph.msg);
+	if (rc != 1)
+		msgb_free(gmm_prim->oph.msg);
+	else
+		rc = 0;
 	return rc;
 }
 
@@ -505,7 +508,10 @@ int gprs_gmm_prim_call_down_cb(struct osmo_gprs_gmm_prim *gmm_prim)
 		rc = g_gmm_ctx->gmm_down_cb(gmm_prim, g_gmm_ctx->gmm_down_cb_user_data);
 	else
 		rc = gmm_down_cb_dummy(gmm_prim, g_gmm_ctx->gmm_down_cb_user_data);
-	msgb_free(gmm_prim->oph.msg);
+	if (rc != 1)
+		msgb_free(gmm_prim->oph.msg);
+	else
+		rc = 0;
 	return rc;
 }
 
