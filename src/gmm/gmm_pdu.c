@@ -132,6 +132,7 @@ static const struct gprs_gmm_drx_param drx_param_def = {
 const struct tlv_definition gprs_gmm_att_tlvdef = {
 	.def = {
 		[GSM48_IE_GMM_CIPH_CKSN]	= { TLV_TYPE_SINGLE_TV, 1 },
+		[GSM48_IE_GMM_PTMSI_TYPE]	= { TLV_TYPE_SINGLE_TV, 1 },
 		[GSM48_IE_GMM_TIMER_READY]	= { TLV_TYPE_TV, 1 },
 		[GSM48_IE_GMM_ALLOC_PTMSI]	= { TLV_TYPE_TLV, 0 },
 		[GSM48_IE_GMM_PTMSI_SIG]	= { TLV_TYPE_FIXED, 3 },
@@ -236,6 +237,14 @@ int gprs_gmm_build_attach_req(struct gprs_gmm_entity *gmme,
 		return -EINVAL;
 
 	/* TODO: optional fields */
+
+	/* 9.4.1.13 P-TMSI type: The MS shall include this IE if the
+	 * type of identity in the Mobile identity IE is set to
+	 * "TMSI/P-TMSI/M-TMSI". */
+	if (!attach_with_imsi) {
+		uint8_t ptmsi_type_native = 1; /* Table 10.5.5.29.1 */
+		msgb_v_put(msg, (GSM48_IE_GMM_PTMSI_TYPE << 4) | (ptmsi_type_native & 0x01));
+	}
 	return 0;
 }
 
