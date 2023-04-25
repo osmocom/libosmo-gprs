@@ -41,6 +41,13 @@ static const struct osmo_tdef_state_timeout sm_ms_fsm_timeouts[32] = {
 #define sm_ms_fsm_state_chg(fi, NEXT_STATE) \
 	osmo_tdef_fsm_inst_state_chg(fi, NEXT_STATE, sm_ms_fsm_timeouts, g_sm_ctx->T_defs, -1)
 
+static void st_sm_ms_pdp_inactive_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_state)
+{
+	/* PDP became inactive, there's no use in keeping it */
+	struct gprs_sm_ms_fsm_ctx *ctx = (struct gprs_sm_ms_fsm_ctx *)fi->priv;
+	gprs_sm_entity_free(ctx->sme);
+}
+
 static void st_sm_ms_pdp_inactive(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	switch (event) {
@@ -176,6 +183,7 @@ static struct osmo_fsm_state sm_ms_fsm_states[] = {
 		.out_state_mask =
 			X(GPRS_SM_MS_ST_PDP_ACTIVE_PENDING),
 		.name = "INACTIVE",
+		.onenter = st_sm_ms_pdp_inactive_on_enter,
 		.action = st_sm_ms_pdp_inactive,
 	},
 	[GPRS_SM_MS_ST_PDP_ACTIVE_PENDING] = {
