@@ -26,6 +26,7 @@
 #include <osmocom/core/talloc.h>
 #include <osmocom/core/tdef.h>
 #include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
+#include <osmocom/gsm/gsm48.h>
 
 #include <osmocom/gprs/sndcp/sndcp_prim.h>
 
@@ -190,6 +191,7 @@ int gprs_sm_submit_gmmsm_assign_req(const struct gprs_sm_entity *sme)
 
 	gmm_prim_tx = osmo_gprs_gmm_prim_alloc_gmmsm_establish_req(sme->sess_id);
 	gmm_prim_tx->gmmsm.establish_req.attach_type = OSMO_GPRS_GMM_ATTACH_TYPE_GPRS;
+	gmm_prim_tx->gmmsm.establish_req.attach_with_imsi = (ms->gmm.ptmsi == GSM_RESERVED_TMSI);
 	gmm_prim_tx->gmmsm.establish_req.ptmsi = ms->gmm.ptmsi;
 	OSMO_STRLCPY_ARRAY(gmm_prim_tx->gmmsm.establish_req.imsi, ms->gmm.imsi);
 	OSMO_STRLCPY_ARRAY(gmm_prim_tx->gmmsm.establish_req.imei, ms->gmm.imei);
