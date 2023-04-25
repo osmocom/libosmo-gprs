@@ -115,9 +115,10 @@ struct osmo_gprs_gmm_gmmreg_prim {
 			union {
 				struct {
 					/* PLMNs MT-caps, attach-type. */
+					uint32_t allocated_ptmsi;
 				} acc;
 				struct {
-					uint8_t cause;
+					uint8_t cause; /* See enum gsm48_gsm_cause */
 				} rej;
 			};
 		} attach_cnf;

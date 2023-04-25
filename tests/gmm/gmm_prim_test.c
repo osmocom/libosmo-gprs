@@ -145,9 +145,15 @@ int test_gmm_prim_up_cb(struct osmo_gprs_gmm_prim *gmm_prim, void *user_data)
 	case OSMO_GPRS_GMM_SAP_GMMREG:
 		switch (OSMO_PRIM_HDR(&gmm_prim->oph)) {
 		case OSMO_PRIM(OSMO_GPRS_GMM_GMMREG_ATTACH, PRIM_OP_CONFIRM):
-			printf("%s(): Rx %s accepted=%u rej_cause=%u\n", __func__, pdu_name,
-			       gmm_prim->gmmreg.attach_cnf.accepted,
-			       gmm_prim->gmmreg.attach_cnf.rej.cause);
+			if (gmm_prim->gmmreg.attach_cnf.accepted) {
+				printf("%s(): Rx %s accepted=%u allocated_ptmsi=0x%08x\n", __func__, pdu_name,
+				       gmm_prim->gmmreg.attach_cnf.accepted,
+				       gmm_prim->gmmreg.attach_cnf.acc.allocated_ptmsi);
+			} else {
+				printf("%s(): Rx %s accepted=%u rej_cause=%u\n", __func__, pdu_name,
+				       gmm_prim->gmmreg.attach_cnf.accepted,
+				       gmm_prim->gmmreg.attach_cnf.rej.cause);
+			}
 			break;
 		case OSMO_PRIM(OSMO_GPRS_GMM_GMMREG_DETACH, PRIM_OP_CONFIRM):
 			printf("%s(): Rx %s detach_type='%s'\n", __func__, pdu_name,

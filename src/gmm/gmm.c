@@ -188,8 +188,11 @@ int gprs_gmm_submit_gmmreg_attach_cnf(struct gprs_gmm_entity *gmme, bool accepte
 
 	gmm_prim_tx = gprs_gmm_prim_alloc_gmmreg_attach_cnf();
 	gmm_prim_tx->gmmreg.attach_cnf.accepted = accepted;
-	if (!accepted)
+	if (accepted) {
+		gmm_prim_tx->gmmreg.attach_cnf.acc.allocated_ptmsi = gmme->ptmsi;
+	} else {
 		gmm_prim_tx->gmmreg.attach_cnf.rej.cause = cause;
+	}
 
 	rc = gprs_gmm_prim_call_up_cb(gmm_prim_tx);
 	return rc;
