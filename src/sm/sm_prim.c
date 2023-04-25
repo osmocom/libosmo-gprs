@@ -239,8 +239,10 @@ static int gprs_sm_prim_handle_smreg_pdp_act_req(struct osmo_gprs_sm_prim *sm_pr
 		OSMO_ASSERT(ms);
 	} else {
 		sme = gprs_sm_ms_get_pdp_ctx(ms, smreg->pdp_act_req.nsapi);
-		LOGSME(sme, LOGL_ERROR, "Rx SMREG-PDP-ACT.req for already existing PDP context\n");
-		return -EINVAL;
+		if (sme) {
+			LOGSME(sme, LOGL_ERROR, "Rx SMREG-PDP-ACT.req for already existing PDP context\n");
+			return -EINVAL;
+		}
 	}
 
 	sme = gprs_sm_entity_alloc(ms, smreg->pdp_act_req.nsapi);
