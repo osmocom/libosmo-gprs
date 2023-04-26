@@ -511,7 +511,7 @@ static int gprs_gmm_rx_att_ack(struct gprs_gmm_entity *gmme, struct gsm48_hdr *g
 		goto rejected;
 	}
 
-	LOGGMME(gmme, LOGL_DEBUG, "Rx GMM ATTACH ACCEPT\n");
+	LOGGMME(gmme, LOGL_INFO, "Rx GMM ATTACH ACCEPT\n");
 	aa = (struct gsm48_attach_ack *)&gh->data[0];
 
 	gmme->ra_upd_timer = aa->ra_upd_timer;
@@ -585,7 +585,7 @@ static int gprs_gmm_rx_att_rej(struct gprs_gmm_entity *gmme, struct gsm48_hdr *g
 	cause = *arej;
 	arej++;
 
-	LOGGMME(gmme, LOGL_DEBUG, "Rx GMM ATTACH REJECT cause='%s' (%u)\n",
+	LOGGMME(gmme, LOGL_NOTICE, "Rx GMM ATTACH REJECT cause='%s' (%u)\n",
 		get_value_string(gsm48_gmm_cause_names, cause), cause);
 
 	if (len > sizeof(*gh) + 1) {
@@ -622,7 +622,7 @@ static int gprs_gmm_rx_detach_accept(struct gprs_gmm_entity *gmme, struct gsm48_
 
 	bool force_standby_indicated = (gh->data[0] >> 4) == 0x01;
 
-	LOGGMME(gmme, LOGL_DEBUG, "Rx GMM DETACH ACCEPT (MO) force_standby_indicated=%s\n",
+	LOGGMME(gmme, LOGL_INFO, "Rx GMM DETACH ACCEPT (MO) force_standby_indicated=%s\n",
 		force_standby_indicated ? "true" : "false");
 
 	/* TODO: submit GMMSM-RELEASE-IND */
@@ -661,7 +661,7 @@ static int gprs_gmm_rx_id_req(struct gprs_gmm_entity *gmme, struct gsm48_hdr *gh
 	}
 
 	id_type = gh->data[0] & 0xf;
-	LOGGMME(gmme, LOGL_DEBUG, "Rx GMM IDENTITY REQUEST mi_type=%s\n",
+	LOGGMME(gmme, LOGL_INFO, "Rx GMM IDENTITY REQUEST mi_type=%s\n",
 		gsm48_mi_type_name(id_type));
 
 	return gprs_gmm_tx_id_resp(gmme, id_type);
@@ -681,7 +681,7 @@ static int gprs_gmm_rx_auth_ciph_req(struct gprs_gmm_entity *gmme, struct gsm48_
 		return -EINVAL;
 	}
 
-	LOGGMME(gmme, LOGL_DEBUG, "Rx GMM AUTHENTICATION AND CIPHERING REQUEST\n");
+	LOGGMME(gmme, LOGL_INFO, "Rx GMM AUTHENTICATION AND CIPHERING REQUEST\n");
 	acreq = (struct gsm48_auth_ciph_req *)&gh->data[0];
 
 	if (len > sizeof(*gh) + sizeof(*acreq)) {
