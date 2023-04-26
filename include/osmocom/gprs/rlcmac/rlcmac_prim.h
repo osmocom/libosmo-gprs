@@ -79,7 +79,8 @@ static inline const char *osmo_gprs_rlcmac_gmmrr_prim_type_name(enum osmo_gprs_r
  * Same as struct osmo_gprs_gmm_gmmrr_prim.
  */
 struct osmo_gprs_rlcmac_gmmrr_prim {
-	/* Common fields (none) */
+	/* Common fields */
+	uint32_t tlli;
 	union {
 		/* OSMO_GPRS_RLCMAC_GMMRR_ASSIGN | Req */
 		struct {
@@ -87,7 +88,6 @@ struct osmo_gprs_rlcmac_gmmrr_prim {
 		} assign_req;
 		/* OSMO_GPRS_RLCMAC_GMMRR_PAGE | Ind */
 		struct {
-			uint32_t tlli;
 		} page_ind;
 	};
 };
@@ -192,7 +192,7 @@ struct osmo_gprs_rlcmac_prim *osmo_gprs_rlcmac_prim_alloc_grr_unitdata_req(
 
 /* Alloc primitive for GMMRR SAP: */
 struct osmo_gprs_rlcmac_prim *osmo_gprs_rlcmac_prim_alloc_gmmrr_assign_req(
-				uint32_t new_tlli);
+				uint32_t old_tlli, uint32_t new_tlli);
 
 /* Alloc primitive for L1CTL SAP: */
 struct osmo_gprs_rlcmac_prim *osmo_gprs_rlcmac_prim_alloc_l1ctl_ccch_data_ind(uint32_t fn, uint8_t *data);

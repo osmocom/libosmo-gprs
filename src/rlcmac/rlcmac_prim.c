@@ -204,10 +204,11 @@ struct osmo_gprs_rlcmac_prim *osmo_gprs_rlcmac_prim_alloc_grr_unitdata_req(
 }
 
 /* 3GPP TS 24.007 9.3.2.1 GMMRR-ASSIGN-REQ:*/
-struct osmo_gprs_rlcmac_prim *osmo_gprs_rlcmac_prim_alloc_gmmrr_assign_req(uint32_t new_tlli)
+struct osmo_gprs_rlcmac_prim *osmo_gprs_rlcmac_prim_alloc_gmmrr_assign_req(uint32_t old_tlli, uint32_t new_tlli)
 {
 	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
 	rlcmac_prim = rlcmac_prim_gmmrr_alloc(OSMO_GPRS_RLCMAC_GMMRR_ASSIGN, PRIM_OP_REQUEST, 0);
+	rlcmac_prim->gmmrr.tlli = old_tlli;
 	rlcmac_prim->gmmrr.assign_req.new_tlli = new_tlli;
 	return rlcmac_prim;
 }
@@ -217,7 +218,7 @@ struct osmo_gprs_rlcmac_prim *gprs_rlcmac_prim_alloc_gmmrr_page_ind(uint32_t tll
 {
 	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
 	rlcmac_prim = rlcmac_prim_gmmrr_alloc(OSMO_GPRS_RLCMAC_GMMRR_PAGE, PRIM_OP_INDICATION, 0);
-	rlcmac_prim->gmmrr.page_ind.tlli = tlli;
+	rlcmac_prim->gmmrr.tlli = tlli;
 	return rlcmac_prim;
 }
 
@@ -387,20 +388,48 @@ static int gprs_rlcmac_prim_grr_upper_down(struct osmo_gprs_rlcmac_prim *rlcmac_
 static int rlcmac_prim_handle_gmmrr_assign_req(struct osmo_gprs_rlcmac_prim *rlcmac_prim)
 {
 	struct gprs_rlcmac_entity *gre;
-
-	gre = gprs_rlcmac_find_entity_by_tlli(rlcmac_prim->gmmrr.assign_req.new_tlli);
-	if (!gre) {
-		LOGRLCMAC(LOGL_INFO, "GMMRR-ASSIGN.req: creating new entity TLLI=0x%08x\n",
-			  rlcmac_prim->gmmrr.assign_req.new_tlli);
-		gre = gprs_rlcmac_entity_alloc(rlcmac_prim->gmmrr.assign_req.new_tlli);
+	uint32_t old_tlli = rlcmac_prim->gmmrr.tlli;
+	uint32_t new_tlli = rlcmac_prim->gmmrr.assign_req.new_tlli;
+	int rc = 0;
+	if (old_tlli == GPRS_RLCMAC_TLLI_UNASSIGNED) {
+		/* Case "create" */
+		if (new_tlli == GPRS_RLCMAC_TLLI_UNASSIGNED) {
+			LOGRLCMAC(LOGL_ERROR, "GMMRR-ASSIGN.req: both old and new TLLIs are unassigned\n");
+			rc = -EINVAL;
+			goto free_ret;
+		}
+		if ((gre = gprs_rlcmac_find_entity_by_tlli(new_tlli))) {
+			LOGRLCMAC(LOGL_ERROR, "GMMRR-ASSIGN.req: GRE with new TLLI=0x%08x already exists\n", new_tlli);
+			rc = -EINVAL;
+			goto free_ret;
+		}
+		LOGRLCMAC(LOGL_INFO, "GMMRR-ASSIGN.req: creating new entity TLLI=0x%08x\n", new_tlli);
+		gre = gprs_rlcmac_entity_alloc(new_tlli);
 		OSMO_ASSERT(gre);
+	} else if (new_tlli == GPRS_RLCMAC_TLLI_UNASSIGNED) {
+		/* Case "destroy" */
+		gre = gprs_rlcmac_find_entity_by_tlli(old_tlli);
+		if (!gre) {
+			LOGRLCMAC(LOGL_ERROR, "GMMRR-ASSIGN.req: GRE with TLLI=0x%08x not found\n", old_tlli);
+			rc = -ENOENT;
+			goto free_ret;
+		}
+		gprs_rlcmac_entity_free(gre);
 	} else {
-		LOGRLCMAC(LOGL_INFO, "GMMRR-ASSIGN.req: TLLI=0x%08x already exists\n",
-			  rlcmac_prim->gmmrr.assign_req.new_tlli);
+		/* Case "update", both old_tlli and new_tlli are valid */
+		gre = gprs_rlcmac_find_entity_by_tlli(old_tlli);
+		if (!gre) {
+			LOGRLCMAC(LOGL_ERROR, "GMMRR-ASSIGN.req: GRE with TLLI=0x%08x not found\n", old_tlli);
+			rc = -ENOENT;
+			goto free_ret;
+		}
+		LOGGRE(gre, LOGL_INFO, "Update TLLI 0x%08x -> 0x%08x\n", old_tlli, new_tlli);
+		gre->tlli = new_tlli;
 	}
 
+free_ret:
 	msgb_free(rlcmac_prim->oph.msg);
-	return 0;
+	return rc;
 }
 
 static int gprs_rlcmac_prim_gmmrr_upper_down(struct osmo_gprs_rlcmac_prim *rlcmac_prim)

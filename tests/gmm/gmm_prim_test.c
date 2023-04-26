@@ -137,6 +137,15 @@ static uint8_t pdu_gmm_detach_acc[] = {
 0x08, 0x06, 0x00
 };
 
+/* override, requires '-Wl,--wrap=osmo_get_rand_id' */
+int __real_osmo_get_rand_id(uint8_t *data, size_t len);
+int __wrap_osmo_get_rand_id(uint8_t *data, size_t len)
+{
+	memset(data, 0x00, len);
+	return 0;
+}
+
+
 int test_gmm_prim_up_cb(struct osmo_gprs_gmm_prim *gmm_prim, void *user_data)
 {
 	const char *pdu_name = osmo_gprs_gmm_prim_name(gmm_prim);
@@ -196,7 +205,9 @@ int test_gmm_prim_down_cb(struct osmo_gprs_gmm_prim *gmm_prim, void *user_data)
 	case OSMO_GPRS_GMM_SAP_GMMRR:
 		OSMO_ASSERT(OSMO_PRIM_HDR(&gmm_prim->oph) ==
 			    OSMO_PRIM(OSMO_GPRS_GMM_GMMRR_ASSIGN, PRIM_OP_REQUEST));
-		printf("%s(): Rx %s new_tlli=0x%08x\n", __func__, pdu_name, gmm_prim->gmmrr.assign_req.new_tlli);
+		printf("%s(): Rx %s old_tlli=0x%08x new_tlli=0x%08x\n",
+		       __func__, pdu_name,
+		       gmm_prim->gmmrr.tlli, gmm_prim->gmmrr.assign_req.new_tlli);
 		break;
 	default:
 		printf("%s(): Unexpected Rx %s\n", __func__, pdu_name);
@@ -211,7 +222,15 @@ int test_gmm_prim_llc_down_cb(struct osmo_gprs_llc_prim *llc_prim, void *user_da
 
 	switch (llc_prim->oph.sap) {
 	case OSMO_GPRS_LLC_SAP_LLGMM:
-		printf("%s(): Rx %s TLLI=0x%08x\n", __func__, pdu_name, llc_prim->llgmm.tlli);
+		switch (OSMO_PRIM_HDR(&llc_prim->oph)) {
+		case OSMO_PRIM(OSMO_GPRS_LLC_LLGMM_ASSIGN, PRIM_OP_REQUEST):
+			printf("%s(): Rx %s old_TLLI=0x%08x new_TLLI=0x%08x\n",
+			       __func__, pdu_name,
+			       llc_prim->llgmm.tlli, llc_prim->llgmm.assign_req.tlli_new);
+			break;
+		default:
+			printf("%s(): Rx %s TLLI=0x%08x\n", __func__, pdu_name, llc_prim->llgmm.tlli);
+		}
 		break;
 	case OSMO_GPRS_LLC_SAP_LL:
 		printf("%s(): Rx %s TLLI=0x%08x SAPI=%s l3=[%s]\n", __func__, pdu_name,
@@ -231,8 +250,8 @@ static void test_gmm_prim_ms_gmmreg(void)
 	struct osmo_gprs_gmm_prim *gmm_prim;
 	struct osmo_gprs_llc_prim *llc_prim;
 	int rc;
-	uint32_t ptmsi = 0x00000000;
-	uint32_t tlli = 0x00000000;
+	uint32_t ptmsi = 0x00001234;
+	uint32_t rand_tlli = 0x80001234;
 	char *imsi = "1234567890";
 	char *imei = "42342342342342";
 	char *imeisv = "4234234234234275";
@@ -259,21 +278,21 @@ static void test_gmm_prim_ms_gmmreg(void)
 	OSMO_ASSERT(rc == 0);
 
 	/* Network answers with GMM Identity Req: */
-	llc_prim = gprs_llc_prim_alloc_ll_unitdata_ind(tlli, OSMO_GPRS_LLC_SAPI_GMM, (uint8_t *)pdu_gmm_identity_req, sizeof(pdu_gmm_identity_req));
+	llc_prim = gprs_llc_prim_alloc_ll_unitdata_ind(rand_tlli, OSMO_GPRS_LLC_SAPI_GMM, (uint8_t *)pdu_gmm_identity_req, sizeof(pdu_gmm_identity_req));
 	OSMO_ASSERT(llc_prim);
 	rc = osmo_gprs_gmm_prim_llc_lower_up(llc_prim);
 	OSMO_ASSERT(rc == 0);
 	/* As a result, MS answers GMM Identity Resp */
 
 	/* Network sends GMM Ciph Auth Req */
-	llc_prim = gprs_llc_prim_alloc_ll_unitdata_ind(tlli, OSMO_GPRS_LLC_SAPI_GMM, (uint8_t *)pdu_gmm_auth_ciph_req, sizeof(pdu_gmm_auth_ciph_req));
+	llc_prim = gprs_llc_prim_alloc_ll_unitdata_ind(rand_tlli, OSMO_GPRS_LLC_SAPI_GMM, (uint8_t *)pdu_gmm_auth_ciph_req, sizeof(pdu_gmm_auth_ciph_req));
 	OSMO_ASSERT(llc_prim);
 	rc = osmo_gprs_gmm_prim_llc_lower_up(llc_prim);
 	OSMO_ASSERT(rc == 0);
 	/* As a result, MS answers GMM Ciph Auth Resp */
 
 	/* Network sends GMM Attach Accept */
-	llc_prim = gprs_llc_prim_alloc_ll_unitdata_ind(tlli, OSMO_GPRS_LLC_SAPI_GMM, (uint8_t *)pdu_gmm_att_acc, sizeof(pdu_gmm_att_acc));
+	llc_prim = gprs_llc_prim_alloc_ll_unitdata_ind(rand_tlli, OSMO_GPRS_LLC_SAPI_GMM, (uint8_t *)pdu_gmm_att_acc, sizeof(pdu_gmm_att_acc));
 	OSMO_ASSERT(llc_prim);
 	rc = osmo_gprs_gmm_prim_llc_lower_up(llc_prim);
 	OSMO_ASSERT(rc == 0);
@@ -292,7 +311,7 @@ static void test_gmm_prim_ms_gmmreg(void)
 	OSMO_ASSERT(rc == 0);
 
 	/* Network sends GMM Detach Accept */
-	llc_prim = gprs_llc_prim_alloc_ll_unitdata_ind(tlli, OSMO_GPRS_LLC_SAPI_GMM, (uint8_t *)pdu_gmm_detach_acc, sizeof(pdu_gmm_detach_acc));
+	llc_prim = gprs_llc_prim_alloc_ll_unitdata_ind(rand_tlli, OSMO_GPRS_LLC_SAPI_GMM, (uint8_t *)pdu_gmm_detach_acc, sizeof(pdu_gmm_detach_acc));
 	OSMO_ASSERT(llc_prim);
 	rc = osmo_gprs_gmm_prim_llc_lower_up(llc_prim);
 	OSMO_ASSERT(rc == 0);
@@ -307,8 +326,8 @@ static void test_gmm_prim_ms_gmmsm(void)
 	struct osmo_gprs_gmm_prim *gmm_prim;
 	struct osmo_gprs_llc_prim *llc_prim;
 	int rc;
-	uint32_t ptmsi = 0x00000000;
-	uint32_t tlli = 0x00000000;
+	uint32_t ptmsi = 0x00001234;
+	uint32_t rand_tlli = 0x80001234;
 	char *imsi = "1234567890";
 	char *imei = "42342342342342";
 	char *imeisv = "4234234234234275";
@@ -337,21 +356,21 @@ static void test_gmm_prim_ms_gmmsm(void)
 	/* MS sends GMM Attach Req first since its not eyt attached */
 
 	/* Network answers with GMM Identity Req: */
-	llc_prim = gprs_llc_prim_alloc_ll_unitdata_ind(tlli, OSMO_GPRS_LLC_SAPI_GMM, (uint8_t *)pdu_gmm_identity_req, sizeof(pdu_gmm_identity_req));
+	llc_prim = gprs_llc_prim_alloc_ll_unitdata_ind(rand_tlli, OSMO_GPRS_LLC_SAPI_GMM, (uint8_t *)pdu_gmm_identity_req, sizeof(pdu_gmm_identity_req));
 	OSMO_ASSERT(llc_prim);
 	rc = osmo_gprs_gmm_prim_llc_lower_up(llc_prim);
 	OSMO_ASSERT(rc == 0);
 	/* As a result, MS answers GMM Identity Resp */
 
 	/* Network sends GMM Ciph Auth Req */
-	llc_prim = gprs_llc_prim_alloc_ll_unitdata_ind(tlli, OSMO_GPRS_LLC_SAPI_GMM, (uint8_t *)pdu_gmm_auth_ciph_req, sizeof(pdu_gmm_auth_ciph_req));
+	llc_prim = gprs_llc_prim_alloc_ll_unitdata_ind(rand_tlli, OSMO_GPRS_LLC_SAPI_GMM, (uint8_t *)pdu_gmm_auth_ciph_req, sizeof(pdu_gmm_auth_ciph_req));
 	OSMO_ASSERT(llc_prim);
 	rc = osmo_gprs_gmm_prim_llc_lower_up(llc_prim);
 	OSMO_ASSERT(rc == 0);
 	/* As a result, MS answers GMM Ciph Auth Resp */
 
 	/* Network sends GMM Attach Accept */
-	llc_prim = gprs_llc_prim_alloc_ll_unitdata_ind(tlli, OSMO_GPRS_LLC_SAPI_GMM, (uint8_t *)pdu_gmm_att_acc, sizeof(pdu_gmm_att_acc));
+	llc_prim = gprs_llc_prim_alloc_ll_unitdata_ind(rand_tlli, OSMO_GPRS_LLC_SAPI_GMM, (uint8_t *)pdu_gmm_att_acc, sizeof(pdu_gmm_att_acc));
 	OSMO_ASSERT(llc_prim);
 	rc = osmo_gprs_gmm_prim_llc_lower_up(llc_prim);
 	OSMO_ASSERT(rc == 0);

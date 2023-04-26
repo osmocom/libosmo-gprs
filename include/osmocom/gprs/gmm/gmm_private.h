@@ -55,6 +55,8 @@ struct gprs_gmm_entity {
 	struct gprs_gmm_ms_fsm_ctx ms_fsm;
 	uint32_t ptmsi;
 	uint32_t old_ptmsi;
+	uint32_t tlli;
+	uint32_t old_tlli;
 	char imsi[OSMO_IMSI_BUF_SIZE];
 	char imei[GSM23003_IMEI_NUM_DIGITS + 1];
 	char imeisv[GSM23003_IMEISV_NUM_DIGITS+1];
@@ -78,16 +80,20 @@ int gprs_gmm_prim_call_llc_down_cb(struct osmo_gprs_llc_prim *llc_prim);
 struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmreg_attach_cnf(void);
 struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmreg_detach_cnf(void);
 
-struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmrr_assign_req(uint32_t new_tlli);
+struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmrr_assign_req(uint32_t old_tlli, uint32_t new_tlli);
 
 struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmsm_establish_cnf(uint32_t id, uint8_t cause);
 struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmrr_release_ind(uint32_t id);
 struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmsm_unitdata_ind(uint32_t id, uint8_t *smpdu, unsigned int smpdu_len);
 
 /* gmm.c: */
-struct gprs_gmm_entity *gprs_gmm_gmme_alloc(void);
+struct gprs_gmm_entity *gprs_gmm_gmme_alloc(uint32_t ptmsi, const char *imsi);
 void gprs_gmm_gmme_free(struct gprs_gmm_entity *gmme);
+struct gprs_gmm_entity *gprs_gmm_gmme_find_or_create_by_ptmsi_imsi(uint32_t ptmsi, const char *imsi);
+struct gprs_gmm_entity *gprs_gmm_find_gmme_by_ptmsi(uint32_t ptmsi);
+struct gprs_gmm_entity *gprs_gmm_find_gmme_by_imsi(const char *imsi);
 struct gprs_gmm_entity *gprs_gmm_find_gmme_by_tlli(uint32_t tlli);
+uint32_t gprs_gmm_alloc_rand_tlli(void);
 int gprs_gmm_rx(struct gprs_gmm_entity *gmme, struct gsm48_hdr *gh, unsigned int len);
 int gprs_gmm_tx_att_req(struct gprs_gmm_entity *gmme,
 			enum osmo_gprs_gmm_attach_type attach_type,

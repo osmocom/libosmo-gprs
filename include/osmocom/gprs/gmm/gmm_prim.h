@@ -156,7 +156,8 @@ static inline const char *osmo_gprs_gmm_gmmrr_prim_type_name(enum osmo_gprs_gmm_
  * Same as struct osmo_gprs_rlcmac_gmmrr_prim.
  */
 struct osmo_gprs_gmm_gmmrr_prim {
-	/* Common fields (none) */
+	/* Common fields */
+	uint32_t tlli;
 	union {
 		/* OSMO_GPRS_GMM_GMMRR_ASSIGN | Req */
 		struct {
@@ -164,7 +165,6 @@ struct osmo_gprs_gmm_gmmrr_prim {
 		} assign_req;
 		/* OSMO_GPRS_GMM_GMMRR_PAGE | Ind */
 		struct {
-			uint32_t tlli;
 		} page_ind;
 	};
 };

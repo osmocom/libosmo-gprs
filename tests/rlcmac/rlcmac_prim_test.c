@@ -427,7 +427,8 @@ static int test_rlcmac_prim_up_cb(struct osmo_gprs_rlcmac_prim *rlcmac_prim, voi
 
 	switch (rlcmac_prim->oph.sap) {
 	case OSMO_GPRS_RLCMAC_SAP_GMMRR:
-		printf("%s(): Rx %s TLLI=0x%08x\n", __func__, pdu_name, rlcmac_prim->gmmrr.page_ind.tlli);
+		printf("%s(): Rx %s TLLI=0x%08x\n", __func__, pdu_name,
+		       rlcmac_prim->gmmrr.tlli);
 		break;
 	case OSMO_GPRS_RLCMAC_SAP_GRR:
 		printf("%s(): Rx %s TLLI=0x%08x ll=[%s]\n", __func__, pdu_name,
@@ -911,7 +912,7 @@ static void test_dl_tbf_ccch_assign(void)
 	uint8_t rrbp = GPRS_RLCMAC_RRBP_N_plus_17_18;
 
 	/* Notify RLCMAC about our TLLI */
-	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_gmmrr_assign_req(tlli);
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_gmmrr_assign_req(GPRS_RLCMAC_TLLI_UNASSIGNED, tlli);
 	rc = osmo_gprs_rlcmac_prim_upper_down(rlcmac_prim);
 
 	OSMO_ASSERT(sizeof(ccch_imm_ass_pkt_dl_tbf) == GSM_MACBLOCK_LEN);
@@ -961,7 +962,7 @@ static void test_dl_tbf_ccch_assign_requests_ul_tbf_pacch(void)
 	uint8_t usf_li[8] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 1, 2 };
 
 	/* Notify RLCMAC about our TLLI */
-	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_gmmrr_assign_req(tlli);
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_gmmrr_assign_req(GPRS_RLCMAC_TLLI_UNASSIGNED, tlli);
 	rc = osmo_gprs_rlcmac_prim_upper_down(rlcmac_prim);
 
 	OSMO_ASSERT(sizeof(ccch_imm_ass_pkt_dl_tbf) == GSM_MACBLOCK_LEN);

@@ -244,10 +244,11 @@ static inline struct osmo_gprs_gmm_prim *gmm_prim_gmmrr_alloc(enum osmo_gprs_gmm
 }
 
 /* 3GPP TS 24.007 9.3.2.1 GMMRR-ASSIGN-REQ:*/
-struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmrr_assign_req(uint32_t new_tlli)
+struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmrr_assign_req(uint32_t old_tlli, uint32_t new_tlli)
 {
 	struct osmo_gprs_gmm_prim *gmm_prim;
 	gmm_prim = gmm_prim_gmmrr_alloc(OSMO_GPRS_GMM_GMMRR_ASSIGN, PRIM_OP_REQUEST, 0);
+	gmm_prim->gmmrr.tlli = old_tlli;
 	gmm_prim->gmmrr.assign_req.new_tlli = new_tlli;
 	return gmm_prim;
 }
@@ -257,7 +258,7 @@ struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmrr_page_ind(uint32_t tlli
 {
 	struct osmo_gprs_gmm_prim *gmm_prim;
 	gmm_prim = gmm_prim_gmmrr_alloc(OSMO_GPRS_GMM_GMMRR_PAGE, PRIM_OP_INDICATION, 0);
-	gmm_prim->gmmrr.page_ind.tlli = tlli;
+	gmm_prim->gmmrr.tlli = tlli;
 	return gmm_prim;
 }
 
@@ -359,14 +360,10 @@ static int gprs_gmm_prim_handle_gmmreg_attach_req(struct osmo_gprs_gmm_prim *gmm
 	int rc;
 	struct gprs_gmm_entity *gmme;
 
-	gmme = llist_first_entry_or_null(&g_gmm_ctx->gmme_list, struct gprs_gmm_entity, list);
-	if (!gmme) {
-		gmme = gprs_gmm_gmme_alloc();
-		OSMO_ASSERT(gmme);
-	}
-	gmme->ptmsi = gmm_prim->gmmreg.attach_req.ptmsi;
-	if (gmm_prim->gmmreg.attach_req.imsi[0] != '\0')
-		OSMO_STRLCPY_ARRAY(gmme->imsi, gmm_prim->gmmreg.attach_req.imsi);
+	gmme = gprs_gmm_gmme_find_or_create_by_ptmsi_imsi(gmm_prim->gmmreg.attach_req.ptmsi,
+							  gmm_prim->gmmreg.attach_req.imsi);
+	OSMO_ASSERT(gmme);
+
 	if (gmm_prim->gmmreg.attach_req.imei[0] != '\0')
 		OSMO_STRLCPY_ARRAY(gmme->imei, gmm_prim->gmmreg.attach_req.imei);
 	if (gmm_prim->gmmreg.attach_req.imeisv[0] != '\0')
@@ -383,10 +380,10 @@ static int gprs_gmm_prim_handle_gmmreg_attach_req(struct osmo_gprs_gmm_prim *gmm
 static int gprs_gmm_prim_handle_gmmreg_detach_req(struct osmo_gprs_gmm_prim *gmm_prim)
 {
 	int rc;
-	struct gprs_gmm_entity *gmme = gprs_gmm_find_gmme_by_tlli(gmm_prim->gmmreg.detach_req.ptmsi);
+	struct gprs_gmm_entity *gmme = gprs_gmm_find_gmme_by_ptmsi(gmm_prim->gmmreg.detach_req.ptmsi);
 
 	if (!gmme) {
-		LOGGMM(LOGL_ERROR, "Rx GMMREG-DETACH.req for unknown PTMSI=0x%08x\n",
+		LOGGMM(LOGL_ERROR, "Rx GMMREG-DETACH.req for unknown P-TMSI=0x%08x\n",
 		       gmm_prim->gmmreg.detach_req.ptmsi);
 		return -EINVAL;
 	}
@@ -420,14 +417,9 @@ static int gprs_gmm_prim_handle_gmmsm_establish_req(struct osmo_gprs_gmm_prim *g
 	int rc;
 	struct gprs_gmm_entity *gmme;
 
-	gmme = llist_first_entry_or_null(&g_gmm_ctx->gmme_list, struct gprs_gmm_entity, list);
-	if (!gmme) {
-		gmme = gprs_gmm_gmme_alloc();
-		OSMO_ASSERT(gmme);
-	}
-	gmme->ptmsi = gmm_prim->gmmsm.establish_req.ptmsi;
-	if (gmm_prim->gmmsm.establish_req.imsi[0] != '\0')
-		OSMO_STRLCPY_ARRAY(gmme->imsi, gmm_prim->gmmsm.establish_req.imsi);
+	gmme = gprs_gmm_gmme_find_or_create_by_ptmsi_imsi(gmm_prim->gmmsm.establish_req.ptmsi,
+							  gmm_prim->gmmsm.establish_req.imsi);
+	OSMO_ASSERT(gmme);
 	if (gmm_prim->gmmsm.establish_req.imei[0] != '\0')
 		OSMO_STRLCPY_ARRAY(gmme->imei, gmm_prim->gmmsm.establish_req.imei);
 	if (gmm_prim->gmmsm.establish_req.imeisv[0] != '\0')

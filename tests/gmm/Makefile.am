@@ -29,3 +29,8 @@ gmm_prim_test_LDADD = \
 	$(LIBOSMOCORE_LIBS) \
 	$(LIBOSMOGSM_LIBS) \
 	$(NULL)
+
+gmm_prim_test_LDFLAGS = \
+	-Wl,--wrap=osmo_get_rand_id \
+	-no-install \
+	$(NULL)
