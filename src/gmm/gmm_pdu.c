@@ -317,8 +317,7 @@ int gprs_gmm_build_identity_resp(struct gprs_gmm_entity *gmme,
 }
 
 /* Tx GMM Authentication and ciphering response, 9.4.10 */
-int gprs_gmm_build_ciph_auth_resp(struct gprs_gmm_entity *gmme, bool imeisv_requested,
-				  uint8_t ac_ref_nr, const uint8_t sres[4], struct msgb *msg)
+int gprs_gmm_build_ciph_auth_resp(const struct gprs_gmm_entity *gmme, const uint8_t *sres, struct msgb *msg)
 {
 	struct gsm48_hdr *gh;
 	struct gsm48_auth_ciph_resp *acr;
@@ -329,14 +328,28 @@ int gprs_gmm_build_ciph_auth_resp(struct gprs_gmm_entity *gmme, bool imeisv_requ
 	gh->msg_type = GSM48_MT_GMM_AUTH_CIPH_RESP;
 
 	acr = (struct gsm48_auth_ciph_resp *) msgb_put(msg, sizeof(*acr));
-	acr->ac_ref_nr = ac_ref_nr;
+	acr->ac_ref_nr = gmme->auth_ciph.req.ac_ref_nr;
 
-	if (imeisv_requested) {
-		(void)imeisv_requested;
-		/* TODO: IMEISV IE */
+	/* Authentication parameter Response, 10.5.3.2 */
+	if (sres)
+		msgb_tv_fixed_put(msg, GSM48_IE_GMM_AUTH_SRES, 4, sres);
+
+	/* IMEISV, 10.5.1.4 */
+	if (gmme->auth_ciph.req.imeisv_requested) {
+		uint8_t *l;
+		struct osmo_mobile_identity mi = (struct osmo_mobile_identity){
+			.type = GSM_MI_TYPE_IMEISV,
+		};
+		OSMO_STRLCPY_ARRAY(mi.imeisv, gmme->imeisv);
+		l = msgb_tl_put(msg, GSM48_IE_GMM_IMEISV);
+		rc = osmo_mobile_identity_encode_msgb(msg, &mi, false);
+		if (rc < 0)
+			return -EINVAL;
+		*l = rc;
 	}
 
-	/* TODO: Optional IEs, eg Authentication parameter */
+	/* TODO: Authentication Response parameter (extension) */
+	/* TODO: Message authentication code */
 	return rc;
 }
 

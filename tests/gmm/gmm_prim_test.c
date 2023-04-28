@@ -149,6 +149,8 @@ int __wrap_osmo_get_rand_id(uint8_t *data, size_t len)
 int test_gmm_prim_up_cb(struct osmo_gprs_gmm_prim *gmm_prim, void *user_data)
 {
 	const char *pdu_name = osmo_gprs_gmm_prim_name(gmm_prim);
+	struct osmo_gprs_gmm_prim *gmm_prim_tx;
+	int rc;
 
 	switch (gmm_prim->oph.sap) {
 	case OSMO_GPRS_GMM_SAP_GMMREG:
@@ -167,6 +169,27 @@ int test_gmm_prim_up_cb(struct osmo_gprs_gmm_prim *gmm_prim, void *user_data)
 		case OSMO_PRIM(OSMO_GPRS_GMM_GMMREG_DETACH, PRIM_OP_CONFIRM):
 			printf("%s(): Rx %s detach_type='%s'\n", __func__, pdu_name,
 			       osmo_gprs_gmm_detach_ms_type_name(gmm_prim->gmmreg.detach_cnf.detach_type));
+			break;
+		case OSMO_PRIM(OSMO_GPRS_GMM_GMMREG_SIM_AUTH, PRIM_OP_INDICATION):
+			printf("%s(): Rx %s ac_ref_nr=%u key_seq=%u rand=%s\n",
+				__func__, pdu_name,
+			       gmm_prim->gmmreg.sim_auth_ind.ac_ref_nr,
+			       gmm_prim->gmmreg.sim_auth_ind.key_seq,
+			       osmo_hexdump(gmm_prim->gmmreg.sim_auth_ind.rand,
+					    sizeof(gmm_prim->gmmreg.sim_auth_ind.rand)));
+			/* Emulate SIM, asnwer SRES=0xacacacac, Kc=bdbdbd... */
+			gmm_prim_tx = osmo_gprs_gmm_prim_alloc_gmmreg_sim_auth_rsp();
+			OSMO_ASSERT(gmm_prim_tx);
+			gmm_prim_tx->gmmreg.sim_auth_rsp.ac_ref_nr = gmm_prim->gmmreg.sim_auth_ind.ac_ref_nr;
+			gmm_prim_tx->gmmreg.sim_auth_rsp.key_seq  = gmm_prim->gmmreg.sim_auth_ind.key_seq;
+			memcpy(gmm_prim_tx->gmmreg.sim_auth_rsp.rand, gmm_prim->gmmreg.sim_auth_ind.rand,
+			       sizeof(gmm_prim_tx->gmmreg.sim_auth_rsp.rand));
+			memset(gmm_prim_tx->gmmreg.sim_auth_rsp.sres, 0xac,
+			       sizeof(gmm_prim_tx->gmmreg.sim_auth_rsp.sres));
+			memset(gmm_prim_tx->gmmreg.sim_auth_rsp.kc, 0xbd,
+			       sizeof(gmm_prim_tx->gmmreg.sim_auth_rsp.kc));
+			rc = osmo_gprs_gmm_prim_upper_down(gmm_prim_tx);
+			OSMO_ASSERT(rc == 0);
 			break;
 		default:
 			printf("%s(): Unexpected Rx %s\n", __func__, pdu_name);

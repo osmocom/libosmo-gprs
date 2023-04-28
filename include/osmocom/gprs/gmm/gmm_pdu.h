@@ -29,8 +29,8 @@ int gprs_gmm_build_identity_resp(struct gprs_gmm_entity *gmme,
 				 uint8_t mi_type,
 				 struct msgb *msg);
 
-int gprs_gmm_build_ciph_auth_resp(struct gprs_gmm_entity *gmme, bool imeisv_requested,
-				  uint8_t ac_ref_nr, const uint8_t sres[4], struct msgb *msg);
+int gprs_gmm_build_ciph_auth_resp(const struct gprs_gmm_entity *gmme,
+				  const uint8_t *sres, struct msgb *msg);
 
 int gprs_gmm_build_detach_req(struct gprs_gmm_entity *gmme,
 			      enum osmo_gprs_gmm_detach_ms_type detach_type,

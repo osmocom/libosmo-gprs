@@ -152,6 +152,7 @@ struct gprs_gmm_entity *gprs_gmm_gmme_alloc(uint32_t ptmsi, const char *imsi)
 	gmme->ptmsi = ptmsi;
 	gmme->old_ptmsi = GSM_RESERVED_TMSI;
 	gmme->old_tlli = GPRS_GMM_TLLI_UNASSIGNED;
+	gmme->auth_ciph.req.ac_ref_nr = 0xff; /* invalid value */
 	OSMO_STRLCPY_ARRAY(gmme->imsi, imsi);
 
 	/* TS 24.008 4.7.1.4.1:
@@ -295,6 +296,21 @@ static int gprs_gmm_submit_gmmreg_detach_cnf(struct gprs_gmm_entity *gmme)
 	return rc;
 }
 
+static int gprs_gmm_submit_gmmreg_sim_auth_ind(struct gprs_gmm_entity *gmme)
+{
+	struct osmo_gprs_gmm_prim *gmm_prim_tx;
+	int rc;
+
+	gmm_prim_tx = gprs_gmm_prim_alloc_gmmreg_sim_auth_ind();
+	gmm_prim_tx->gmmreg.sim_auth_ind.ac_ref_nr = gmme->auth_ciph.req.ac_ref_nr;
+	gmm_prim_tx->gmmreg.sim_auth_ind.key_seq = gmme->auth_ciph.req.key_seq;
+	memcpy(gmm_prim_tx->gmmreg.sim_auth_ind.rand, gmme->auth_ciph.req.rand,
+	       sizeof(gmm_prim_tx->gmmreg.sim_auth_ind.rand));
+
+	rc = gprs_gmm_prim_call_up_cb(gmm_prim_tx);
+	return rc;
+}
+
 int gprs_gmm_submit_gmmsm_establish_cnf(struct gprs_gmm_entity *gmme, uint32_t sess_id, bool accepted, uint8_t cause)
 {
 	struct osmo_gprs_gmm_prim *gmm_prim_tx;
@@ -317,15 +333,15 @@ static int gprs_gmm_submit_gmmrr_assing_req(struct gprs_gmm_entity *gmme)
 	return rc;
 }
 
-static int gprs_gmm_submit_llgmm_assing_req(struct gprs_gmm_entity *gmme)
+int gprs_gmm_submit_llgmm_assing_req(const struct gprs_gmm_entity *gmme)
 {
 	struct osmo_gprs_llc_prim *llc_prim_tx;
 	int rc;
 
 	llc_prim_tx = osmo_gprs_llc_prim_alloc_llgm_assign_req(gmme->old_tlli);
 	llc_prim_tx->llgmm.assign_req.tlli_new = gmme->tlli;
-	llc_prim_tx->llgmm.assign_req.gea = gmme->gea;
-	memcpy(llc_prim_tx->llgmm.assign_req.kc, gmme->kc, ARRAY_SIZE(gmme->kc));
+	llc_prim_tx->llgmm.assign_req.gea = gmme->auth_ciph.gea;
+	memcpy(llc_prim_tx->llgmm.assign_req.kc, gmme->auth_ciph.kc, ARRAY_SIZE(gmme->auth_ciph.kc));
 
 	rc = gprs_gmm_prim_call_llc_down_cb(llc_prim_tx);
 	return rc;
@@ -365,8 +381,9 @@ static int gprs_gmm_tx_id_resp(struct gprs_gmm_entity *gmme,
 	return rc;
 }
 
-/* Tx GMM Authentication and ciphering response, 9.4.10 */
-static int gprs_gmm_tx_ciph_auth_resp(struct gprs_gmm_entity *gmme, bool imeisv_requested, uint8_t ac_ref_nr, const uint8_t sres[4])
+/* Tx GMM Authentication and ciphering response, 9.4.10
+ * sres can be NULL if no authentication was requested. */
+int gprs_gmm_tx_ciph_auth_resp(const struct gprs_gmm_entity *gmme, const uint8_t *sres)
 {
 	struct osmo_gprs_llc_prim *llc_prim;
 	int rc;
@@ -378,7 +395,7 @@ static int gprs_gmm_tx_ciph_auth_resp(struct gprs_gmm_entity *gmme, bool imeisv_
 			gmme->tlli, OSMO_GPRS_LLC_SAPI_GMM, NULL, GPRS_GMM_ALLOC_SIZE);
 	msg = llc_prim->oph.msg;
 	msg->l3h = msg->tail;
-	rc = gprs_gmm_build_ciph_auth_resp(gmme, imeisv_requested, ac_ref_nr, sres, msg);
+	rc = gprs_gmm_build_ciph_auth_resp(gmme, sres, msg);
 	if (rc < 0) {
 		msgb_free(msg);
 		return -EBADMSG;
@@ -673,8 +690,8 @@ static int gprs_gmm_rx_auth_ciph_req(struct gprs_gmm_entity *gmme, struct gsm48_
 	struct gsm48_auth_ciph_req *acreq;
 	struct tlv_parsed tp;
 	int rc;
-	bool imeisv_requested = false;
-	uint8_t sres[4] = {};
+	uint8_t *rand = NULL;
+	uint8_t cksn = 0xff;
 
 	if (len < sizeof(*gh) + sizeof(*acreq)) {
 		LOGGMME(gmme, LOGL_ERROR, "Rx GMM AUTHENTICATION AND CIPHERING REQUEST with wrong size %u\n", len);
@@ -691,17 +708,44 @@ static int gprs_gmm_rx_auth_ciph_req(struct gprs_gmm_entity *gmme, struct gsm48_
 			LOGGMME(gmme, LOGL_ERROR, "Rx GMM AUTHENTICATION AND CIPHERING REQUEST: failed to parse TLVs %d\n", rc);
 			return -EINVAL;
 		}
-		if (TLVP_PRESENT(&tp, GSM48_IE_GMM_IMEISV))
-			imeisv_requested = !!*((uint8_t *)TLVP_VAL(&tp, GSM48_IE_GMM_IMEISV));
-
+		if (TLVP_PRESENT(&tp, GSM48_IE_GMM_AUTH_RAND)) {
+			rand = (uint8_t *)TLVP_VAL(&tp, GSM48_IE_GMM_AUTH_RAND);
+			if (TLVP_PRESENT(&tp, GSM48_IE_GMM_CIPH_CKSN)) {
+				cksn = *(uint8_t *)TLVP_VAL(&tp, GSM48_IE_GMM_CIPH_CKSN);
+				cksn &= 0x0f;
+			}
+		}
+		/* TODO: 9.4.9.3 Authentication Parameter AUTN */
+		/* TODO: 9.4.9.4 Replayed MS network capability */
+		/* TODO: 9.4.9.5 Integrity algorithm */
+		/* TODO: 9.4.9.6 Message authentication code */
+		/* TODO: 9.4.9.7 Replayed MS Radio Access Capability */
 	}
 
-	rc = gprs_gmm_tx_ciph_auth_resp(gmme, imeisv_requested, acreq->ac_ref_nr, sres);
-	if (rc < 0)
-		return rc;
+	gmme->auth_ciph.gea = acreq->ciph_alg;
+	gmme->auth_ciph.req.ac_ref_nr = acreq->ac_ref_nr;
+	gmme->auth_ciph.req.imeisv_requested = acreq->imeisv_req;
+	gmme->auth_ciph.req.key_seq = cksn;
+	if (rand)
+		memcpy(gmme->auth_ciph.req.rand, rand, sizeof(gmme->auth_ciph.req.rand));
 
-	/* Submit LLGMM-ASSIGN-REQ as per TS 24.007 Annex C.1 */
-	rc = gprs_gmm_submit_llgmm_assing_req(gmme);
+	if (rand) {
+		/* SIM AUTH needed. Answer GMM req asynchronously in GMMREG-SIM_AUTH.rsp: */
+		rc = gprs_gmm_submit_gmmreg_sim_auth_ind(gmme);
+		/* TODO: if rc < 0, transmit AUTHENTICATION AND CIPHERING FAILURE (9.4.10a) */
+	} else {
+		/* Submit LLGMM-ASSIGN-REQ as per TS 24.007 Annex C.1 */
+		rc = gprs_gmm_submit_llgmm_assing_req(gmme);
+		if (rc < 0) {
+			/* TODO: if rc < 0, transmit AUTHENTICATION AND CIPHERING FAILURE (9.4.10a) */
+			/* invalidate active reference: */
+			gmme->auth_ciph.req.ac_ref_nr = 0xff;
+			return rc;
+		}
+		rc = gprs_gmm_tx_ciph_auth_resp(gmme, NULL);
+		/* invalidate active reference: */
+		gmme->auth_ciph.req.ac_ref_nr = 0xff;
+	}
 	return rc;
 }
 

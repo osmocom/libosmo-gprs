@@ -40,6 +40,7 @@ static inline const char *osmo_gprs_gmm_prim_sap_name(enum osmo_gprs_gmm_prim_sa
 enum osmo_gprs_gmm_gmmreg_prim_type {
 	OSMO_GPRS_GMM_GMMREG_ATTACH,	/* Req/Cnf/Rej */
 	OSMO_GPRS_GMM_GMMREG_DETACH,	/* Req/Cnf/Ind */
+	OSMO_GPRS_GMM_GMMREG_SIM_AUTH,	/* Ind/Rsp, Osmocom specific primitive */
 };
 extern const struct value_string osmo_gprs_gmm_gmmreg_prim_type_names[];
 static inline const char *osmo_gprs_gmm_gmmreg_prim_type_name(enum osmo_gprs_gmm_gmmreg_prim_type val)
@@ -132,10 +133,24 @@ struct osmo_gprs_gmm_gmmreg_prim {
 		struct {
 			enum osmo_gprs_gmm_detach_ms_type detach_type;
 		} detach_cnf;
-		/* OSMO_GPRS_GMM_GMMREG_DETACH | Ind, , 6.6.1.6 */
+		/* OSMO_GPRS_GMM_GMMREG_DETACH | Ind, 6.6.1.6 */
 		struct {
 			enum osmo_gprs_gmm_detach_ms_type detach_type;
 		} detach_ind;
+		/* OSMO_GPRS_GMM_GMMREG_SIM_AUTH | Ind, Osmocom specific */
+		struct {
+			uint8_t ac_ref_nr;
+			uint8_t key_seq;
+			uint8_t rand[16];
+		} sim_auth_ind;
+		/* OSMO_GPRS_GMM_GMMREG_SIM_AUTH | Rsp, Osmocom specific */
+		struct {
+			uint8_t ac_ref_nr; /* from ind originating rsp */
+			uint8_t key_seq; /* from ind originating rsp */
+			uint8_t rand[16]; /* from ind originating rsp */
+			uint8_t sres[4]; /* result */
+			uint8_t kc[16]; /* result */
+		} sim_auth_rsp;
 	};
 };
 
@@ -254,6 +269,7 @@ const char *osmo_gprs_gmm_prim_name(const struct osmo_gprs_gmm_prim *gmm_prim);
 /* Alloc primitive for GMMREG SAP: */
 struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmreg_attach_req(void);
 struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmreg_detach_req(void);
+struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmreg_sim_auth_rsp(void);
 
 /* Alloc primitive for GMMRR SAP: */
 struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmrr_page_ind(uint32_t tlli);

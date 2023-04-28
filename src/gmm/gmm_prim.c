@@ -49,6 +49,7 @@ const struct value_string osmo_gprs_gmm_prim_sap_names[] = {
 const struct value_string osmo_gprs_gmm_gmmreg_prim_type_names[] = {
 	{ OSMO_GPRS_GMM_GMMREG_ATTACH, "ATTACH" },
 	{ OSMO_GPRS_GMM_GMMREG_DETACH, "DETACH" },
+	{ OSMO_GPRS_GMM_GMMREG_SIM_AUTH, "SIM_AUTH" },
 	{ 0, NULL }
 };
 
@@ -226,11 +227,27 @@ struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmreg_detach_cnf(void)
 	return gmm_prim;
 }
 
-/* TS 24.007 6.6.1.6 GMMREG-DETACH.cnf */
+/* TS 24.007 6.6.1.6 GMMREG-DETACH.ind */
 struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmreg_detach_ind(void)
 {
 	struct osmo_gprs_gmm_prim *gmm_prim;
 	gmm_prim = gmm_prim_gmmreg_alloc(OSMO_GPRS_GMM_GMMREG_DETACH, PRIM_OP_INDICATION, 0);
+	return gmm_prim;
+}
+
+/* Osmocom specific: GMMREG-SIM_AUTH.ind */
+struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmreg_sim_auth_ind(void)
+{
+	struct osmo_gprs_gmm_prim *gmm_prim;
+	gmm_prim = gmm_prim_gmmreg_alloc(OSMO_GPRS_GMM_GMMREG_SIM_AUTH, PRIM_OP_INDICATION, 0);
+	return gmm_prim;
+}
+
+/* Osmocom specific: GMMREG-SIM_AUTH.rsp */
+struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmreg_sim_auth_rsp(void)
+{
+	struct osmo_gprs_gmm_prim *gmm_prim;
+	gmm_prim = gmm_prim_gmmreg_alloc(OSMO_GPRS_GMM_GMMREG_SIM_AUTH, PRIM_OP_RESPONSE, 0);
 	return gmm_prim;
 }
 
@@ -394,6 +411,51 @@ static int gprs_gmm_prim_handle_gmmreg_detach_req(struct osmo_gprs_gmm_prim *gmm
 	return rc;
 }
 
+/* Osmocom specific: GMMREG-SIM_AUTH.response:*/
+static int gprs_gmm_prim_handle_gmmreg_sim_auth_resp(struct osmo_gprs_gmm_prim *gmm_prim)
+{
+	int rc;
+	struct gprs_gmm_entity *gmme;
+	bool found = false;
+
+	llist_for_each_entry(gmme, &g_gmm_ctx->gmme_list, list) {
+		if (gmme->auth_ciph.req.ac_ref_nr != gmm_prim->gmmreg.sim_auth_rsp.ac_ref_nr)
+			continue;
+		if (gmme->auth_ciph.req.key_seq != gmm_prim->gmmreg.sim_auth_rsp.key_seq)
+			continue;
+		if (memcmp(gmme->auth_ciph.req.rand, gmm_prim->gmmreg.sim_auth_rsp.rand,
+			    sizeof(gmme->auth_ciph.req.rand)) != 0)
+			continue;
+		found = true;
+		break;
+	}
+
+	if (!found) {
+		LOGGMM(LOGL_ERROR, "Rx GMMREG-SIM_AUTH.rsp for unknown request ac_ref_nr=%u key_seq=%u rand=%s\n",
+		       gmm_prim->gmmreg.sim_auth_rsp.ac_ref_nr,
+		       gmm_prim->gmmreg.sim_auth_rsp.key_seq,
+		       osmo_hexdump(gmm_prim->gmmreg.sim_auth_rsp.rand,
+				    sizeof(gmm_prim->gmmreg.sim_auth_rsp.rand)));
+		return -EINVAL;
+	}
+
+	/* Copy over Kc: */
+	memcpy(gmme->auth_ciph.kc, gmm_prim->gmmreg.sim_auth_rsp.kc, sizeof(gmme->auth_ciph.kc));
+
+	rc = gprs_gmm_submit_llgmm_assing_req(gmme);
+	if (rc < 0) {
+		/* TODO: if rc < 0, transmit AUTHENTICATION AND CIPHERING FAILURE (9.4.10a) */
+		/* invalidate active reference: */
+		gmme->auth_ciph.req.ac_ref_nr = 0xff;
+		return rc;
+	}
+
+	rc = gprs_gmm_tx_ciph_auth_resp(gmme, gmm_prim->gmmreg.sim_auth_rsp.sres);
+	/* invalidate active reference: */
+	gmme->auth_ciph.req.ac_ref_nr = 0xff;
+	return rc;
+}
+
 static int gprs_gmm_prim_handle_gmmreg(struct osmo_gprs_gmm_prim *gmm_prim)
 {
 	int rc;
@@ -404,6 +466,9 @@ static int gprs_gmm_prim_handle_gmmreg(struct osmo_gprs_gmm_prim *gmm_prim)
 		break;
 	case OSMO_PRIM(OSMO_GPRS_GMM_GMMREG_DETACH, PRIM_OP_REQUEST):
 		rc = gprs_gmm_prim_handle_gmmreg_detach_req(gmm_prim);
+		break;
+	case OSMO_PRIM(OSMO_GPRS_GMM_GMMREG_SIM_AUTH, PRIM_OP_RESPONSE):
+		rc = gprs_gmm_prim_handle_gmmreg_sim_auth_resp(gmm_prim);
 		break;
 	default:
 		rc = gprs_gmm_prim_handle_unsupported(gmm_prim);

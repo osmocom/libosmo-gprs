@@ -65,8 +65,17 @@ struct gprs_gmm_entity {
 	uint8_t radio_prio;	/* TS 24.008 10.5.7.2 */
 	struct gprs_ra_id ra; /* TS 24.008  10.5.5.15 (decoded) */
 
-	uint8_t gea; /* GEA/0 = 0, GEA/1 = 1, ... */
-	uint8_t kc[16]; /* max 16 * 8 = 128 bits */
+	struct {
+		/* Input params received from network: */
+		struct {
+			uint8_t ac_ref_nr;
+			uint8_t key_seq;
+			uint8_t rand[16]; /* max 16 * 8 = 128 bits */
+			bool imeisv_requested;
+		} req;
+		uint8_t gea; /* GEA/0 = 0, GEA/1 = 1, ... */
+		uint8_t kc[16]; /* max 16 * 8 = 128 bits */
+	} auth_ciph;
 
 	unsigned long t3302;
 	unsigned long t3346;
@@ -79,6 +88,7 @@ int gprs_gmm_prim_call_llc_down_cb(struct osmo_gprs_llc_prim *llc_prim);
 
 struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmreg_attach_cnf(void);
 struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmreg_detach_cnf(void);
+struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmreg_sim_auth_ind(void);
 
 struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmrr_assign_req(uint32_t old_tlli, uint32_t new_tlli);
 
@@ -101,9 +111,11 @@ int gprs_gmm_tx_att_req(struct gprs_gmm_entity *gmme,
 int gprs_gmm_tx_detach_req(struct gprs_gmm_entity *gmme,
 			   enum osmo_gprs_gmm_detach_ms_type detach_type,
 			   enum osmo_gprs_gmm_detach_poweroff_type poweroff_type);
+int gprs_gmm_tx_ciph_auth_resp(const struct gprs_gmm_entity *gmme, const uint8_t *sres);
 
 int gprs_gmm_submit_gmmreg_attach_cnf(struct gprs_gmm_entity *gmme, bool accepted, uint8_t cause);
 int gprs_gmm_submit_gmmsm_establish_cnf(struct gprs_gmm_entity *gmme, uint32_t sess_id, bool accepted, uint8_t cause);
+int gprs_gmm_submit_llgmm_assing_req(const struct gprs_gmm_entity *gmme);
 
 #define LOGGMME(snme, level, fmt, args...) \
 	LOGGMM(level, "GMME(IMSI-%s:PTMSI-%08x:TLLI-%08x) " fmt, \
