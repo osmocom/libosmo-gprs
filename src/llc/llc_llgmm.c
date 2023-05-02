@@ -153,16 +153,24 @@ static int llc_prim_handle_llgm_assign_req(struct osmo_gprs_llc_prim *llc_prim)
 			/* If TLLI old == TLLI_UNASSIGNED was assigned to LLME, then this is
 			 * TLLI assignmemt according to 8.3.1 */
 			llme->old_tlli = TLLI_UNASSIGNED;
-			llme->tlli = new_tlli;
 			llme->state = OSMO_GPRS_LLC_LLMS_ASSIGNED;
 			/* 8.5.3.1 For all LLE's */
 			for (i = 0; i < ARRAY_SIZE(llme->lle); i++) {
 				struct gprs_llc_lle *l = &llme->lle[i];
-				l->vu_send = l->vu_recv = 0;
-				l->retrans_ctr = 0;
 				l->state = OSMO_GPRS_LLC_LLES_ASSIGNED_ADM;
+				if (llme->tlli != new_tlli) {
+					/* Only reset state if the new tlli is really changing.
+					* During GMM attachment, the TLLI is already known and
+					* used by LLC (LLME allocated on the fly), and hence it
+					* is expected to keep using previous state with the
+					* same TLLI from here onwards.
+					*/
+					l->vu_send = l->vu_recv = 0;
+					l->retrans_ctr = 0;
+				}
 				/* FIXME Set parameters according to table 9 */
 			}
+			llme->tlli = new_tlli;
 		}
 	} else if (old_tlli != TLLI_UNASSIGNED && new_tlli != TLLI_UNASSIGNED) {
 		/* TLLI Change 8.3.2 */
