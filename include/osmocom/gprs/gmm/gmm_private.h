@@ -117,7 +117,7 @@ int gprs_gmm_submit_gmmreg_attach_cnf(struct gprs_gmm_entity *gmme, bool accepte
 int gprs_gmm_submit_gmmsm_establish_cnf(struct gprs_gmm_entity *gmme, uint32_t sess_id, bool accepted, uint8_t cause);
 int gprs_gmm_submit_llgmm_assing_req(const struct gprs_gmm_entity *gmme);
 
-#define LOGGMME(snme, level, fmt, args...) \
+#define LOGGMME(gmme, level, fmt, args...) \
 	LOGGMM(level, "GMME(IMSI-%s:PTMSI-%08x:TLLI-%08x) " fmt, \
 		 gmme->imsi, \
 		 gmme->ptmsi, \
