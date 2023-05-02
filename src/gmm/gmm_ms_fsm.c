@@ -104,6 +104,7 @@ static void st_gmm_ms_registered_initiated(struct osmo_fsm_inst *fi, uint32_t ev
 	struct gprs_gmm_ms_fsm_ctx *ctx = (struct gprs_gmm_ms_fsm_ctx *)fi->priv;
 	uint8_t cause;
 	int rc;
+	struct gprs_gmm_ms_fsm_attach_ctx att;
 
 	switch (event) {
 	case GPRS_GMM_MS_EV_ATTACH_REQUESTED:
@@ -114,28 +115,36 @@ static void st_gmm_ms_registered_initiated(struct osmo_fsm_inst *fi, uint32_t ev
 		cause = *(uint8_t *)data;
 		/* fall-through */
 	case GPRS_GMM_MS_EV_LOW_LVL_FAIL:
+		/* Update state before announcing event to users. Moving to
+		 * Deregistered reset attach ctx, hence do a tmp copy here: */
+		memcpy(&att, &ctx->attach, sizeof(att));
+		gmm_ms_fsm_state_chg(fi, GPRS_GMM_MS_ST_DEREGISTERED);
+
 		if (event == GPRS_GMM_MS_EV_LOW_LVL_FAIL)
 			cause = GMM_CAUSE_MAC_FAIL;
-		if (ctx->attach.explicit_att) {
+
+		if (att.explicit_att) {
 			/* Submit GMMREG-ATTACH-REJ as per TS 24.007 Annex C.1 */
 			rc = gprs_gmm_submit_gmmreg_attach_cnf(ctx->gmme, false, cause);
 			if (rc < 0)
 				return;
 		}
-		if (ctx->attach.implicit_att) {
+
+		if (att.implicit_att) {
 			/* Submit GMMSM-ESTABLISH-CNF as per TS 24.007 Annex C.3 */
 			unsigned int i;
-			for (i = 0; i < ctx->attach.num_sess_id; i++) {
+			for (i = 0; i < att.num_sess_id; i++) {
 				rc = gprs_gmm_submit_gmmsm_establish_cnf(ctx->gmme,
-									 ctx->attach.sess_id[i],
+									 att.sess_id[i],
 									 false, cause);
 				if (rc < 0)
 					return;
 			}
 		}
-		gmm_ms_fsm_state_chg(fi, GPRS_GMM_MS_ST_DEREGISTERED);
 		break;
 	case GPRS_GMM_MS_EV_ATTACH_ACCEPTED:
+		/* Update state before announcing event to users. */
+		gmm_ms_fsm_state_chg(fi, GPRS_GMM_MS_ST_REGISTERED);
 		if (ctx->attach.explicit_att) {
 			/* Submit GMMREG-ATTACH-CNF as per TS 24.007 Annex C.1 */
 			rc = gprs_gmm_submit_gmmreg_attach_cnf(ctx->gmme, true, 0);
@@ -151,7 +160,6 @@ static void st_gmm_ms_registered_initiated(struct osmo_fsm_inst *fi, uint32_t ev
 					return;
 			}
 		}
-		gmm_ms_fsm_state_chg(fi, GPRS_GMM_MS_ST_REGISTERED);
 		break;
 	case GPRS_GMM_MS_EV_DETACH_REQUESTED:
 		gmm_ms_fsm_state_chg(fi, GPRS_GMM_MS_ST_DEREGISTERED);

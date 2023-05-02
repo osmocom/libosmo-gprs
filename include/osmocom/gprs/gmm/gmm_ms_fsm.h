@@ -42,28 +42,31 @@ enum gprs_gmm_ms_fsm_events {
 	GPRS_GMM_MS_EV_LOW_LVL_FAIL,
 };
 
+/* Info about last initiated attach: */
+struct gprs_gmm_ms_fsm_attach_ctx {
+	enum osmo_gprs_gmm_attach_type type;
+	bool with_imsi;
+	bool explicit_att; /* true if by SMREG-ATTACH.req requested it */
+	bool implicit_att; /* true if GMMSM-ESTABLISH.req requested it */
+	/* Session Ids waiting for attach to happen during implicit_att: */
+	uint32_t sess_id[16];
+	uint8_t num_sess_id;
+	/* Retransmission of ATTACH REQUEST (T3310) */
+	uint8_t req_attempts;
+};
+
+/* Info about last initiated detach: */
+struct gprs_gmm_ms_fsm_detach_ctx {
+	enum osmo_gprs_gmm_detach_ms_type type;
+	enum osmo_gprs_gmm_detach_poweroff_type poweroff_type;
+};
+
 struct gprs_gmm_ms_fsm_ctx {
 	struct osmo_fsm_inst *fi;
 	struct gprs_gmm_entity *gmme;
 
-	/* Info about last initiated attach: */
-	struct {
-		enum osmo_gprs_gmm_attach_type type;
-		bool with_imsi;
-		bool explicit_att; /* true if by SMREG-ATTACH.req requested it */
-		bool implicit_att; /* true if GMMSM-ESTABLISH.req requested it */
-		/* Session Ids waiting for attach to happen during implicit_att: */
-		uint32_t sess_id[16];
-		uint8_t num_sess_id;
-		/* Retransmission of ATTACH REQUEST (T3310) */
-		uint8_t req_attempts;
-	} attach;
-
-	/* Info about last initiated detach: */
-	struct {
-		enum osmo_gprs_gmm_detach_ms_type type;
-		enum osmo_gprs_gmm_detach_poweroff_type poweroff_type;
-	} detach;
+	struct gprs_gmm_ms_fsm_attach_ctx attach;
+	struct gprs_gmm_ms_fsm_detach_ctx detach;
 };
 
 int gprs_gmm_ms_fsm_init(void);
