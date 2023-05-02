@@ -48,9 +48,6 @@ struct gprs_gmm_ms_fsm_attach_ctx {
 	bool with_imsi;
 	bool explicit_att; /* true if by SMREG-ATTACH.req requested it */
 	bool implicit_att; /* true if GMMSM-ESTABLISH.req requested it */
-	/* Session Ids waiting for attach to happen during implicit_att: */
-	uint32_t sess_id[16];
-	uint8_t num_sess_id;
 	/* Retransmission of ATTACH REQUEST (T3310) */
 	uint8_t req_attempts;
 };
@@ -78,8 +75,7 @@ void gprs_gmm_ms_fsm_ctx_release(struct gprs_gmm_ms_fsm_ctx *ctx);
 int gprs_gmm_ms_fsm_ctx_request_attach(struct gprs_gmm_ms_fsm_ctx *ctx,
 				       enum osmo_gprs_gmm_attach_type attach_type,
 				       bool attach_with_imsi,
-				       bool explicit_attach,
-				       uint32_t sess_id);
+				       bool explicit_attach);
 
 int gprs_gmm_ms_fsm_ctx_request_detach(struct gprs_gmm_ms_fsm_ctx *ctx,
 				       enum osmo_gprs_gmm_detach_ms_type detach_type,

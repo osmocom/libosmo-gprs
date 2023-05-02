@@ -149,6 +149,7 @@ struct gprs_gmm_entity *gprs_gmm_gmme_alloc(uint32_t ptmsi, const char *imsi)
 		return NULL;
 	}
 
+	gmme->sess_id = GPRS_GMM_SESS_ID_UNASSIGNED;
 	gmme->ptmsi = ptmsi;
 	gmme->old_ptmsi = GSM_RESERVED_TMSI;
 	gmme->old_tlli = GPRS_GMM_TLLI_UNASSIGNED;

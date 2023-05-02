@@ -132,14 +132,11 @@ static void st_gmm_ms_registered_initiated(struct osmo_fsm_inst *fi, uint32_t ev
 
 		if (att.implicit_att) {
 			/* Submit GMMSM-ESTABLISH-CNF as per TS 24.007 Annex C.3 */
-			unsigned int i;
-			for (i = 0; i < att.num_sess_id; i++) {
-				rc = gprs_gmm_submit_gmmsm_establish_cnf(ctx->gmme,
-									 att.sess_id[i],
-									 false, cause);
-				if (rc < 0)
-					return;
-			}
+			rc = gprs_gmm_submit_gmmsm_establish_cnf(ctx->gmme,
+								 ctx->gmme->sess_id,
+								 false, cause);
+			if (rc < 0)
+				return;
 		}
 		break;
 	case GPRS_GMM_MS_EV_ATTACH_ACCEPTED:
@@ -153,12 +150,9 @@ static void st_gmm_ms_registered_initiated(struct osmo_fsm_inst *fi, uint32_t ev
 		}
 		if (ctx->attach.implicit_att) {
 			/* Submit GMMSM-ESTABLISH-CNF as per TS 24.007 Annex C.3 */
-			unsigned int i;
-			for (i = 0; i < ctx->attach.num_sess_id; i++) {
-				rc = gprs_gmm_submit_gmmsm_establish_cnf(ctx->gmme, ctx->attach.sess_id[i], true, 0);
-				if (rc < 0)
-					return;
-			}
+			rc = gprs_gmm_submit_gmmsm_establish_cnf(ctx->gmme, ctx->gmme->sess_id, true, 0);
+			if (rc < 0)
+				return;
 		}
 		break;
 	case GPRS_GMM_MS_EV_DETACH_REQUESTED:
@@ -419,8 +413,7 @@ void gprs_gmm_ms_fsm_ctx_release(struct gprs_gmm_ms_fsm_ctx *ctx)
 int gprs_gmm_ms_fsm_ctx_request_attach(struct gprs_gmm_ms_fsm_ctx *ctx,
 				       enum osmo_gprs_gmm_attach_type attach_type,
 				       bool attach_with_imsi,
-				       bool explicit_attach,
-				       uint32_t sess_id)
+				       bool explicit_attach)
 {
 	int rc;
 
@@ -430,23 +423,6 @@ int gprs_gmm_ms_fsm_ctx_request_attach(struct gprs_gmm_ms_fsm_ctx *ctx,
 		ctx->attach.explicit_att = true;
 	else
 		ctx->attach.implicit_att = true;
-
-	if (!explicit_attach) {
-		unsigned int i;
-		bool found = false;
-		if (ctx->attach.num_sess_id == ARRAY_SIZE(ctx->attach.sess_id))
-			return -ENOMEM;
-		for (i = 0; i < ctx->attach.num_sess_id; i++) {
-			if (sess_id == ctx->attach.sess_id[i]) {
-				found = true;
-				break;
-			}
-		}
-		if (!found) {
-			ctx->attach.sess_id[ctx->attach.num_sess_id] = sess_id;
-			ctx->attach.num_sess_id++;
-		}
-	}
 
 	rc = osmo_fsm_inst_dispatch(ctx->fi, GPRS_GMM_MS_EV_ATTACH_REQUESTED, NULL);
 	return rc;

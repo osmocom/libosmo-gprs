@@ -20,6 +20,8 @@
 /* 3GPP TS 44.064 § 8.3 TLLI assignment procedures */
 #define GPRS_GMM_TLLI_UNASSIGNED (0xffffffff)
 
+#define GPRS_GMM_SESS_ID_UNASSIGNED (0xffffffff)
+
 extern int g_gmm_log_cat[_OSMO_GPRS_GMM_LOGC_MAX];
 
 #define LOGGMM(lvl, fmt, args...) LOGP(g_gmm_log_cat[OSMO_GPRS_GMM_LOGC_GMM], lvl, fmt, ## args)
@@ -53,6 +55,7 @@ struct gprs_gmm_entity {
 	struct llist_head list; /* item in (struct gprs_gmm_ctx)->gmme_list */
 
 	struct gprs_gmm_ms_fsm_ctx ms_fsm;
+	uint32_t sess_id; /* Used to identify the GMME in GMMSM SAP */
 	uint32_t ptmsi;
 	uint32_t old_ptmsi;
 	uint32_t tlli;

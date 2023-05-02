@@ -389,7 +389,7 @@ static int gprs_gmm_prim_handle_gmmreg_attach_req(struct osmo_gprs_gmm_prim *gmm
 	rc = gprs_gmm_ms_fsm_ctx_request_attach(&gmme->ms_fsm,
 						gmm_prim->gmmreg.attach_req.attach_type,
 						gmm_prim->gmmreg.attach_req.attach_with_imsi,
-						true, 0);
+						true);
 	return rc;
 }
 
@@ -485,6 +485,8 @@ static int gprs_gmm_prim_handle_gmmsm_establish_req(struct osmo_gprs_gmm_prim *g
 	gmme = gprs_gmm_gmme_find_or_create_by_ptmsi_imsi(gmm_prim->gmmsm.establish_req.ptmsi,
 							  gmm_prim->gmmsm.establish_req.imsi);
 	OSMO_ASSERT(gmme);
+	/* Identify this GMME with this sess_id in GMMSM SAP from now on: */
+	gmme->sess_id = gmm_prim->gmmsm.sess_id;
 
 	if (gmme->ms_fsm.fi->state == GPRS_GMM_MS_ST_REGISTERED) {
 		rc = gprs_gmm_submit_gmmsm_establish_cnf(gmme, gmm_prim->gmmsm.sess_id, true, 0);
@@ -499,8 +501,7 @@ static int gprs_gmm_prim_handle_gmmsm_establish_req(struct osmo_gprs_gmm_prim *g
 	rc = gprs_gmm_ms_fsm_ctx_request_attach(&gmme->ms_fsm,
 						gmm_prim->gmmsm.establish_req.attach_type,
 						gmm_prim->gmmsm.establish_req.attach_with_imsi,
-						false,
-						gmm_prim->gmmsm.sess_id);
+						false);
 	return rc;
 }
 
