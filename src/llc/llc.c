@@ -754,7 +754,8 @@ int gprs_llc_lle_rx_unitdata_ind(struct gprs_llc_lle *lle, uint8_t *ll_pdu, size
 	if (~pdu_dec->flags & OSMO_GPRS_LLC_PDU_F_PROT_MODE)
 		crc_length = OSMO_MIN(crc_length, UI_HDR_LEN + N202);
 	if (pdu_dec->fcs != gprs_llc_fcs(ll_pdu, crc_length)) {
-		LOGLLE(lle, LOGL_INFO, "Dropping frame with invalid FCS\n");
+		LOGLLE(lle, LOGL_NOTICE, "Dropping frame with invalid FCS 0x%06x vs exp 0x%06x\n",
+		       pdu_dec->fcs, gprs_llc_fcs(ll_pdu, crc_length));
 		return -EIO;
 	}
 
