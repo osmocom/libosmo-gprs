@@ -485,6 +485,12 @@ static int gprs_gmm_prim_handle_gmmsm_establish_req(struct osmo_gprs_gmm_prim *g
 	gmme = gprs_gmm_gmme_find_or_create_by_ptmsi_imsi(gmm_prim->gmmsm.establish_req.ptmsi,
 							  gmm_prim->gmmsm.establish_req.imsi);
 	OSMO_ASSERT(gmme);
+
+	if (gmme->ms_fsm.fi->state == GPRS_GMM_MS_ST_REGISTERED) {
+		rc = gprs_gmm_submit_gmmsm_establish_cnf(gmme, gmm_prim->gmmsm.sess_id, true, 0);
+		return rc;
+	}
+
 	if (gmm_prim->gmmsm.establish_req.imei[0] != '\0')
 		OSMO_STRLCPY_ARRAY(gmme->imei, gmm_prim->gmmsm.establish_req.imei);
 	if (gmm_prim->gmmsm.establish_req.imeisv[0] != '\0')
