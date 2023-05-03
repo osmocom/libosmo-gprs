@@ -329,7 +329,8 @@ static int gprs_sm_rx_act_pdp_ack(struct gprs_sm_entity *sme,
 		if (TLVP_PRESENT(&tp, GSM48_IE_GSM_PROTO_CONF_OPT)) {
 			if (TLVP_LEN(&tp, GSM48_IE_GSM_PROTO_CONF_OPT) > ARRAY_SIZE(sme->pco)) {
 				LOGSME(sme, LOGL_ERROR,
-				       "Rx SM Activate PDP Context Accept: PCO size too big! %u\n", qos_len);
+				       "Rx SM Activate PDP Context Accept: PCO size too big! %u\n",
+				       TLVP_LEN(&tp, GSM48_IE_GSM_PROTO_CONF_OPT));
 				goto rejected;
 			}
 			sme->pco_len = TLVP_LEN(&tp, GSM48_IE_GSM_PROTO_CONF_OPT);
@@ -339,6 +340,56 @@ static int gprs_sm_rx_act_pdp_ack(struct gprs_sm_entity *sme,
 	}
 
 	rc = osmo_fsm_inst_dispatch(sme->ms_fsm.fi, GPRS_SM_MS_EV_RX_ACT_PDP_CTX_ACC, NULL);
+	if (rc < 0)
+		goto rejected;
+	return rc;
+
+tooshort:
+	LOGSME(sme, LOGL_ERROR, "Rx GMM message too short! len=%u\n", len);
+rejected:
+	return -EINVAL; /* TODO: what to do on error? */
+}
+
+/* 3GPP TS 24.008 § 9.5.3: Activate PDP Context rej */
+static int gprs_sm_rx_act_pdp_rej(struct gprs_sm_entity *sme,
+				    struct gsm48_hdr *gh,
+				    unsigned int len)
+{
+	struct tlv_parsed tp;
+	int rc;
+	enum gsm48_gsm_cause cause;
+	uint8_t *ofs = (uint8_t *)gh;
+
+	ofs += sizeof(*gh);
+	//uint8_t transaction_id = gsm48_hdr_trans_id(gh);
+
+	LOGSME(sme, LOGL_INFO, "Rx SM Activate PDP Context Reject\n");
+
+	if (len < (ofs + 1) - (uint8_t *)gh)
+		goto tooshort;
+	cause = *ofs++;
+
+	if (len > ofs - (uint8_t *)gh) {
+		rc = gprs_sm_tlv_parse(&tp, ofs, len - (ofs - (uint8_t *)gh));
+		if (rc < 0) {
+			LOGSME(sme, LOGL_ERROR, "Rx SM Activate PDP Context Reject: failed to parse TLVs %d\n", rc);
+			goto rejected;
+		}
+
+		if (TLVP_PRESENT(&tp, GSM48_IE_GSM_PROTO_CONF_OPT)) {
+			if (TLVP_LEN(&tp, GSM48_IE_GSM_PROTO_CONF_OPT) > ARRAY_SIZE(sme->pco)) {
+				LOGSME(sme, LOGL_ERROR,
+				       "Rx SM Activate PDP Context Reject: PCO size too big! %u\n",
+				       TLVP_LEN(&tp, GSM48_IE_GSM_PROTO_CONF_OPT));
+				goto rejected;
+			}
+			sme->pco_len = TLVP_LEN(&tp, GSM48_IE_GSM_PROTO_CONF_OPT);
+			if (sme->pco_len)
+				memcpy(sme->pco, TLVP_VAL(&tp, GSM48_IE_GSM_PROTO_CONF_OPT), sme->pco_len);
+		}
+	}
+
+	rc = osmo_fsm_inst_dispatch(sme->ms_fsm.fi, GPRS_SM_MS_EV_RX_ACT_PDP_CTX_REJ, &cause);
 	if (rc < 0)
 		goto rejected;
 	return rc;
@@ -361,6 +412,9 @@ int gprs_sm_rx(struct gprs_sm_entity *sme, struct gsm48_hdr *gh, unsigned int le
 	switch (gh->msg_type) {
 	case GSM48_MT_GSM_ACT_PDP_ACK:
 		rc = gprs_sm_rx_act_pdp_ack(sme, gh, len);
+		break;
+	case GSM48_MT_GSM_ACT_PDP_REJ:
+		rc = gprs_sm_rx_act_pdp_rej(sme, gh, len);
 		break;
 	default:
 		LOGSME(sme, LOGL_ERROR,
