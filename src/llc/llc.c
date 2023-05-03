@@ -266,7 +266,10 @@ int gprs_llc_lle_tx_xid(const struct gprs_llc_lle *lle, uint8_t *xid_payload, un
 	gprs_llc_encode_is_cmd_as_cr(is_cmd, &pdu_dec.flags);
 
 	/* LLC payload is put directly below: */
-	llc_prim = gprs_llc_prim_alloc_bssgp_dl_unitdata_req(lle->llme->tlli, NULL, 4096 - sizeof(llc_prim));
+	if (g_llc_ctx->location == OSMO_GPRS_LLC_LOCATION_SGSN)
+		llc_prim = gprs_llc_prim_alloc_bssgp_dl_unitdata_req(lle->llme->tlli, NULL, 4096 - sizeof(llc_prim));
+	else
+		llc_prim = gprs_llc_prim_alloc_grr_unitdata_req(lle->llme->tlli, NULL, 4096 - sizeof(llc_prim));
 	msg = llc_prim->oph.msg;
 	msg->l3h = msg->tail;
 
@@ -276,10 +279,15 @@ int gprs_llc_lle_tx_xid(const struct gprs_llc_lle *lle, uint8_t *xid_payload, un
 		msgb_free(msg);
 		return rc;
 	}
-	llc_prim->bssgp.ll_pdu = msgb_l3(msg);
-	llc_prim->bssgp.ll_pdu_len = msgb_l3len(msg);
+	if (g_llc_ctx->location == OSMO_GPRS_LLC_LOCATION_MS) {
+		llc_prim->bssgp.ll_pdu = msgb_l3(msg);
+		llc_prim->bssgp.ll_pdu_len = msgb_l3len(msg);
+	} else {
+		llc_prim->grr.ll_pdu = msgb_l3(msg);
+		llc_prim->grr.ll_pdu_len = msgb_l3len(msg);
+	}
 
-	/* Send BSSGP-DL-UNITDATA.req */
+	/* Send GRR-UNITDATA.req */
 	gprs_llc_prim_call_down_cb(llc_prim);
 	return 0;
 }
