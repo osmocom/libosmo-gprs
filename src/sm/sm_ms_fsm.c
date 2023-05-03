@@ -30,6 +30,8 @@
 
 #define X(s) (1 << (s))
 
+#define TIMER_DELAY_FREE 0
+
 static const struct osmo_tdef_state_timeout sm_ms_fsm_timeouts[32] = {
 	[GPRS_SM_MS_ST_PDP_INACTIVE] = {},
 	[GPRS_SM_MS_ST_PDP_ACTIVE_PENDING] = { .T = 3380 },
@@ -43,9 +45,13 @@ static const struct osmo_tdef_state_timeout sm_ms_fsm_timeouts[32] = {
 
 static void st_sm_ms_pdp_inactive_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_state)
 {
-	/* PDP became inactive, there's no use in keeping it */
-	struct gprs_sm_ms_fsm_ctx *ctx = (struct gprs_sm_ms_fsm_ctx *)fi->priv;
-	gprs_sm_entity_free(ctx->sme);
+	/* PDP became inactive, there's no use in keeping it.
+	 * Schedule asynchronous release of PDP. It will automatically be
+	 * aborted as a consequence of changing state if user decides to
+	 * automatically activate the PDP ctx in this same code path as an
+	 * answer to a primitive submitted to it. */
+	fi->T = TIMER_DELAY_FREE;
+	osmo_timer_schedule(&fi->timer, 0, 0);
 }
 
 static void st_sm_ms_pdp_inactive(struct osmo_fsm_inst *fi, uint32_t event, void *data)
@@ -149,6 +155,9 @@ static int sm_ms_fsm_timer_cb(struct osmo_fsm_inst *fi)
 	struct gprs_sm_ms_fsm_ctx *ctx = (struct gprs_sm_ms_fsm_ctx *)fi->priv;
 
 	switch (fi->T) {
+	case TIMER_DELAY_FREE:
+		gprs_sm_entity_free(ctx->sme);
+		break;
 	case 3380:
 		ctx->act_pdp_ctx_attempts++;
 		LOGPFSML(ctx->fi, LOGL_INFO, "T3380 timeout attempts=%u\n", ctx->act_pdp_ctx_attempts);
