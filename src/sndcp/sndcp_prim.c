@@ -637,9 +637,14 @@ static int gprs_sndcp_prim_handle_sndcp_snsm_activate_ind(struct osmo_gprs_sndcp
 	* return rc;
 	*/
 
-	/* TS 24.007 C.6 "LLC link exists already, only XID exchange" */
-	sne->xid_req_in_transit_orig_snsm_activate_ind = true;
-	rc = gprs_sndcp_sne_submit_llc_ll_xid_req(sne);
+	if (sne->l3xid_req && sne->l3xid_req_len > 0) {
+		/* TS 24.007 C.6 "LLC link exists already, only XID exchange" */
+		sne->xid_req_in_transit_orig_snsm_activate_ind = true;
+		rc = gprs_sndcp_sne_submit_llc_ll_xid_req(sne);
+	} else {
+		/* TS 24.007 C.6 "LLC link exists already, no XID exchange"*/
+		rc = gprs_sndcp_sne_submit_snsm_activate_rsp(sne);
+	}
 	return rc;
 }
 

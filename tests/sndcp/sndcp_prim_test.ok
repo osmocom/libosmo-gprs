@@ -5,7 +5,6 @@ test_sndcp_prim_up_cb(): Rx SN-UNITDATA.indication TLLI=0xe1c5d364 SAPI=SNDCP3 N
 test_sndcp_prim_down_cb(): Rx LL-UNITDATA.request TLLI=0xe1c5d364 SAPI=SNDCP3 L3=[65 00 00 00 73 6f 6d 65 2d 6e 70 64 75 2d 64 61 74 61 2d 6c 69 6b 65 2d 61 6e 2d 69 70 2d 70 6b 74 00 ]
 ==== test_sndcp_prim_net() [end] ====
 ==== test_sndcp_prim_ms() [start] ====
-test_sndcp_prim_down_cb(): Rx LL-XID.request
 test_sndcp_prim_snsm_cb(): Rx SNSM-ACTIVATE.response
 test_sndcp_prim_down_cb(): Rx LL-XID.request
 test_sndcp_prim_up_cb(): Rx SN-XID.confirm
