@@ -208,7 +208,7 @@ int gprs_sm_submit_smreg_pdp_act_cnf(const struct gprs_sm_entity *sme, enum gsm4
 
 	sm_prim_tx = gprs_sm_prim_alloc_smreg_pdp_act_cnf();
 	sm_prim_tx->smreg.ms_id = sme->ms->ms_id;
-	sm_prim_tx->smreg.pdp_act_cnf.accepted = (cause != 0);
+	sm_prim_tx->smreg.pdp_act_cnf.accepted = (cause == 0);
 	sm_prim_tx->smreg.pdp_act_cnf.nsapi = sme->nsapi;
 	sm_prim_tx->smreg.pdp_act_cnf.pco_len = sme->pco_len;
 	if (sme->pco_len)
