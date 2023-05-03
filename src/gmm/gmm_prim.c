@@ -508,10 +508,29 @@ static int gprs_gmm_prim_handle_gmmsm_establish_req(struct osmo_gprs_gmm_prim *g
 /* TS 24.007 9.5.1.5 GMMSM-Unitdata.request:*/
 static int gprs_gmm_prim_handle_gmmsm_unitdata_req(struct osmo_gprs_gmm_prim *gmm_prim)
 {
+	struct osmo_gprs_llc_prim *llc_prim;
 	int rc;
+	struct gprs_gmm_entity *gmme;
 
-	rc = gprs_gmm_prim_handle_unsupported(gmm_prim);
+	gmme = gprs_gmm_find_gmme_by_sess_id(gmm_prim->gmmsm.sess_id);
+	if (!gmme) {
+		LOGGMM(LOGL_ERROR, "No GMME with sess_id=%u found\n",
+			gmm_prim->gmmsm.sess_id);
+		return -ENOENT;
+	}
 
+	llc_prim = osmo_gprs_llc_prim_alloc_ll_unitdata_req(
+			gmme->tlli, OSMO_GPRS_LLC_SAPI_GMM,
+			gmm_prim->gmmsm.unitdata_req.smpdu,
+			gmm_prim->gmmsm.unitdata_req.smpdu_len);
+	llc_prim->ll.unitdata_req.radio_prio = gmme->radio_prio;
+	/* TODO:
+	llc_prim->ll.qos_params[3];
+	llc_prim->ll.apply_gea;
+	llc_prim->ll.apply_gia;
+	*/
+
+	rc = gprs_gmm_prim_call_llc_down_cb(llc_prim);
 	return rc;
 }
 
@@ -660,15 +679,39 @@ static int gprs_gmm_prim_handle_ll_unitdata_ind(struct osmo_gprs_llc_prim *llc_p
 {
 	struct gprs_gmm_entity *gmme;
 	int rc = 0;
+	struct gsm48_hdr *gh = (struct gsm48_hdr *)llc_prim->ll.l3_pdu;
+	unsigned int len = llc_prim->ll.l3_pdu_len;
+	uint8_t pdisc;
+	struct osmo_gprs_gmm_prim *gmm_prim;
+
 	gmme = gprs_gmm_find_gmme_by_tlli(llc_prim->ll.tlli);
 	if (!gmme) {
 		LOGGMM(LOGL_NOTICE, "Rx %s: Unknown TLLI 0x%08x\n",
 		       osmo_gprs_llc_prim_name(llc_prim), llc_prim->ll.tlli);
 		return -ENOENT;
 	}
-	rc = gprs_gmm_rx(gmme,
-			 (struct gsm48_hdr *)llc_prim->ll.l3_pdu,
-			 llc_prim->ll.l3_pdu_len);
+
+	if (len < sizeof(struct gsm48_hdr)) {
+		LOGGMME(gmme, LOGL_ERROR, "Rx GMM message too short! len=%u\n", len);
+		return -EINVAL;
+	}
+
+	pdisc = gsm48_hdr_pdisc(gh);
+
+	switch (pdisc) {
+	case GSM48_PDISC_MM_GPRS:
+		rc = gprs_gmm_rx(gmme, gh, len);
+		break;
+	case GSM48_PDISC_SM_GPRS:
+		/* Forward up to SM layer: */
+		gmm_prim = gprs_gmm_prim_alloc_gmmsm_unitdata_ind(gmme->sess_id,
+								  (uint8_t *)gh,
+								  len);
+		rc = gprs_gmm_prim_call_up_cb(gmm_prim);
+		break;
+	default:
+		OSMO_ASSERT(0);
+	}
 
 	return rc;
 }

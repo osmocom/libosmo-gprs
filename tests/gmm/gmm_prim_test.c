@@ -204,6 +204,12 @@ int test_gmm_prim_up_cb(struct osmo_gprs_gmm_prim *gmm_prim, void *user_data)
 			       gmm_prim->gmmsm.establish_cnf.accepted,
 			       gmm_prim->gmmsm.establish_cnf.rej.cause);
 			break;
+		case OSMO_PRIM(OSMO_GPRS_GMM_GMMSM_UNITDATA, PRIM_OP_INDICATION):
+			printf("%s(): Rx %s sess_id=%u sm_pdu=%s\n", __func__, pdu_name,
+			       gmm_prim->gmmsm.sess_id,
+			       osmo_hexdump(gmm_prim->gmmsm.unitdata_ind.smpdu,
+					    gmm_prim->gmmsm.unitdata_ind.smpdu_len));
+			break;
 		//case OSMO_PRIM(OSMO_GPRS_GMM_GMMSM_DETACH, PRIM_OP_CONFIRM):
 		//	printf("%s(): Rx %s detach_type='%s'\n", __func__, pdu_name,
 		//	       osmo_gprs_gmm_detach_ms_type_name(gmm_prim->gmmsm.detach_cnf.detach_type));
@@ -355,6 +361,7 @@ static void test_gmm_prim_ms_gmmsm(void)
 	char *imei = "42342342342342";
 	char *imeisv = "4234234234234275";
 	uint32_t sess_id = 1234;
+	uint8_t sm_pdu[] = {GSM48_PDISC_SM_GPRS, 0x28, 0x29, 0x30}; /* fake SM PDU */
 
 	printf("==== %s() [start] ====\n", __func__);
 
@@ -400,7 +407,18 @@ static void test_gmm_prim_ms_gmmsm(void)
 	/* As a result, MS answers GMM Attach Complete */
 	/* As a result, MS submits GMMSM Establish.cnf */
 
-	/* ... */
+	/* SM layer submits Activate PDP Context Req: */
+	gmm_prim = osmo_gprs_gmm_prim_alloc_gmmsm_unitdata_req(sess_id, sm_pdu, sizeof(sm_pdu));
+	rc = osmo_gprs_gmm_prim_upper_down(gmm_prim);
+	OSMO_ASSERT(rc == 0);
+	/* As a result, GMM submits LLC-LL-UNITDATA.req */
+
+	/* Network answers with Activate PDP Ctx Accept, LLC submits the pdu up to GMM: */
+	llc_prim = gprs_llc_prim_alloc_ll_unitdata_ind(rand_tlli, OSMO_GPRS_LLC_SAPI_GMM, sm_pdu, sizeof(sm_pdu));
+	OSMO_ASSERT(llc_prim);
+	rc = osmo_gprs_gmm_prim_llc_lower_up(llc_prim);
+	OSMO_ASSERT(rc == 0);
+	/* As a result, GMM submits GMMSM-UNITDATA.ind */
 
 	/* DEACT: TODO */
 

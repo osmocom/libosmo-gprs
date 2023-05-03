@@ -106,6 +106,7 @@ struct gprs_gmm_entity *gprs_gmm_gmme_find_or_create_by_ptmsi_imsi(uint32_t ptms
 struct gprs_gmm_entity *gprs_gmm_find_gmme_by_ptmsi(uint32_t ptmsi);
 struct gprs_gmm_entity *gprs_gmm_find_gmme_by_imsi(const char *imsi);
 struct gprs_gmm_entity *gprs_gmm_find_gmme_by_tlli(uint32_t tlli);
+struct gprs_gmm_entity *gprs_gmm_find_gmme_by_sess_id(uint32_t id);
 uint32_t gprs_gmm_alloc_rand_tlli(void);
 int gprs_gmm_rx(struct gprs_gmm_entity *gmme, struct gsm48_hdr *gh, unsigned int len);
 int gprs_gmm_tx_att_req(struct gprs_gmm_entity *gmme,

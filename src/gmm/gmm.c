@@ -236,6 +236,17 @@ struct gprs_gmm_entity *gprs_gmm_find_gmme_by_tlli(uint32_t tlli)
 	return NULL;
 }
 
+struct gprs_gmm_entity *gprs_gmm_find_gmme_by_sess_id(uint32_t id)
+{
+	struct gprs_gmm_entity *gmme;
+
+	llist_for_each_entry(gmme, &g_gmm_ctx->gmme_list, list) {
+		if (gmme->sess_id == id)
+			return gmme;
+	}
+	return NULL;
+}
+
 uint32_t gprs_gmm_alloc_rand_tlli(void)
 {
 	/* 3GPP TS 23.003 Table 1: Type of TLLI = Random TLLI_
@@ -754,10 +765,6 @@ static int gprs_gmm_rx_auth_ciph_req(struct gprs_gmm_entity *gmme, struct gsm48_
 int gprs_gmm_rx(struct gprs_gmm_entity *gmme, struct gsm48_hdr *gh, unsigned int len)
 {
 	int rc = 0;
-	if (len < sizeof(struct gsm48_hdr)) {
-		LOGGMME(gmme, LOGL_ERROR, "Rx GMM message too short! len=%u\n", len);
-		return -EINVAL;
-	}
 
 	switch (gh->msg_type) {
 	case GSM48_MT_GMM_ATTACH_ACK:
