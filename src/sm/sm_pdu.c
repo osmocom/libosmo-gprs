@@ -1,4 +1,4 @@
-/* SM PDUs, 3GPP TS 9.5 24.008 Session Management Messages */
+/* SM PDUs, 3GPP TS 24.008 Session Management Messages */
 /* (C) 2023 by Sysmocom s.f.m.c. GmbH
  *
  * All Rights Reserved
@@ -60,6 +60,7 @@ static uint8_t gprs_sm_pdp_addr_enc_ietf(struct gprs_sm_pdp_addr *out,
 					 const struct osmo_sockaddr *pdp_addr_v6)
 {
 	memset(out, 0, sizeof(*out));
+	unsigned int len = 2;
 
 	out->spare = 0x00;
 	out->organization = GPRS_SM_PDP_ADDR_ORG_IETF;
@@ -67,18 +68,34 @@ static uint8_t gprs_sm_pdp_addr_enc_ietf(struct gprs_sm_pdp_addr *out,
 
 	switch (pdp_addr_ietf_type) {
 	case OSMO_GPRS_SM_PDP_ADDR_IETF_IPV6:
-		memcpy(out->addr6, pdp_addr_v6->u.sin6.sin6_addr.s6_addr, sizeof(out->addr6));
-		return 2 + sizeof(out->addr6);
+		if (pdp_addr_v6) {
+			memcpy(out->addr6, pdp_addr_v6->u.sin6.sin6_addr.s6_addr, sizeof(out->addr6));
+			len += sizeof(out->addr6);
+		}
+		break;
 	case OSMO_GPRS_SM_PDP_ADDR_IETF_IPV4V6:
-		out->both.addr = pdp_addr_v4->u.sin.sin_addr.s_addr;
-		memcpy(out->both.addr6,  pdp_addr_v6->u.sin6.sin6_addr.s6_addr, sizeof(out->both.addr6));
-		return 2 + sizeof(out->both.addr) + sizeof(out->both.addr6);
+		if (pdp_addr_v4) {
+			out->both.addr = pdp_addr_v4->u.sin.sin_addr.s_addr;
+			len += sizeof(out->both.addr);
+			if (pdp_addr_v6) {
+				memcpy(out->both.addr6,  pdp_addr_v6->u.sin6.sin6_addr.s6_addr, sizeof(out->both.addr6));
+				len += sizeof(out->both.addr6);
+			}
+		} else if (pdp_addr_v6) {
+			memcpy(out->addr6, pdp_addr_v6->u.sin6.sin6_addr.s6_addr, sizeof(out->addr6));
+			len += sizeof(out->addr6);
+		}
+		break;
 	case OSMO_GPRS_SM_PDP_ADDR_IETF_IPV4:
 	default:
 		/* All other values shall be interpreted as IPv4 address in this version of the protocol */
-		out->addr = pdp_addr_v4->u.sin.sin_addr.s_addr;
-		return 2 + sizeof(out->both.addr);
+		if (pdp_addr_v4) {
+			out->addr = pdp_addr_v4->u.sin.sin_addr.s_addr;
+			len += sizeof(out->both.addr);
+		}
+		break;
 	}
+	return len;
 }
 
 int gprs_sm_pdp_addr_dec(const struct gprs_sm_pdp_addr *pdp_addr,
@@ -153,7 +170,7 @@ int gprs_sm_pdp_addr_dec(const struct gprs_sm_pdp_addr *pdp_addr,
 	return 0;
 }
 
-/* Chapter 9.4.1: Attach request */
+/* Chapter 9.5.1: Activate PDP Context Request */
 int gprs_sm_build_act_pdp_ctx_req(struct gprs_sm_entity *sme,
 			      struct msgb *msg)
 {
@@ -180,8 +197,8 @@ int gprs_sm_build_act_pdp_ctx_req(struct gprs_sm_entity *sme,
 	l = msgb_put(msg, 1); /* len */
 	*l = gprs_sm_pdp_addr_enc_ietf((struct gprs_sm_pdp_addr *)msg->tail,
 					sme->pdp_addr_ietf_type,
-					&sme->pdp_addr_v4,
-					&sme->pdp_addr_v6);
+					!osmo_sockaddr_is_any(&sme->pdp_addr_v4) ? &sme->pdp_addr_v4 : NULL,
+					!osmo_sockaddr_is_any(&sme->pdp_addr_v6) ? &sme->pdp_addr_v6 : NULL);
 	msgb_put(msg, *l);
 
 	/* 10.5.6.1 Access point name (Optional) */
