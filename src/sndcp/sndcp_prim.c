@@ -304,7 +304,10 @@ int gprs_sndcp_prim_call_up_cb(struct osmo_gprs_sndcp_prim *sndcp_prim)
 		rc = g_sndcp_ctx->sndcp_up_cb(sndcp_prim, g_sndcp_ctx->sndcp_up_cb_user_data);
 	else
 		rc = sndcp_up_cb_dummy(sndcp_prim, g_sndcp_ctx->sndcp_up_cb_user_data);
-	msgb_free(sndcp_prim->oph.msg);
+	if (rc != 1)
+		msgb_free(sndcp_prim->oph.msg);
+	else
+		rc = 0;
 	return rc;
 }
 
@@ -443,7 +446,10 @@ int gprs_sndcp_prim_call_down_cb(struct osmo_gprs_llc_prim *llc_prim)
 		rc = g_sndcp_ctx->sndcp_down_cb(llc_prim, g_sndcp_ctx->sndcp_down_cb_user_data);
 	else
 		rc = sndcp_down_cb_dummy(llc_prim, g_sndcp_ctx->sndcp_down_cb_user_data);
-	msgb_free(llc_prim->oph.msg);
+	if (rc != 1)
+		msgb_free(llc_prim->oph.msg);
+	else
+		rc = 0;
 	return rc;
 }
 
@@ -581,7 +587,10 @@ int gprs_sndcp_prim_call_snsm_cb(struct osmo_gprs_sndcp_prim *sndcp_prim)
 		rc = g_sndcp_ctx->sndcp_snsm_cb(sndcp_prim, g_sndcp_ctx->sndcp_snsm_cb_user_data);
 	else
 		rc = sndcp_snsm_cb_dummy(sndcp_prim, g_sndcp_ctx->sndcp_snsm_cb_user_data);
-	msgb_free(sndcp_prim->oph.msg);
+	if (rc != 1)
+		msgb_free(sndcp_prim->oph.msg);
+	else
+		rc = 0;
 	return rc;
 }
 
