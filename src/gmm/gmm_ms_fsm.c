@@ -102,7 +102,7 @@ static void st_gmm_ms_deregistered(struct osmo_fsm_inst *fi, uint32_t event, voi
 static void st_gmm_ms_registered_initiated(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	struct gprs_gmm_ms_fsm_ctx *ctx = (struct gprs_gmm_ms_fsm_ctx *)fi->priv;
-	uint8_t cause;
+	uint8_t cause = GMM_CAUSE_MAC_FAIL;
 	int rc;
 	struct gprs_gmm_ms_fsm_attach_ctx att;
 
@@ -119,9 +119,6 @@ static void st_gmm_ms_registered_initiated(struct osmo_fsm_inst *fi, uint32_t ev
 		 * Deregistered reset attach ctx, hence do a tmp copy here: */
 		memcpy(&att, &ctx->attach, sizeof(att));
 		gmm_ms_fsm_state_chg(fi, GPRS_GMM_MS_ST_DEREGISTERED);
-
-		if (event == GPRS_GMM_MS_EV_LOW_LVL_FAIL)
-			cause = GMM_CAUSE_MAC_FAIL;
 
 		if (att.explicit_att) {
 			/* Submit GMMREG-ATTACH-REJ as per TS 24.007 Annex C.1 */
