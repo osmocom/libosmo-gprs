@@ -209,6 +209,7 @@ int gprs_sm_build_act_pdp_ctx_req(struct gprs_sm_entity *sme,
 		if (rc < 0)
 			return -EINVAL;
 		*l = rc;
+		msgb_put(msg, *l);
 	}
 
 	/* 10.5.6.3 Protocol configuration options (Optional) */
