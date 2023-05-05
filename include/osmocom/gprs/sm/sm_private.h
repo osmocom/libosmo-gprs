@@ -127,6 +127,7 @@ struct gprs_sm_ms {
 
 	struct {
 		uint32_t ptmsi;
+		uint32_t tlli;
 		char imsi[OSMO_IMSI_BUF_SIZE];
 		char imei[GSM23003_IMEI_NUM_DIGITS + 1];
 		char imeisv[GSM23003_IMEISV_NUM_DIGITS+1];

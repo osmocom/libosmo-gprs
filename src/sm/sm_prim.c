@@ -25,6 +25,7 @@
 #include <osmocom/core/msgb.h>
 #include <osmocom/core/utils.h>
 #include <osmocom/core/logging.h>
+#include <osmocom/gsm/gsm48.h>
 
 #include <osmocom/gprs/sm/sm.h>
 #include <osmocom/gprs/sm/sm_prim.h>
@@ -466,17 +467,23 @@ static int gprs_sm_prim_handle_gmmsm_establish_cnf(struct osmo_gprs_gmm_prim *gm
 {
 	struct osmo_gprs_gmm_gmmsm_prim *gmmsm = &gmm_prim->gmmsm;
 	struct gprs_sm_entity *sme;
-	int rc, ev;
+	int rc;
 
 	sme = gprs_sm_find_sme_by_sess_id(gmmsm->sess_id);
 	if (!sme) {
 		LOGSM(LOGL_ERROR, "Rx GMMSM-ESTABLISH.cnf for non existing SM Entity\n");
 		return -EINVAL;
 	}
-
-	ev = gmmsm->establish_cnf.accepted ?
-		GPRS_SM_MS_EV_RX_GMM_ESTABLISH_CNF : GPRS_SM_MS_EV_RX_GMM_ESTABLISH_REJ;
-	rc = osmo_fsm_inst_dispatch(sme->ms_fsm.fi, ev, NULL);
+	if (gmmsm->establish_cnf.accepted) {
+		/* Update allocated PTMSI: */
+		if (gmm_prim->gmmsm.establish_cnf.acc.allocated_ptmsi != GSM_RESERVED_TMSI)
+			sme->ms->gmm.ptmsi = gmm_prim->gmmsm.establish_cnf.acc.allocated_ptmsi;
+		/* Set allocated TLLI: */
+		sme->ms->gmm.tlli = gmm_prim->gmmsm.establish_cnf.acc.allocated_tlli;
+		rc = osmo_fsm_inst_dispatch(sme->ms_fsm.fi, GPRS_SM_MS_EV_RX_GMM_ESTABLISH_CNF, NULL);
+	} else {
+		rc = osmo_fsm_inst_dispatch(sme->ms_fsm.fi, GPRS_SM_MS_EV_RX_GMM_ESTABLISH_REJ, NULL);
+	}
 
 	return rc;
 }

@@ -85,6 +85,10 @@ struct osmo_gprs_sm_smreg_prim {
 					uint8_t radio_prio;	/* TS 24.008 10.5.7.2 */
 					uint8_t qos[OSMO_GPRS_SM_QOS_MAXLEN];
 					uint8_t qos_len;
+					struct {
+						uint32_t allocated_ptmsi;
+						uint32_t allocated_tlli;
+					} gmm;
 				} acc;
 				struct {
 					uint8_t cause;

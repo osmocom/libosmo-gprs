@@ -128,7 +128,7 @@ struct gprs_sm_ms *gprs_sm_find_ms_by_tlli(uint32_t tlli)
 	struct gprs_sm_ms *ms;
 
 	llist_for_each_entry(ms, &g_sm_ctx->ms_list, list) {
-		if (ms->gmm.ptmsi == tlli)
+		if (ms->gmm.tlli == tlli)
 			return ms;
 	}
 	return NULL;
@@ -222,6 +222,8 @@ int gprs_sm_submit_smreg_pdp_act_cnf(const struct gprs_sm_entity *sme, enum gsm4
 		sm_prim_tx->smreg.pdp_act_cnf.acc.qos_len = sme->qos_len;
 		if (sme->qos_len)
 			memcpy(sm_prim_tx->smreg.pdp_act_cnf.acc.qos, &sme->qos, sme->qos_len);
+		sm_prim_tx->smreg.pdp_act_cnf.acc.gmm.allocated_ptmsi = sme->ms->gmm.ptmsi;
+		sm_prim_tx->smreg.pdp_act_cnf.acc.gmm.allocated_tlli = sme->ms->gmm.tlli;
 	} else {
 		sm_prim_tx->smreg.pdp_act_cnf.rej.cause = cause;
 	}
@@ -237,7 +239,7 @@ int gprs_sm_submit_snsm_act_ind(const struct gprs_sm_entity *sme)
 	int rc;
 
 	sndcp_prim_tx = osmo_gprs_sndcp_prim_alloc_snsm_activate_ind(
-				sme->ms->gmm.ptmsi,
+				sme->ms->gmm.tlli,
 				sme->nsapi,
 				sme->llc_sapi);
 	//sndcp_prim_tx->snsm.activat_ind.qos_params = ; /* TODO */
