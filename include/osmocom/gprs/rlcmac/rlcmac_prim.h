@@ -49,13 +49,17 @@ struct osmo_gprs_rlcmac_grr_prim {
 		struct {
 			uint8_t sapi;
 			uint8_t radio_prio;
-			uint8_t qos_params[3];
+			struct {
+				uint8_t peak_throughput;
+			} qos_params; /* 3GPP TS 44.064 7.2.3.1 */
 		} data_req;
 		/* OSMO_GPRS_RLCMAC_GRR_UNITDATA | Req */
 		struct {
 			uint8_t sapi;
 			uint8_t radio_prio;
-			uint8_t qos_params[3];
+			struct {
+				uint8_t peak_throughput;
+			} qos_params; /* 3GPP TS 44.064 7.2.3.2 */
 			uint8_t cause;
 		} unitdata_req;
 	};

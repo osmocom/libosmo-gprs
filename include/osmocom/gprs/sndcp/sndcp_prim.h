@@ -125,7 +125,8 @@ struct osmo_gprs_sndcp_snsm_prim {
 		struct {
 			uint8_t nsapi;
 			uint8_t sapi;
-			uint8_t qos_params[3];
+			uint8_t qos_profile[OSMO_GPRS_SNDCP_QOS_MAXLEN];
+			uint8_t qos_profile_len;
 			uint8_t radio_prio;
 		} activate_ind;
 		/* OSMO_GPRS_SNDCP_SNSM_ACTIVATE | Rsp */
@@ -147,7 +148,8 @@ struct osmo_gprs_sndcp_snsm_prim {
 		struct {
 			uint8_t nsapi;
 			uint8_t sapi;
-			uint8_t qos_params[3];
+			uint8_t qos_profile[OSMO_GPRS_SNDCP_QOS_MAXLEN];
+			uint8_t qos_profile_len;
 			uint8_t radio_prio;
 			unsigned int tx_npdu_nr;
 			unsigned int rx_npdu_nr;

@@ -386,7 +386,7 @@ static int gprs_gmm_tx_id_resp(struct gprs_gmm_entity *gmme,
 	llc_prim->ll.l3_pdu = msg->l3h;
 	llc_prim->ll.l3_pdu_len = msgb_l3len(msg);
 	/* TODO:
-	llc_prim->ll.qos_params[3];
+	llc_prim->ll.qos_params.*;
 	llc_prim->ll.radio_prio;
 	llc_prim->ll.apply_gea;
 	llc_prim->ll.apply_gia;
@@ -420,7 +420,7 @@ int gprs_gmm_tx_ciph_auth_resp(const struct gprs_gmm_entity *gmme, const uint8_t
 	llc_prim->ll.l3_pdu = msg->l3h;
 	llc_prim->ll.l3_pdu_len = msgb_l3len(msg);
 	/* TODO:
-	llc_prim->ll.qos_params[3];
+	llc_prim->ll.qos_params.*;
 	llc_prim->ll.radio_prio;
 	llc_prim->ll.apply_gea;
 	llc_prim->ll.apply_gia;
@@ -457,7 +457,7 @@ int gprs_gmm_tx_att_req(struct gprs_gmm_entity *gmme,
 	llc_prim->ll.l3_pdu = msg->l3h;
 	llc_prim->ll.l3_pdu_len = msgb_l3len(msg);
 	/* TODO:
-	llc_prim->ll.qos_params[3];
+	llc_prim->ll.qos_params.*;
 	llc_prim->ll.radio_prio;
 	llc_prim->ll.apply_gea;
 	llc_prim->ll.apply_gia;
@@ -489,7 +489,7 @@ static int gprs_gmm_tx_att_compl(struct gprs_gmm_entity *gmme)
 	llc_prim->ll.l3_pdu = msg->l3h;
 	llc_prim->ll.l3_pdu_len = msgb_l3len(msg);
 	/* TODO:
-	llc_prim->ll.qos_params[3];
+	llc_prim->ll.qos_params.*;
 	llc_prim->ll.radio_prio;
 	llc_prim->ll.apply_gea;
 	llc_prim->ll.apply_gia;
@@ -523,7 +523,7 @@ int gprs_gmm_tx_detach_req(struct gprs_gmm_entity *gmme,
 	llc_prim->ll.l3_pdu = msg->l3h;
 	llc_prim->ll.l3_pdu_len = msgb_l3len(msg);
 	/* TODO:
-	llc_prim->ll.qos_params[3];
+	llc_prim->ll.qos_params.*;
 	llc_prim->ll.radio_prio;
 	llc_prim->ll.apply_gea;
 	llc_prim->ll.apply_gia;

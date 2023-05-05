@@ -5,6 +5,9 @@
 #include <stdint.h>
 #include <stddef.h>
 
+/* 3GPP TS 24.008 10.5.6.5 Quality of service */
+#define OSMO_GPRS_SNDCP_QOS_MAXLEN 22
+
 enum osmo_gprs_sndcp_location {
 	OSMO_GPRS_SNDCP_LOCATION_UNSET,
 	OSMO_GPRS_SNDCP_LOCATION_MS,

@@ -525,7 +525,7 @@ static int gprs_gmm_prim_handle_gmmsm_unitdata_req(struct osmo_gprs_gmm_prim *gm
 			gmm_prim->gmmsm.unitdata_req.smpdu_len);
 	llc_prim->ll.unitdata_req.radio_prio = gmme->radio_prio;
 	/* TODO:
-	llc_prim->ll.qos_params[3];
+	llc_prim->ll.qos_params.*;
 	llc_prim->ll.apply_gea;
 	llc_prim->ll.apply_gia;
 	*/

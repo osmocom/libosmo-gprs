@@ -167,7 +167,12 @@ struct osmo_gprs_llc_ll_prim {
 		} xid;
 		/* OSMO_GPRS_LLC_LL_DATA | Req */
 		struct {
-			uint8_t qos_params[3];
+			struct {
+				uint8_t peak_throughput;
+				/* SGSN-only: */
+				uint8_t precedence_class;
+				uint8_t delay_class;
+			} qos_params; /* 3GPP TS 44.064 7.2.2.5 */
 			uint8_t reference; /* TODO: confirm type */
 			uint8_t radio_prio; /* only for the MS side */
 		} data_req;
@@ -177,7 +182,13 @@ struct osmo_gprs_llc_ll_prim {
 		} data_cnf;
 		/* OSMO_GPRS_LLC_LL_UNITDATA | Req */
 		struct {
-			uint8_t qos_params[3];
+			struct {
+				uint8_t reliability_class;
+				uint8_t peak_throughput;
+				/* SGSN-only: */
+				uint8_t precedence_class;
+				uint8_t delay_class;
+			} qos_params; /* 3GPP TS 44.064 7.2.2.6 */
 			uint8_t radio_prio; /* only for the MS side */
 			bool apply_gea; /* Cipher */
 			bool apply_gia; /* Integrity Protection */
@@ -209,14 +220,17 @@ struct osmo_gprs_llc_grr_prim {
 		struct {
 			uint8_t sapi;
 			uint8_t radio_prio;
-			uint8_t qos_params[3];
-
+			struct {
+				uint8_t peak_throughput;
+			} qos_params; /* 3GPP TS 44.064 7.2.3.1 */
 		} data_req;
 		/* OSMO_GPRS_LLC_GRR_UNITDATA| Req */
 		struct {
 			uint8_t sapi;
 			uint8_t radio_prio;
-			uint8_t qos_params[3];
+			struct {
+				uint8_t peak_throughput;
+			} qos_params;  /* 3GPP TS 44.064 7.2.3.2 */
 			uint8_t cause;
 		} unitdata_req;
 	};
@@ -237,7 +251,11 @@ struct osmo_gprs_llc_bssgp_prim {
 	union {
 		/* OSMO_GPRS_LLC_BSSGP_DL_UNITDATA | Req */
 		struct {
-			uint8_t qos_params[3];
+			struct {
+				uint8_t precedence_class;
+				uint8_t delay_class;
+				uint8_t peak_throughput;
+			} qos_params;  /* 3GPP TS 44.064 7.2.4.1 */
 			bool rlc_confirm;
 			uint8_t sapi;
 			/* TODO: MOCN specific parameters:
