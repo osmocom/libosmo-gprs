@@ -489,7 +489,7 @@ static int gprs_gmm_prim_handle_gmmsm_establish_req(struct osmo_gprs_gmm_prim *g
 	gmme->sess_id = gmm_prim->gmmsm.sess_id;
 
 	if (gmme->ms_fsm.fi->state == GPRS_GMM_MS_ST_REGISTERED) {
-		rc = gprs_gmm_submit_gmmsm_establish_cnf(gmme, gmm_prim->gmmsm.sess_id, true, 0);
+		rc = gprs_gmm_submit_gmmsm_establish_cnf(gmme, true, 0);
 		return rc;
 	}
 

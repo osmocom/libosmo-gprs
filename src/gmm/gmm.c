@@ -288,6 +288,7 @@ int gprs_gmm_submit_gmmreg_attach_cnf(struct gprs_gmm_entity *gmme, bool accepte
 	gmm_prim_tx->gmmreg.attach_cnf.accepted = accepted;
 	if (accepted) {
 		gmm_prim_tx->gmmreg.attach_cnf.acc.allocated_ptmsi = gmme->ptmsi;
+		gmm_prim_tx->gmmreg.attach_cnf.acc.allocated_tlli = gmme->tlli;
 	} else {
 		gmm_prim_tx->gmmreg.attach_cnf.rej.cause = cause;
 	}
@@ -323,12 +324,16 @@ static int gprs_gmm_submit_gmmreg_sim_auth_ind(struct gprs_gmm_entity *gmme)
 	return rc;
 }
 
-int gprs_gmm_submit_gmmsm_establish_cnf(struct gprs_gmm_entity *gmme, uint32_t sess_id, bool accepted, uint8_t cause)
+int gprs_gmm_submit_gmmsm_establish_cnf(struct gprs_gmm_entity *gmme, bool accepted, uint8_t cause)
 {
 	struct osmo_gprs_gmm_prim *gmm_prim_tx;
 	int rc;
 
-	gmm_prim_tx = gprs_gmm_prim_alloc_gmmsm_establish_cnf(sess_id, cause);
+	gmm_prim_tx = gprs_gmm_prim_alloc_gmmsm_establish_cnf(gmme->sess_id, cause);
+	if (accepted) {
+		gmm_prim_tx->gmmsm.establish_cnf.acc.allocated_ptmsi = gmme->ptmsi;
+		gmm_prim_tx->gmmsm.establish_cnf.acc.allocated_tlli = gmme->tlli;
+	}
 
 	rc = gprs_gmm_prim_call_up_cb(gmm_prim_tx);
 	return rc;

@@ -129,9 +129,7 @@ static void st_gmm_ms_registered_initiated(struct osmo_fsm_inst *fi, uint32_t ev
 
 		if (att.implicit_att) {
 			/* Submit GMMSM-ESTABLISH-CNF as per TS 24.007 Annex C.3 */
-			rc = gprs_gmm_submit_gmmsm_establish_cnf(ctx->gmme,
-								 ctx->gmme->sess_id,
-								 false, cause);
+			rc = gprs_gmm_submit_gmmsm_establish_cnf(ctx->gmme, false, cause);
 			if (rc < 0)
 				return;
 		}
@@ -147,7 +145,7 @@ static void st_gmm_ms_registered_initiated(struct osmo_fsm_inst *fi, uint32_t ev
 		}
 		if (ctx->attach.implicit_att) {
 			/* Submit GMMSM-ESTABLISH-CNF as per TS 24.007 Annex C.3 */
-			rc = gprs_gmm_submit_gmmsm_establish_cnf(ctx->gmme, ctx->gmme->sess_id, true, 0);
+			rc = gprs_gmm_submit_gmmsm_establish_cnf(ctx->gmme, true, 0);
 			if (rc < 0)
 				return;
 		}

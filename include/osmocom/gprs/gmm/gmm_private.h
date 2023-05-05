@@ -118,7 +118,7 @@ int gprs_gmm_tx_detach_req(struct gprs_gmm_entity *gmme,
 int gprs_gmm_tx_ciph_auth_resp(const struct gprs_gmm_entity *gmme, const uint8_t *sres);
 
 int gprs_gmm_submit_gmmreg_attach_cnf(struct gprs_gmm_entity *gmme, bool accepted, uint8_t cause);
-int gprs_gmm_submit_gmmsm_establish_cnf(struct gprs_gmm_entity *gmme, uint32_t sess_id, bool accepted, uint8_t cause);
+int gprs_gmm_submit_gmmsm_establish_cnf(struct gprs_gmm_entity *gmme, bool accepted, uint8_t cause);
 int gprs_gmm_submit_llgmm_assing_req(const struct gprs_gmm_entity *gmme);
 
 #define LOGGMME(gmme, level, fmt, args...) \
