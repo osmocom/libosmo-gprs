@@ -199,10 +199,13 @@ int test_gmm_prim_up_cb(struct osmo_gprs_gmm_prim *gmm_prim, void *user_data)
 	case OSMO_GPRS_GMM_SAP_GMMSM:
 		switch (OSMO_PRIM_HDR(&gmm_prim->oph)) {
 		case OSMO_PRIM(OSMO_GPRS_GMM_GMMSM_ESTABLISH, PRIM_OP_CONFIRM):
-			printf("%s(): Rx %s sess_id=%u accepted=%u rej_cause=%u\n", __func__, pdu_name,
-			       gmm_prim->gmmsm.sess_id,
-			       gmm_prim->gmmsm.establish_cnf.accepted,
-			       gmm_prim->gmmsm.establish_cnf.rej.cause);
+			if (gmm_prim->gmmsm.establish_cnf.accepted)
+				printf("%s(): Rx %s sess_id=%u accepted\n", __func__, pdu_name,
+				       gmm_prim->gmmsm.sess_id);
+			else
+				printf("%s(): Rx %s sess_id=%u rejected cause=%u\n", __func__, pdu_name,
+				       gmm_prim->gmmsm.sess_id,
+				       gmm_prim->gmmsm.establish_cnf.rej.cause);
 			break;
 		case OSMO_PRIM(OSMO_GPRS_GMM_GMMSM_UNITDATA, PRIM_OP_INDICATION):
 			printf("%s(): Rx %s sess_id=%u sm_pdu=%s\n", __func__, pdu_name,

@@ -21,7 +21,7 @@ test_gmm_prim_llc_down_cb(): Rx LL-UNITDATA.request TLLI=0x80001234 SAPI=GMM l3=
 test_gmm_prim_llc_down_cb(): Rx LLGMM-ASSIGN.request old_TLLI=0x80001234 new_TLLI=0xea711b41
 test_gmm_prim_down_cb(): Rx GMRR-ASSIGN.request old_tlli=0x80001234 new_tlli=0xea711b41
 test_gmm_prim_llc_down_cb(): Rx LL-UNITDATA.request TLLI=0xea711b41 SAPI=GMM l3=[08 03 ]
-test_gmm_prim_up_cb(): Rx GMMSM-ESTABLISH.confirm sess_id=1234 accepted=1 rej_cause=0
+test_gmm_prim_up_cb(): Rx GMMSM-ESTABLISH.confirm sess_id=1234 accepted
 test_gmm_prim_llc_down_cb(): Rx LL-UNITDATA.request TLLI=0xea711b41 SAPI=GMM l3=[0a 28 29 30 ]
 test_gmm_prim_up_cb(): Rx GMMSM-UNITDATA.indication sess_id=1234 sm_pdu=0a 28 29 30 
 ==== test_gmm_prim_ms_gmmsm() [end] ====
