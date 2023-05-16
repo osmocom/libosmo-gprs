@@ -306,6 +306,13 @@ static void test_gmm_prim_ms_gmmreg(void)
 	OSMO_STRLCPY_ARRAY(gmm_prim->gmmreg.attach_req.imsi, imsi);
 	OSMO_STRLCPY_ARRAY(gmm_prim->gmmreg.attach_req.imei, imei);
 	OSMO_STRLCPY_ARRAY(gmm_prim->gmmreg.attach_req.imeisv, imeisv);
+	gmm_prim->gmmreg.attach_req.old_rai = (struct gprs_ra_id){
+		.mcc = 0,
+		.mnc = 0,
+		.mnc_3_digits = false,
+		.lac = 0,
+		.rac = 0,
+	};
 	rc = osmo_gprs_gmm_prim_upper_down(gmm_prim);
 	OSMO_ASSERT(rc == 0);
 

@@ -181,7 +181,6 @@ int gprs_gmm_build_attach_req(struct gprs_gmm_entity *gmme,
 	uint8_t *l;
 	int rc;
 	struct gsm48_ra_id *raid_enc;
-	struct gprs_ra_id raid;
 
 	gh = (struct gsm48_hdr *) msgb_put(msg, sizeof(*gh));
 	gh->proto_discr = GSM48_PDISC_MM_GPRS;
@@ -221,15 +220,8 @@ int gprs_gmm_build_attach_req(struct gprs_gmm_entity *gmme,
 	*l = rc;
 
 	/* Old routing area identification 0.5.5.15 */
-	raid = (struct gprs_ra_id){ /* TODO: fill this correctly */
-		.mcc = 0,
-		.mnc = 0,
-		.mnc_3_digits = false,
-		.lac = 0,
-		.rac = 0,
-	};
 	raid_enc = (struct gsm48_ra_id *)msgb_put(msg, sizeof(struct gsm48_ra_id));
-	gsm48_encode_ra(raid_enc, &raid);
+	gsm48_encode_ra(raid_enc, &gmme->ra);
 
 	/* MS Radio Access capability 10.5.5.12a */
 	rc = encode_ms_ra_acc_cap(gmme, msg);

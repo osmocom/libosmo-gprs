@@ -385,6 +385,7 @@ static int gprs_gmm_prim_handle_gmmreg_attach_req(struct osmo_gprs_gmm_prim *gmm
 		OSMO_STRLCPY_ARRAY(gmme->imei, gmm_prim->gmmreg.attach_req.imei);
 	if (gmm_prim->gmmreg.attach_req.imeisv[0] != '\0')
 		OSMO_STRLCPY_ARRAY(gmme->imeisv, gmm_prim->gmmreg.attach_req.imeisv);
+	memcpy(&gmme->ra, &gmm_prim->gmmreg.attach_req.old_rai, sizeof(gmme->ra));
 
 	rc = gprs_gmm_ms_fsm_ctx_request_attach(&gmme->ms_fsm,
 						gmm_prim->gmmreg.attach_req.attach_type,
@@ -497,6 +498,7 @@ static int gprs_gmm_prim_handle_gmmsm_establish_req(struct osmo_gprs_gmm_prim *g
 		OSMO_STRLCPY_ARRAY(gmme->imei, gmm_prim->gmmsm.establish_req.imei);
 	if (gmm_prim->gmmsm.establish_req.imeisv[0] != '\0')
 		OSMO_STRLCPY_ARRAY(gmme->imeisv, gmm_prim->gmmsm.establish_req.imeisv);
+	memcpy(&gmme->ra, &gmm_prim->gmmsm.establish_req.old_rai, sizeof(gmme->ra));
 
 	rc = gprs_gmm_ms_fsm_ctx_request_attach(&gmme->ms_fsm,
 						gmm_prim->gmmsm.establish_req.attach_type,

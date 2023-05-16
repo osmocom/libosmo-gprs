@@ -14,6 +14,7 @@
 #include <osmocom/core/utils.h>
 #include <osmocom/core/prim.h>
 #include <osmocom/gsm/protocol/gsm_23_003.h>
+#include <osmocom/gsm/gsm48.h>
 #include <osmocom/gprs/gmm/gmm.h>
 
 struct osmo_gprs_llc_prim;
@@ -108,7 +109,8 @@ struct osmo_gprs_gmm_gmmreg_prim {
 			char imsi[OSMO_IMSI_BUF_SIZE];
 			char imei[GSM23003_IMEI_NUM_DIGITS + 1];
 			char imeisv[GSM23003_IMEISV_NUM_DIGITS+1];
-			/* attach-type, READY-timer, STANDBY-timer */
+			struct gprs_ra_id old_rai;
+			/* READY-timer, STANDBY-timer */
 		} attach_req;
 		/* OSMO_GPRS_GMM_GMMREG_ATTACH | Cnf 6.6.1.2 / Rej 6.6.1.3 */
 		struct {
@@ -212,7 +214,8 @@ struct osmo_gprs_gmm_gmmsm_prim {
 			char imsi[OSMO_IMSI_BUF_SIZE];
 			char imei[GSM23003_IMEI_NUM_DIGITS + 1];
 			char imeisv[GSM23003_IMEISV_NUM_DIGITS+1];
-			/* attach-type, READY-timer, STANDBY-timer */
+			struct gprs_ra_id old_rai;
+			/* READY-timer, STANDBY-timer */
 		} establish_req;
 		/* OSMO_GPRS_GMM_GMMSM_ESTABLISH | Cnf/Rej */
 		struct {
