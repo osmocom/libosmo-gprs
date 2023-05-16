@@ -120,6 +120,7 @@ struct osmo_gprs_gmm_gmmreg_prim {
 					/* PLMNs MT-caps, attach-type. */
 					uint32_t allocated_ptmsi;
 					uint32_t allocated_tlli;
+					struct gprs_ra_id rai;
 				} acc;
 				struct {
 					uint8_t cause; /* See enum gsm48_gsm_cause */
@@ -225,6 +226,7 @@ struct osmo_gprs_gmm_gmmsm_prim {
 					/* PLMNs MT-caps, attach-type. */
 					uint32_t allocated_ptmsi;
 					uint32_t allocated_tlli;
+					struct gprs_ra_id rai;
 				} acc;
 				struct {
 					uint8_t cause;

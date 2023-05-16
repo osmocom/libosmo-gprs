@@ -289,6 +289,7 @@ int gprs_gmm_submit_gmmreg_attach_cnf(struct gprs_gmm_entity *gmme, bool accepte
 	if (accepted) {
 		gmm_prim_tx->gmmreg.attach_cnf.acc.allocated_ptmsi = gmme->ptmsi;
 		gmm_prim_tx->gmmreg.attach_cnf.acc.allocated_tlli = gmme->tlli;
+		memcpy(&gmm_prim_tx->gmmreg.attach_cnf.acc.rai, &gmme->ra, sizeof(gmme->ra));
 	} else {
 		gmm_prim_tx->gmmreg.attach_cnf.rej.cause = cause;
 	}
@@ -333,6 +334,7 @@ int gprs_gmm_submit_gmmsm_establish_cnf(struct gprs_gmm_entity *gmme, bool accep
 	if (accepted) {
 		gmm_prim_tx->gmmsm.establish_cnf.acc.allocated_ptmsi = gmme->ptmsi;
 		gmm_prim_tx->gmmsm.establish_cnf.acc.allocated_tlli = gmme->tlli;
+		memcpy(&gmm_prim_tx->gmmsm.establish_cnf.acc.rai, &gmme->ra, sizeof(gmme->ra));
 	}
 
 	rc = gprs_gmm_prim_call_up_cb(gmm_prim_tx);
