@@ -481,6 +481,8 @@ static int gprs_sm_prim_handle_gmmsm_establish_cnf(struct osmo_gprs_gmm_prim *gm
 			sme->ms->gmm.ptmsi = gmm_prim->gmmsm.establish_cnf.acc.allocated_ptmsi;
 		/* Set allocated TLLI: */
 		sme->ms->gmm.tlli = gmm_prim->gmmsm.establish_cnf.acc.allocated_tlli;
+		/* Set the current RAI: */
+		memcpy(&sme->ms->gmm.ra, &gmm_prim->gmmsm.establish_cnf.acc.rai, sizeof(sme->ms->gmm.ra));
 		rc = osmo_fsm_inst_dispatch(sme->ms_fsm.fi, GPRS_SM_MS_EV_RX_GMM_ESTABLISH_CNF, NULL);
 	} else {
 		rc = osmo_fsm_inst_dispatch(sme->ms_fsm.fi, GPRS_SM_MS_EV_RX_GMM_ESTABLISH_REJ, NULL);

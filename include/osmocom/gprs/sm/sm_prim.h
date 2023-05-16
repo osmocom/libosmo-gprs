@@ -90,6 +90,7 @@ struct osmo_gprs_sm_smreg_prim {
 					struct {
 						uint32_t allocated_ptmsi;
 						uint32_t allocated_tlli;
+						struct gprs_ra_id rai;
 					} gmm;
 				} acc;
 				struct {

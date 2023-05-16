@@ -225,6 +225,7 @@ int gprs_sm_submit_smreg_pdp_act_cnf(const struct gprs_sm_entity *sme, enum gsm4
 			memcpy(sm_prim_tx->smreg.pdp_act_cnf.acc.qos, &sme->qos, sme->qos_len);
 		sm_prim_tx->smreg.pdp_act_cnf.acc.gmm.allocated_ptmsi = sme->ms->gmm.ptmsi;
 		sm_prim_tx->smreg.pdp_act_cnf.acc.gmm.allocated_tlli = sme->ms->gmm.tlli;
+		memcpy(&sm_prim_tx->smreg.pdp_act_cnf.acc.gmm.rai, &sme->ms->gmm.ra, sizeof(sme->ms->gmm.ra));
 	} else {
 		sm_prim_tx->smreg.pdp_act_cnf.rej.cause = cause;
 	}
