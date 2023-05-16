@@ -13,6 +13,7 @@
 #include <osmocom/core/prim.h>
 #include <osmocom/core/socket.h>
 #include <osmocom/gsm/protocol/gsm_23_003.h>
+#include <osmocom/gsm/gsm48.h>
 
 #include <osmocom/gprs/sm/sm.h>
 
@@ -68,6 +69,7 @@ struct osmo_gprs_sm_smreg_prim {
 				char imsi[OSMO_IMSI_BUF_SIZE];
 				char imei[GSM23003_IMEI_NUM_DIGITS + 1];
 				char imeisv[GSM23003_IMEISV_NUM_DIGITS+1];
+				struct gprs_ra_id old_rai;
 			} gmm;
 		} pdp_act_req;
 

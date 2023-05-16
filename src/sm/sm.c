@@ -196,6 +196,7 @@ int gprs_sm_submit_gmmsm_assign_req(const struct gprs_sm_entity *sme)
 	OSMO_STRLCPY_ARRAY(gmm_prim_tx->gmmsm.establish_req.imsi, ms->gmm.imsi);
 	OSMO_STRLCPY_ARRAY(gmm_prim_tx->gmmsm.establish_req.imei, ms->gmm.imei);
 	OSMO_STRLCPY_ARRAY(gmm_prim_tx->gmmsm.establish_req.imeisv, ms->gmm.imeisv);
+	memcpy(&gmm_prim_tx->gmmsm.establish_req.old_rai, &ms->gmm.ra, sizeof(ms->gmm.ra));
 
 	rc = gprs_sm_prim_call_gmm_down_cb(gmm_prim_tx);
 	return rc;

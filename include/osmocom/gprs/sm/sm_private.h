@@ -131,6 +131,7 @@ struct gprs_sm_ms {
 		char imsi[OSMO_IMSI_BUF_SIZE];
 		char imei[GSM23003_IMEI_NUM_DIGITS + 1];
 		char imeisv[GSM23003_IMEISV_NUM_DIGITS+1];
+		struct gprs_ra_id ra; /* TS 24.008  10.5.5.15 (decoded) */
 	} gmm;
 };
 

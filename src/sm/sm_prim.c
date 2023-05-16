@@ -276,6 +276,7 @@ static int gprs_sm_prim_handle_smreg_pdp_act_req(struct osmo_gprs_sm_prim *sm_pr
 		OSMO_STRLCPY_ARRAY(ms->gmm.imei, sm_prim->smreg.pdp_act_req.gmm.imei);
 	if (sm_prim->smreg.pdp_act_req.gmm.imeisv[0] != '\0')
 		OSMO_STRLCPY_ARRAY(ms->gmm.imeisv, sm_prim->smreg.pdp_act_req.gmm.imeisv);
+	memcpy(&ms->gmm.ra, &sm_prim->smreg.pdp_act_req.gmm.old_rai, sizeof(ms->gmm.ra));
 
 	rc = osmo_fsm_inst_dispatch(sme->ms_fsm.fi, GPRS_SM_MS_EV_TX_ACT_PDP_CTX_REQ, NULL);
 
