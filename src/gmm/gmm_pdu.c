@@ -230,6 +230,12 @@ int gprs_gmm_build_attach_req(struct gprs_gmm_entity *gmme,
 
 	/* TODO: optional fields */
 
+	/* 10.5.5.8 Old P-TMSI signature: */
+	if (!attach_with_imsi && gmme->ptmsi != GSM_RESERVED_TMSI) {
+		uint8_t ptmsi_sig[3] = { gmme->ptmsi_sig >> 16, gmme->ptmsi_sig >> 8, gmme->ptmsi_sig };
+		msgb_tv_fixed_put(msg, GSM48_IE_GMM_PTMSI_SIG, sizeof(ptmsi_sig), ptmsi_sig);
+	}
+
 	/* 9.4.1.13 P-TMSI type: The MS shall include this IE if the
 	 * type of identity in the Mobile identity IE is set to
 	 * "TMSI/P-TMSI/M-TMSI". */

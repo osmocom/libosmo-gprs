@@ -56,6 +56,7 @@ struct gprs_gmm_entity {
 
 	struct gprs_gmm_ms_fsm_ctx ms_fsm;
 	uint32_t sess_id; /* Used to identify the GMME in GMMSM SAP */
+	uint32_t ptmsi_sig; /* 3 bytes */
 	uint32_t ptmsi;
 	uint32_t old_ptmsi;
 	uint32_t tlli;

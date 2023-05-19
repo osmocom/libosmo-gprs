@@ -157,9 +157,10 @@ int test_gmm_prim_up_cb(struct osmo_gprs_gmm_prim *gmm_prim, void *user_data)
 		switch (OSMO_PRIM_HDR(&gmm_prim->oph)) {
 		case OSMO_PRIM(OSMO_GPRS_GMM_GMMREG_ATTACH, PRIM_OP_CONFIRM):
 			if (gmm_prim->gmmreg.attach_cnf.accepted) {
-				printf("%s(): Rx %s accepted=%u allocated_ptmsi=0x%08x\n", __func__, pdu_name,
+				printf("%s(): Rx %s accepted=%u allocated_ptmsi=0x%08x allocated_ptmsi_sig=0x%06x\n", __func__, pdu_name,
 				       gmm_prim->gmmreg.attach_cnf.accepted,
-				       gmm_prim->gmmreg.attach_cnf.acc.allocated_ptmsi);
+				       gmm_prim->gmmreg.attach_cnf.acc.allocated_ptmsi,
+				       gmm_prim->gmmreg.attach_cnf.acc.allocated_ptmsi_sig);
 			} else {
 				printf("%s(): Rx %s accepted=%u rej_cause=%u\n", __func__, pdu_name,
 				       gmm_prim->gmmreg.attach_cnf.accepted,
@@ -283,6 +284,7 @@ static void test_gmm_prim_ms_gmmreg(void)
 	struct osmo_gprs_llc_prim *llc_prim;
 	int rc;
 	uint32_t ptmsi = 0x00001234;
+	uint32_t ptmsi_sig = 0x556677;
 	uint32_t rand_tlli = 0x80001234;
 	char *imsi = "1234567890";
 	char *imei = "42342342342342";
@@ -303,6 +305,7 @@ static void test_gmm_prim_ms_gmmreg(void)
 	OSMO_ASSERT(gmm_prim);
 	gmm_prim->gmmreg.attach_req.attach_type = OSMO_GPRS_GMM_ATTACH_TYPE_GPRS;
 	gmm_prim->gmmreg.attach_req.ptmsi = ptmsi;
+	gmm_prim->gmmreg.attach_req.ptmsi_sig = ptmsi_sig;
 	OSMO_STRLCPY_ARRAY(gmm_prim->gmmreg.attach_req.imsi, imsi);
 	OSMO_STRLCPY_ARRAY(gmm_prim->gmmreg.attach_req.imei, imei);
 	OSMO_STRLCPY_ARRAY(gmm_prim->gmmreg.attach_req.imeisv, imeisv);
@@ -366,6 +369,7 @@ static void test_gmm_prim_ms_gmmsm(void)
 	struct osmo_gprs_llc_prim *llc_prim;
 	int rc;
 	uint32_t ptmsi = 0x00001234;
+	uint32_t ptmsi_sig = 0x556677;
 	uint32_t rand_tlli = 0x80001234;
 	char *imsi = "1234567890";
 	char *imei = "42342342342342";
@@ -388,6 +392,7 @@ static void test_gmm_prim_ms_gmmsm(void)
 	OSMO_ASSERT(gmm_prim);
 	gmm_prim->gmmsm.establish_req.attach_type = OSMO_GPRS_GMM_ATTACH_TYPE_GPRS;
 	gmm_prim->gmmsm.establish_req.ptmsi = ptmsi;
+	gmm_prim->gmmsm.establish_req.ptmsi_sig = ptmsi_sig;
 	OSMO_STRLCPY_ARRAY(gmm_prim->gmmsm.establish_req.imsi, imsi);
 	OSMO_STRLCPY_ARRAY(gmm_prim->gmmsm.establish_req.imei, imei);
 	OSMO_STRLCPY_ARRAY(gmm_prim->gmmsm.establish_req.imeisv, imeisv);

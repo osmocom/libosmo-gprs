@@ -105,6 +105,7 @@ struct osmo_gprs_gmm_gmmreg_prim {
 		struct {
 			enum osmo_gprs_gmm_attach_type attach_type;
 			uint32_t ptmsi;
+			uint32_t ptmsi_sig;
 			bool attach_with_imsi;
 			char imsi[OSMO_IMSI_BUF_SIZE];
 			char imei[GSM23003_IMEI_NUM_DIGITS + 1];
@@ -119,6 +120,7 @@ struct osmo_gprs_gmm_gmmreg_prim {
 				struct {
 					/* PLMNs MT-caps, attach-type. */
 					uint32_t allocated_ptmsi;
+					uint32_t allocated_ptmsi_sig;
 					uint32_t allocated_tlli;
 					struct gprs_ra_id rai;
 				} acc;
@@ -211,6 +213,7 @@ struct osmo_gprs_gmm_gmmsm_prim {
 		struct {
 			enum osmo_gprs_gmm_attach_type attach_type;
 			uint32_t ptmsi;
+			uint32_t ptmsi_sig;
 			bool attach_with_imsi;
 			char imsi[OSMO_IMSI_BUF_SIZE];
 			char imei[GSM23003_IMEI_NUM_DIGITS + 1];
@@ -225,6 +228,7 @@ struct osmo_gprs_gmm_gmmsm_prim {
 				struct {
 					/* PLMNs MT-caps, attach-type. */
 					uint32_t allocated_ptmsi;
+					uint32_t allocated_ptmsi_sig;
 					uint32_t allocated_tlli;
 					struct gprs_ra_id rai;
 				} acc;

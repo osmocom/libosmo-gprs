@@ -150,6 +150,7 @@ struct gprs_gmm_entity *gprs_gmm_gmme_alloc(uint32_t ptmsi, const char *imsi)
 	}
 
 	gmme->sess_id = GPRS_GMM_SESS_ID_UNASSIGNED;
+	gmme->ptmsi_sig = GSM_RESERVED_TMSI;
 	gmme->ptmsi = ptmsi;
 	gmme->old_ptmsi = GSM_RESERVED_TMSI;
 	gmme->old_tlli = GPRS_GMM_TLLI_UNASSIGNED;
@@ -288,6 +289,7 @@ int gprs_gmm_submit_gmmreg_attach_cnf(struct gprs_gmm_entity *gmme, bool accepte
 	gmm_prim_tx->gmmreg.attach_cnf.accepted = accepted;
 	if (accepted) {
 		gmm_prim_tx->gmmreg.attach_cnf.acc.allocated_ptmsi = gmme->ptmsi;
+		gmm_prim_tx->gmmreg.attach_cnf.acc.allocated_ptmsi_sig = gmme->ptmsi_sig;
 		gmm_prim_tx->gmmreg.attach_cnf.acc.allocated_tlli = gmme->tlli;
 		memcpy(&gmm_prim_tx->gmmreg.attach_cnf.acc.rai, &gmme->ra, sizeof(gmme->ra));
 	} else {
@@ -333,6 +335,7 @@ int gprs_gmm_submit_gmmsm_establish_cnf(struct gprs_gmm_entity *gmme, bool accep
 	gmm_prim_tx = gprs_gmm_prim_alloc_gmmsm_establish_cnf(gmme->sess_id, cause);
 	if (accepted) {
 		gmm_prim_tx->gmmsm.establish_cnf.acc.allocated_ptmsi = gmme->ptmsi;
+		gmm_prim_tx->gmmsm.establish_cnf.acc.allocated_ptmsi_sig = gmme->ptmsi_sig;
 		gmm_prim_tx->gmmsm.establish_cnf.acc.allocated_tlli = gmme->tlli;
 		memcpy(&gmm_prim_tx->gmmsm.establish_cnf.acc.rai, &gmme->ra, sizeof(gmme->ra));
 	}
@@ -560,6 +563,13 @@ static int gprs_gmm_rx_att_ack(struct gprs_gmm_entity *gmme, struct gsm48_hdr *g
 		if (rc < 0) {
 			LOGGMME(gmme, LOGL_ERROR, "Rx GMM ATTACH ACCEPT: failed to parse TLVs %d\n", rc);
 			goto rejected;
+		}
+
+		if (TLVP_PRESENT(&tp, GSM48_IE_GMM_PTMSI_SIG)) {
+			const uint8_t *ptmsi_sig = TLVP_VAL(&tp, GSM48_IE_GMM_PTMSI_SIG);
+			gmme->ptmsi_sig = (ptmsi_sig[0] << 8) | (ptmsi_sig[1] << 4) | ptmsi_sig[2];
+		} else {
+			gmme->ptmsi_sig = GSM_RESERVED_TMSI;
 		}
 
 		if (TLVP_PRESENT(&tp, GSM48_IE_GMM_ALLOC_PTMSI)) {
