@@ -145,12 +145,14 @@ static int handle_imm_ass(struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *ctx, const stru
 					LOGPFSML(ctx->fi, LOGL_ERROR, "ImmAss SingleBlock (2phase access) not yet supported!\n");
 					return -ENOTSUP;
 				case 1: /* d->iaro->u.hh.u.UplinkDownlinkAssignment.ul_dl.Packet_Uplink_ImmAssignment.Access.DynamicOrFixedAllocation.* (GPRS_DynamicOrFixedAllocation_t) */
+					ctx->phase1_alloc.ul_tfi = d->iaro->u.hh.u.UplinkDownlinkAssignment.ul_dl.Packet_Uplink_ImmAssignment.Access.DynamicOrFixedAllocation.TFI_ASSIGNMENT;
 					ctx->ul_tbf->tx_cs = d->iaro->u.hh.u.UplinkDownlinkAssignment.ul_dl.Packet_Uplink_ImmAssignment.Access.DynamicOrFixedAllocation.CHANNEL_CODING_COMMAND + 1;
 					ctx->tbf_starting_time_exists = d->iaro->u.hh.u.UplinkDownlinkAssignment.ul_dl.Packet_Uplink_ImmAssignment.Access.DynamicOrFixedAllocation.Exist_TBF_STARTING_TIME;
 					if (ctx->tbf_starting_time_exists)
 						ctx->tbf_starting_time = TBF_StartingTime_to_fn(&d->iaro->u.hh.u.UplinkDownlinkAssignment.ul_dl.Packet_Uplink_ImmAssignment.Access.DynamicOrFixedAllocation.TBF_STARTING_TIME,
 												d->fn);
-					LOGPFSML(ctx->fi, LOGL_INFO, "ImmAss initial CS=%s\n", gprs_rlcmac_mcs_name(ctx->ul_tbf->tx_cs));
+					LOGPFSML(ctx->fi, LOGL_INFO, "ImmAss TFI=%u initCS=%s startTimeFN=%u\n",
+						 ctx->phase1_alloc.ul_tfi, gprs_rlcmac_mcs_name(ctx->ul_tbf->tx_cs), ctx->tbf_starting_time);
 					switch (d->iaro->u.hh.u.UplinkDownlinkAssignment.ul_dl.Packet_Uplink_ImmAssignment.Access.DynamicOrFixedAllocation.UnionType) {
 					case 0: /* d->iaro->u.hh.u.UplinkDownlinkAssignment.ul_dl.Packet_Uplink_ImmAssignment.Access.DynamicOrFixedAllocation.Allocation.DynamicAllocation (DynamicAllocation_t) */
 						/* TODO: 2phase access support: Schedule transmit of PKT_RES_REQ on FN=(GPRS_SingleBlockAllocation_t).TBF_STARTING_TIME */
