@@ -270,6 +270,7 @@ static int gprs_sm_prim_handle_smreg_pdp_act_req(struct osmo_gprs_sm_prim *sm_pr
 
 	/* Info required to establish GMM: */
 	ms->gmm.ptmsi = sm_prim->smreg.pdp_act_req.gmm.ptmsi;
+	ms->gmm.ptmsi_sig = sm_prim->smreg.pdp_act_req.gmm.ptmsi_sig;
 	if (sm_prim->smreg.pdp_act_req.gmm.imsi[0] != '\0')
 		OSMO_STRLCPY_ARRAY(ms->gmm.imsi, sm_prim->smreg.pdp_act_req.gmm.imsi);
 	if (sm_prim->smreg.pdp_act_req.gmm.imei[0] != '\0')
@@ -479,6 +480,7 @@ static int gprs_sm_prim_handle_gmmsm_establish_cnf(struct osmo_gprs_gmm_prim *gm
 		/* Update allocated PTMSI: */
 		if (gmm_prim->gmmsm.establish_cnf.acc.allocated_ptmsi != GSM_RESERVED_TMSI)
 			sme->ms->gmm.ptmsi = gmm_prim->gmmsm.establish_cnf.acc.allocated_ptmsi;
+		sme->ms->gmm.ptmsi_sig = gmm_prim->gmmsm.establish_cnf.acc.allocated_ptmsi_sig;
 		/* Set allocated TLLI: */
 		sme->ms->gmm.tlli = gmm_prim->gmmsm.establish_cnf.acc.allocated_tlli;
 		/* Set the current RAI: */

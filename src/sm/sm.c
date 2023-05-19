@@ -193,6 +193,7 @@ int gprs_sm_submit_gmmsm_assign_req(const struct gprs_sm_entity *sme)
 	gmm_prim_tx->gmmsm.establish_req.attach_type = OSMO_GPRS_GMM_ATTACH_TYPE_GPRS;
 	gmm_prim_tx->gmmsm.establish_req.attach_with_imsi = (ms->gmm.ptmsi == GSM_RESERVED_TMSI);
 	gmm_prim_tx->gmmsm.establish_req.ptmsi = ms->gmm.ptmsi;
+	gmm_prim_tx->gmmsm.establish_req.ptmsi_sig = ms->gmm.ptmsi_sig;
 	OSMO_STRLCPY_ARRAY(gmm_prim_tx->gmmsm.establish_req.imsi, ms->gmm.imsi);
 	OSMO_STRLCPY_ARRAY(gmm_prim_tx->gmmsm.establish_req.imei, ms->gmm.imei);
 	OSMO_STRLCPY_ARRAY(gmm_prim_tx->gmmsm.establish_req.imeisv, ms->gmm.imeisv);
@@ -224,6 +225,7 @@ int gprs_sm_submit_smreg_pdp_act_cnf(const struct gprs_sm_entity *sme, enum gsm4
 		if (sme->qos_len)
 			memcpy(sm_prim_tx->smreg.pdp_act_cnf.acc.qos, &sme->qos, sme->qos_len);
 		sm_prim_tx->smreg.pdp_act_cnf.acc.gmm.allocated_ptmsi = sme->ms->gmm.ptmsi;
+		sm_prim_tx->smreg.pdp_act_cnf.acc.gmm.allocated_ptmsi_sig = sme->ms->gmm.ptmsi_sig;
 		sm_prim_tx->smreg.pdp_act_cnf.acc.gmm.allocated_tlli = sme->ms->gmm.tlli;
 		memcpy(&sm_prim_tx->smreg.pdp_act_cnf.acc.gmm.rai, &sme->ms->gmm.ra, sizeof(sme->ms->gmm.ra));
 	} else {

@@ -65,6 +65,7 @@ struct osmo_gprs_sm_smreg_prim {
 			uint8_t pco_len;
 			struct {
 				uint32_t ptmsi;
+				uint32_t ptmsi_sig;
 				bool attach_with_imsi;
 				char imsi[OSMO_IMSI_BUF_SIZE];
 				char imei[GSM23003_IMEI_NUM_DIGITS + 1];
@@ -89,6 +90,7 @@ struct osmo_gprs_sm_smreg_prim {
 					uint8_t qos_len;
 					struct {
 						uint32_t allocated_ptmsi;
+						uint32_t allocated_ptmsi_sig;
 						uint32_t allocated_tlli;
 						struct gprs_ra_id rai;
 					} gmm;
