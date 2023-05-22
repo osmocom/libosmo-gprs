@@ -330,6 +330,8 @@ bool gprs_rlcmac_ul_tbf_shall_keep_open(const struct gprs_rlcmac_ul_tbf *ul_tbf,
 
 void gprs_rlcmac_ul_tbf_schedule_next_llc_frame(struct gprs_rlcmac_ul_tbf *ul_tbf)
 {
+	struct osmo_gprs_rlcmac_prim *rlcmac_prim_tx;
+
 	if (ul_tbf->llc_tx_msg && msgb_length(ul_tbf->llc_tx_msg))
 		return;
 
@@ -342,6 +344,14 @@ void gprs_rlcmac_ul_tbf_schedule_next_llc_frame(struct gprs_rlcmac_ul_tbf *ul_tb
 	LOGPTBFUL(ul_tbf, LOGL_DEBUG, "Dequeue next LLC (len=%d)\n", msgb_length(ul_tbf->llc_tx_msg));
 
 	ul_tbf->last_ul_drained_fn = -1;
+
+	/* TS 24.008 section 4.7.2.1.1: "The READY timer is started in the MS
+	 * when the GMM entity receives an indication from lower layers that an LLC frame
+	 * other than LLC NULL frame has been transmitted on the radio interface".
+	 * hence, signal here to GMM the event.
+	 */
+	rlcmac_prim_tx = gprs_rlcmac_prim_alloc_gmmrr_llc_transmitted_ind(ul_tbf->tbf.gre->tlli);
+	gprs_rlcmac_prim_call_up_cb(rlcmac_prim_tx);
 }
 
 static int create_new_bsn(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_rts_block_ind *bi, enum gprs_rlcmac_coding_scheme cs)

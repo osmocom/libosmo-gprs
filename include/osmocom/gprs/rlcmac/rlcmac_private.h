@@ -100,6 +100,7 @@ int gprs_rlcmac_prim_call_down_cb(struct osmo_gprs_rlcmac_prim *rlcmac_prim);
 struct osmo_gprs_rlcmac_prim *gprs_rlcmac_prim_alloc_grr_unitdata_ind(
 				uint32_t tlli, uint8_t *ll_pdu, size_t ll_pdu_len);
 struct osmo_gprs_rlcmac_prim *gprs_rlcmac_prim_alloc_gmmrr_page_ind(uint32_t tlli);
+struct osmo_gprs_rlcmac_prim *gprs_rlcmac_prim_alloc_gmmrr_llc_transmitted_ind(uint32_t tlli);
 
 struct osmo_gprs_rlcmac_prim *gprs_rlcmac_prim_alloc_l1ctl_rach8_req(uint8_t ra);
 struct osmo_gprs_rlcmac_prim *gprs_rlcmac_prim_alloc_l1ctl_rach11_req(uint16_t ra11, uint8_t synch_seq);

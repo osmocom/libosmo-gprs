@@ -161,11 +161,13 @@ struct osmo_gprs_gmm_gmmreg_prim {
 };
 
 /* TS 24.007 Section 9.3.2 "Service primitives for GMMRR-SAP (GSM only)"
+ * OSMO_GPRS_GMM_GMMRR_LLC_TRANSMITTED: addition implementing TS 24.008 4.7.2.1.1
  * Same as enum osmo_gprs_rlcmac_gmmrr_prim_type.
  */
 enum osmo_gprs_gmm_gmmrr_prim_type {
 	OSMO_GPRS_GMM_GMMRR_ASSIGN,	/* Req: newTLLI  */
 	OSMO_GPRS_GMM_GMMRR_PAGE,	/* Ind: TLLI */
+	OSMO_GPRS_GMM_GMMRR_LLC_TRANSMITTED, /* Ind: TLLI */
 };
 extern const struct value_string osmo_gprs_gmm_gmmrr_prim_type_names[];
 static inline const char *osmo_gprs_gmm_gmmrr_prim_type_name(enum osmo_gprs_gmm_gmmrr_prim_type val)
@@ -187,6 +189,9 @@ struct osmo_gprs_gmm_gmmrr_prim {
 		/* OSMO_GPRS_GMM_GMMRR_PAGE | Ind */
 		struct {
 		} page_ind;
+		/* OSMO_GPRS_GMM_GMMRR_LLC_TRANSMITTED | Ind */
+		struct {
+		} llc_transmitted_ind;
 	};
 };
 

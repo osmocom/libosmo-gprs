@@ -59,6 +59,7 @@ const struct value_string osmo_gprs_rlcmac_grr_prim_type_names[] = {
 const struct value_string osmo_gprs_rlcmac_gmmrr_prim_type_names[] = {
 	{ OSMO_GPRS_RLCMAC_GMMRR_ASSIGN,	"ASSIGN" },
 	{ OSMO_GPRS_RLCMAC_GMMRR_PAGE,		"PAGE" },
+	{ OSMO_GPRS_RLCMAC_GMMRR_LLC_TRANSMITTED, "LLC_TRANSMITTED" },
 	{ 0, NULL }
 };
 
@@ -218,6 +219,16 @@ struct osmo_gprs_rlcmac_prim *gprs_rlcmac_prim_alloc_gmmrr_page_ind(uint32_t tll
 {
 	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
 	rlcmac_prim = rlcmac_prim_gmmrr_alloc(OSMO_GPRS_RLCMAC_GMMRR_PAGE, PRIM_OP_INDICATION, 0);
+	rlcmac_prim->gmmrr.tlli = tlli;
+	return rlcmac_prim;
+}
+
+/* TS 24.008 4.7.2.1.1: indication towards GMM that an LLC frame other than LLC
+ * NULL frame has been transmitted on the radio interface */
+struct osmo_gprs_rlcmac_prim *gprs_rlcmac_prim_alloc_gmmrr_llc_transmitted_ind(uint32_t tlli)
+{
+	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
+	rlcmac_prim = rlcmac_prim_gmmrr_alloc(OSMO_GPRS_RLCMAC_GMMRR_LLC_TRANSMITTED, PRIM_OP_INDICATION, 0);
 	rlcmac_prim->gmmrr.tlli = tlli;
 	return rlcmac_prim;
 }

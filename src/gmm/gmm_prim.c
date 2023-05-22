@@ -56,6 +56,7 @@ const struct value_string osmo_gprs_gmm_gmmreg_prim_type_names[] = {
 const struct value_string osmo_gprs_gmm_gmmrr_prim_type_names[] = {
 	{ OSMO_GPRS_GMM_GMMRR_ASSIGN,	"ASSIGN" },
 	{ OSMO_GPRS_GMM_GMMRR_PAGE,	"PAGE" },
+	{ OSMO_GPRS_GMM_GMMRR_LLC_TRANSMITTED, "LLC_TRANSMITTED" },
 	{ 0, NULL }
 };
 
@@ -607,6 +608,10 @@ static int gprs_gmm_prim_handle_gmmrr(struct osmo_gprs_gmm_prim *gmm_prim)
 	int rc = 0;
 	switch (OSMO_PRIM_HDR(&gmm_prim->oph)) {
 	case OSMO_PRIM(OSMO_GPRS_GMM_GMMRR_PAGE, PRIM_OP_INDICATION):
+		rc = gprs_gmm_prim_handle_unsupported(gmm_prim);
+		rc = 1;
+		break;
+	case OSMO_PRIM(OSMO_GPRS_GMM_GMMRR_LLC_TRANSMITTED, PRIM_OP_INDICATION):
 		rc = gprs_gmm_prim_handle_unsupported(gmm_prim);
 		rc = 1;
 		break;
