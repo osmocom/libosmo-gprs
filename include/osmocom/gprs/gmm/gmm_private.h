@@ -66,7 +66,6 @@ struct gprs_gmm_entity {
 	char imei[GSM23003_IMEI_NUM_DIGITS + 1];
 	char imeisv[GSM23003_IMEISV_NUM_DIGITS+1];
 
-	uint8_t ra_upd_timer;	/* TS 24.008 10.5.7.3 */
 	uint8_t radio_prio;	/* TS 24.008 10.5.7.2 */
 	struct gprs_ra_id ra; /* TS 24.008  10.5.5.15 (decoded) */
 
@@ -87,6 +86,8 @@ struct gprs_gmm_entity {
 	/* READY timer, TS 24.008 4.7.2.1.1 */
 	struct osmo_timer_list t3314;
 	unsigned long t3314_assigned_sec; /* value assigned by the network */
+	struct osmo_timer_list t3312; /* periodic RAU, in seconds */
+	unsigned long t3312_assigned_sec; /* value assigned by the network */
 };
 
 /* gmm_prim.c: */
@@ -116,6 +117,8 @@ uint32_t gprs_gmm_alloc_rand_tlli(void);
 void gprs_gmm_gmme_ready_timer_start(struct gprs_gmm_entity *gmme);
 void gprs_gmm_gmme_ready_timer_stop(struct gprs_gmm_entity *gmme);
 bool gprs_gmm_gmme_ready_timer_running(const struct gprs_gmm_entity *gmme);
+void gprs_gmm_gmme_t3312_start(struct gprs_gmm_entity *gmme);
+void gprs_gmm_gmme_t3312_stop(struct gprs_gmm_entity *gmme);
 int gprs_gmm_rx(struct gprs_gmm_entity *gmme, struct gsm48_hdr *gh, unsigned int len);
 int gprs_gmm_tx_att_req(struct gprs_gmm_entity *gmme,
 			enum osmo_gprs_gmm_attach_type attach_type,

@@ -79,6 +79,7 @@ static struct osmo_tdef T_defs_gmm[] = {
 };
 
 static void t3314_ready_timer_cb(void *data);
+static void t3312_periodic_rau_timer_cb(void *data);
 
 static void gprs_gmm_ctx_free(void)
 {
@@ -176,6 +177,7 @@ struct gprs_gmm_entity *gprs_gmm_gmme_alloc(uint32_t ptmsi, const char *imsi)
 	gmme->t3346 = osmo_tdef_get(g_gmm_ctx->T_defs, 3346, OSMO_TDEF_S, -1);
 
 	osmo_timer_setup(&gmme->t3314, t3314_ready_timer_cb, gmme);
+	osmo_timer_setup(&gmme->t3312, t3312_periodic_rau_timer_cb, gmme);
 
 	llist_add(&gmme->list, &g_gmm_ctx->gmme_list);
 
@@ -190,6 +192,8 @@ void gprs_gmm_gmme_free(struct gprs_gmm_entity *gmme)
 	LOGGMME(gmme, LOGL_DEBUG, "free()\n");
 	if (osmo_timer_pending(&gmme->t3314))
 		osmo_timer_del(&gmme->t3314);
+	if (osmo_timer_pending(&gmme->t3312))
+		osmo_timer_del(&gmme->t3312);
 	gprs_gmm_ms_fsm_ctx_release(&gmme->ms_fsm);
 	llist_del(&gmme->list);
 	talloc_free(gmme);
@@ -295,20 +299,23 @@ void gprs_gmm_gmme_ready_timer_start(struct gprs_gmm_entity *gmme)
 	LOGGMME(gmme, LOGL_INFO, "READY timer started\n");
 	osmo_timer_schedule(&gmme->t3314, gmme->t3314_assigned_sec, 0);
 
-	/* TODO: "Timer T3312 is stopped and shall be set to its initial value
-	 * for the next start when the READY timer is started." */
+	/* "Timer T3312 is stopped and shall be set to its initial value
+	 * for the next start when the READY timer is started.": */
+	gprs_gmm_gmme_t3312_stop(gmme);
 }
 
 /* Ready timer is stopped: */
 void gprs_gmm_gmme_ready_timer_stop(struct gprs_gmm_entity *gmme)
 {
-	/* TODO: "In A/Gb mode, the timer T3312 is reset and started with its
-	 * initial value, when the READY timer is stopped or expires."
-	 */
 	if (!osmo_timer_pending(&gmme->t3314))
 		return;
 	LOGGMME(gmme, LOGL_INFO, "READY timer stopped\n");
 	osmo_timer_del(&gmme->t3314);
+
+	/* "In A/Gb mode, the timer T3312 is reset and started with its
+	 * initial value, when the READY timer is stopped or expires."
+	 */
+	gprs_gmm_gmme_t3312_start(gmme);
 }
 
 bool gprs_gmm_gmme_ready_timer_running(const struct gprs_gmm_entity *gmme)
@@ -325,10 +332,54 @@ static void t3314_ready_timer_cb(void *data)
 	struct gprs_gmm_entity *gmme = (struct gprs_gmm_entity *)data;
 	LOGGMME(gmme, LOGL_INFO, "READY timer expired\n");
 
-	/* TODO: "In A/Gb mode, the timer T3312 is reset and started with its
-	 *initial value, when the READY timer is stopped or expires."
+	/* "In A/Gb mode, the timer T3312 is reset and started with its
+	 * initial value, when the READY timer is stopped or expires.":
 	 */
+	gprs_gmm_gmme_t3312_start(gmme);
+}
 
+/* T3312 (Periodic RAU) is started: */
+void gprs_gmm_gmme_t3312_start(struct gprs_gmm_entity *gmme)
+{
+	unsigned long t3312_sec;
+
+	t3312_sec = osmo_tdef_get(g_gmm_ctx->T_defs, 3312, OSMO_TDEF_S, -1);
+	if (t3312_sec == 0)
+		return;
+
+	LOGGMME(gmme, LOGL_INFO, "T3312 started\n");
+	osmo_timer_schedule(&gmme->t3312, t3312_sec, 0);
+}
+
+/* T3312 (Periodic RAU) is stopped: */
+void gprs_gmm_gmme_t3312_stop(struct gprs_gmm_entity *gmme)
+{
+	if (!osmo_timer_pending(&gmme->t3312))
+		return;
+
+	LOGGMME(gmme, LOGL_INFO, "T3312 stopped\n");
+	osmo_timer_del(&gmme->t3312);
+}
+
+/* T3312 (Periodic RAU) timer expiration: */
+static void t3312_periodic_rau_timer_cb(void *data)
+{
+	struct gprs_gmm_entity *gmme = (struct gprs_gmm_entity *)data;
+	LOGGMME(gmme, LOGL_INFO, "T3312 Periodic RAU timer expired\n");
+
+	/* TODO:
+	 * - "Initiation of the Periodic RAU procedure if the MS is not
+	 *   attached for emergency bearer services or T3323 started under the
+	 *   conditions as specified in subclause 4.7.2.2.
+	 * - Implicit detach from network if the MS is attached for emergency
+	 *   bearer services."
+	 * - "If the MS is in a state other than GMM-REGISTERED.NORMAL-SERVICE
+	 *   when timer T3312 expires, the periodic routing area updating procedure
+	 *   is delayed until the MS returns to GMM-REGISTERED.NORMAL-SERVICE."
+	 *   "If timer T3323 expires, the MS shall memorize that it has to initiate a
+	 *   routing area updating procedure when it returns to state
+	 *   GMM-REGISTERED.NORMAL-SERVICE."
+	 */
 }
 
 int gprs_gmm_submit_gmmreg_attach_cnf(struct gprs_gmm_entity *gmme, bool accepted, uint8_t cause)
@@ -595,6 +646,7 @@ static int gprs_gmm_rx_att_ack(struct gprs_gmm_entity *gmme, struct gsm48_hdr *g
 	struct gsm48_attach_ack *aa;
 	struct tlv_parsed tp;
 	int rc;
+	int periodic_rau_sec;
 
 	if (len < sizeof(*gh) + sizeof(*aa)) {
 		LOGGMME(gmme, LOGL_ERROR, "Rx GMM ATTACH ACCEPT with wrong size %u\n", len);
@@ -604,8 +656,11 @@ static int gprs_gmm_rx_att_ack(struct gprs_gmm_entity *gmme, struct gsm48_hdr *g
 	LOGGMME(gmme, LOGL_INFO, "Rx GMM ATTACH ACCEPT\n");
 	aa = (struct gsm48_attach_ack *)&gh->data[0];
 
-	gmme->ra_upd_timer = aa->ra_upd_timer;
+	periodic_rau_sec = gprs_gmm_gprs_tmr_to_secs(aa->ra_upd_timer);
 	gmme->radio_prio = aa->radio_prio;
+	gmme->t3312_assigned_sec = periodic_rau_sec >= 0 ? periodic_rau_sec : 0;
+	if (gmme->t3312_assigned_sec == 0)
+		gprs_gmm_gmme_t3312_stop(gmme);
 	gsm48_parse_ra(&gmme->ra, (const uint8_t *)&aa->ra_id);
 
 	if (len > sizeof(*gh) + sizeof(*aa)) {
@@ -632,8 +687,13 @@ static int gprs_gmm_rx_att_ack(struct gprs_gmm_entity *gmme, struct gsm48_hdr *g
 			gmme->t3314_assigned_sec = osmo_tdef_get(g_gmm_ctx->T_defs, 3314, OSMO_TDEF_S, -1);
 		}
 		/* "If the negotiated READY timer value is set to zero, the READY timer shall be stopped immediately": */
-		if (gmme->t3314_assigned_sec == 0)
+		if (gmme->t3314_assigned_sec == 0) {
 			gprs_gmm_gmme_ready_timer_stop(gmme);
+			/* "If after a READY timer negotiation the READY timer
+			 * value is set to zero, timer T3312 is reset and started
+			 * with its initial value." */
+			gprs_gmm_gmme_t3312_start(gmme);
+		}
 
 		if (TLVP_PRESENT(&tp, GSM48_IE_GMM_ALLOC_PTMSI)) {
 			struct osmo_mobile_identity mi;

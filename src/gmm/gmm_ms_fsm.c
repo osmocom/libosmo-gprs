@@ -75,6 +75,7 @@ static void st_gmm_ms_deregistered_on_enter(struct osmo_fsm_inst *fi, uint32_t p
 	struct gprs_gmm_ms_fsm_ctx *ctx = (struct gprs_gmm_ms_fsm_ctx *)fi->priv;
 
 	memset(&ctx->attach, 0, sizeof(ctx->attach));
+	gprs_gmm_gmme_t3312_stop(ctx->gmme);
 }
 
 static void st_gmm_ms_deregistered(struct osmo_fsm_inst *fi, uint32_t event, void *data)
