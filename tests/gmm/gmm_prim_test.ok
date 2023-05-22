@@ -1,5 +1,5 @@
 ==== test_gmm_prim_ms_gmmreg() [start] ====
-test_gmm_prim_llc_down_cb(): Rx LL-UNITDATA.request TLLI=0x80001234 SAPI=GMM l3=[08 01 04 97 07 00 00 01 0a 00 05 f4 00 00 12 34 00 f0 00 00 00 00 00 19 55 66 77 e1 ]
+test_gmm_prim_llc_down_cb(): Rx LL-UNITDATA.request TLLI=0x80001234 SAPI=GMM l3=[08 01 04 97 07 00 00 01 0a 00 05 f4 00 00 12 34 00 f0 00 00 00 00 00 19 55 66 77 17 16 e1 ]
 test_gmm_prim_llc_down_cb(): Rx LL-UNITDATA.request TLLI=0x80001234 SAPI=GMM l3=[08 16 08 42 32 24 43 32 24 43 f2 ]
 test_gmm_prim_up_cb(): Rx GMMREG-SIM_AUTH.indication ac_ref_nr=2 key_seq=0 rand=e2 a6 f3 f8 bb 9e a7 01 e0 ce 4f 33 64 a9 91 75 
 test_gmm_prim_llc_down_cb(): Rx LLGMM-ASSIGN.request old_TLLI=0xffffffff new_TLLI=0x80001234
@@ -13,7 +13,7 @@ test_gmm_prim_llc_down_cb(): Rx LLGMM-ASSIGN.request old_TLLI=0xea711b41 new_TLL
 test_gmm_prim_up_cb(): Rx GMMREG-DETACH.confirm detach_type='GPRS detach'
 ==== test_gmm_prim_ms_gmmreg() [end] ====
 ==== test_gmm_prim_ms_gmmsm() [start] ====
-test_gmm_prim_llc_down_cb(): Rx LL-UNITDATA.request TLLI=0x80001234 SAPI=GMM l3=[08 01 04 97 07 00 00 01 0a 00 05 f4 00 00 12 34 00 f0 00 00 00 00 00 19 55 66 77 e1 ]
+test_gmm_prim_llc_down_cb(): Rx LL-UNITDATA.request TLLI=0x80001234 SAPI=GMM l3=[08 01 04 97 07 00 00 01 0a 00 05 f4 00 00 12 34 00 f0 00 00 00 00 00 19 55 66 77 17 16 e1 ]
 test_gmm_prim_llc_down_cb(): Rx LL-UNITDATA.request TLLI=0x80001234 SAPI=GMM l3=[08 16 08 42 32 24 43 32 24 43 f2 ]
 test_gmm_prim_up_cb(): Rx GMMREG-SIM_AUTH.indication ac_ref_nr=2 key_seq=0 rand=e2 a6 f3 f8 bb 9e a7 01 e0 ce 4f 33 64 a9 91 75 
 test_gmm_prim_llc_down_cb(): Rx LLGMM-ASSIGN.request old_TLLI=0xffffffff new_TLLI=0x80001234

@@ -10,6 +10,7 @@
 #include <osmocom/core/msgb.h>
 #include <osmocom/core/logging.h>
 #include <osmocom/core/endian.h>
+#include <osmocom/core/tdef.h>
 #include <osmocom/gsm/protocol/gsm_23_003.h>
 
 #include <osmocom/gprs/llc/llc_prim.h>
@@ -83,6 +84,9 @@ struct gprs_gmm_entity {
 
 	unsigned long t3302;
 	unsigned long t3346;
+	/* READY timer, TS 24.008 4.7.2.1.1 */
+	struct osmo_timer_list t3314;
+	unsigned long t3314_assigned_sec; /* value assigned by the network */
 };
 
 /* gmm_prim.c: */
@@ -109,6 +113,9 @@ struct gprs_gmm_entity *gprs_gmm_find_gmme_by_imsi(const char *imsi);
 struct gprs_gmm_entity *gprs_gmm_find_gmme_by_tlli(uint32_t tlli);
 struct gprs_gmm_entity *gprs_gmm_find_gmme_by_sess_id(uint32_t id);
 uint32_t gprs_gmm_alloc_rand_tlli(void);
+void gprs_gmm_gmme_ready_timer_start(struct gprs_gmm_entity *gmme);
+void gprs_gmm_gmme_ready_timer_stop(struct gprs_gmm_entity *gmme);
+bool gprs_gmm_gmme_ready_timer_running(const struct gprs_gmm_entity *gmme);
 int gprs_gmm_rx(struct gprs_gmm_entity *gmme, struct gsm48_hdr *gh, unsigned int len);
 int gprs_gmm_tx_att_req(struct gprs_gmm_entity *gmme,
 			enum osmo_gprs_gmm_attach_type attach_type,

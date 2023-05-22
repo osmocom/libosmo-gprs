@@ -603,6 +603,18 @@ int gprs_gmm_prim_call_down_cb(struct osmo_gprs_gmm_prim *gmm_prim)
 	return rc;
 }
 
+static int gprs_gmm_prim_handle_gmmrr_llc_transmitted_ind(struct osmo_gprs_gmm_prim *gmm_prim)
+{
+	struct gprs_gmm_entity *gmme = gprs_gmm_find_gmme_by_tlli(gmm_prim->gmmrr.tlli);
+	if (!gmme) {
+		LOGGMM(LOGL_NOTICE, "Rx %s: Unknown TLLI 0x%08x\n",
+		       osmo_gprs_gmm_prim_name(gmm_prim), gmm_prim->gmmrr.tlli);
+		return -ENOENT;
+	}
+	gprs_gmm_gmme_ready_timer_start(gmme);
+	return 0;
+}
+
 static int gprs_gmm_prim_handle_gmmrr(struct osmo_gprs_gmm_prim *gmm_prim)
 {
 	int rc = 0;
@@ -612,8 +624,7 @@ static int gprs_gmm_prim_handle_gmmrr(struct osmo_gprs_gmm_prim *gmm_prim)
 		rc = 1;
 		break;
 	case OSMO_PRIM(OSMO_GPRS_GMM_GMMRR_LLC_TRANSMITTED, PRIM_OP_INDICATION):
-		rc = gprs_gmm_prim_handle_unsupported(gmm_prim);
-		rc = 1;
+		rc = gprs_gmm_prim_handle_gmmrr_llc_transmitted_ind(gmm_prim);
 		break;
 	default:
 		rc = gprs_gmm_prim_handle_unsupported(gmm_prim);

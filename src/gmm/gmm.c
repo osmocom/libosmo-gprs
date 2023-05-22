@@ -78,6 +78,8 @@ static struct osmo_tdef T_defs_gmm[] = {
 	{ 0 } /* empty item at the end */
 };
 
+static void t3314_ready_timer_cb(void *data);
+
 static void gprs_gmm_ctx_free(void)
 {
 	struct gprs_gmm_entity *gmme;
@@ -173,6 +175,8 @@ struct gprs_gmm_entity *gprs_gmm_gmme_alloc(uint32_t ptmsi, const char *imsi)
 	gmme->t3302 = osmo_tdef_get(g_gmm_ctx->T_defs, 3302, OSMO_TDEF_S, -1);
 	gmme->t3346 = osmo_tdef_get(g_gmm_ctx->T_defs, 3346, OSMO_TDEF_S, -1);
 
+	osmo_timer_setup(&gmme->t3314, t3314_ready_timer_cb, gmme);
+
 	llist_add(&gmme->list, &g_gmm_ctx->gmme_list);
 
 	return gmme;
@@ -184,6 +188,8 @@ void gprs_gmm_gmme_free(struct gprs_gmm_entity *gmme)
 		return;
 
 	LOGGMME(gmme, LOGL_DEBUG, "free()\n");
+	if (osmo_timer_pending(&gmme->t3314))
+		osmo_timer_del(&gmme->t3314);
 	gprs_gmm_ms_fsm_ctx_release(&gmme->ms_fsm);
 	llist_del(&gmme->list);
 	talloc_free(gmme);
@@ -278,6 +284,51 @@ uint32_t gprs_gmm_alloc_rand_tlli(void)
 failed:
 	LOGGMM(LOGL_ERROR, "Failed to allocate a TLLI: %d (%s)\n", rc, strerror(-rc));
 	return GPRS_GMM_TLLI_UNASSIGNED;
+}
+
+/* TS 24.008 4.7.2.1.1 READY timer behaviour (A/Gb mode only) */
+/* Ready timer is started: */
+void gprs_gmm_gmme_ready_timer_start(struct gprs_gmm_entity *gmme)
+{
+	if (gmme->t3314_assigned_sec == 0)
+		return;
+	LOGGMME(gmme, LOGL_INFO, "READY timer started\n");
+	osmo_timer_schedule(&gmme->t3314, gmme->t3314_assigned_sec, 0);
+
+	/* TODO: "Timer T3312 is stopped and shall be set to its initial value
+	 * for the next start when the READY timer is started." */
+}
+
+/* Ready timer is stopped: */
+void gprs_gmm_gmme_ready_timer_stop(struct gprs_gmm_entity *gmme)
+{
+	/* TODO: "In A/Gb mode, the timer T3312 is reset and started with its
+	 * initial value, when the READY timer is stopped or expires."
+	 */
+	if (!osmo_timer_pending(&gmme->t3314))
+		return;
+	LOGGMME(gmme, LOGL_INFO, "READY timer stopped\n");
+	osmo_timer_del(&gmme->t3314);
+}
+
+bool gprs_gmm_gmme_ready_timer_running(const struct gprs_gmm_entity *gmme)
+{
+	return osmo_timer_pending(&gmme->t3314);
+}
+
+/* READY timer expiration: */
+static void t3314_ready_timer_cb(void *data)
+{
+	/* "When the READY timer has expired the MS shall perform the routing
+	 * area updating procedure when a routing area border is crossed"
+	 */
+	struct gprs_gmm_entity *gmme = (struct gprs_gmm_entity *)data;
+	LOGGMME(gmme, LOGL_INFO, "READY timer expired\n");
+
+	/* TODO: "In A/Gb mode, the timer T3312 is reset and started with its
+	 *initial value, when the READY timer is stopped or expires."
+	 */
+
 }
 
 int gprs_gmm_submit_gmmreg_attach_cnf(struct gprs_gmm_entity *gmme, bool accepted, uint8_t cause)
@@ -571,6 +622,18 @@ static int gprs_gmm_rx_att_ack(struct gprs_gmm_entity *gmme, struct gsm48_hdr *g
 		} else {
 			gmme->ptmsi_sig = GSM_RESERVED_TMSI;
 		}
+
+		/* 10.5.7.3 Negotiated READY timer value */
+		if (TLVP_PRESENT(&tp, GSM48_IE_GMM_TIMER_READY)) {
+			int secs = gprs_gmm_gprs_tmr_to_secs(*TLVP_VAL(&tp, GSM48_IE_GMM_TIMER_READY));
+			gmme->t3314_assigned_sec = secs >= 0 ? secs : 0;
+		} else {
+			/* Apply the requested value: */
+			gmme->t3314_assigned_sec = osmo_tdef_get(g_gmm_ctx->T_defs, 3314, OSMO_TDEF_S, -1);
+		}
+		/* "If the negotiated READY timer value is set to zero, the READY timer shall be stopped immediately": */
+		if (gmme->t3314_assigned_sec == 0)
+			gprs_gmm_gmme_ready_timer_stop(gmme);
 
 		if (TLVP_PRESENT(&tp, GSM48_IE_GMM_ALLOC_PTMSI)) {
 			struct osmo_mobile_identity mi;

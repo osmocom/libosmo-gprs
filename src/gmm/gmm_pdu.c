@@ -181,6 +181,7 @@ int gprs_gmm_build_attach_req(struct gprs_gmm_entity *gmme,
 	uint8_t *l;
 	int rc;
 	struct gsm48_ra_id *raid_enc;
+	unsigned long t3314_sec;
 
 	gh = (struct gsm48_hdr *) msgb_put(msg, sizeof(*gh));
 	gh->proto_discr = GSM48_PDISC_MM_GPRS;
@@ -235,6 +236,10 @@ int gprs_gmm_build_attach_req(struct gprs_gmm_entity *gmme,
 		uint8_t ptmsi_sig[3] = { gmme->ptmsi_sig >> 16, gmme->ptmsi_sig >> 8, gmme->ptmsi_sig };
 		msgb_tv_fixed_put(msg, GSM48_IE_GMM_PTMSI_SIG, sizeof(ptmsi_sig), ptmsi_sig);
 	}
+
+	/* 10.5.7.3 Requested READY timer value */
+	t3314_sec = osmo_tdef_get(g_gmm_ctx->T_defs, 3314, OSMO_TDEF_S, -1);
+	msgb_tv_put(msg, GSM48_IE_GMM_TIMER_READY, gprs_gmm_secs_to_gprs_tmr_floor(t3314_sec));
 
 	/* 9.4.1.13 P-TMSI type: The MS shall include this IE if the
 	 * type of identity in the Mobile identity IE is set to
