@@ -151,6 +151,26 @@ const struct tlv_definition gprs_gmm_att_tlvdef = {
 	},
 };
 
+static int encode_ms_net_cap(struct gprs_gmm_entity *gmme, struct msgb *msg)
+{
+	int rc;
+	uint8_t *l; /* len */
+	struct bitvec bv = {
+		.data = msg->tail,
+		.data_len = GSM_MACBLOCK_LEN,
+	};
+
+	msgb_put_u8(msg, GSM48_IE_GMM_MS_NET_CAPA);
+
+	l = msgb_put(msg, 1); /* len */
+
+	/* TODO: we hardcode a MS Net Cap for now. We may want to pass it from the app at some point: */
+	rc = bitvec_unhex(&bv, "e5e0");
+	*l = OSMO_BYTES_FOR_BITS(bv.cur_bit);
+	msgb_put(msg, *l);
+	return rc;
+}
+
 static int encode_ms_ra_acc_cap(struct gprs_gmm_entity *gmme, struct msgb *msg)
 {
 	int rc;
@@ -261,6 +281,68 @@ int gprs_gmm_build_attach_compl(struct gprs_gmm_entity *gmme, struct msgb *msg)
 	gh->msg_type = GSM48_MT_GMM_ATTACH_COMPL;
 
 	/* TODO: Add optional IEs */
+	return 0;
+}
+
+/* Chapter 9.4.14: Routing area update request */
+int gprs_gmm_build_rau_req(struct gprs_gmm_entity *gmme,
+			   enum gprs_gmm_upd_type rau_type,
+			   struct msgb *msg)
+{
+	struct gsm48_hdr *gh;
+	uint8_t byte, cksn;
+	int rc;
+	struct gsm48_ra_id *raid_enc;
+	unsigned long t3314_sec;
+	uint8_t ptmsi_type_native = 1; /* Table 10.5.5.29.1 */
+
+	gh = (struct gsm48_hdr *) msgb_put(msg, sizeof(*gh));
+	gh->proto_discr = GSM48_PDISC_MM_GPRS;
+	gh->msg_type = GSM48_MT_GMM_RA_UPD_REQ;
+
+	/* 10.5.5.18 Update type */
+	cksn = gmme->auth_ciph.req.key_seq;
+	byte = (cksn << 4) | (((uint8_t)rau_type) & 0x07);
+	msgb_put_u8(msg, byte);
+
+	/* Old routing area identification 0.5.5.15 */
+	raid_enc = (struct gsm48_ra_id *)msgb_put(msg, sizeof(struct gsm48_ra_id));
+	gsm48_encode_ra(raid_enc, &gmme->ra);
+
+	/* MS Radio Access capability 10.5.5.12a */
+	rc = encode_ms_ra_acc_cap(gmme, msg);
+	if (rc < 0)
+		return -EINVAL;
+
+	/* 10.5.5.8 Old P-TMSI signature: */
+	if (gmme->ptmsi_sig != GSM_RESERVED_TMSI) {
+		uint8_t ptmsi_sig[3] = { gmme->ptmsi_sig >> 16, gmme->ptmsi_sig >> 8, gmme->ptmsi_sig };
+		msgb_tv_fixed_put(msg, GSM48_IE_GMM_PTMSI_SIG, sizeof(ptmsi_sig), ptmsi_sig);
+	}
+
+	/* 10.5.7.3 Requested READY timer value */
+	t3314_sec = osmo_tdef_get(g_gmm_ctx->T_defs, 3314, OSMO_TDEF_S, -1);
+	msgb_tv_put(msg, GSM48_IE_GMM_TIMER_READY, gprs_gmm_secs_to_gprs_tmr_floor(t3314_sec));
+
+	/* DRX parameter 10.5.5.6 */
+	memcpy(msgb_put(msg, sizeof(drx_param_def)),
+	       &drx_param_def,
+	       sizeof(drx_param_def));
+
+	/* 9.4.14.6 MS network capability */
+	rc = encode_ms_net_cap(gmme, msg);
+	if (rc < 0)
+		return -EINVAL;
+
+	/* 9.4.14.7 PDP context status */
+	/* TODO: implement. Table 9.4.14/3GPP TS 24.00 states it is optional (O) but 9.4.14.7 states:
+	 * "This IE shall be included by the MS." */
+
+	/* 9.4.14.17 P-TMSI type */
+	/* Table 9.4.14/3GPP TS 24.00 states it is optional (O) but 9.4.14.17 states:
+	 * "This IE shall be included by the MS." */
+	msgb_v_put(msg, (GSM48_IE_GMM_PTMSI_TYPE << 4) | (ptmsi_type_native & 0x01));
+
 	return 0;
 }
 
@@ -392,5 +474,17 @@ int gprs_gmm_build_detach_req(struct gprs_gmm_entity *gmme,
 	*l = rc;
 
 	/* TODO: optional fields: P-TMSI signature 10.5.5.8a */
+	return 0;
+}
+
+int gprs_gmm_build_rau_compl(struct gprs_gmm_entity *gmme, struct msgb *msg)
+{
+	struct gsm48_hdr *gh;
+
+	gh = (struct gsm48_hdr *) msgb_put(msg, sizeof(*gh));
+	gh->proto_discr = GSM48_PDISC_MM_GPRS;
+	gh->msg_type = GSM48_MT_GMM_RA_UPD_COMPL;
+
+	/* TODO: Add optional IEs */
 	return 0;
 }

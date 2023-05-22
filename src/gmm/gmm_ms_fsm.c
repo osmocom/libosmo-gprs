@@ -35,7 +35,7 @@ static const struct osmo_tdef_state_timeout gmm_ms_fsm_timeouts[32] = {
 	[GPRS_GMM_MS_ST_REGISTERED_INITIATED] =		{ .T = 3310 },
 	[GPRS_GMM_MS_ST_REGISTERED] =			{},
 	[GPRS_GMM_MS_ST_DEREGISTERED_INITIATED] =	{},
-	[GPRS_GMM_MS_ST_RAU_INITIATED] =		{},
+	[GPRS_GMM_MS_ST_RAU_INITIATED] =		{ .T = 3330 },
 	[GPRS_GMM_MS_ST_SR_INITIATED] =			{},
 
 };
@@ -57,6 +57,19 @@ static int reinit_attach_proc(struct gprs_gmm_ms_fsm_ctx *ctx)
 	return gprs_gmm_tx_att_req(ctx->gmme,
 			    ctx->attach.type,
 			    ctx->attach.with_imsi);
+}
+
+static int reinit_rau_proc(struct gprs_gmm_ms_fsm_ctx *ctx)
+{
+	unsigned long val_sec;
+
+	OSMO_ASSERT(ctx->fi->state == GPRS_GMM_MS_ST_RAU_INITIATED);
+
+	/* Rearm T3330 */
+	OSMO_ASSERT(ctx->fi->T == 3330);
+	val_sec = osmo_tdef_get(g_gmm_ctx->T_defs, ctx->fi->T, OSMO_TDEF_S, -1);
+	osmo_timer_schedule(&ctx->fi->timer, val_sec, 0);
+	return gprs_gmm_tx_rau_req(ctx->gmme, ctx->rau.type);
 }
 
 static void st_gmm_ms_null(struct osmo_fsm_inst *fi, uint32_t event, void *data)
@@ -168,11 +181,24 @@ static void st_gmm_ms_registered_on_enter(struct osmo_fsm_inst *fi, uint32_t pre
 
 static void st_gmm_ms_registered(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
+	struct gprs_gmm_ms_fsm_ctx *ctx = (struct gprs_gmm_ms_fsm_ctx *)fi->priv;
+	struct osmo_gprs_llc_prim *llc_prim_tx;
+	int rc;
+
 	switch (event) {
 	case GPRS_GMM_MS_EV_SR_REQUESTED:
 		gmm_ms_fsm_state_chg(fi, GPRS_GMM_MS_ST_REGISTERED);
 		break;
 	case GPRS_GMM_MS_EV_RAU_REQUESTED:
+		/* TS 24.007 C.15: submit LLGMM-SUSPEND-REQ */
+		llc_prim_tx = osmo_gprs_llc_prim_alloc_llgm_suspend_req(ctx->gmme->tlli);
+		OSMO_ASSERT(llc_prim_tx);
+		rc = gprs_gmm_prim_call_llc_down_cb(llc_prim_tx);
+		/* Transmit RAU Requested to SGSN: */
+		rc = gprs_gmm_tx_rau_req(ctx->gmme,
+					 ctx->rau.type);
+		if (rc < 0)
+			return;
 		gmm_ms_fsm_state_chg(fi, GPRS_GMM_MS_ST_RAU_INITIATED);
 		break;
 	case GPRS_GMM_MS_EV_DETACH_REQUESTED:
@@ -200,6 +226,9 @@ static void st_gmm_ms_deregistered_initiated(struct osmo_fsm_inst *fi, uint32_t 
 
 static void st_gmm_ms_rau_initiated(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
+	struct gprs_gmm_ms_fsm_ctx *ctx = (struct gprs_gmm_ms_fsm_ctx *)fi->priv;
+	struct osmo_gprs_llc_prim *llc_prim_tx;
+
 	switch (event) {
 	case GPRS_GMM_MS_EV_RAU_REJECTED:
 		// causes #13, #15, #25
@@ -208,6 +237,10 @@ static void st_gmm_ms_rau_initiated(struct osmo_fsm_inst *fi, uint32_t event, vo
 		//mm_ms_fsm_state_chg(fi, GPRS_GMM_MS_ST_DEREGISTERED_INITIATED);
 		break;
 	case GPRS_GMM_MS_EV_RAU_ACCEPTED:
+		/* TS 24.007 C.15: submit LLGM-RESUME-REQ */
+		llc_prim_tx = osmo_gprs_llc_prim_alloc_llgm_resume_req(ctx->gmme->tlli);
+		OSMO_ASSERT(llc_prim_tx);
+		gprs_gmm_prim_call_llc_down_cb(llc_prim_tx);
 		gmm_ms_fsm_state_chg(fi, GPRS_GMM_MS_ST_REGISTERED);
 		break;
 	default:
@@ -347,7 +380,7 @@ int gmm_ms_fsm_timer_cb(struct osmo_fsm_inst *fi)
 
 	switch (fi->T) {
 	case 3310:
-		/* TS 23.008 clause 4.7.3.1.5 c) */
+		/* TS 24.008 clause 4.7.3.1.5 c) */
 		ctx->attach.req_attempts++;
 		LOGPFSML(ctx->fi, LOGL_INFO, "T3310 timeout attempts=%u\n", ctx->attach.req_attempts);
 		OSMO_ASSERT(fi->state == GPRS_GMM_MS_ST_REGISTERED_INITIATED);
@@ -359,6 +392,20 @@ int gmm_ms_fsm_timer_cb(struct osmo_fsm_inst *fi)
 			return 0;
 		}
 		reinit_attach_proc(ctx);
+		break;
+	case 3330:
+		/* TS 24.008 clause 4.7.5.1.5 c) */
+		ctx->rau.req_attempts++;
+		LOGPFSML(ctx->fi, LOGL_INFO, "T3330 timeout attempts=%u\n", ctx->rau.req_attempts);
+		OSMO_ASSERT(fi->state == GPRS_GMM_MS_ST_RAU_INITIATED);
+		if (ctx->rau.req_attempts == 4) {
+			/* "On the fifth expiry of timer T3330, the MS shall
+			 *  abort the GPRS attach procedure" */
+			LOGPFSML(ctx->fi, LOGL_NOTICE, "GPRS RAU procedure failure (T3330 timeout attempts=%u)\n", ctx->rau.req_attempts);
+			osmo_fsm_inst_dispatch(ctx->fi, GPRS_GMM_MS_EV_LOW_LVL_FAIL, NULL);
+			return 0;
+		}
+		reinit_rau_proc(ctx);
 		break;
 	default:
 		OSMO_ASSERT(0);
@@ -447,5 +494,16 @@ int gprs_gmm_ms_fsm_ctx_request_detach(struct gprs_gmm_ms_fsm_ctx *ctx,
 	}
 
 	rc = gprs_gmm_tx_detach_req(ctx->gmme, detach_type, poweroff_type);
+	return rc;
+}
+
+int gprs_gmm_ms_fsm_ctx_request_rau(struct gprs_gmm_ms_fsm_ctx *ctx,
+				    enum gprs_gmm_upd_type rau_type)
+{
+	int rc = 0;
+
+	ctx->rau.type = rau_type;
+	rc = osmo_fsm_inst_dispatch(ctx->fi, GPRS_GMM_MS_EV_RAU_REQUESTED, NULL);
+
 	return rc;
 }

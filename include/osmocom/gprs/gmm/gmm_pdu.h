@@ -5,6 +5,7 @@
 #include <osmocom/gsm/tlv.h>
 
 struct gprs_gmm_entity;
+enum gprs_gmm_upd_type;
 
 #define GPRS_GMM_ALLOC_SIZE        2048
 #define  GPRS_GMM_ALLOC_HEADROOM    256
@@ -36,3 +37,9 @@ int gprs_gmm_build_detach_req(struct gprs_gmm_entity *gmme,
 			      enum osmo_gprs_gmm_detach_ms_type detach_type,
 			      enum osmo_gprs_gmm_detach_poweroff_type poweroff_type,
 			      struct msgb *msg);
+
+int gprs_gmm_build_rau_req(struct gprs_gmm_entity *gmme,
+			   enum gprs_gmm_upd_type rau_type,
+			   struct msgb *msg);
+
+int gprs_gmm_build_rau_compl(struct gprs_gmm_entity *gmme, struct msgb *msg);

@@ -78,6 +78,14 @@ static struct osmo_tdef T_defs_gmm[] = {
 	{ 0 } /* empty item at the end */
 };
 
+const struct value_string gprs_gmm_upd_type_names[] = {
+	{ GPRS_GMM_UPD_TYPE_RA,	"RA updating" },
+	{ GPRS_GMM_UPD_TYPE_COMBINED_RA_LA, "Combined RA/LA updating" },
+	{ GPRS_GMM_UPD_TYPE_COMBINED_RA_LA_IMSI, "Combined RA/LA updating with IMSI attac" },
+	{ GPRS_GMM_UPD_TYPE_PERIODIC,	"Periodic updating" },
+	{ 0, NULL }
+};
+
 static void t3314_ready_timer_cb(void *data);
 static void t3312_periodic_rau_timer_cb(void *data);
 
@@ -296,7 +304,7 @@ void gprs_gmm_gmme_ready_timer_start(struct gprs_gmm_entity *gmme)
 {
 	if (gmme->t3314_assigned_sec == 0)
 		return;
-	LOGGMME(gmme, LOGL_INFO, "READY timer started\n");
+	LOGGMME(gmme, LOGL_INFO, "READY timer started (expires in %lu seconds)\n", gmme->t3314_assigned_sec);
 	osmo_timer_schedule(&gmme->t3314, gmme->t3314_assigned_sec, 0);
 
 	/* "Timer T3312 is stopped and shall be set to its initial value
@@ -341,14 +349,11 @@ static void t3314_ready_timer_cb(void *data)
 /* T3312 (Periodic RAU) is started: */
 void gprs_gmm_gmme_t3312_start(struct gprs_gmm_entity *gmme)
 {
-	unsigned long t3312_sec;
-
-	t3312_sec = osmo_tdef_get(g_gmm_ctx->T_defs, 3312, OSMO_TDEF_S, -1);
-	if (t3312_sec == 0)
+	if (gmme->t3312_assigned_sec == 0)
 		return;
 
-	LOGGMME(gmme, LOGL_INFO, "T3312 started\n");
-	osmo_timer_schedule(&gmme->t3312, t3312_sec, 0);
+	LOGGMME(gmme, LOGL_INFO, "T3312 started (expires in %lu seconds)\n", gmme->t3312_assigned_sec);
+	osmo_timer_schedule(&gmme->t3312, gmme->t3312_assigned_sec, 0);
 }
 
 /* T3312 (Periodic RAU) is stopped: */
@@ -380,6 +385,8 @@ static void t3312_periodic_rau_timer_cb(void *data)
 	 *   routing area updating procedure when it returns to state
 	 *   GMM-REGISTERED.NORMAL-SERVICE."
 	 */
+	gprs_gmm_ms_fsm_ctx_request_rau(&gmme->ms_fsm, GPRS_GMM_UPD_TYPE_PERIODIC);
+
 }
 
 int gprs_gmm_submit_gmmreg_attach_cnf(struct gprs_gmm_entity *gmme, bool accepted, uint8_t cause)
@@ -641,6 +648,71 @@ int gprs_gmm_tx_detach_req(struct gprs_gmm_entity *gmme,
 	return rc;
 }
 
+/* Tx GMM Routing area update request, 9.4.14 */
+int gprs_gmm_tx_rau_req(struct gprs_gmm_entity *gmme,
+			enum gprs_gmm_upd_type rau_type)
+{
+	struct osmo_gprs_llc_prim *llc_prim;
+	int rc;
+	struct msgb *msg;
+
+	LOGGMME(gmme, LOGL_INFO, "Tx GMM RAU REQUEST\n");
+	llc_prim = osmo_gprs_llc_prim_alloc_ll_unitdata_req(
+			gmme->tlli, OSMO_GPRS_LLC_SAPI_GMM, NULL, GPRS_GMM_ALLOC_SIZE);
+	msg = llc_prim->oph.msg;
+	msg->l3h = msg->tail;
+	rc = gprs_gmm_build_rau_req(gmme, rau_type, msg);
+	if (rc < 0) {
+		msgb_free(msg);
+		return -EBADMSG;
+	}
+	llc_prim->ll.l3_pdu = msg->l3h;
+	llc_prim->ll.l3_pdu_len = msgb_l3len(msg);
+	/* TODO:
+	llc_prim->ll.qos_params.*;
+	llc_prim->ll.radio_prio;
+	llc_prim->ll.apply_gea;
+	llc_prim->ll.apply_gia;
+	*/
+
+	rc = gprs_gmm_prim_call_llc_down_cb(llc_prim);
+
+	return rc;
+}
+
+/* Tx GMM Routing area update complete, 9.4.16 */
+static int gprs_gmm_tx_rau_compl(struct gprs_gmm_entity *gmme)
+{
+	struct osmo_gprs_llc_prim *llc_prim;
+	int rc;
+	struct msgb *msg;
+
+	LOGGMME(gmme, LOGL_INFO, "Tx GMM RAU COMPL\n");
+
+	llc_prim = osmo_gprs_llc_prim_alloc_ll_unitdata_req(
+			gmme->tlli, OSMO_GPRS_LLC_SAPI_GMM, NULL, GPRS_GMM_ALLOC_SIZE);
+	msg = llc_prim->oph.msg;
+	msg->l3h = msg->tail;
+	rc = gprs_gmm_build_rau_compl(gmme, msg);
+	if (rc < 0) {
+		msgb_free(msg);
+		return -EBADMSG;
+	}
+	llc_prim->ll.l3_pdu = msg->l3h;
+	llc_prim->ll.l3_pdu_len = msgb_l3len(msg);
+	/* TODO:
+	llc_prim->ll.qos_params.*;
+	llc_prim->ll.radio_prio;
+	llc_prim->ll.apply_gea;
+	llc_prim->ll.apply_gia;
+	*/
+
+	rc = gprs_gmm_prim_call_llc_down_cb(llc_prim);
+	if (rc < 0)
+		return rc;
+	return rc;
+}
+
 static int gprs_gmm_rx_att_ack(struct gprs_gmm_entity *gmme, struct gsm48_hdr *gh, unsigned int len)
 {
 	struct gsm48_attach_ack *aa;
@@ -815,6 +887,130 @@ rejected:
 	return -EINVAL; /* TODO: what to do on error? */
 }
 
+/* Rx Routing area update accept, 9.4.15 */
+static int gprs_gmm_rx_rau_acc(struct gprs_gmm_entity *gmme, struct gsm48_hdr *gh, unsigned int len)
+{
+	struct gsm48_ra_upd_ack *raack;
+	struct tlv_parsed tp;
+	int rc;
+	int periodic_rau_sec;
+
+	if (len < sizeof(*gh) + sizeof(*raack)) {
+		LOGGMME(gmme, LOGL_ERROR, "Rx GMM RAU ACCEPT with wrong size %u\n", len);
+		goto rejected;
+	}
+
+	raack = (struct gsm48_ra_upd_ack *)&gh->data[0];
+	LOGGMME(gmme, LOGL_INFO, "Rx GMM RAU ACCEPT upd_result=0x%02x\n", raack->upd_result);
+
+	/* TODO: check raack->upd_result */
+
+	periodic_rau_sec = gprs_gmm_gprs_tmr_to_secs(raack->ra_upd_timer);
+	gmme->t3312_assigned_sec = periodic_rau_sec >= 0 ? periodic_rau_sec : 0;
+	if (gmme->t3312_assigned_sec == 0)
+		gprs_gmm_gmme_t3312_stop(gmme);
+	gsm48_parse_ra(&gmme->ra, (const uint8_t *)&raack->ra_id);
+
+	if (len > sizeof(*gh) + sizeof(*raack)) {
+		rc = gprs_gmm_tlv_parse(&tp, &raack->data[0],
+					len - (sizeof(*gh) + sizeof(*raack)));
+		if (rc < 0) {
+			LOGGMME(gmme, LOGL_ERROR, "Rx GMM RAU ACCEPT: failed to parse TLVs %d\n", rc);
+			goto rejected;
+		}
+
+		/* 10.5.5.8 P-TMSI signature */
+		if (TLVP_PRESENT(&tp, GSM48_IE_GMM_PTMSI_SIG)) {
+			const uint8_t *ptmsi_sig = TLVP_VAL(&tp, GSM48_IE_GMM_PTMSI_SIG);
+			gmme->ptmsi_sig = (ptmsi_sig[0] << 8) | (ptmsi_sig[1] << 4) | ptmsi_sig[2];
+		} else {
+			gmme->ptmsi_sig = GSM_RESERVED_TMSI;
+		}
+
+		/* 10.5.1.4 Allocated P-TMSI */
+		if (TLVP_PRESENT(&tp, GSM48_IE_GMM_ALLOC_PTMSI)) {
+			struct osmo_mobile_identity mi;
+			if (osmo_mobile_identity_decode(&mi, TLVP_VAL(&tp, GSM48_IE_GMM_ALLOC_PTMSI),
+							TLVP_LEN(&tp, GSM48_IE_GMM_ALLOC_PTMSI), false)
+			    || mi.type != GSM_MI_TYPE_TMSI) {
+				LOGGMME(gmme, LOGL_ERROR, "Cannot decode P-TMSI\n");
+				goto rejected;
+			}
+			gmme->old_ptmsi = gmme->ptmsi;
+			gmme->ptmsi = mi.tmsi;
+			/* TS 24.008 4.7.1.4.1:"Upon receipt of the assigned P-TMSI, the MS
+			 * shall derive the local TLLI from this P-TMSI and shall use it for
+			 * addressing at lower layers": */
+			gmme->old_tlli = gmme->tlli;
+			gmme->tlli = gprs_tmsi2tlli(gmme->ptmsi, TLLI_LOCAL);
+		}
+		/* FIXME! what to do it PTMSI changes? probably need to update other layers... Check GPRS ATTACH ACCEPT func */
+
+		/* 10.5.1.4 MS identity */
+		if (TLVP_PRESENT(&tp, GSM48_IE_GMM_IMEISV)) {
+			struct osmo_mobile_identity mi;
+			if (osmo_mobile_identity_decode(&mi, TLVP_VAL(&tp, GSM48_IE_GMM_IMEISV),
+							TLVP_LEN(&tp, GSM48_IE_GMM_IMEISV), false)
+			    || mi.type != GSM_MI_TYPE_IMEISV) {
+				LOGGMME(gmme, LOGL_ERROR, "Cannot decode IMEISV\n");
+				goto rejected;
+			}
+			/* TODO: */
+		}
+
+		/* 10.5.5.11 List of Receive N-PDU Numbers: TODO */
+
+		/* 10.5.7.3 Negotiated READY timer value */
+		if (TLVP_PRESENT(&tp, GSM48_IE_GMM_TIMER_READY)) {
+			int secs = gprs_gmm_gprs_tmr_to_secs(*TLVP_VAL(&tp, GSM48_IE_GMM_TIMER_READY));
+			gmme->t3314_assigned_sec = secs >= 0 ? secs : 0;
+		} else {
+			/* Apply the requested value: */
+			gmme->t3314_assigned_sec = osmo_tdef_get(g_gmm_ctx->T_defs, 3314, OSMO_TDEF_S, -1);
+		}
+		/* "If the negotiated READY timer value is set to zero, the READY timer shall be stopped immediately": */
+		if (gmme->t3314_assigned_sec == 0) {
+			gprs_gmm_gmme_ready_timer_stop(gmme);
+			/* "If after a READY timer negotiation the READY timer
+			 * value is set to zero, timer T3312 is reset and started
+			 * with its initial value." */
+			gprs_gmm_gmme_t3312_start(gmme);
+		}
+
+		/* 10.5.5.14 GMM cause: TODO */
+
+		/* 10.5.7.4 T3302 value */
+		if (TLVP_PRES_LEN(&tp, GSM48_IE_GMM_TIMER_T3302, 1))
+			gmme->t3302 = *TLVP_VAL(&tp, GSM48_IE_GMM_TIMER_T3302);
+
+		/* 10.5.1.13 Equivalent PLMNs: TODO */
+		/* 10.5.7.1 PDP context status: TODO */
+
+		/* TODO: lots more Optional IEs */
+	}
+
+	/* Submit LLGMM-ASSIGN-REQ as per TS 24.007 Annex C.1 */
+	rc = gprs_gmm_submit_llgmm_assing_req(gmme);
+	if (rc < 0)
+		goto rejected;
+
+	/* Submit GMMRR-ASSIGN-REQ as per TS 24.007 Annex C.1 */
+	rc = gprs_gmm_submit_gmmrr_assing_req(gmme);
+	if (rc < 0)
+		goto rejected;
+
+	rc = gprs_gmm_tx_rau_compl(gmme);
+	if (rc < 0)
+		goto rejected;
+
+	rc = osmo_fsm_inst_dispatch(gmme->ms_fsm.fi, GPRS_GMM_MS_EV_RAU_ACCEPTED, NULL);
+
+	return rc;
+
+rejected:
+	return -EINVAL; /* TODO: what to do on error? */
+}
+
 /* Rx GMM Identity Request, 9.2.10 */
 static int gprs_gmm_rx_id_req(struct gprs_gmm_entity *gmme, struct gsm48_hdr *gh, unsigned int len)
 {
@@ -915,6 +1111,9 @@ int gprs_gmm_rx(struct gprs_gmm_entity *gmme, struct gsm48_hdr *gh, unsigned int
 		break;
 	case GSM48_MT_GMM_DETACH_ACK:
 		rc = gprs_gmm_rx_detach_accept(gmme, gh, len);
+		break;
+	case GSM48_MT_GMM_RA_UPD_ACK:
+		rc = gprs_gmm_rx_rau_acc(gmme, gh, len);
 		break;
 	case GSM48_MT_GMM_ID_REQ:
 		rc = gprs_gmm_rx_id_req(gmme, gh, len);

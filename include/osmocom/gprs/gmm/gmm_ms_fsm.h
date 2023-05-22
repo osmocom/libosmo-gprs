@@ -5,6 +5,20 @@
 
 struct gprs_gmm_entity;
 
+/* Update type 10.5.5.18 */
+enum gprs_gmm_upd_type {
+	GPRS_GMM_UPD_TYPE_RA = 0,
+	GPRS_GMM_UPD_TYPE_COMBINED_RA_LA = 1,
+	GPRS_GMM_UPD_TYPE_COMBINED_RA_LA_IMSI = 2,
+	GPRS_GMM_UPD_TYPE_PERIODIC = 3,
+	/* others: reserved */
+};
+extern const struct value_string gprs_gmm_upd_type_names[];
+static inline const char *gprs_gmm_upd_type_name(enum gprs_gmm_upd_type val)
+{
+	return get_value_string(gprs_gmm_upd_type_names, val);
+}
+
 /* 3GPP TS 24.008 § 4.1.3.1 GMM states in the MS */
 enum gprs_gmm_ms_fsm_states {
 	GPRS_GMM_MS_ST_NULL,			/* 4.1.3.1.1.1 */
@@ -58,12 +72,20 @@ struct gprs_gmm_ms_fsm_detach_ctx {
 	enum osmo_gprs_gmm_detach_poweroff_type poweroff_type;
 };
 
+/* Info about last initiated RAU: */
+struct gprs_gmm_ms_fsm_rau_ctx {
+	enum gprs_gmm_upd_type type;
+	/* Retransmission of RAU REQUEST (4.7.5.1.5) */
+	uint8_t req_attempts;
+};
+
 struct gprs_gmm_ms_fsm_ctx {
 	struct osmo_fsm_inst *fi;
 	struct gprs_gmm_entity *gmme;
 
 	struct gprs_gmm_ms_fsm_attach_ctx attach;
 	struct gprs_gmm_ms_fsm_detach_ctx detach;
+	struct gprs_gmm_ms_fsm_rau_ctx rau;
 };
 
 int gprs_gmm_ms_fsm_init(void);
@@ -81,3 +103,5 @@ int gprs_gmm_ms_fsm_ctx_request_detach(struct gprs_gmm_ms_fsm_ctx *ctx,
 				       enum osmo_gprs_gmm_detach_ms_type detach_type,
 				       enum osmo_gprs_gmm_detach_poweroff_type poweroff_type);
 
+int gprs_gmm_ms_fsm_ctx_request_rau(struct gprs_gmm_ms_fsm_ctx *ctx,
+				    enum gprs_gmm_upd_type rau_type);

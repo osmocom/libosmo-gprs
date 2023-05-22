@@ -38,10 +38,13 @@ gmm_misc_test_LDFLAGS = \
 	$(NULL)
 
 # libosmo-gprs-llc.a is used below to access non-exported private symbols used in the test:
+# libosmo-gprs-rlcmac.a is used below to access non-exported private symbols used in the test:
 gmm_prim_test_SOURCES = gmm_prim_test.c
 gmm_prim_test_LDADD = \
 	$(top_builddir)/src/gmm/libosmo-gprs-gmm.la \
 	$(top_builddir)/src/llc/.libs/libosmo-gprs-llc.a \
+	$(top_builddir)/src/rlcmac/.libs/libosmo-gprs-rlcmac.a \
+	$(top_builddir)/src/csn1/libosmo-csn1.la \
 	$(LIBOSMOCORE_LIBS) \
 	$(LIBOSMOGSM_LIBS) \
 	$(NULL)

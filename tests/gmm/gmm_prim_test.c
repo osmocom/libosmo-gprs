@@ -28,7 +28,11 @@
 #include <osmocom/core/utils.h>
 #include <osmocom/core/fsm.h>
 #include <osmocom/core/msgb.h>
+#include <osmocom/core/timer.h>
+#include <osmocom/core/timer_compat.h>
+#include <osmocom/core/select.h>
 
+#include <osmocom/gprs/rlcmac/rlcmac_private.h>
 #include <osmocom/gprs/llc/llc_prim.h>
 #include <osmocom/gprs/llc/llc_private.h>
 #include <osmocom/gprs/gmm/gmm.h>
@@ -133,6 +137,46 @@ static uint8_t pdu_gmm_att_acc[] = {
 0xea, 0x71, 0x1b, 0x41
 };
 
+/*
+GSM A-I/F DTAP - Routing Area Update Accept
+ Protocol Discriminator: GPRS mobility management messages (8)
+  .... 1000 = Protocol discriminator: GPRS mobility management messages (0x8)
+  0000 .... = Skip Indicator: No indication of selected PLMN (0)
+ DTAP GPRS Mobility Management Message Type: Routing Area Update Accept (0x09)
+ Force to Standby
+  .... 0... = Spare bit(s): 0
+  .... .000 = Force to standby: Force to standby not indicated (0)
+ Update Result
+  .000 .... = Update Result: RA updated (0)
+ GPRS Timer - Periodic RA update timer
+  GPRS Timer: 10 sec
+   000. .... = Unit: value is incremented in multiples of 2 seconds (0)
+   ...0 0101 = Timer value: 5
+ Routing Area Identification - RAI: 234-70-5-0
+  Routing area identification: 234-70-5-0
+   Mobile Country Code (MCC): United Kingdom (234)
+   Mobile Network Code (MNC): AMSUK Limited (70)
+   Location Area Code (LAC): 0x0005 (5)
+   Routing Area Code (RAC): 0x00 (0)
+ Mobile Identity - Allocated P-TMSI - TMSI/P-TMSI (0xec999002)
+  Element ID: 0x18
+  Length: 5
+  1111 .... = Unused: 0xf
+  .... 0... = Odd/even indication: Even number of identity digits
+  .... .100 = Mobile Identity Type: TMSI/P-TMSI/M-TMSI (4)
+  TMSI/P-TMSI/M-TMSI/5G-TMSI: 3969486850 (0xec999002)
+ GPRS Timer - Negotiated Ready Timer
+  Element ID: 0x17
+  GPRS Timer: 10 sec
+   000. .... = Unit: value is incremented in multiples of 2 seconds (0)
+   ...0 0101 = Timer value: 5
+*/
+static uint8_t pdu_gmm_rau_acc[] = {
+0x08, 0x09, 0x00, 0x05, 0x32, 0xf4, 0x07, 0x00,
+0x05, 0x00, 0x18, 0x05, 0xf4, 0xec, 0x99, 0x90,
+0x02, 0x17, 0x05
+};
+
 static uint8_t pdu_gmm_detach_acc[] = {
 0x08, 0x06, 0x00
 };
@@ -145,6 +189,42 @@ int __wrap_osmo_get_rand_id(uint8_t *data, size_t len)
 	return 0;
 }
 
+#define clock_debug(fmt, args...) \
+	do { \
+		struct timespec ts; \
+		struct timeval tv; \
+		osmo_clock_gettime(CLOCK_MONOTONIC, &ts); \
+		osmo_gettimeofday(&tv, NULL); \
+		fprintf(stdout, "sys={%lu.%06lu}, mono={%lu.%06lu}: " fmt "\n", \
+			tv.tv_sec, tv.tv_usec, ts.tv_sec, ts.tv_nsec/1000, ##args); \
+	} while (0)
+
+static void clock_override_enable(bool enable)
+{
+	osmo_gettimeofday_override = enable;
+	osmo_clock_override_enable(CLOCK_MONOTONIC, enable);
+}
+
+static void clock_override_set(long sec, long usec)
+{
+	struct timespec *mono;
+	osmo_gettimeofday_override_time.tv_sec = sec;
+	osmo_gettimeofday_override_time.tv_usec = usec;
+	mono = osmo_clock_override_gettimespec(CLOCK_MONOTONIC);
+	mono->tv_sec = sec;
+	mono->tv_nsec = usec*1000;
+
+	clock_debug("clock_override_set");
+}
+
+static void clock_override_add_debug(long sec, long usec, bool dbg)
+{
+	osmo_gettimeofday_override_add(sec, usec);
+	osmo_clock_override_add(CLOCK_MONOTONIC, sec, usec*1000);
+	if (dbg)
+		clock_debug("clock_override_add");
+}
+#define clock_override_add(sec, usec) clock_override_add_debug(sec, usec, true)
 
 int test_gmm_prim_up_cb(struct osmo_gprs_gmm_prim *gmm_prim, void *user_data)
 {
@@ -252,6 +332,7 @@ int test_gmm_prim_down_cb(struct osmo_gprs_gmm_prim *gmm_prim, void *user_data)
 int test_gmm_prim_llc_down_cb(struct osmo_gprs_llc_prim *llc_prim, void *user_data)
 {
 	const char *pdu_name = osmo_gprs_llc_prim_name(llc_prim);
+	struct osmo_gprs_gmm_prim *gmm_prim_tx;
 
 	switch (llc_prim->oph.sap) {
 	case OSMO_GPRS_LLC_SAP_LLGMM:
@@ -269,6 +350,15 @@ int test_gmm_prim_llc_down_cb(struct osmo_gprs_llc_prim *llc_prim, void *user_da
 		printf("%s(): Rx %s TLLI=0x%08x SAPI=%s l3=[%s]\n", __func__, pdu_name,
 		       llc_prim->ll.tlli, osmo_gprs_llc_sapi_name(llc_prim->ll.sapi),
 		       osmo_hexdump(llc_prim->ll.l3_pdu, llc_prim->ll.l3_pdu_len));
+		switch (OSMO_PRIM_HDR(&llc_prim->oph)) {
+		case OSMO_PRIM(OSMO_GPRS_LLC_LL_UNITDATA, PRIM_OP_REQUEST):
+			/* Immediately notify GMM that it was transmitted over the air: */
+			gmm_prim_tx = (struct osmo_gprs_gmm_prim *)gprs_rlcmac_prim_alloc_gmmrr_llc_transmitted_ind(llc_prim->ll.tlli);
+			gmm_prim_tx->oph.sap = OSMO_GPRS_GMM_SAP_GMMRR;
+			gmm_prim_tx->oph.primitive = OSMO_GPRS_GMM_GMMRR_LLC_TRANSMITTED;
+			osmo_gprs_gmm_prim_lower_up(gmm_prim_tx);
+			break;
+		}
 		break;
 	default:
 		printf("%s(): Unexpected Rx %s\n", __func__, pdu_name);
@@ -286,11 +376,14 @@ static void test_gmm_prim_ms_gmmreg(void)
 	uint32_t ptmsi = 0x00001234;
 	uint32_t ptmsi_sig = 0x556677;
 	uint32_t rand_tlli = 0x80001234;
+	uint32_t tlli;
 	char *imsi = "1234567890";
 	char *imei = "42342342342342";
 	char *imeisv = "4234234234234275";
 
 	printf("==== %s() [start] ====\n", __func__);
+
+	clock_override_set(0, 0);
 
 	rc = osmo_gprs_gmm_init(OSMO_GPRS_GMM_LOCATION_MS);
 	OSMO_ASSERT(rc == 0);
@@ -338,8 +431,30 @@ static void test_gmm_prim_ms_gmmreg(void)
 	OSMO_ASSERT(llc_prim);
 	rc = osmo_gprs_gmm_prim_llc_lower_up(llc_prim);
 	OSMO_ASSERT(rc == 0);
+	/* update the used ptmsi to align with what was assigned from the network: */
+	ptmsi = 0xea711b41;
+	tlli = gprs_tmsi2tlli(ptmsi, TLLI_LOCAL);
 	/* As a result, MS answers GMM Attach Complete */
 	/* As a result, MS submits GMMREG ATTACH.cnf */
+
+	/* Wait for READY timer to expire: */
+	clock_override_add(44, 0); /* 44: See GMM Attach Accept (pdu_gmm_att_acc) feed above */
+	clock_debug("Expect T3314 (READY) timeout");
+	osmo_select_main(0);
+
+	clock_override_add(10*60, 0); /* 44: See GMM Attach Accept (pdu_gmm_att_acc) feed above */
+	clock_debug("Expect T3312 (periodic RAU) timeout");
+	osmo_select_main(0);
+
+	/* Network sends GMM RAU Accept */
+	llc_prim = gprs_llc_prim_alloc_ll_unitdata_ind(tlli, OSMO_GPRS_LLC_SAPI_GMM, (uint8_t *)pdu_gmm_rau_acc, sizeof(pdu_gmm_rau_acc));
+	OSMO_ASSERT(llc_prim);
+	rc = osmo_gprs_gmm_prim_llc_lower_up(llc_prim);
+	OSMO_ASSERT(rc == 0);
+	/* update the used ptmsi to align with what was assigned from the network: */
+	ptmsi = 0xea711b41;
+	tlli = gprs_tmsi2tlli(ptmsi, TLLI_LOCAL);
+	/* As a result, MS answers GMM RAU Complete */
 
 	/* ... */
 
@@ -353,7 +468,7 @@ static void test_gmm_prim_ms_gmmreg(void)
 	OSMO_ASSERT(rc == 0);
 
 	/* Network sends GMM Detach Accept */
-	llc_prim = gprs_llc_prim_alloc_ll_unitdata_ind(rand_tlli, OSMO_GPRS_LLC_SAPI_GMM, (uint8_t *)pdu_gmm_detach_acc, sizeof(pdu_gmm_detach_acc));
+	llc_prim = gprs_llc_prim_alloc_ll_unitdata_ind(tlli, OSMO_GPRS_LLC_SAPI_GMM, (uint8_t *)pdu_gmm_detach_acc, sizeof(pdu_gmm_detach_acc));
 	OSMO_ASSERT(llc_prim);
 	rc = osmo_gprs_gmm_prim_llc_lower_up(llc_prim);
 	OSMO_ASSERT(rc == 0);
@@ -378,6 +493,8 @@ static void test_gmm_prim_ms_gmmsm(void)
 	uint8_t sm_pdu[] = {GSM48_PDISC_SM_GPRS, 0x28, 0x29, 0x30}; /* fake SM PDU */
 
 	printf("==== %s() [start] ====\n", __func__);
+
+	clock_override_set(0, 0);
 
 	rc = osmo_gprs_gmm_init(OSMO_GPRS_GMM_LOCATION_MS);
 	OSMO_ASSERT(rc == 0);
@@ -459,6 +576,8 @@ int main(int argc, char *argv[])
 	log_set_print_category(osmo_stderr_target, 1);
 	log_set_print_level(osmo_stderr_target, 1);
 	log_set_use_color(osmo_stderr_target, 0);
+
+	clock_override_enable(true);
 
 	test_gmm_prim_ms_gmmreg();
 	test_gmm_prim_ms_gmmsm();
