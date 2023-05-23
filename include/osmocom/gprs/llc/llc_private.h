@@ -254,6 +254,10 @@ struct gprs_llc_llme {
 
 	/* Internal management */
 	uint32_t age_timestamp;
+
+	/* TS 44.064 § C.2: "In addition, all states should observe the suspended
+	 * operation (reception of LLGMM-SUSPEND-REQ) restrictions" */
+	bool suspended;
 };
 
 static inline struct gprs_llc_lle *gprs_llc_llme_get_lle(struct gprs_llc_llme *llme,

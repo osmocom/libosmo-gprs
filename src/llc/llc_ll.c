@@ -277,9 +277,15 @@ static int llc_prim_handle_ll_unitdata_req(struct osmo_gprs_llc_prim *llc_prim)
 		lle = gprs_llc_llme_get_lle(llme, llc_prim->ll.sapi);
 	}
 
+	if (lle->llme->suspended && llc_prim->ll.sapi != OSMO_GPRS_LLC_SAPI_GMM) {
+		LOGLLE(lle, LOGL_NOTICE, "Dropping frame to transmit, LLME is suspended\n");
+		goto ret_free;
+	}
+
 	rc = gprs_llc_lle_tx_ui(lle, llc_prim->ll.l3_pdu, llc_prim->ll.l3_pdu_len,
 				llc_prim->ll.unitdata_req.apply_gea);
 
+ret_free:
 	msgb_free(llc_prim->oph.msg);
 	return rc;
 }

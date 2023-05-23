@@ -100,11 +100,39 @@ struct osmo_gprs_llc_prim *osmo_gprs_llc_prim_alloc_llgm_reset_req(uint32_t tlli
 	return llc_prim;
 }
 
-/* 7.2.1.2 LLGMM-RESET.cnf (SGSN):*/
+/* 7.2.1.2 LLGMM-RESET.cnf (SGSN): */
 struct osmo_gprs_llc_prim *osmo_gprs_llc_prim_alloc_llgm_reset_cnf(uint32_t tlli)
 {
 	struct osmo_gprs_llc_prim *llc_prim;
 	llc_prim = llc_prim_llgmm_alloc(OSMO_GPRS_LLC_LLGMM_RESET, PRIM_OP_CONFIRM, 0);
+	llc_prim->llgmm.tlli = tlli;
+	return llc_prim;
+}
+
+/* 7.2.1.3 LLGMM-TRIGGER.req (MS): */
+struct osmo_gprs_llc_prim *osmo_gprs_llc_prim_alloc_llgm_trigger_req(uint32_t tlli, uint8_t cause)
+{
+	struct osmo_gprs_llc_prim *llc_prim;
+	llc_prim = llc_prim_llgmm_alloc(OSMO_GPRS_LLC_LLGMM_TRIGGER, PRIM_OP_REQUEST, 0);
+	llc_prim->llgmm.tlli = tlli;
+	llc_prim->llgmm.trigger_req.cause = cause;
+	return llc_prim;
+}
+
+/* 7.2.1.4 LLGMM-SUSPEND.req (MS/SGSN): */
+struct osmo_gprs_llc_prim *osmo_gprs_llc_prim_alloc_llgm_suspend_req(uint32_t tlli)
+{
+	struct osmo_gprs_llc_prim *llc_prim;
+	llc_prim = llc_prim_llgmm_alloc(OSMO_GPRS_LLC_LLGMM_SUSPEND, PRIM_OP_REQUEST, 0);
+	llc_prim->llgmm.tlli = tlli;
+	return llc_prim;
+}
+
+/* 7.2.1.5 LLGMM-RESUME.req (MS/SGSN):*/
+struct osmo_gprs_llc_prim *osmo_gprs_llc_prim_alloc_llgm_resume_req(uint32_t tlli)
+{
+	struct osmo_gprs_llc_prim *llc_prim;
+	llc_prim = llc_prim_llgmm_alloc(OSMO_GPRS_LLC_LLGMM_RESUME, PRIM_OP_REQUEST, 0);
 	llc_prim->llgmm.tlli = tlli;
 	return llc_prim;
 }
@@ -246,6 +274,48 @@ ret_free:
 	return rc;
 }
 
+/* 7.2.1.4 LLGMM-SUSPEND.req (MS/SGSN):*/
+static int llc_prim_handle_llgm_suspend_req(struct osmo_gprs_llc_prim *llc_prim)
+{
+	int rc = 0;
+	struct gprs_llc_llme *llme = gprs_llc_find_llme_by_tlli(llc_prim->llgmm.tlli);
+
+	if (!llme) {
+		LOGLLC(LOGL_NOTICE, "Rx %s: Unknown TLLI 0x%08x\n",
+			osmo_gprs_llc_prim_name(llc_prim), llc_prim->llgmm.tlli);
+		rc = -ENOKEY;
+		goto ret_free;
+	}
+	LOGLLME(llme, LOGL_INFO, "%s\n", osmo_gprs_llc_prim_name(llc_prim));
+
+	llme->suspended = true;
+
+ret_free:
+	msgb_free(llc_prim->oph.msg);
+	return rc;
+}
+
+/* 7.2.1.5 LLGMM-RESUME.req (MS/SGSN):*/
+static int llc_prim_handle_llgm_resume_req(struct osmo_gprs_llc_prim *llc_prim)
+{
+	int rc = 0;
+	struct gprs_llc_llme *llme = gprs_llc_find_llme_by_tlli(llc_prim->llgmm.tlli);
+
+	if (!llme) {
+		LOGLLC(LOGL_NOTICE, "Rx %s: Unknown TLLI 0x%08x\n",
+			osmo_gprs_llc_prim_name(llc_prim), llc_prim->llgmm.tlli);
+		rc = -ENOKEY;
+		goto ret_free;
+	}
+	LOGLLME(llme, LOGL_INFO, "%s\n", osmo_gprs_llc_prim_name(llc_prim));
+
+	llme->suspended = false;
+
+ret_free:
+	msgb_free(llc_prim->oph.msg);
+	return rc;
+}
+
 /* LLC higher layers push LLC primitive down to LLC layer: */
 int gprs_llc_prim_llgmm_upper_down(struct osmo_gprs_llc_prim *llc_prim)
 {
@@ -267,12 +337,12 @@ int gprs_llc_prim_llgmm_upper_down(struct osmo_gprs_llc_prim *llc_prim)
 	case OSMO_PRIM(OSMO_GPRS_LLC_LLGMM_SUSPEND, PRIM_OP_REQUEST):
 		OSMO_ASSERT(g_llc_ctx->location == OSMO_GPRS_LLC_LOCATION_MS ||
 			    g_llc_ctx->location == OSMO_GPRS_LLC_LOCATION_SGSN);
-		rc = gprs_llc_prim_handle_unsupported(llc_prim);
+		rc = llc_prim_handle_llgm_suspend_req(llc_prim);
 		break;
 	case OSMO_PRIM(OSMO_GPRS_LLC_LLGMM_RESUME, PRIM_OP_REQUEST):
 		OSMO_ASSERT(g_llc_ctx->location == OSMO_GPRS_LLC_LOCATION_MS ||
 			    g_llc_ctx->location == OSMO_GPRS_LLC_LOCATION_SGSN);
-		rc = gprs_llc_prim_handle_unsupported(llc_prim);
+		rc = llc_prim_handle_llgm_resume_req(llc_prim);
 		break;
 	case OSMO_PRIM(OSMO_GPRS_LLC_LLGMM_IOV, PRIM_OP_REQUEST):
 		OSMO_ASSERT(g_llc_ctx->location == OSMO_GPRS_LLC_LOCATION_SGSN);
