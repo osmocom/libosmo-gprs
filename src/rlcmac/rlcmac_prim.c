@@ -426,6 +426,8 @@ static int rlcmac_prim_handle_gmmrr_assign_req(struct osmo_gprs_rlcmac_prim *rlc
 			goto free_ret;
 		}
 		gprs_rlcmac_entity_free(gre);
+		gre = NULL;
+		goto free_ret;
 	} else {
 		/* Case "update", both old_tlli and new_tlli are valid */
 		gre = gprs_rlcmac_find_entity_by_tlli(old_tlli);
@@ -437,6 +439,11 @@ static int rlcmac_prim_handle_gmmrr_assign_req(struct osmo_gprs_rlcmac_prim *rlc
 		LOGGRE(gre, LOGL_INFO, "Update TLLI 0x%08x -> 0x%08x\n", old_tlli, new_tlli);
 		gre->tlli = new_tlli;
 	}
+
+	/* cache/update knowledge about this GMME's PTMSI and IMSI. It will be
+	 * needed later on to match paging requests: */
+	gre->ptmsi = rlcmac_prim->gmmrr.assign_req.ptmsi;
+	OSMO_STRLCPY_ARRAY(gre->imsi, rlcmac_prim->gmmrr.assign_req.imsi);
 
 free_ret:
 	msgb_free(rlcmac_prim->oph.msg);

@@ -904,6 +904,8 @@ static void test_dl_tbf_ccch_assign(void)
 
 	printf("=== %s start ===\n", __func__);
 	prepare_test();
+	uint32_t ptmsi = 0x00001234;
+	char *imsi = "1234567890";
 	uint32_t tlli = 0x0000001;
 	uint8_t ts_nr = 7;
 	uint8_t usf = 0;
@@ -913,6 +915,8 @@ static void test_dl_tbf_ccch_assign(void)
 
 	/* Notify RLCMAC about our TLLI */
 	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_gmmrr_assign_req(GPRS_RLCMAC_TLLI_UNASSIGNED, tlli);
+	rlcmac_prim->gmmrr.assign_req.ptmsi = ptmsi;
+	OSMO_STRLCPY_ARRAY(rlcmac_prim->gmmrr.assign_req.imsi, imsi);
 	rc = osmo_gprs_rlcmac_prim_upper_down(rlcmac_prim);
 
 	OSMO_ASSERT(sizeof(ccch_imm_ass_pkt_dl_tbf) == GSM_MACBLOCK_LEN);
@@ -951,6 +955,8 @@ static void test_dl_tbf_ccch_assign_requests_ul_tbf_pacch(void)
 	printf("=== %s start ===\n", __func__);
 	prepare_test();
 	RlcMacDownlink_t dl_block;
+	uint32_t ptmsi = 0x00001234;
+	char *imsi = "1234567890";
 	uint32_t tlli = 0x0000001;
 	uint8_t ts_nr = 7;
 	uint8_t usf = 0;
@@ -963,6 +969,8 @@ static void test_dl_tbf_ccch_assign_requests_ul_tbf_pacch(void)
 
 	/* Notify RLCMAC about our TLLI */
 	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_gmmrr_assign_req(GPRS_RLCMAC_TLLI_UNASSIGNED, tlli);
+	rlcmac_prim->gmmrr.assign_req.ptmsi = ptmsi;
+	OSMO_STRLCPY_ARRAY(rlcmac_prim->gmmrr.assign_req.imsi, imsi);
 	rc = osmo_gprs_rlcmac_prim_upper_down(rlcmac_prim);
 
 	OSMO_ASSERT(sizeof(ccch_imm_ass_pkt_dl_tbf) == GSM_MACBLOCK_LEN);

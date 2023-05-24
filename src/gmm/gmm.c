@@ -459,6 +459,8 @@ static int gprs_gmm_submit_gmmrr_assing_req(struct gprs_gmm_entity *gmme)
 	int rc;
 
 	gmm_prim_tx = gprs_gmm_prim_alloc_gmmrr_assign_req(gmme->old_tlli, gmme->tlli);
+	gmm_prim_tx->gmmrr.assign_req.ptmsi = gmme->ptmsi;
+	OSMO_STRLCPY_ARRAY(gmm_prim_tx->gmmrr.assign_req.imsi, gmme->imsi);
 
 	rc = gprs_gmm_prim_call_down_cb(gmm_prim_tx);
 	return rc;

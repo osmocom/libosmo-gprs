@@ -185,6 +185,8 @@ struct osmo_gprs_gmm_gmmrr_prim {
 		/* OSMO_GPRS_GMM_GMMRR_ASSIGN | Req */
 		struct {
 			uint32_t new_tlli;
+			uint32_t ptmsi;
+			char imsi[OSMO_IMSI_BUF_SIZE];
 		} assign_req;
 		/* OSMO_GPRS_GMM_GMMRR_PAGE | Ind */
 		struct {

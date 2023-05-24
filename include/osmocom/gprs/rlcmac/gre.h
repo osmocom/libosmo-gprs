@@ -12,6 +12,10 @@ struct gprs_rlcmac_entity {
 	struct llist_head entry; /* item in (struct gprs_rlcmac_ctx)->gre_list */
 	uint32_t tlli;
 
+	/* Used to match paging requests coming from CS domain: */
+	uint32_t ptmsi;
+	char imsi[OSMO_IMSI_BUF_SIZE];
+
 	struct gprs_rlcmac_llc_queue *llc_queue;
 
 	/* Manage TBF Starting Time delay during TBF assignment: */
