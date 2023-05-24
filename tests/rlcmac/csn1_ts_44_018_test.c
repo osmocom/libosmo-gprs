@@ -86,6 +86,40 @@ static void test_imm_ass_ro(void)
 	printf("\n");
 }
 
+static void test_p1ro(void)
+{
+	printf("*** %s ***\n", __func__);
+
+	static const char * const testData[] = {
+		/* P1 Rest Octets
+		*     L... .... = NLN(PCH): Not Present
+		*     .L.. .... = Priority 1: Not Present
+		*     ..L. .... = Priority 2: Not Present
+		*     ...L .... = Group Call Information: Not Present
+		*     .... H... = Packet Page Indication 1: For GPRS
+		*     .... .H.. = Packet Page Indication 2: For GPRS
+		*     Padding Bits: default padding
+		*/
+		"272b2b2b2b2b2b2b2b2b",
+	};
+
+	for (unsigned int i = 0; i < ARRAY_SIZE(testData); i++) {
+		uint8_t buf[17];
+		P1_Rest_Octets_t p1ro = { 0 };
+		int rc;
+
+		printf("testData[%d] = %s\n", i, testData[i]);
+
+		rc = osmo_hexparse(testData[i], &buf[0], sizeof(buf));
+		OSMO_ASSERT(rc >= 0);
+
+		rc = osmo_gprs_rlcmac_decode_p1ro(&p1ro, &buf[0], rc);
+		printf("osmo_gprs_rlcmac_decode_p1ro() returns %d\n", rc);
+	}
+
+	printf("\n");
+}
+
 static const struct log_info_cat test_log_categories[] = { };
 static const struct log_info test_log_info = {
 	.cat = test_log_categories,
@@ -107,6 +141,7 @@ int main(int argc, char *argv[])
 
 	test_si13ro();
 	test_imm_ass_ro();
+	test_p1ro();
 
 	talloc_free(tall_ctx);
 }

@@ -22,3 +22,7 @@ osmo_gprs_rlcmac_decode_imm_ass_ro() returns 0
 testData[4] = 444261b4b40b2b2b2b2b2b
 osmo_gprs_rlcmac_decode_imm_ass_ro() returns 0
 
+*** test_p1ro ***
+testData[0] = 272b2b2b2b2b2b2b2b2b
+osmo_gprs_rlcmac_decode_p1ro() returns 0
+

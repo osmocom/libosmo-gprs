@@ -35,40 +35,31 @@ CSN_DESCR_EXTERN(StartingTime_t);
 
 /*<P1 Rest Octets>*/
 /*<P2 Rest Octets>*/
-#if 0
 static const
 CSN_DESCR_BEGIN(MobileAllocationIE_t)
   M_UINT       (MobileAllocationIE_t,  Length,  8),
   M_VAR_ARRAY  (MobileAllocationIE_t, MA, Length, 0),
 CSN_DESCR_END  (MobileAllocationIE_t)
-#endif
 
-#if 0
 static const
 CSN_DESCR_BEGIN(SingleRFChannel_t)
   M_UINT       (SingleRFChannel_t,  spare,  2),
   M_UINT       (SingleRFChannel_t,  ARFCN,  10),
 CSN_DESCR_END  (SingleRFChannel_t)
-#endif
 
-#if 0
 static const
 CSN_DESCR_BEGIN(RFHoppingChannel_t)
   M_UINT       (RFHoppingChannel_t,  MAIO,  6),
   M_UINT       (RFHoppingChannel_t,  HSN,  6),
 CSN_DESCR_END  (RFHoppingChannel_t)
-#endif
 
-#if 0
 static const
 CSN_DESCR_BEGIN(MobileAllocation_or_Frequency_Short_List_t)
   M_UNION      (MobileAllocation_or_Frequency_Short_List_t, 2),
   M_BITMAP     (MobileAllocation_or_Frequency_Short_List_t, u.Frequency_Short_List, 64),
   M_TYPE       (MobileAllocation_or_Frequency_Short_List_t, u.MA, MobileAllocationIE_t),
 CSN_DESCR_END  (MobileAllocation_or_Frequency_Short_List_t)
-#endif
 
-#if 0
 static const
 CSN_DESCR_BEGIN(Channel_Description_t)
   M_UINT       (Channel_Description_t,  Channel_type_and_TDMA_offset,  5),
@@ -79,9 +70,7 @@ CSN_DESCR_BEGIN(Channel_Description_t)
   M_TYPE       (Channel_Description_t, u.SingleRFChannel, SingleRFChannel_t),
   M_TYPE       (Channel_Description_t, u.RFHoppingChannel, RFHoppingChannel_t),
 CSN_DESCR_END(Channel_Description_t)
-#endif
 
-#if 0
 static const
 CSN_DESCR_BEGIN(Group_Channel_Description_t)
   M_TYPE       (Group_Channel_Description_t, Channel_Description, Channel_Description_t),
@@ -89,9 +78,7 @@ CSN_DESCR_BEGIN(Group_Channel_Description_t)
   M_NEXT_EXIST (Group_Channel_Description_t, Exist_Hopping, 1),
   M_TYPE       (Group_Channel_Description_t, MA_or_Frequency_Short_List, MobileAllocation_or_Frequency_Short_List_t),
 CSN_DESCR_END  (Group_Channel_Description_t)
-#endif
 
-#if 0
 static const
 CSN_DESCR_BEGIN(Group_Call_Reference_t)
   M_UINT       (Group_Call_Reference_t,  value,  27),
@@ -100,9 +87,7 @@ CSN_DESCR_BEGIN(Group_Call_Reference_t)
   M_UINT       (Group_Call_Reference_t,  call_priority,  3),
   M_UINT       (Group_Call_Reference_t,  Ciphering_information,  4),
 CSN_DESCR_END  (Group_Call_Reference_t)
-#endif
 
-#if 0
 static const
 CSN_DESCR_BEGIN(Group_Call_information_t)
   M_TYPE       (Group_Call_information_t, Group_Call_Reference, Group_Call_Reference_t),
@@ -110,9 +95,7 @@ CSN_DESCR_BEGIN(Group_Call_information_t)
   M_NEXT_EXIST (Group_Call_information_t, Exist_Group_Channel_Description, 1),
   M_TYPE       (Group_Call_information_t, Group_Channel_Description, Group_Channel_Description_t),
 CSN_DESCR_END (Group_Call_information_t)
-#endif
 
-#if 0
 static const
 CSN_DESCR_BEGIN  (P1_Rest_Octets_t)
   M_NEXT_EXIST_LH(P1_Rest_Octets_t, Exist_NLN_PCH_and_NLN_status, 2),
@@ -131,9 +114,7 @@ CSN_DESCR_BEGIN  (P1_Rest_Octets_t)
   M_UINT_LH      (P1_Rest_Octets_t,  Packet_Page_Indication_1,  1),
   M_UINT_LH      (P1_Rest_Octets_t,  Packet_Page_Indication_2,  1),
 CSN_DESCR_END    (P1_Rest_Octets_t)
-#endif
 
-#if 0
 static const
 CSN_DESCR_BEGIN  (P2_Rest_Octets_t)
   M_NEXT_EXIST_LH(P2_Rest_Octets_t, Exist_CN3, 1),
@@ -154,7 +135,6 @@ CSN_DESCR_BEGIN  (P2_Rest_Octets_t)
 
   M_UINT_LH      (P2_Rest_Octets_t,  Packet_Page_Indication_3,  1),
 CSN_DESCR_END    (P2_Rest_Octets_t)
-#endif
 
 static const
 CSN_DESCR_BEGIN(DynamicAllocation_t)
@@ -670,5 +650,23 @@ int osmo_gprs_rlcmac_decode_imm_ass_ro(IA_RestOctets_t *storage,
 	return _osmo_gprs_rlcmac_decode(storage,
 					CSNDESCR(IA_RestOctets_t),
 					"IA Rest Octets",
+					data, data_len);
+}
+
+int osmo_gprs_rlcmac_decode_p1ro(P1_Rest_Octets_t *storage,
+                                       const uint8_t *data, size_t data_len)
+{
+	return _osmo_gprs_rlcmac_decode(storage,
+					CSNDESCR(P1_Rest_Octets_t),
+					"P1 Rest Octets",
+					data, data_len);
+}
+
+int osmo_gprs_rlcmac_decode_p2ro(P2_Rest_Octets_t *storage,
+                                       const uint8_t *data, size_t data_len)
+{
+	return _osmo_gprs_rlcmac_decode(storage,
+					CSNDESCR(P2_Rest_Octets_t),
+					"P2 Rest Octets",
 					data, data_len);
 }
