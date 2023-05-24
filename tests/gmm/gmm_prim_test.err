@@ -37,6 +37,8 @@ DLGLOBAL INFO Rx from lower layers: GMRR-LLC_TRANSMITTED.indication
 DLGLOBAL INFO GMME(IMSI-1234567890:PTMSI-ec999002:TLLI-ec999002) READY timer started (expires in 10 seconds)
 DLGLOBAL INFO GMM_MS{RAUInitidated}: Received Event RAU_ACCEPTED
 DLGLOBAL INFO GMM_MS{RAUInitidated}: state_chg to Registered
+DLGLOBAL INFO Rx from lower layers: GMRR-PAGE.indication
+DLGLOBAL INFO GMME(IMSI-1234567890:PTMSI-ec999002:TLLI-ec999002) READY timer started (expires in 10 seconds)
 DLGLOBAL INFO Rx from upper layers: GMMREG-DETACH.request
 DLGLOBAL INFO GMM_MS{Registered}: Received Event DETACH_REQUESTED
 DLGLOBAL INFO GMM_MS{Registered}: state_chg to DeregisteredInitiated

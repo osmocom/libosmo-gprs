@@ -458,6 +458,14 @@ static void test_gmm_prim_ms_gmmreg(void)
 
 	/* ... */
 
+	/* Test PS paging request arriving from CCCH (RR): */
+	gmm_prim = osmo_gprs_gmm_prim_alloc_gmmrr_page_ind(tlli);
+	OSMO_ASSERT(gmm_prim);
+	rc = osmo_gprs_gmm_prim_lower_up(gmm_prim);
+	OSMO_ASSERT(rc == 0);
+
+	/* ... */
+
 	/* DETACH */
 	gmm_prim = osmo_gprs_gmm_prim_alloc_gmmreg_detach_req();
 	OSMO_ASSERT(gmm_prim);

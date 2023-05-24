@@ -603,6 +603,27 @@ int gprs_gmm_prim_call_down_cb(struct osmo_gprs_gmm_prim *gmm_prim)
 	return rc;
 }
 
+static int gprs_gmm_prim_handle_gmmrr_page_ind(struct osmo_gprs_gmm_prim *gmm_prim)
+{
+	struct osmo_gprs_llc_prim *llc_prim_tx;
+	int rc;
+	struct gprs_gmm_entity *gmme;
+
+	if (!(gmme = gprs_gmm_find_gmme_by_tlli(gmm_prim->gmmrr.tlli))) {
+		LOGGMM(LOGL_NOTICE, "Rx %s: Unknown TLLI 0x%08x\n",
+		       osmo_gprs_gmm_prim_name(gmm_prim), gmm_prim->gmmrr.tlli);
+		return -ENOENT;
+	}
+
+	/* TS 24.007 C.13: restart READY timer, submit LLGM-TRIGGER.req */
+	gprs_gmm_gmme_ready_timer_start(gmme);
+
+	llc_prim_tx = osmo_gprs_llc_prim_alloc_llgmm_trigger_req(gmme->tlli, OSMO_GPRS_LLC_LLGM_TRIGGER_PAGE_RESP);
+
+	rc = gprs_gmm_prim_call_llc_down_cb(llc_prim_tx);
+	return rc;
+}
+
 static int gprs_gmm_prim_handle_gmmrr_llc_transmitted_ind(struct osmo_gprs_gmm_prim *gmm_prim)
 {
 	struct gprs_gmm_entity *gmme = gprs_gmm_find_gmme_by_tlli(gmm_prim->gmmrr.tlli);
@@ -620,8 +641,7 @@ static int gprs_gmm_prim_handle_gmmrr(struct osmo_gprs_gmm_prim *gmm_prim)
 	int rc = 0;
 	switch (OSMO_PRIM_HDR(&gmm_prim->oph)) {
 	case OSMO_PRIM(OSMO_GPRS_GMM_GMMRR_PAGE, PRIM_OP_INDICATION):
-		rc = gprs_gmm_prim_handle_unsupported(gmm_prim);
-		rc = 1;
+		rc = gprs_gmm_prim_handle_gmmrr_page_ind(gmm_prim);
 		break;
 	case OSMO_PRIM(OSMO_GPRS_GMM_GMMRR_LLC_TRANSMITTED, PRIM_OP_INDICATION):
 		rc = gprs_gmm_prim_handle_gmmrr_llc_transmitted_ind(gmm_prim);

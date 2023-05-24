@@ -19,6 +19,7 @@ test_gmm_prim_llc_down_cb(): Rx LLGMM-ASSIGN.request old_TLLI=0xea711b41 new_TLL
 test_gmm_prim_down_cb(): Rx GMRR-ASSIGN.request old_tlli=0xea711b41 new_tlli=0xec999002
 test_gmm_prim_llc_down_cb(): Rx LL-UNITDATA.request TLLI=0xec999002 SAPI=GMM l3=[08 0a ]
 test_gmm_prim_llc_down_cb(): Rx LLGMM-RESUME.request TLLI=0xec999002
+test_gmm_prim_llc_down_cb(): Rx LLGMM-TRIGGER.request TLLI=0xec999002
 test_gmm_prim_llc_down_cb(): Rx LL-UNITDATA.request TLLI=0xec999002 SAPI=GMM l3=[08 05 20 0a 00 05 f4 ec 99 90 02 ]
 test_gmm_prim_llc_down_cb(): Rx LLGMM-ASSIGN.request old_TLLI=0xec999002 new_TLLI=0xffffffff
 test_gmm_prim_up_cb(): Rx GMMREG-DETACH.confirm detach_type='GPRS detach'
