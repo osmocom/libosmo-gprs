@@ -134,9 +134,28 @@ int osmo_gprs_rlcmac_set_codel_params(bool use, unsigned int interval_msec)
 struct gprs_rlcmac_entity *gprs_rlcmac_find_entity_by_tlli(uint32_t tlli)
 {
 	struct gprs_rlcmac_entity *gre;
-
 	llist_for_each_entry(gre, &g_rlcmac_ctx->gre_list, entry) {
 		if (gre->tlli == tlli)
+			return gre;
+	}
+	return NULL;
+}
+
+struct gprs_rlcmac_entity *gprs_rlcmac_find_entity_by_ptmsi(uint32_t ptmsi)
+{
+	struct gprs_rlcmac_entity *gre;
+	llist_for_each_entry(gre, &g_rlcmac_ctx->gre_list, entry) {
+		if (gre->ptmsi == ptmsi)
+			return gre;
+	}
+	return NULL;
+}
+
+struct gprs_rlcmac_entity *gprs_rlcmac_find_entity_by_imsi(const char *imsi)
+{
+	struct gprs_rlcmac_entity *gre;
+	llist_for_each_entry(gre, &g_rlcmac_ctx->gre_list, entry) {
+		if (strncmp(gre->imsi, imsi, ARRAY_SIZE(gre->imsi)) == 0)
 			return gre;
 	}
 	return NULL;
@@ -299,6 +318,203 @@ int gprs_rlcmac_handle_ccch_imm_ass(const struct gsm48_imm_ass *ia, uint32_t fn)
 			break;
 		}
 		break;
+	}
+
+	return rc;
+}
+
+
+/* TS 44.018 3.3.2.1.1:
+* It is used when sending paging information to a mobile station in packet idle mode, if PCCCH is not present in the cell.
+* If the mobile station in packet idle mode is identified by its IMSI, it shall parse the message for a corresponding Packet
+* Page Indication field:
+* - if the Packet Page Indication field indicates a packet paging procedure, the mobile station shall proceed as
+*   specified in sub-clause 3.5.1.2.
+* 3.5.1.2 "On receipt of a packet paging request":
+* On the receipt of a paging request message, the RR sublayer of addressed mobile station indicates the receipt of a
+* paging request to the MM sublayer, see 3GPP TS 24.007.
+*/
+/* TS 44.018 9.1.22 "Paging request type 1" */
+int gprs_rlcmac_handle_ccch_pag_req1(const struct gsm48_paging1 *pag)
+{
+	uint8_t len;
+	const uint8_t *buf = pag->data;
+	int rc;
+	struct osmo_mobile_identity mi1 = {}; /* GSM_MI_TYPE_NONE */
+	struct osmo_mobile_identity mi2 = {}; /* GSM_MI_TYPE_NONE */
+	P1_Rest_Octets_t p1ro = {};
+	unsigned p1_rest_oct_len;
+	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
+	struct gprs_rlcmac_entity *gre;
+
+	LOGRLCMAC(LOGL_INFO, "Rx Paging Request Type 1\n");
+
+
+	/* The L2 pseudo length of this message is the sum of lengths of all
+	 * information elements present in the message except the P1 Rest Octets and L2
+	 * Pseudo Length information elements. */
+	if (pag->l2_plen == GSM_MACBLOCK_LEN - sizeof(pag->l2_plen)) {
+		/* no P1 Rest Octets => no Packet Page Indication => Discard */
+		return 0;
+	}
+
+	len = *buf;
+	buf++;
+
+	if (GSM_MACBLOCK_LEN < (buf - (uint8_t *)pag) + len)
+		return -EBADMSG;
+
+	if ((rc = osmo_mobile_identity_decode(&mi1, buf, len, false)) < 0)
+		return rc;
+	buf += len;
+
+	if (GSM_MACBLOCK_LEN < (buf - (uint8_t *)pag) + 1) {
+		/* No MI2 and no P1 Rest Octets => no Packet Page Indication => Discard */
+		return 0;
+	}
+
+	if (*buf == GSM48_IE_MOBILE_ID) {
+		buf++;
+		if (GSM_MACBLOCK_LEN < (buf - (uint8_t *)pag) + 1)
+			return -EBADMSG;
+		len = *buf;
+		buf++;
+		if (GSM_MACBLOCK_LEN < (buf - (uint8_t *)pag) + len)
+			return -EBADMSG;
+		if ((rc = osmo_mobile_identity_decode(&mi2, buf, len, false)) < 0)
+			return rc;
+		buf += len;
+	}
+
+	p1_rest_oct_len = GSM_MACBLOCK_LEN - (buf - (uint8_t *)pag);
+	if (p1_rest_oct_len == 0) {
+		/*No P1 Rest Octets => no Packet Page Indication => Discard */
+		return 0;
+	}
+
+	rc = osmo_gprs_rlcmac_decode_p1ro(&p1ro, buf, p1_rest_oct_len);
+	if (rc != 0) {
+		LOGRLCMAC(LOGL_ERROR, "Failed to parse P1 Rest Octets\n");
+		return rc;
+	}
+
+	if (p1ro.Packet_Page_Indication_1 == 1) { /* for GPRS */
+		switch (mi1.type) {
+		case GSM_MI_TYPE_IMSI:
+			if ((gre = gprs_rlcmac_find_entity_by_imsi(mi1.imsi))) {
+				/* TS 24.007 C.13: Submit GMMRR-PAGE.ind: */
+				rlcmac_prim = gprs_rlcmac_prim_alloc_gmmrr_page_ind(gre->tlli);
+				rc = gprs_rlcmac_prim_call_up_cb(rlcmac_prim);
+			}
+			break;
+		case GSM_MI_TYPE_TMSI:
+			if ((gre = gprs_rlcmac_find_entity_by_ptmsi(mi1.tmsi))) {
+				/* TS 24.007 C.13: Submit GMMRR-PAGE.ind: */
+				rlcmac_prim = gprs_rlcmac_prim_alloc_gmmrr_page_ind(gre->tlli);
+				rc = gprs_rlcmac_prim_call_up_cb(rlcmac_prim);
+			}
+			break;
+		default:
+			return -EINVAL;
+		}
+	}
+
+	if (p1ro.Packet_Page_Indication_2 == 1) { /* for GPRS */
+		switch (mi2.type) {
+		case GSM_MI_TYPE_IMSI:
+			if ((gre = gprs_rlcmac_find_entity_by_imsi(mi2.imsi))) {
+				/* TS 24.007 C.13: Submit GMMRR-PAGE.ind: */
+				rlcmac_prim = gprs_rlcmac_prim_alloc_gmmrr_page_ind(gre->tlli);
+				rc = gprs_rlcmac_prim_call_up_cb(rlcmac_prim);
+			}
+			break;
+		case GSM_MI_TYPE_TMSI:
+			if ((gre = gprs_rlcmac_find_entity_by_ptmsi(mi2.tmsi))) {
+				/* TS 24.007 C.13: Submit GMMRR-PAGE.ind: */
+				rlcmac_prim = gprs_rlcmac_prim_alloc_gmmrr_page_ind(gre->tlli);
+				rc = gprs_rlcmac_prim_call_up_cb(rlcmac_prim);
+			}
+			break;
+		default:
+			break; /* MI2 not present */
+		}
+	}
+
+	return rc;
+}
+
+/* TS 44.018 9.1.23 "Paging request type 2" */
+int gprs_rlcmac_handle_ccch_pag_req2(const struct gsm48_paging2 *pag)
+{
+	uint8_t len;
+	const uint8_t *buf = pag->data;
+	int rc;
+	struct osmo_mobile_identity mi3 = {}; /* GSM_MI_TYPE_NONE */
+	P2_Rest_Octets_t p2ro = {};
+	unsigned p2_rest_oct_len;
+	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
+	struct gprs_rlcmac_entity *gre;
+
+	LOGRLCMAC(LOGL_INFO, "Rx Paging Request Type 2\n");
+
+	/* The L2 pseudo length of this message is the sum of lengths of all
+	 * information elements present in the message except the P1 Rest Octets and L2
+	 * Pseudo Length information elements. */
+	if (pag->l2_plen == GSM_MACBLOCK_LEN - sizeof(pag->l2_plen)) {
+		/* no P2 Rest Octets => no Packet Page Indication => Discard */
+		return 0;
+	}
+
+	if (GSM_MACBLOCK_LEN < (buf - (uint8_t *)pag) + 1)
+		return -EBADMSG;
+
+	/* No MI3 => Discard */
+	if (*buf != GSM48_IE_MOBILE_ID)
+		return 0;
+
+	buf++;
+	if (GSM_MACBLOCK_LEN < (buf - (uint8_t *)pag) + 1)
+		return -EBADMSG;
+	len = *buf;
+	buf++;
+	if (GSM_MACBLOCK_LEN < (buf - (uint8_t *)pag) + len)
+		return -EBADMSG;
+	if ((rc = osmo_mobile_identity_decode(&mi3, buf, len, false)) < 0)
+		return rc;
+	buf += len;
+
+	p2_rest_oct_len = GSM_MACBLOCK_LEN - (buf - (uint8_t *)pag);
+	if (p2_rest_oct_len == 0) {
+		/*No P1 Rest Octets => no Packet Page Indication => Discard */
+		return 0;
+	}
+
+	rc = osmo_gprs_rlcmac_decode_p2ro(&p2ro, buf, p2_rest_oct_len);
+	if (rc != 0) {
+		LOGRLCMAC(LOGL_ERROR, "Failed to parse P2 Rest Octets\n");
+		return rc;
+	}
+
+	if (p2ro.Packet_Page_Indication_3 != 1) /* NOT for GPRS */
+		return 0;
+
+	switch (mi3.type) {
+	case GSM_MI_TYPE_IMSI:
+		if ((gre = gprs_rlcmac_find_entity_by_imsi(mi3.imsi))) {
+			/* TS 24.007 C.13: Submit GMMRR-PAGE.ind: */
+			rlcmac_prim = gprs_rlcmac_prim_alloc_gmmrr_page_ind(gre->tlli);
+			rc = gprs_rlcmac_prim_call_up_cb(rlcmac_prim);
+		}
+		break;
+	case GSM_MI_TYPE_TMSI:
+		if ((gre = gprs_rlcmac_find_entity_by_ptmsi(mi3.tmsi))) {
+			/* TS 24.007 C.13: Submit GMMRR-PAGE.ind: */
+			rlcmac_prim = gprs_rlcmac_prim_alloc_gmmrr_page_ind(gre->tlli);
+			rc = gprs_rlcmac_prim_call_up_cb(rlcmac_prim);
+		}
+		break;
+	default:
+		return -EINVAL;
 	}
 
 	return rc;

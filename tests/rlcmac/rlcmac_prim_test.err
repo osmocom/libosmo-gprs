@@ -796,3 +796,10 @@ DLGLOBAL INFO UL_TBF_ASS{IDLE}: Deallocated
 DLGLOBAL INFO UL_TBF{FINISHED}: Send L1CTL-CFG_UL_TBF.req ul_tbf_nr=0 (release)
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-CFG_UL_TBF.request
 DLGLOBAL INFO UL_TBF{FINISHED}: Deallocated
+DLGLOBAL INFO Rx from upper layers: GMMRR-ASSIGN.request
+DLGLOBAL INFO GMMRR-ASSIGN.req: creating new entity TLLI=0x00000001
+DLGLOBAL INFO DL_TBF_ASS{IDLE}: Allocated
+DLGLOBAL DEBUG Rx from lower layers: L1CTL-CCCH_DATA.indication
+DLGLOBAL INFO Rx Paging Request Type 1
+DLGLOBAL NOTICE P1 Rest Octets: 74 remaining bits unhandled by decoder
+DLGLOBAL INFO DL_TBF_ASS{IDLE}: Deallocated

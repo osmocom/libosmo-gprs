@@ -186,6 +186,45 @@ static uint8_t ccch_imm_ass_pkt_dl_tbf[] = {
 	0x2b, 0x2b, 0x2b, 0x2b
 };
 
+/*
+GSM CCCH - Paging Request Type 1
+ L2 Pseudo Length
+  0011 00.. = L2 Pseudo Length value: 12
+ .... 0110 = Protocol discriminator: Radio Resources Management messages (0x6)
+  .... 0110 = Protocol discriminator: Radio Resources Management messages (0x6)
+  0000 .... = Skip Indicator: No indication of selected PLMN (0)
+ Message Type: Paging Request Type 1
+ Page Mode
+  .... 0000 = Page Mode: Normal paging (0)
+ Channel Needed
+  ..00 .... = Channel 1: Any channel (0)
+  00.. .... = Channel 2: Any channel (0)
+ Mobile Identity - Mobile Identity 1 - IMSI (262420000000423)
+  Length: 8
+  0010 .... = Identity Digit 1: 2
+  .... 1... = Odd/even indication: Odd number of identity digits
+  .... .001 = Mobile Identity Type: IMSI (1)
+  IMSI: 262420000000423
+  [Association IMSI: 262420000000423]
+    Mobile Country Code (MCC): Germany (262)
+    Mobile Network Code (MNC): Vodafone GmbH (42)
+ P1 Rest Octets
+  L... .... = NLN(PCH): Not Present
+  .L.. .... = Priority 1: Not Present
+  ..L. .... = Priority 2: Not Present
+  ...L .... = Group Call Information: Not Present
+  .... H... = Packet Page Indication 1: For GPRS
+  .... .H.. = Packet Page Indication 2: For GPRS
+  Padding Bits: default padding
+
+*/
+static uint8_t ccch_pag_req_1[] = {
+	0x31, 0x06, 0x21, 0x00, 0x08, 0x29, 0x26, 0x24, 0x00, 0x00,
+	0x00, 0x40, 0x32, 0x27, 0x2b, 0x2b, 0x2b, 0x2b, 0x2b,
+	0x2b, 0x2b, 0x2b, 0x2b
+};
+
+
 #define clock_debug(fmt, args...) \
 	do { \
 		struct timespec ts; \
@@ -1029,6 +1068,38 @@ static void test_dl_tbf_ccch_assign_requests_ul_tbf_pacch(void)
 	cleanup_test();
 }
 
+/* SGSN->PCU->BTS --PCH--> MS containing "Paging Request Type 1" asking for PS services.
+ * RLCMAC will send GMMRR-PAGE.ind to GMM layer, which is in charge of orchestrating the response. */
+static void test_ccch_pag_req1(void)
+{
+	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
+	int rc;
+
+	printf("=== %s start ===\n", __func__);
+	prepare_test();
+	uint32_t ptmsi = 0x00001234;
+	char *imsi = "262420000000423";
+	uint32_t tlli = 0x0000001;
+
+	/* Notify RLCMAC about our TLLI */
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_gmmrr_assign_req(GPRS_RLCMAC_TLLI_UNASSIGNED, tlli);
+	rlcmac_prim->gmmrr.assign_req.ptmsi = ptmsi;
+	OSMO_STRLCPY_ARRAY(rlcmac_prim->gmmrr.assign_req.imsi, imsi);
+	rc = osmo_gprs_rlcmac_prim_upper_down(rlcmac_prim);
+
+	OSMO_ASSERT(sizeof(ccch_pag_req_1) == GSM_MACBLOCK_LEN);
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_ccch_data_ind(0, ccch_pag_req_1);
+	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+	OSMO_ASSERT(rc == 0);
+	/* Above prim is expected to trigger RLCMAC layer submitting GMMRR-Page.ind as here. */
+
+	/* Here GMM would start UL TBF through LLGM-TRIGGER.req(PAGE_RESPONSE),
+	 * and LLC in turn submits GRR-UNITDATA.req */
+
+	printf("=== %s end ===\n", __func__);
+	cleanup_test();
+}
+
 static const struct log_info_cat test_log_categories[] = { };
 static const struct log_info test_log_info = {
 	.cat = test_log_categories,
@@ -1060,6 +1131,7 @@ int main(int argc, char *argv[])
 	test_ul_tbf_request_another_ul_tbf();
 	test_dl_tbf_ccch_assign();
 	test_dl_tbf_ccch_assign_requests_ul_tbf_pacch();
+	test_ccch_pag_req1();
 
 	talloc_free(tall_ctx);
 }

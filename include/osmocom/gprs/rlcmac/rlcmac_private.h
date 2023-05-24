@@ -86,9 +86,13 @@ extern struct gprs_rlcmac_ctx *g_rlcmac_ctx;
 
 /* rlcmac.c */
 struct gprs_rlcmac_entity *gprs_rlcmac_find_entity_by_tlli(uint32_t tlli);
+struct gprs_rlcmac_entity *gprs_rlcmac_find_entity_by_ptmsi(uint32_t ptmsi);
+struct gprs_rlcmac_entity *gprs_rlcmac_find_entity_by_imsi(const char *imsi);
 struct gprs_rlcmac_dl_tbf *gprs_rlcmac_find_dl_tbf_by_tfi(uint8_t dl_tfi);
 struct gprs_rlcmac_ul_tbf *gprs_rlcmac_find_ul_tbf_by_tfi(uint8_t ul_tfi);
 int gprs_rlcmac_handle_ccch_imm_ass(const struct gsm48_imm_ass *ia, uint32_t fn);
+int gprs_rlcmac_handle_ccch_pag_req1(const struct gsm48_paging1 *pag);
+int gprs_rlcmac_handle_ccch_pag_req2(const struct gsm48_paging2 *pag);
 int gprs_rlcmac_handle_bcch_si13(const struct gsm48_system_information_type_13 *si13);
 int gprs_rlcmac_handle_gprs_dl_block(const struct osmo_gprs_rlcmac_prim *rlcmac_prim,
 				     enum gprs_rlcmac_coding_scheme cs);
