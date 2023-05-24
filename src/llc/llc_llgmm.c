@@ -274,6 +274,46 @@ ret_free:
 	return rc;
 }
 
+/* 7.2.1.3 LLGMM-TRIGGER.req (SGSN):*/
+static int llc_prim_handle_llgmm_trigger_req(struct osmo_gprs_llc_prim *llc_prim)
+{
+	struct gprs_llc_lle *lle;
+	int rc;
+	struct gprs_llc_llme *llme = gprs_llc_find_llme_by_tlli(llc_prim->llgmm.tlli);
+
+	if (!llme) {
+		LOGLLC(LOGL_NOTICE, "Rx %s: Unknown TLLI 0x%08x\n",
+			osmo_gprs_llc_prim_name(llc_prim), llc_prim->llgmm.tlli);
+		rc = -ENOKEY;
+		goto ret_free;
+	}
+	LOGLLME(llme, LOGL_INFO, "%s\n", osmo_gprs_llc_prim_name(llc_prim));
+
+	lle = gprs_llc_llme_get_lle(llme, OSMO_GPRS_LLC_SAPI_GMM);
+
+	/* "If there is a frame waiting to be transmitted in the MS, then this
+	 * frame shall be transmitted on the corresponding SAPI or optionally a
+	 * UI frame with no information field shall be transmitted on any SAPI.
+	 * Otherwise if Cause indicates Cell Update and if Cell Notification is
+	 * indicated by the SGSN (see 3GPP TS 24.008 [8a]), then a NULL frame
+	 * with P=0 shall be transmitted on any SAPI."
+	 */
+	switch (llc_prim->llgmm.trigger_req.cause) {
+	case OSMO_GPRS_LLC_LLGM_TRIGGER_CELL_NOTIFICATION:
+		rc = gprs_llc_lle_tx_null(lle);
+		break;
+	case OSMO_GPRS_LLC_LLGM_TRIGGER_CELL_UPDATE:
+	case OSMO_GPRS_LLC_LLGM_TRIGGER_PAGE_RESP:
+	default:
+		rc = gprs_llc_lle_tx_ui(lle, NULL, 0, false);
+		break;
+	}
+
+ret_free:
+	msgb_free(llc_prim->oph.msg);
+	return rc;
+}
+
 /* 7.2.1.4 LLGMM-SUSPEND.req (MS/SGSN):*/
 static int llc_prim_handle_llgmm_suspend_req(struct osmo_gprs_llc_prim *llc_prim)
 {
@@ -332,7 +372,7 @@ int gprs_llc_prim_llgmm_upper_down(struct osmo_gprs_llc_prim *llc_prim)
 		break;
 	case OSMO_PRIM(OSMO_GPRS_LLC_LLGMM_TRIGGER, PRIM_OP_REQUEST):
 		OSMO_ASSERT(g_llc_ctx->location == OSMO_GPRS_LLC_LOCATION_MS);
-		rc = gprs_llc_prim_handle_unsupported(llc_prim);
+		rc = llc_prim_handle_llgmm_trigger_req(llc_prim);
 		break;
 	case OSMO_PRIM(OSMO_GPRS_LLC_LLGMM_SUSPEND, PRIM_OP_REQUEST):
 		OSMO_ASSERT(g_llc_ctx->location == OSMO_GPRS_LLC_LOCATION_MS ||

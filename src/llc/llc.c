@@ -292,6 +292,46 @@ int gprs_llc_lle_tx_xid(const struct gprs_llc_lle *lle, uint8_t *xid_payload, un
 	return 0;
 }
 
+/* 6.4.1.7 NULL command */
+int gprs_llc_lle_tx_null(const struct gprs_llc_lle *lle)
+{
+	int rc;
+	struct msgb *msg;
+	struct gprs_llc_pdu_decoded pdu_dec = {
+		.sapi = lle->sapi,
+		.fmt = OSMO_GPRS_LLC_FMT_U,
+		.func = OSMO_GPRS_LLC_FUNC_NULL,
+		.flags = 0 /* P=0 */,
+	};
+	struct osmo_gprs_llc_prim *llc_prim;
+
+	/* LLC payload is put directly below: */
+	if (g_llc_ctx->location == OSMO_GPRS_LLC_LOCATION_SGSN)
+		llc_prim = gprs_llc_prim_alloc_bssgp_dl_unitdata_req(lle->llme->tlli, NULL, 4096 - sizeof(llc_prim));
+	else
+		llc_prim = gprs_llc_prim_alloc_grr_unitdata_req(lle->llme->tlli, NULL, 4096 - sizeof(llc_prim));
+	msg = llc_prim->oph.msg;
+	msg->l3h = msg->tail;
+
+	rc = gprs_llc_pdu_encode(msg, &pdu_dec);
+	if (rc < 0) {
+		LOGLLC(LOGL_NOTICE, "Failed to encode U DM\n");
+		msgb_free(msg);
+		return rc;
+	}
+	if (g_llc_ctx->location == OSMO_GPRS_LLC_LOCATION_MS) {
+		llc_prim->bssgp.ll_pdu = msgb_l3(msg);
+		llc_prim->bssgp.ll_pdu_len = msgb_l3len(msg);
+	} else {
+		llc_prim->grr.ll_pdu = msgb_l3(msg);
+		llc_prim->grr.ll_pdu_len = msgb_l3len(msg);
+	}
+
+	/* Send BSSGP-DL-UNITDATA.req (SGSN) / GRR-UNITDATA.req (MS) */
+	gprs_llc_prim_call_down_cb(llc_prim);
+	return 0;
+}
+
 /* Transmit a UI frame over the given SAPI:
    'encryptable' indicates whether particular message can be encrypted according
    to 3GPP TS 24.008 § 4.7.1.2

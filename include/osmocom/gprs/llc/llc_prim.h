@@ -88,6 +88,16 @@ static inline const char *osmo_gprs_llc_bssgp_prim_type_name(enum osmo_gprs_llc_
 	return get_value_string(osmo_gprs_llc_bssgp_prim_type_names, val);
 }
 
+/* TS 04.64 Section 7.2.1.3 LLGMM-TRIGGER */
+/* 3GPP TS 24.008 2.1.2 "Cell Notification" is considered a different trigger
+ * type than Cell Update since lower layers behave different (tx LLC NULL vs UI
+ * frame). Furthermore, the one knowing about requirement to use one or the other
+ * is the upper layer (GMM), as well as the one responsible of READY timer. */
+enum osmo_gprs_llc_llgmm_trigger_type {
+	OSMO_GPRS_LLC_LLGM_TRIGGER_CELL_UPDATE,
+	OSMO_GPRS_LLC_LLGM_TRIGGER_CELL_NOTIFICATION,
+	OSMO_GPRS_LLC_LLGM_TRIGGER_PAGE_RESP,
+};
 
 /* Parameters for OSMO_GPRS_LLC_LLGMM_* prims */
 struct osmo_gprs_llc_llgmm_prim {
@@ -104,7 +114,7 @@ struct osmo_gprs_llc_llgmm_prim {
 		} assign_req;
 		/* OSMO_GPRS_LLC_LLGMM_TRIGGER | Req */
 		struct {
-			uint8_t cause;
+			uint8_t cause; /* enum osmo_gprs_llc_llgmm_trigger_type */
 		} trigger_req;
 		/* OSMO_GPRS_LLC_LLGMM_SUSPEND | Req */
 		struct {

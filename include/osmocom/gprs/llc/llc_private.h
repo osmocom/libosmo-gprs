@@ -323,6 +323,7 @@ int gprs_llc_lle_tx_xid(const struct gprs_llc_lle *lle, uint8_t *xid_payload, un
 int gprs_llc_lle_tx_xid_req(struct gprs_llc_lle *lle, uint8_t *l3par, unsigned int l3par_len);
 int gprs_llc_lle_tx_xid_resp(struct gprs_llc_lle *lle, uint8_t *l3par, unsigned int l3par_len);
 int gprs_llc_lle_tx_ui(struct gprs_llc_lle *lle, uint8_t *l3_pdu, size_t l3_pdu_len, bool encryptable);
+int gprs_llc_lle_tx_null(const struct gprs_llc_lle *lle);
 
 /* llc_prim.c: */
 struct osmo_gprs_llc_prim *gprs_llc_prim_alloc(enum osmo_gprs_llc_prim_sap sap, unsigned int type,

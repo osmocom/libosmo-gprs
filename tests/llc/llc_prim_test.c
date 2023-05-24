@@ -172,11 +172,29 @@ static void test_llc_prim_ms(void)
 	rc = osmo_gprs_llc_prim_upper_down(llc_prim);
 	OSMO_ASSERT(rc == 0);
 
-	/* Rx LLC-GMM-Attach-Req at MS from SGSN (should be a response message
+	/* Rx LLC-GMM-Attach-Accept at MS from SGSN (should be a response message
 	 * but we don't care about upper layers here): */
 	llc_prim = osmo_gprs_llc_prim_alloc_grr_unitdata_ind(tlli, pdu_llc_gmm_att_req, sizeof(pdu_llc_gmm_att_req));
 	OSMO_ASSERT(llc_prim);
 	rc = osmo_gprs_llc_prim_lower_up(llc_prim);
+	OSMO_ASSERT(rc == 0);
+
+	/* Test GMM asking LLC to transmit a response for a Paging Request: */
+	llc_prim = osmo_gprs_llc_prim_alloc_llgmm_trigger_req(tlli, OSMO_GPRS_LLC_LLGM_TRIGGER_PAGE_RESP);
+	OSMO_ASSERT(llc_prim);
+	rc = osmo_gprs_llc_prim_upper_down(llc_prim);
+	OSMO_ASSERT(rc == 0);
+
+	/* Test GMM asking LLC to transmit for Cell Update: */
+	llc_prim = osmo_gprs_llc_prim_alloc_llgmm_trigger_req(tlli, OSMO_GPRS_LLC_LLGM_TRIGGER_CELL_UPDATE);
+	OSMO_ASSERT(llc_prim);
+	rc = osmo_gprs_llc_prim_upper_down(llc_prim);
+	OSMO_ASSERT(rc == 0);
+
+	/* Test GMM asking LLC to transmit for Cell Notification: */
+	llc_prim = osmo_gprs_llc_prim_alloc_llgmm_trigger_req(tlli, OSMO_GPRS_LLC_LLGM_TRIGGER_CELL_NOTIFICATION);
+	OSMO_ASSERT(llc_prim);
+	rc = osmo_gprs_llc_prim_upper_down(llc_prim);
 	OSMO_ASSERT(rc == 0);
 
 	printf("==== %s() [end] ====\n", __func__);
