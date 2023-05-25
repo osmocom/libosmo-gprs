@@ -469,7 +469,7 @@ int gprs_gmm_submit_llgmm_assing_req(const struct gprs_gmm_entity *gmme)
 	struct osmo_gprs_llc_prim *llc_prim_tx;
 	int rc;
 
-	llc_prim_tx = osmo_gprs_llc_prim_alloc_llgm_assign_req(gmme->old_tlli);
+	llc_prim_tx = osmo_gprs_llc_prim_alloc_llgmm_assign_req(gmme->old_tlli);
 	llc_prim_tx->llgmm.assign_req.tlli_new = gmme->tlli;
 	llc_prim_tx->llgmm.assign_req.gea = gmme->auth_ciph.gea;
 	memcpy(llc_prim_tx->llgmm.assign_req.kc, gmme->auth_ciph.kc, ARRAY_SIZE(gmme->auth_ciph.kc));

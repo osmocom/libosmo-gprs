@@ -191,7 +191,7 @@ static void st_gmm_ms_registered(struct osmo_fsm_inst *fi, uint32_t event, void 
 		break;
 	case GPRS_GMM_MS_EV_RAU_REQUESTED:
 		/* TS 24.007 C.15: submit LLGMM-SUSPEND-REQ */
-		llc_prim_tx = osmo_gprs_llc_prim_alloc_llgm_suspend_req(ctx->gmme->tlli);
+		llc_prim_tx = osmo_gprs_llc_prim_alloc_llgmm_suspend_req(ctx->gmme->tlli);
 		OSMO_ASSERT(llc_prim_tx);
 		rc = gprs_gmm_prim_call_llc_down_cb(llc_prim_tx);
 		/* Transmit RAU Requested to SGSN: */
@@ -238,7 +238,7 @@ static void st_gmm_ms_rau_initiated(struct osmo_fsm_inst *fi, uint32_t event, vo
 		break;
 	case GPRS_GMM_MS_EV_RAU_ACCEPTED:
 		/* TS 24.007 C.15: submit LLGM-RESUME-REQ */
-		llc_prim_tx = osmo_gprs_llc_prim_alloc_llgm_resume_req(ctx->gmme->tlli);
+		llc_prim_tx = osmo_gprs_llc_prim_alloc_llgmm_resume_req(ctx->gmme->tlli);
 		OSMO_ASSERT(llc_prim_tx);
 		gprs_gmm_prim_call_llc_down_cb(llc_prim_tx);
 		gmm_ms_fsm_state_chg(fi, GPRS_GMM_MS_ST_REGISTERED);

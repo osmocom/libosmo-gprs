@@ -219,13 +219,13 @@ static void test_llc_prim_sgsn(void)
 	rc = osmo_gprs_llc_prim_upper_down(llc_prim);
 	OSMO_ASSERT(rc == 0);
 
-	llc_prim = osmo_gprs_llc_prim_alloc_llgm_assign_req(tlli);
+	llc_prim = osmo_gprs_llc_prim_alloc_llgmm_assign_req(tlli);
 	OSMO_ASSERT(llc_prim);
 	llc_prim->llgmm.assign_req.tlli_new = tlli;
 	rc = osmo_gprs_llc_prim_upper_down(llc_prim);
 	OSMO_ASSERT(rc == 0);
 
-	llc_prim = osmo_gprs_llc_prim_alloc_llgm_reset_req(tlli);
+	llc_prim = osmo_gprs_llc_prim_alloc_llgmm_reset_req(tlli);
 	OSMO_ASSERT(llc_prim);
 	rc = osmo_gprs_llc_prim_upper_down(llc_prim);
 	OSMO_ASSERT(rc == 0);

@@ -298,11 +298,11 @@ int osmo_gprs_llc_prim_lower_up(struct osmo_gprs_llc_prim *llc_prim);
 const char *osmo_gprs_llc_prim_name(const struct osmo_gprs_llc_prim *llc_prim);
 
 /* Alloc primitive for LLGMM SAP: */
-struct osmo_gprs_llc_prim *osmo_gprs_llc_prim_alloc_llgm_assign_req(uint32_t tlli);
-struct osmo_gprs_llc_prim *osmo_gprs_llc_prim_alloc_llgm_reset_req(uint32_t tlli);
-struct osmo_gprs_llc_prim *osmo_gprs_llc_prim_alloc_llgm_trigger_req(uint32_t tlli, uint8_t cause);
-struct osmo_gprs_llc_prim *osmo_gprs_llc_prim_alloc_llgm_suspend_req(uint32_t tlli);
-struct osmo_gprs_llc_prim *osmo_gprs_llc_prim_alloc_llgm_resume_req(uint32_t tlli);
+struct osmo_gprs_llc_prim *osmo_gprs_llc_prim_alloc_llgmm_assign_req(uint32_t tlli);
+struct osmo_gprs_llc_prim *osmo_gprs_llc_prim_alloc_llgmm_reset_req(uint32_t tlli);
+struct osmo_gprs_llc_prim *osmo_gprs_llc_prim_alloc_llgmm_trigger_req(uint32_t tlli, uint8_t cause);
+struct osmo_gprs_llc_prim *osmo_gprs_llc_prim_alloc_llgmm_suspend_req(uint32_t tlli);
+struct osmo_gprs_llc_prim *osmo_gprs_llc_prim_alloc_llgmm_resume_req(uint32_t tlli);
 
 /* Alloc primitive for LL SAP: */
 struct osmo_gprs_llc_prim *osmo_gprs_llc_prim_alloc_ll_establish_req(uint32_t tlli, enum osmo_gprs_llc_sapi ll_sapi,
