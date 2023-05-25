@@ -113,6 +113,8 @@ CSN_DESCR_BEGIN  (P1_Rest_Octets_t)
 
   M_UINT_LH      (P1_Rest_Octets_t,  Packet_Page_Indication_1,  1),
   M_UINT_LH      (P1_Rest_Octets_t,  Packet_Page_Indication_2,  1),
+  /* TODO: Additions for Rel-6,7,8,10,11,12,13,14,15 */
+  M_PADDING_BITS (IA_RestOctets_t),
 CSN_DESCR_END    (P1_Rest_Octets_t)
 
 static const
@@ -134,6 +136,8 @@ CSN_DESCR_BEGIN  (P2_Rest_Octets_t)
   M_UINT         (P2_Rest_Octets_t,  Priority3,  3),
 
   M_UINT_LH      (P2_Rest_Octets_t,  Packet_Page_Indication_3,  1),
+  /* TODO: Additions for Rel-6,10,11,13,14,15 */
+  M_PADDING_BITS (IA_RestOctets_t),
 CSN_DESCR_END    (P2_Rest_Octets_t)
 
 static const
