@@ -1223,6 +1223,23 @@ static int gprs_gmm_rx_auth_ciph_req(struct gprs_gmm_entity *gmme, struct gsm48_
 	return rc;
 }
 
+/* Rx GMM Status, 9.4.18 */
+static int gprs_gmm_rx_status(struct gprs_gmm_entity *gmme, struct gsm48_hdr *gh, unsigned int len)
+{
+	enum gsm48_gmm_cause cause;
+
+	if (len < sizeof(struct gsm48_hdr) + 1) {
+		LOGGMME(gmme, LOGL_ERROR, "Rx GMM STATUS with wrong size %u\n", len);
+		return -EINVAL;
+	}
+
+	cause = gh->data[0];
+	LOGGMME(gmme, LOGL_INFO, "Rx GMM STATUS cause=0x%02x '%s'\n",
+		cause, get_value_string(gsm48_gmm_cause_names, cause));
+
+	return 0;
+}
+
 /* Rx GPRS Mobility Management. */
 int gprs_gmm_rx(struct gprs_gmm_entity *gmme, struct gsm48_hdr *gh, unsigned int len)
 {
@@ -1249,6 +1266,9 @@ int gprs_gmm_rx(struct gprs_gmm_entity *gmme, struct gsm48_hdr *gh, unsigned int
 		break;
 	case GSM48_MT_GMM_AUTH_CIPH_REQ:
 		rc = gprs_gmm_rx_auth_ciph_req(gmme, gh, len);
+		break;
+	case GSM48_MT_GMM_STATUS:
+		rc = gprs_gmm_rx_status(gmme, gh, len);
 		break;
 	default:
 		LOGGMME(gmme, LOGL_ERROR,
