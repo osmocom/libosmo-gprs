@@ -779,6 +779,8 @@ static int gprs_gmm_rx_att_ack(struct gprs_gmm_entity *gmme, struct gsm48_hdr *g
 	gmme->t3312_assigned_sec = periodic_rau_sec >= 0 ? periodic_rau_sec : 0;
 	if (gmme->t3312_assigned_sec == 0)
 		gprs_gmm_gmme_t3312_stop(gmme);
+	if (aa->force_stby)
+		gprs_gmm_gmme_ready_timer_stop(gmme);
 	gsm48_parse_ra(&gmme->ra, (const uint8_t *)&aa->ra_id);
 
 	if (len > sizeof(*gh) + sizeof(*aa)) {
@@ -906,6 +908,9 @@ static int gprs_gmm_rx_detach_accept(struct gprs_gmm_entity *gmme, struct gsm48_
 	LOGGMME(gmme, LOGL_INFO, "Rx GMM DETACH ACCEPT (MO) force_standby_indicated=%s\n",
 		force_standby_indicated ? "true" : "false");
 
+	if (force_standby_indicated)
+		gprs_gmm_gmme_ready_timer_stop(gmme);
+
 	/* TODO: submit GMMSM-RELEASE-IND */
 
 	/* Submit LLGMM-ASSIGN-REQ as per TS 24.007 Annex C.3 */
@@ -949,6 +954,8 @@ static int gprs_gmm_rx_rau_acc(struct gprs_gmm_entity *gmme, struct gsm48_hdr *g
 	gmme->t3312_assigned_sec = periodic_rau_sec >= 0 ? periodic_rau_sec : 0;
 	if (gmme->t3312_assigned_sec == 0)
 		gprs_gmm_gmme_t3312_stop(gmme);
+	if (raack->force_stby)
+		gprs_gmm_gmme_ready_timer_stop(gmme);
 	gsm48_parse_ra(&gmme->ra, (const uint8_t *)&raack->ra_id);
 
 	if (len > sizeof(*gh) + sizeof(*raack)) {
@@ -1053,6 +1060,7 @@ static int gprs_gmm_rx_id_req(struct gprs_gmm_entity *gmme, struct gsm48_hdr *gh
 	 * The IDENTITY RESPONSE message shall contain the identification parameters as requested by the network"
 	 */
 	uint8_t id_type;
+	bool force_standby_indicated;
 
 	if (len < sizeof(struct gsm48_hdr) + 1) {
 		LOGGMME(gmme, LOGL_ERROR, "Rx GMM IDENTITY REQUEST with wrong size %u\n", len);
@@ -1060,8 +1068,12 @@ static int gprs_gmm_rx_id_req(struct gprs_gmm_entity *gmme, struct gsm48_hdr *gh
 	}
 
 	id_type = gh->data[0] & 0xf;
-	LOGGMME(gmme, LOGL_INFO, "Rx GMM IDENTITY REQUEST mi_type=%s\n",
-		gsm48_mi_type_name(id_type));
+	force_standby_indicated = (gh->data[0] >> 4) == 0x01;
+	LOGGMME(gmme, LOGL_INFO, "Rx GMM IDENTITY REQUEST mi_type=%s force_stdby=%u\n",
+		gsm48_mi_type_name(id_type), force_standby_indicated);
+
+	if (force_standby_indicated)
+		gprs_gmm_gmme_ready_timer_stop(gmme);
 
 	return gprs_gmm_tx_id_resp(gmme, id_type);
 }
@@ -1172,6 +1184,9 @@ static int gprs_gmm_rx_auth_ciph_req(struct gprs_gmm_entity *gmme, struct gsm48_
 		/* TODO: 9.4.9.6 Message authentication code */
 		/* TODO: 9.4.9.7 Replayed MS Radio Access Capability */
 	}
+
+	if (acreq->force_stby)
+		gprs_gmm_gmme_ready_timer_stop(gmme);
 
 	gmme->auth_ciph.gea = acreq->ciph_alg;
 	gmme->auth_ciph.req.ac_ref_nr = acreq->ac_ref_nr;
