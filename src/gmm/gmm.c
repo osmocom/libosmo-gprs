@@ -453,6 +453,16 @@ int gprs_gmm_submit_gmmsm_establish_cnf(struct gprs_gmm_entity *gmme, bool accep
 	return rc;
 }
 
+int gprs_gmm_submit_gmmsm_release_ind(struct gprs_gmm_entity *gmme)
+{
+	struct osmo_gprs_gmm_prim *gmm_prim_tx;
+	int rc;
+
+	gmm_prim_tx = gprs_gmm_prim_alloc_gmmsm_release_ind(gmme->sess_id);
+	rc = gprs_gmm_prim_call_up_cb(gmm_prim_tx);
+	return rc;
+}
+
 static int gprs_gmm_submit_gmmrr_assing_req(struct gprs_gmm_entity *gmme)
 {
 	struct osmo_gprs_gmm_prim *gmm_prim_tx;
@@ -910,8 +920,6 @@ static int gprs_gmm_rx_detach_accept(struct gprs_gmm_entity *gmme, struct gsm48_
 
 	if (force_standby_indicated)
 		gprs_gmm_gmme_ready_timer_stop(gmme);
-
-	/* TODO: submit GMMSM-RELEASE-IND */
 
 	/* Submit LLGMM-ASSIGN-REQ as per TS 24.007 Annex C.3 */
 	gmme->old_tlli = gmme->tlli;

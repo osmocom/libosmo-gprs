@@ -102,7 +102,7 @@ struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmreg_sim_auth_ind(void);
 struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmrr_assign_req(uint32_t old_tlli, uint32_t new_tlli);
 
 struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmsm_establish_cnf(uint32_t id, uint8_t cause);
-struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmrr_release_ind(uint32_t id);
+struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmsm_release_ind(uint32_t id);
 struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmsm_unitdata_ind(uint32_t id, uint8_t *smpdu, unsigned int smpdu_len);
 
 /* gmm.c: */
@@ -131,6 +131,7 @@ int gprs_gmm_tx_ciph_auth_resp(const struct gprs_gmm_entity *gmme, const uint8_t
 
 int gprs_gmm_submit_gmmreg_attach_cnf(struct gprs_gmm_entity *gmme, bool accepted, uint8_t cause);
 int gprs_gmm_submit_gmmsm_establish_cnf(struct gprs_gmm_entity *gmme, bool accepted, uint8_t cause);
+int gprs_gmm_submit_gmmsm_release_ind(struct gprs_gmm_entity *gmme);
 int gprs_gmm_submit_llgmm_assing_req(const struct gprs_gmm_entity *gmme);
 
 /* misc.c */

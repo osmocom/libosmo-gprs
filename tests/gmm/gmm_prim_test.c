@@ -294,10 +294,10 @@ int test_gmm_prim_up_cb(struct osmo_gprs_gmm_prim *gmm_prim, void *user_data)
 			       osmo_hexdump(gmm_prim->gmmsm.unitdata_ind.smpdu,
 					    gmm_prim->gmmsm.unitdata_ind.smpdu_len));
 			break;
-		//case OSMO_PRIM(OSMO_GPRS_GMM_GMMSM_DETACH, PRIM_OP_CONFIRM):
-		//	printf("%s(): Rx %s detach_type='%s'\n", __func__, pdu_name,
-		//	       osmo_gprs_gmm_detach_ms_type_name(gmm_prim->gmmsm.detach_cnf.detach_type));
-		//	break;
+		case OSMO_PRIM(OSMO_GPRS_GMM_GMMSM_RELEASE, PRIM_OP_INDICATION):
+			printf("%s(): Rx %s sess_id=%u\n", __func__, pdu_name,
+			       gmm_prim->gmmsm.sess_id);
+			break;
 		default:
 			printf("%s(): Unexpected Rx %s\n", __func__, pdu_name);
 			OSMO_ASSERT(0)
