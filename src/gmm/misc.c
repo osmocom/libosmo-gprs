@@ -20,6 +20,7 @@
 
 #include <osmocom/core/logging.h>
 #include <osmocom/core/utils.h>
+#include <osmocom/gsm/gsm_utils.h>
 #include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
 
 #include <osmocom/gprs/gmm/gmm.h>
@@ -78,4 +79,30 @@ uint8_t gprs_gmm_secs_to_gprs_tmr_floor(int secs)
 		return GPRS_TMR_6MINUTE | (secs / 360);
 
 	return GPRS_TMR_6MINUTE | GPRS_TMR_FACT_MASK;
+}
+
+
+/* Decode TS 24.008 10.5.3.5a "Network name".
+ * FIXME: This should be improved & moved to libosmocore at some point, since it is also used in CS MM.
+ */
+int gprs_gmm_decode_network_name(char *name, int name_len, const uint8_t *lv)
+{
+	uint8_t in_len = lv[0];
+	int length, padding;
+
+	name[0] = '\0';
+	if (in_len < 1)
+		return -EINVAL;
+
+	/* must be CB encoded */
+	if ((lv[1] & 0x70) != 0x00)
+		return -ENOTSUP;
+
+	padding = lv[1] & 0x03;
+	length = ((in_len - 1) * 8 - padding) / 7;
+	if (length <= 0)
+		return 0;
+	gsm_7bit_decode_n(name, name_len, lv + 2, length);
+
+	return length;
 }

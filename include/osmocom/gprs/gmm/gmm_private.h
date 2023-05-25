@@ -88,6 +88,10 @@ struct gprs_gmm_entity {
 	unsigned long t3314_assigned_sec; /* value assigned by the network */
 	struct osmo_timer_list t3312; /* periodic RAU, in seconds */
 	unsigned long t3312_assigned_sec; /* value assigned by the network */
+
+	/* network name */
+	char	name_long[32];
+	char	name_short[32];
 };
 
 /* gmm_prim.c: */
@@ -137,6 +141,7 @@ int gprs_gmm_submit_llgmm_assing_req(const struct gprs_gmm_entity *gmme);
 /* misc.c */
 int gprs_gmm_gprs_tmr_to_secs(uint8_t gprs_tmr);
 uint8_t gprs_gmm_secs_to_gprs_tmr_floor(int secs);
+int gprs_gmm_decode_network_name(char *name, int name_len, const uint8_t *lv);
 
 #define LOGGMME(gmme, level, fmt, args...) \
 	LOGGMM(level, "GMME(IMSI-%s:PTMSI-%08x:TLLI-%08x) " fmt, \

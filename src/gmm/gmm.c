@@ -1240,6 +1240,33 @@ static int gprs_gmm_rx_status(struct gprs_gmm_entity *gmme, struct gsm48_hdr *gh
 	return 0;
 }
 
+/* Rx GMM Information, 9.4.19 */
+static int gprs_gmm_rx_information(struct gprs_gmm_entity *gmme, struct gsm48_hdr *gh, unsigned int len)
+{
+	struct tlv_parsed tp;
+	int rc;
+
+	if (len <= sizeof(struct gsm48_hdr)) /* no Optional IEs, empty msg */
+		return 0;
+
+	rc = gprs_gmm_tlv_parse(&tp, &gh->data[0],
+				len - sizeof(*gh));
+	if (rc < 0) {
+		LOGGMME(gmme, LOGL_ERROR, "Rx GMM INFORMATION: failed to parse TLVs %d\n", rc);
+		return -EINVAL;
+	}
+
+	if (TLVP_PRESENT(&tp, GSM48_IE_GSM_NAME_FULL))
+		gprs_gmm_decode_network_name(gmme->name_long, sizeof(gmme->name_long),
+					     TLVP_VAL(&tp, GSM48_IE_GSM_NAME_FULL)-1);
+
+	if (TLVP_PRESENT(&tp, GSM48_IE_GSM_NAME_SHORT))
+		gprs_gmm_decode_network_name(gmme->name_short, sizeof(gmme->name_short),
+					     TLVP_VAL(&tp, GSM48_IE_GSM_NAME_SHORT)-1);
+
+	return 0;
+}
+
 /* Rx GPRS Mobility Management. */
 int gprs_gmm_rx(struct gprs_gmm_entity *gmme, struct gsm48_hdr *gh, unsigned int len)
 {
@@ -1269,6 +1296,9 @@ int gprs_gmm_rx(struct gprs_gmm_entity *gmme, struct gsm48_hdr *gh, unsigned int
 		break;
 	case GSM48_MT_GMM_STATUS:
 		rc = gprs_gmm_rx_status(gmme, gh, len);
+		break;
+	case GSM48_MT_GMM_INFO:
+		rc = gprs_gmm_rx_information(gmme, gh, len);
 		break;
 	default:
 		LOGGMME(gmme, LOGL_ERROR,
