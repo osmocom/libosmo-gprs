@@ -284,6 +284,17 @@ int gprs_gmm_build_attach_compl(struct gprs_gmm_entity *gmme, struct msgb *msg)
 	return 0;
 }
 
+/* 9.4.8 P-TMSI reallocation complete */
+int gprs_gmm_build_ptmsi_realloc_compl(struct gprs_gmm_entity *gmme, struct msgb *msg)
+{
+	struct gsm48_hdr *gh;
+
+	gh = (struct gsm48_hdr *) msgb_put(msg, sizeof(*gh));
+	gh->proto_discr = GSM48_PDISC_MM_GPRS;
+	gh->msg_type = GSM48_MT_GMM_PTMSI_REALL_COMPL;
+	return 0;
+}
+
 /* Chapter 9.4.14: Routing area update request */
 int gprs_gmm_build_rau_req(struct gprs_gmm_entity *gmme,
 			   enum gprs_gmm_upd_type rau_type,

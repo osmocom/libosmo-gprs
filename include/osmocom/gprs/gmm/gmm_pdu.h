@@ -25,6 +25,7 @@ int gprs_gmm_build_attach_req(struct gprs_gmm_entity *gmme,
 			      struct msgb *msg);
 
 int gprs_gmm_build_attach_compl(struct gprs_gmm_entity *gmme, struct msgb *msg);
+int gprs_gmm_build_ptmsi_realloc_compl(struct gprs_gmm_entity *gmme, struct msgb *msg);
 
 int gprs_gmm_build_identity_resp(struct gprs_gmm_entity *gmme,
 				 uint8_t mi_type,

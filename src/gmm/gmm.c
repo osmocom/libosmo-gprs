@@ -480,6 +480,17 @@ int gprs_gmm_submit_llgmm_assing_req(const struct gprs_gmm_entity *gmme)
 	return rc;
 }
 
+static void gprs_gmm_gmme_update_allocated_ptmsi(struct gprs_gmm_entity *gmme, uint32_t new_ptmsi)
+{
+	gmme->old_ptmsi = gmme->ptmsi;
+	gmme->ptmsi = new_ptmsi;
+	/* TS 24.008 4.7.1.4.1:"Upon receipt of the assigned P-TMSI, the MS
+	 * shall derive the local TLLI from this P-TMSI and shall use it for
+	 * addressing at lower layers": */
+	gmme->old_tlli = gmme->tlli;
+	gmme->tlli = gprs_tmsi2tlli(gmme->ptmsi, TLLI_LOCAL);
+}
+
 /* Tx Identity Response, 9.2.11 */
 static int gprs_gmm_tx_id_resp(struct gprs_gmm_entity *gmme,
 			       uint8_t mi_type)
@@ -650,6 +661,39 @@ int gprs_gmm_tx_detach_req(struct gprs_gmm_entity *gmme,
 	return rc;
 }
 
+/* Tx GMM Atach Complete, 9.4.3 */
+static int gprs_gmm_tx_ptmsi_realloc_compl(struct gprs_gmm_entity *gmme)
+{
+	struct osmo_gprs_llc_prim *llc_prim;
+	int rc;
+	struct msgb *msg;
+
+	LOGGMME(gmme, LOGL_INFO, "Tx P-TMSI REALLOCATION COMPL\n");
+
+	llc_prim = osmo_gprs_llc_prim_alloc_ll_unitdata_req(
+			gmme->tlli, OSMO_GPRS_LLC_SAPI_GMM, NULL, GPRS_GMM_ALLOC_SIZE);
+	msg = llc_prim->oph.msg;
+	msg->l3h = msg->tail;
+	rc = gprs_gmm_build_ptmsi_realloc_compl(gmme, msg);
+	if (rc < 0) {
+		msgb_free(msg);
+		return -EBADMSG;
+	}
+	llc_prim->ll.l3_pdu = msg->l3h;
+	llc_prim->ll.l3_pdu_len = msgb_l3len(msg);
+	/* TODO:
+	llc_prim->ll.qos_params.*;
+	llc_prim->ll.radio_prio;
+	llc_prim->ll.apply_gea;
+	llc_prim->ll.apply_gia;
+	*/
+
+	rc = gprs_gmm_prim_call_llc_down_cb(llc_prim);
+	if (rc < 0)
+		return rc;
+	return rc;
+}
+
 /* Tx GMM Routing area update request, 9.4.14 */
 int gprs_gmm_tx_rau_req(struct gprs_gmm_entity *gmme,
 			enum gprs_gmm_upd_type rau_type)
@@ -777,13 +821,7 @@ static int gprs_gmm_rx_att_ack(struct gprs_gmm_entity *gmme, struct gsm48_hdr *g
 				LOGGMME(gmme, LOGL_ERROR, "Cannot decode P-TMSI\n");
 				goto rejected;
 			}
-			gmme->old_ptmsi = gmme->ptmsi;
-			gmme->ptmsi = mi.tmsi;
-			/* TS 24.008 4.7.1.4.1:"Upon receipt of the assigned P-TMSI, the MS
-			 * shall derive the local TLLI from this P-TMSI and shall use it for
-			 * addressing at lower layers": */
-			gmme->old_tlli = gmme->tlli;
-			gmme->tlli = gprs_tmsi2tlli(gmme->ptmsi, TLLI_LOCAL);
+			gprs_gmm_gmme_update_allocated_ptmsi(gmme, mi.tmsi);
 		}
 
 		if (TLVP_PRES_LEN(&tp, GSM48_IE_GMM_TIMER_T3302, 1))
@@ -938,13 +976,7 @@ static int gprs_gmm_rx_rau_acc(struct gprs_gmm_entity *gmme, struct gsm48_hdr *g
 				LOGGMME(gmme, LOGL_ERROR, "Cannot decode P-TMSI\n");
 				goto rejected;
 			}
-			gmme->old_ptmsi = gmme->ptmsi;
-			gmme->ptmsi = mi.tmsi;
-			/* TS 24.008 4.7.1.4.1:"Upon receipt of the assigned P-TMSI, the MS
-			 * shall derive the local TLLI from this P-TMSI and shall use it for
-			 * addressing at lower layers": */
-			gmme->old_tlli = gmme->tlli;
-			gmme->tlli = gprs_tmsi2tlli(gmme->ptmsi, TLLI_LOCAL);
+			gprs_gmm_gmme_update_allocated_ptmsi(gmme, mi.tmsi);
 		}
 		/* FIXME! what to do it PTMSI changes? probably need to update other layers... Check GPRS ATTACH ACCEPT func */
 
@@ -1034,6 +1066,75 @@ static int gprs_gmm_rx_id_req(struct gprs_gmm_entity *gmme, struct gsm48_hdr *gh
 	return gprs_gmm_tx_id_resp(gmme, id_type);
 }
 
+/* Rx GMM P-TMSI reallocation command, 9.4.7 */
+static int gprs_gmm_rx_ptmsi_realloc_cmd(struct gprs_gmm_entity *gmme, const struct gsm48_hdr *gh, unsigned int len)
+{
+	const uint8_t *buf = &gh->data[0];
+	uint8_t mi_len;
+	struct osmo_mobile_identity mi;
+	bool force_standby_indicated;
+	struct tlv_parsed tp;
+	int rc;
+
+	if (len != 15) {
+		LOGGMME(gmme, LOGL_ERROR, "Rx GMM P-TMSI REALLOCATION COMMAND with wrong size %u\n", len);
+		goto rejected;
+	}
+
+	mi_len = *buf;
+	if (mi_len != 5)
+		goto rejected;
+	buf++;
+	if (osmo_mobile_identity_decode(&mi, buf, mi_len, false) || mi.type != GSM_MI_TYPE_TMSI) {
+		LOGGMME(gmme, LOGL_ERROR, "Rx GMM P-TMSI REALLOCATION COMMAND: Cannot decode P-TMSI\n");
+		goto rejected;
+	}
+	gprs_gmm_gmme_update_allocated_ptmsi(gmme, mi.tmsi);
+	buf += mi_len;
+
+	gsm48_parse_ra(&gmme->ra, (const uint8_t *)buf);
+	buf += 6;
+
+	force_standby_indicated = (*buf >> 4) == 0x01;
+	if (force_standby_indicated)
+		gprs_gmm_gmme_ready_timer_stop(gmme);
+	buf++;
+
+	/* Optional: */
+	if (len > (buf - (uint8_t *)gh)) {
+		rc = gprs_gmm_tlv_parse(&tp, buf, len - (buf - (uint8_t *)gh));
+		if (rc < 0) {
+			LOGGMME(gmme, LOGL_ERROR, "Rx GMM P-TMSI REALLOCATION COMMAND: failed to parse TLVs %d\n", rc);
+			goto rejected;
+		}
+
+		/* 10.5.5.8 P-TMSI signature */
+		if (TLVP_PRESENT(&tp, GSM48_IE_GMM_PTMSI_SIG)) {
+			const uint8_t *ptmsi_sig = TLVP_VAL(&tp, GSM48_IE_GMM_PTMSI_SIG);
+			gmme->ptmsi_sig = (ptmsi_sig[0] << 8) | (ptmsi_sig[1] << 4) | ptmsi_sig[2];
+		} else {
+			gmme->ptmsi_sig = GSM_RESERVED_TMSI;
+		}
+
+		/* TODO: 10.5.5.35 DCN-ID */
+	}
+
+	/* Submit LLGMM-ASSIGN-REQ as per TS 24.007 Annex C.1 */
+	rc = gprs_gmm_submit_llgmm_assing_req(gmme);
+	if (rc < 0)
+		goto rejected;
+
+	/* Submit GMMRR-ASSIGN-REQ as per TS 24.007 Annex C.1 */
+	rc = gprs_gmm_submit_gmmrr_assing_req(gmme);
+	if (rc < 0)
+		goto rejected;
+
+	return gprs_gmm_tx_ptmsi_realloc_compl(gmme);
+
+rejected:
+	return -EINVAL; /* TODO: what to do on error? */
+}
+
 /* Rx GMM Authentication and ciphering request, 9.4.9 */
 static int gprs_gmm_rx_auth_ciph_req(struct gprs_gmm_entity *gmme, struct gsm48_hdr *gh, unsigned int len)
 {
@@ -1119,6 +1220,9 @@ int gprs_gmm_rx(struct gprs_gmm_entity *gmme, struct gsm48_hdr *gh, unsigned int
 		break;
 	case GSM48_MT_GMM_ID_REQ:
 		rc = gprs_gmm_rx_id_req(gmme, gh, len);
+		break;
+	case GSM48_MT_GMM_PTMSI_REALL_CMD:
+		rc = gprs_gmm_rx_ptmsi_realloc_cmd(gmme, gh, len);
 		break;
 	case GSM48_MT_GMM_AUTH_CIPH_REQ:
 		rc = gprs_gmm_rx_auth_ciph_req(gmme, gh, len);

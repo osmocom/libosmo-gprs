@@ -466,6 +466,22 @@ static void test_gmm_prim_ms_gmmreg(void)
 
 	/* ... */
 
+	/* Test Network sends P-TMSI Reallocation Cmd */
+#if 0
+	/* TODO: find a pcap with a P-TMSI Reallocation Cmd */
+	llc_prim = gprs_llc_prim_alloc_ll_unitdata_ind(tlli, OSMO_GPRS_LLC_SAPI_GMM, (uint8_t *)pdu_gmm_ptmsi_realloc_cmd, sizeof(pdu_gmm_ptmsi_realloc_cmd));
+	OSMO_ASSERT(llc_prim);
+	rc = osmo_gprs_gmm_prim_llc_lower_up(llc_prim);
+	OSMO_ASSERT(rc == 0);
+	/* update the used ptmsi to align with what was assigned from the network: */
+	ptmsi = 0xea711b41;
+	tlli = gprs_tmsi2tlli(ptmsi, TLLI_LOCAL);
+	/* As a result, MS answers GMM P-TMSI Reallocation Complete */
+#endif
+
+
+	/* ... */
+
 	/* DETACH */
 	gmm_prim = osmo_gprs_gmm_prim_alloc_gmmreg_detach_req();
 	OSMO_ASSERT(gmm_prim);
