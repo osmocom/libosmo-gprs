@@ -89,6 +89,7 @@ struct gprs_gmm_entity {
 	unsigned long t3314_assigned_sec; /* value assigned by the network */
 	struct osmo_timer_list t3312; /* periodic RAU, in seconds */
 	unsigned long t3312_assigned_sec; /* value assigned by the network */
+	struct osmo_timer_list t3316; /* Delete stored RAND  & SRES */
 
 	/* network name */
 	char	name_long[32];
@@ -124,6 +125,8 @@ void gprs_gmm_gmme_ready_timer_stop(struct gprs_gmm_entity *gmme);
 bool gprs_gmm_gmme_ready_timer_running(const struct gprs_gmm_entity *gmme);
 void gprs_gmm_gmme_t3312_start(struct gprs_gmm_entity *gmme);
 void gprs_gmm_gmme_t3312_stop(struct gprs_gmm_entity *gmme);
+void gprs_gmm_gmme_t3316_start(struct gprs_gmm_entity *gmme);
+void gprs_gmm_gmme_t3316_stop(struct gprs_gmm_entity *gmme);
 int gprs_gmm_rx(struct gprs_gmm_entity *gmme, struct gsm48_hdr *gh, unsigned int len);
 int gprs_gmm_tx_att_req(struct gprs_gmm_entity *gmme,
 			enum osmo_gprs_gmm_attach_type attach_type,

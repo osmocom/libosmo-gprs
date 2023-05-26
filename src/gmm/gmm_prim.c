@@ -445,6 +445,8 @@ static int gprs_gmm_prim_handle_gmmreg_sim_auth_resp(struct osmo_gprs_gmm_prim *
 	/* Copy over Kc: */
 	memcpy(gmme->auth_ciph.kc, gmm_prim->gmmreg.sim_auth_rsp.kc, sizeof(gmme->auth_ciph.kc));
 
+	gprs_gmm_gmme_t3316_start(gmme);
+
 	rc = gprs_gmm_submit_llgmm_assing_req(gmme);
 	if (rc < 0) {
 		/* invalidate active reference: */

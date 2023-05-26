@@ -88,6 +88,7 @@ const struct value_string gprs_gmm_upd_type_names[] = {
 
 static void t3314_ready_timer_cb(void *data);
 static void t3312_periodic_rau_timer_cb(void *data);
+static void t3316_delete_rand_sres_cb(void *data);
 
 static void gprs_gmm_ctx_free(void)
 {
@@ -186,6 +187,7 @@ struct gprs_gmm_entity *gprs_gmm_gmme_alloc(uint32_t ptmsi, const char *imsi)
 
 	osmo_timer_setup(&gmme->t3314, t3314_ready_timer_cb, gmme);
 	osmo_timer_setup(&gmme->t3312, t3312_periodic_rau_timer_cb, gmme);
+	osmo_timer_setup(&gmme->t3316, t3316_delete_rand_sres_cb, gmme);
 
 	llist_add(&gmme->list, &g_gmm_ctx->gmme_list);
 
@@ -202,6 +204,8 @@ void gprs_gmm_gmme_free(struct gprs_gmm_entity *gmme)
 		osmo_timer_del(&gmme->t3314);
 	if (osmo_timer_pending(&gmme->t3312))
 		osmo_timer_del(&gmme->t3312);
+	if (osmo_timer_pending(&gmme->t3316))
+		osmo_timer_del(&gmme->t3316);
 	gprs_gmm_ms_fsm_ctx_release(&gmme->ms_fsm);
 	llist_del(&gmme->list);
 	talloc_free(gmme);
@@ -387,6 +391,37 @@ static void t3312_periodic_rau_timer_cb(void *data)
 	 */
 	gprs_gmm_ms_fsm_ctx_request_rau(&gmme->ms_fsm, GPRS_GMM_UPD_TYPE_PERIODIC);
 
+}
+
+/* T3316 (Delete stored RAND & SRES) is started: */
+void gprs_gmm_gmme_t3316_start(struct gprs_gmm_entity *gmme)
+{
+	unsigned long timeout_sec = osmo_tdef_get(g_gmm_ctx->T_defs, 3316, OSMO_TDEF_S, -1);
+
+	if (timeout_sec == 0)
+		return;
+	LOGGMME(gmme, LOGL_INFO, "T3316 started (expires in %lu seconds)\n", timeout_sec);
+	osmo_timer_schedule(&gmme->t3316, timeout_sec, 0);
+}
+
+/* T3316 (Delete stored RAND & SRES) is stopped: */
+void gprs_gmm_gmme_t3316_stop(struct gprs_gmm_entity *gmme)
+{
+	if (!osmo_timer_pending(&gmme->t3316))
+		return;
+
+	LOGGMME(gmme, LOGL_INFO, "T3316 stopped\n");
+	osmo_timer_del(&gmme->t3316);
+}
+
+/* T3312 (Delete stored RAND & SRES) timer expiration: */
+static void t3316_delete_rand_sres_cb(void *data)
+{
+	struct gprs_gmm_entity *gmme = (struct gprs_gmm_entity *)data;
+	LOGGMME(gmme, LOGL_INFO, "T3316 (Delete stored RAND & SRES timer) expired\n");
+	/* invalidate active reference: */
+	gmme->auth_ciph.req.ac_ref_nr = 0xff;
+	/* Nothing more to do yet, since we really never store RAND & SRES so far? */
 }
 
 int gprs_gmm_submit_gmmreg_attach_cnf(struct gprs_gmm_entity *gmme, bool accepted, uint8_t cause)
@@ -732,8 +767,14 @@ int gprs_gmm_tx_auth_ciph_fail(struct gprs_gmm_entity *gmme, enum gsm48_gmm_caus
 	llc_prim->ll.apply_gia;
 	*/
 
+	/* TS 24.008 4.7.7.5.1: "If the MS returns an AUTHENTICATION AND CIPHERING FAILURE
+	 * message to the network, the MS shall delete any previously stored RAND and RES
+	 * and shall stop timer T3316, if running."
+	 */
+	gprs_gmm_gmme_t3316_stop(gmme);
 	/* invalidate active reference: */
 	gmme->auth_ciph.req.ac_ref_nr = 0xff;
+
 	rc = gprs_gmm_prim_call_llc_down_cb(llc_prim);
 	if (rc < 0)
 		return rc;
@@ -1264,6 +1305,19 @@ static int gprs_gmm_rx_auth_ciph_req(struct gprs_gmm_entity *gmme, struct gsm48_
 	return rc;
 }
 
+/* Rx GMM Authentication and ciphering reject, 9.4.11 */
+static int gprs_gmm_rx_auth_ciph_rej(struct gprs_gmm_entity *gmme, struct gsm48_hdr *gh, unsigned int len)
+{
+	int rc;
+	uint8_t cause;
+
+	LOGGMME(gmme, LOGL_NOTICE, "Rx GMM AUTHENTICATION AND CIPHERING REJECT\n");
+
+	cause = GMM_CAUSE_GSM_AUTH_UNACCEPT;
+	rc = osmo_fsm_inst_dispatch(gmme->ms_fsm.fi, GPRS_GMM_MS_EV_ATTACH_REJECTED, &cause);
+	return rc;
+}
+
 /* Rx GMM Status, 9.4.18 */
 static int gprs_gmm_rx_status(struct gprs_gmm_entity *gmme, struct gsm48_hdr *gh, unsigned int len)
 {
@@ -1334,6 +1388,9 @@ int gprs_gmm_rx(struct gprs_gmm_entity *gmme, struct gsm48_hdr *gh, unsigned int
 		break;
 	case GSM48_MT_GMM_AUTH_CIPH_REQ:
 		rc = gprs_gmm_rx_auth_ciph_req(gmme, gh, len);
+		break;
+	case GSM48_MT_GMM_AUTH_CIPH_REJ:
+		rc = gprs_gmm_rx_auth_ciph_rej(gmme, gh, len);
 		break;
 	case GSM48_MT_GMM_STATUS:
 		rc = gprs_gmm_rx_status(gmme, gh, len);

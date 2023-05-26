@@ -72,6 +72,12 @@ static int reinit_rau_proc(struct gprs_gmm_ms_fsm_ctx *ctx)
 	return gprs_gmm_tx_rau_req(ctx->gmme, ctx->rau.type);
 }
 
+static void st_gmm_ms_null_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_state)
+{
+	struct gprs_gmm_ms_fsm_ctx *ctx = (struct gprs_gmm_ms_fsm_ctx *)fi->priv;
+	gprs_gmm_gmme_t3316_stop(ctx->gmme);
+}
+
 static void st_gmm_ms_null(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	switch (event) {
@@ -89,6 +95,7 @@ static void st_gmm_ms_deregistered_on_enter(struct osmo_fsm_inst *fi, uint32_t p
 
 	memset(&ctx->attach, 0, sizeof(ctx->attach));
 	gprs_gmm_gmme_t3312_stop(ctx->gmme);
+	gprs_gmm_gmme_t3316_stop(ctx->gmme);
 
 	/* TS 24.007 9.5.1.4: informs SM layerthat the MS has been GPRS detached, e.g. by timer expiry */
 	if (prev_state != GPRS_GMM_MS_ST_NULL)
@@ -241,6 +248,7 @@ static void st_gmm_ms_rau_initiated(struct osmo_fsm_inst *fi, uint32_t event, vo
 		//mm_ms_fsm_state_chg(fi, GPRS_GMM_MS_ST_DEREGISTERED_INITIATED);
 		break;
 	case GPRS_GMM_MS_EV_RAU_ACCEPTED:
+		gprs_gmm_gmme_t3316_stop(ctx->gmme);
 		/* TS 24.007 C.15: submit LLGM-RESUME-REQ */
 		llc_prim_tx = osmo_gprs_llc_prim_alloc_llgmm_resume_req(ctx->gmme->tlli);
 		OSMO_ASSERT(llc_prim_tx);
@@ -284,6 +292,7 @@ static struct osmo_fsm_state gmm_ms_fsm_states[] = {
 		.out_state_mask =
 			X(GPRS_GMM_MS_ST_DEREGISTERED),
 		.name = "Null",
+		.onenter = st_gmm_ms_null_on_enter,
 		.action = st_gmm_ms_null,
 	},
 	[GPRS_GMM_MS_ST_DEREGISTERED] = {
