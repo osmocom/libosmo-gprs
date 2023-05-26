@@ -51,7 +51,7 @@ enum gprs_gmm_ms_fsm_events {
 	GPRS_GMM_MS_EV_SR_REJECTED, /* (Iu only) */
 	GPRS_GMM_MS_EV_SR_ACCEPTED, /* (Iu only) */
 	GPRS_GMM_MS_EV_RAU_REQUESTED,
-	GPRS_GMM_MS_EV_RAU_REJECTED,
+	GPRS_GMM_MS_EV_RAU_REJECTED, /* data: ptr to "uint8_t cause" */
 	GPRS_GMM_MS_EV_RAU_ACCEPTED,
 	GPRS_GMM_MS_EV_LOW_LVL_FAIL,
 };

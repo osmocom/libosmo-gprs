@@ -239,13 +239,22 @@ static void st_gmm_ms_rau_initiated(struct osmo_fsm_inst *fi, uint32_t event, vo
 {
 	struct gprs_gmm_ms_fsm_ctx *ctx = (struct gprs_gmm_ms_fsm_ctx *)fi->priv;
 	struct osmo_gprs_llc_prim *llc_prim_tx;
+	enum gsm48_gmm_cause cause;
 
 	switch (event) {
 	case GPRS_GMM_MS_EV_RAU_REJECTED:
-		// causes #13, #15, #25
-		gmm_ms_fsm_state_chg(fi, GPRS_GMM_MS_ST_REGISTERED);
-		// else
-		//mm_ms_fsm_state_chg(fi, GPRS_GMM_MS_ST_DEREGISTERED_INITIATED);
+		cause = *(uint8_t *)data;
+		/* 3GPP TS 24.008 Figure 4.1b */
+		switch (cause) {
+		case GMM_CAUSE_ROAMING_NOTALLOWED:
+		case GMM_CAUSE_NO_SUIT_CELL_IN_LA:
+		case GMM_CAUSE_NOT_AUTH_FOR_CSG:
+			gmm_ms_fsm_state_chg(fi, GPRS_GMM_MS_ST_REGISTERED);
+			break;
+		default:
+			gmm_ms_fsm_state_chg(fi, GPRS_GMM_MS_ST_DEREGISTERED);
+			break;
+		}
 		break;
 	case GPRS_GMM_MS_EV_RAU_ACCEPTED:
 		gprs_gmm_gmme_t3316_stop(ctx->gmme);
@@ -351,7 +360,6 @@ static struct osmo_fsm_state gmm_ms_fsm_states[] = {
 			X(GPRS_GMM_MS_EV_RAU_ACCEPTED),
 		.out_state_mask =
 			X(GPRS_GMM_MS_ST_REGISTERED) |
-			X(GPRS_GMM_MS_ST_DEREGISTERED_INITIATED) |
 			X(GPRS_GMM_MS_ST_DEREGISTERED),
 		.name = "RAUInitidated",
 		.action = st_gmm_ms_rau_initiated,

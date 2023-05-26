@@ -1137,6 +1137,49 @@ rejected:
 	return -EINVAL; /* TODO: what to do on error? */
 }
 
+/* Rx GMM Routing area update reject, 9.4.17 */
+static int gprs_gmm_rx_rau_rej(struct gprs_gmm_entity *gmme, struct gsm48_hdr *gh, unsigned int len)
+{
+	uint8_t *buf = &gh->data[0];
+	struct tlv_parsed tp;
+	uint8_t cause = GMM_CAUSE_SEM_INCORR_MSG;
+	bool force_standby_indicated;
+	int rc;
+
+	if (len < sizeof(*gh) + 2) {
+		LOGGMME(gmme, LOGL_ERROR, "Rx GMM ROUTING AREA UPDATE REJECT with wrong size %u\n", len);
+		goto rejected;
+	}
+
+	cause = buf[0];
+	force_standby_indicated = (buf[1] >> 4) == 0x01;
+	buf += 2;
+
+	LOGGMME(gmme, LOGL_NOTICE, "Rx GMM ROUTING AREA UPDATE REJECT cause='%s' (%u) force_stdby=%u\n",
+		get_value_string(gsm48_gmm_cause_names, cause), cause, force_standby_indicated);
+
+	if (force_standby_indicated)
+		gprs_gmm_gmme_ready_timer_stop(gmme);
+
+	if (len > (buf - (uint8_t *)gh)) {
+		rc = gprs_gmm_tlv_parse(&tp, buf, len - (buf - (uint8_t *)gh));
+		if (rc < 0) {
+			LOGGMME(gmme, LOGL_ERROR, "Rx GMM ROUTING AREA UPDATE REJECT: failed to parse TLVs %d\n", rc);
+			goto rejected;
+		}
+
+		if (TLVP_PRES_LEN(&tp, GSM48_IE_GMM_TIMER_T3302, 1))
+			gmme->t3302 = *TLVP_VAL(&tp, GSM48_IE_GMM_TIMER_T3302);
+
+		if (TLVP_PRES_LEN(&tp, GSM48_IE_GMM_TIMER_T3346, 1))
+			gmme->t3346 = *TLVP_VAL(&tp, GSM48_IE_GMM_TIMER_T3346);
+	}
+
+rejected:
+	rc = osmo_fsm_inst_dispatch(gmme->ms_fsm.fi, GPRS_GMM_MS_EV_RAU_REJECTED, &cause);
+	return -EINVAL;
+}
+
 /* Rx GMM Identity Request, 9.2.10 */
 static int gprs_gmm_rx_id_req(struct gprs_gmm_entity *gmme, struct gsm48_hdr *gh, unsigned int len)
 {
@@ -1379,6 +1422,9 @@ int gprs_gmm_rx(struct gprs_gmm_entity *gmme, struct gsm48_hdr *gh, unsigned int
 		break;
 	case GSM48_MT_GMM_RA_UPD_ACK:
 		rc = gprs_gmm_rx_rau_acc(gmme, gh, len);
+		break;
+	case GSM48_MT_GMM_RA_UPD_REJ:
+		rc = gprs_gmm_rx_rau_rej(gmme, gh, len);
 		break;
 	case GSM48_MT_GMM_ID_REQ:
 		rc = gprs_gmm_rx_id_req(gmme, gh, len);
