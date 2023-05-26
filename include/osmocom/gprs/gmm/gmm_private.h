@@ -12,6 +12,7 @@
 #include <osmocom/core/endian.h>
 #include <osmocom/core/tdef.h>
 #include <osmocom/gsm/protocol/gsm_23_003.h>
+#include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
 
 #include <osmocom/gprs/llc/llc_prim.h>
 #include <osmocom/gprs/gmm/gmm.h>
@@ -132,6 +133,7 @@ int gprs_gmm_tx_detach_req(struct gprs_gmm_entity *gmme,
 			   enum osmo_gprs_gmm_detach_poweroff_type poweroff_type);
 int gprs_gmm_tx_rau_req(struct gprs_gmm_entity *gmme, enum gprs_gmm_upd_type rau_type);
 int gprs_gmm_tx_auth_ciph_resp(const struct gprs_gmm_entity *gmme, const uint8_t *sres);
+int gprs_gmm_tx_auth_ciph_fail(struct gprs_gmm_entity *gmme, enum gsm48_gmm_cause cause);
 
 int gprs_gmm_submit_gmmreg_attach_cnf(struct gprs_gmm_entity *gmme, bool accepted, uint8_t cause);
 int gprs_gmm_submit_gmmsm_establish_cnf(struct gprs_gmm_entity *gmme, bool accepted, uint8_t cause);

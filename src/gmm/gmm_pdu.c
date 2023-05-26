@@ -295,6 +295,24 @@ int gprs_gmm_build_ptmsi_realloc_compl(struct gprs_gmm_entity *gmme, struct msgb
 	return 0;
 }
 
+/* 9.4.10a Authentication and Ciphering Failure */
+int gprs_gmm_build_auth_ciph_fail(struct gprs_gmm_entity *gmme, struct msgb *msg,
+				  enum gsm48_gmm_cause cause)
+{
+	struct gsm48_hdr *gh;
+
+	gh = (struct gsm48_hdr *) msgb_put(msg, sizeof(*gh));
+	gh->proto_discr = GSM48_PDISC_MM_GPRS;
+	gh->msg_type = GSM48_MT_GMM_PTMSI_REALL_COMPL;
+
+	/* 10.5.5.14 Cause */
+	msgb_put_u8(msg, (uint8_t)cause);
+
+	/* TODO: 10.5.3.2.2 Authentication Failure parameter */
+	return 0;
+}
+
+
 /* Chapter 9.4.14: Routing area update request */
 int gprs_gmm_build_rau_req(struct gprs_gmm_entity *gmme,
 			   enum gprs_gmm_upd_type rau_type,

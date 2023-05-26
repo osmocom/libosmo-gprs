@@ -447,9 +447,9 @@ static int gprs_gmm_prim_handle_gmmreg_sim_auth_resp(struct osmo_gprs_gmm_prim *
 
 	rc = gprs_gmm_submit_llgmm_assing_req(gmme);
 	if (rc < 0) {
-		/* TODO: if rc < 0, transmit AUTHENTICATION AND CIPHERING FAILURE (9.4.10a) */
 		/* invalidate active reference: */
 		gmme->auth_ciph.req.ac_ref_nr = 0xff;
+		gprs_gmm_tx_auth_ciph_fail(gmme, GMM_CAUSE_MSG_INCOMP_P_STATE);
 		return rc;
 	}
 

@@ -704,6 +704,42 @@ static int gprs_gmm_tx_ptmsi_realloc_compl(struct gprs_gmm_entity *gmme)
 	return rc;
 }
 
+/* Tx GMM Authentication and Ciphering Failure, 9.4.10a */
+int gprs_gmm_tx_auth_ciph_fail(struct gprs_gmm_entity *gmme, enum gsm48_gmm_cause cause)
+{
+	struct osmo_gprs_llc_prim *llc_prim;
+	int rc;
+	struct msgb *msg;
+
+	LOGGMME(gmme, LOGL_INFO, "Tx GMM AUTHENTICATION AND CIPHERING FAILURE cause=0x%02x '%s'\n",
+		cause, get_value_string(gsm48_gmm_cause_names, cause));
+
+	llc_prim = osmo_gprs_llc_prim_alloc_ll_unitdata_req(
+			gmme->tlli, OSMO_GPRS_LLC_SAPI_GMM, NULL, GPRS_GMM_ALLOC_SIZE);
+	msg = llc_prim->oph.msg;
+	msg->l3h = msg->tail;
+	rc = gprs_gmm_build_auth_ciph_fail(gmme, msg, cause);
+	if (rc < 0) {
+		msgb_free(msg);
+		return -EBADMSG;
+	}
+	llc_prim->ll.l3_pdu = msg->l3h;
+	llc_prim->ll.l3_pdu_len = msgb_l3len(msg);
+	/* TODO:
+	llc_prim->ll.qos_params.*;
+	llc_prim->ll.radio_prio;
+	llc_prim->ll.apply_gea;
+	llc_prim->ll.apply_gia;
+	*/
+
+	/* invalidate active reference: */
+	gmme->auth_ciph.req.ac_ref_nr = 0xff;
+	rc = gprs_gmm_prim_call_llc_down_cb(llc_prim);
+	if (rc < 0)
+		return rc;
+	return rc;
+}
+
 /* Tx GMM Routing area update request, 9.4.14 */
 int gprs_gmm_tx_rau_req(struct gprs_gmm_entity *gmme,
 			enum gprs_gmm_upd_type rau_type)
@@ -1166,6 +1202,7 @@ static int gprs_gmm_rx_auth_ciph_req(struct gprs_gmm_entity *gmme, struct gsm48_
 
 	if (len < sizeof(*gh) + sizeof(*acreq)) {
 		LOGGMME(gmme, LOGL_ERROR, "Rx GMM AUTHENTICATION AND CIPHERING REQUEST with wrong size %u\n", len);
+		gprs_gmm_tx_auth_ciph_fail(gmme, GMM_CAUSE_SEM_INCORR_MSG);
 		return -EINVAL;
 	}
 
@@ -1177,6 +1214,7 @@ static int gprs_gmm_rx_auth_ciph_req(struct gprs_gmm_entity *gmme, struct gsm48_
 					len - (sizeof(*gh) + sizeof(*acreq)));
 		if (rc < 0) {
 			LOGGMME(gmme, LOGL_ERROR, "Rx GMM AUTHENTICATION AND CIPHERING REQUEST: failed to parse TLVs %d\n", rc);
+			gprs_gmm_tx_auth_ciph_fail(gmme, GMM_CAUSE_COND_IE_ERR);
 			return -EINVAL;
 		}
 		if (TLVP_PRESENT(&tp, GSM48_IE_GMM_AUTH_RAND)) {
@@ -1206,14 +1244,17 @@ static int gprs_gmm_rx_auth_ciph_req(struct gprs_gmm_entity *gmme, struct gsm48_
 	if (rand) {
 		/* SIM AUTH needed. Answer GMM req asynchronously in GMMREG-SIM_AUTH.rsp: */
 		rc = gprs_gmm_submit_gmmreg_sim_auth_ind(gmme);
-		/* TODO: if rc < 0, transmit AUTHENTICATION AND CIPHERING FAILURE (9.4.10a) */
+		if (rc < 0) {
+			gprs_gmm_tx_auth_ciph_fail(gmme, GMM_CAUSE_GSM_AUTH_UNACCEPT);
+			return rc;
+		}
 	} else {
 		/* Submit LLGMM-ASSIGN-REQ as per TS 24.007 Annex C.1 */
 		rc = gprs_gmm_submit_llgmm_assing_req(gmme);
 		if (rc < 0) {
-			/* TODO: if rc < 0, transmit AUTHENTICATION AND CIPHERING FAILURE (9.4.10a) */
 			/* invalidate active reference: */
 			gmme->auth_ciph.req.ac_ref_nr = 0xff;
+			gprs_gmm_tx_auth_ciph_fail(gmme, GMM_CAUSE_MSG_INCOMP_P_STATE);
 			return rc;
 		}
 		rc = gprs_gmm_tx_auth_ciph_resp(gmme, NULL);

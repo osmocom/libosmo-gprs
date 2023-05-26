@@ -3,6 +3,7 @@
 
 #include <osmocom/core/msgb.h>
 #include <osmocom/gsm/tlv.h>
+#include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
 
 struct gprs_gmm_entity;
 enum gprs_gmm_upd_type;
@@ -38,6 +39,9 @@ int gprs_gmm_build_detach_req(struct gprs_gmm_entity *gmme,
 			      enum osmo_gprs_gmm_detach_ms_type detach_type,
 			      enum osmo_gprs_gmm_detach_poweroff_type poweroff_type,
 			      struct msgb *msg);
+
+int gprs_gmm_build_auth_ciph_fail(struct gprs_gmm_entity *gmme,
+				  struct msgb *msg, enum gsm48_gmm_cause cause);
 
 int gprs_gmm_build_rau_req(struct gprs_gmm_entity *gmme,
 			   enum gprs_gmm_upd_type rau_type,
