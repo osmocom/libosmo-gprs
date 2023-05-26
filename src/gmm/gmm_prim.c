@@ -453,7 +453,7 @@ static int gprs_gmm_prim_handle_gmmreg_sim_auth_resp(struct osmo_gprs_gmm_prim *
 		return rc;
 	}
 
-	rc = gprs_gmm_tx_ciph_auth_resp(gmme, gmm_prim->gmmreg.sim_auth_rsp.sres);
+	rc = gprs_gmm_tx_auth_ciph_resp(gmme, gmm_prim->gmmreg.sim_auth_rsp.sres);
 	/* invalidate active reference: */
 	gmme->auth_ciph.req.ac_ref_nr = 0xff;
 	return rc;

@@ -131,7 +131,7 @@ int gprs_gmm_tx_detach_req(struct gprs_gmm_entity *gmme,
 			   enum osmo_gprs_gmm_detach_ms_type detach_type,
 			   enum osmo_gprs_gmm_detach_poweroff_type poweroff_type);
 int gprs_gmm_tx_rau_req(struct gprs_gmm_entity *gmme, enum gprs_gmm_upd_type rau_type);
-int gprs_gmm_tx_ciph_auth_resp(const struct gprs_gmm_entity *gmme, const uint8_t *sres);
+int gprs_gmm_tx_auth_ciph_resp(const struct gprs_gmm_entity *gmme, const uint8_t *sres);
 
 int gprs_gmm_submit_gmmreg_attach_cnf(struct gprs_gmm_entity *gmme, bool accepted, uint8_t cause);
 int gprs_gmm_submit_gmmsm_establish_cnf(struct gprs_gmm_entity *gmme, bool accepted, uint8_t cause);

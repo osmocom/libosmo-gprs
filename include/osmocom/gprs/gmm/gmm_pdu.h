@@ -31,7 +31,7 @@ int gprs_gmm_build_identity_resp(struct gprs_gmm_entity *gmme,
 				 uint8_t mi_type,
 				 struct msgb *msg);
 
-int gprs_gmm_build_ciph_auth_resp(const struct gprs_gmm_entity *gmme,
+int gprs_gmm_build_auth_ciph_resp(const struct gprs_gmm_entity *gmme,
 				  const uint8_t *sres, struct msgb *msg);
 
 int gprs_gmm_build_detach_req(struct gprs_gmm_entity *gmme,

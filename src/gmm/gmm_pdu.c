@@ -413,7 +413,7 @@ int gprs_gmm_build_identity_resp(struct gprs_gmm_entity *gmme,
 }
 
 /* Tx GMM Authentication and ciphering response, 9.4.10 */
-int gprs_gmm_build_ciph_auth_resp(const struct gprs_gmm_entity *gmme, const uint8_t *sres, struct msgb *msg)
+int gprs_gmm_build_auth_ciph_resp(const struct gprs_gmm_entity *gmme, const uint8_t *sres, struct msgb *msg)
 {
 	struct gsm48_hdr *gh;
 	struct gsm48_auth_ciph_resp *acr;

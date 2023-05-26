@@ -537,7 +537,7 @@ static int gprs_gmm_tx_id_resp(struct gprs_gmm_entity *gmme,
 
 /* Tx GMM Authentication and ciphering response, 9.4.10
  * sres can be NULL if no authentication was requested. */
-int gprs_gmm_tx_ciph_auth_resp(const struct gprs_gmm_entity *gmme, const uint8_t *sres)
+int gprs_gmm_tx_auth_ciph_resp(const struct gprs_gmm_entity *gmme, const uint8_t *sres)
 {
 	struct osmo_gprs_llc_prim *llc_prim;
 	int rc;
@@ -549,7 +549,7 @@ int gprs_gmm_tx_ciph_auth_resp(const struct gprs_gmm_entity *gmme, const uint8_t
 			gmme->tlli, OSMO_GPRS_LLC_SAPI_GMM, NULL, GPRS_GMM_ALLOC_SIZE);
 	msg = llc_prim->oph.msg;
 	msg->l3h = msg->tail;
-	rc = gprs_gmm_build_ciph_auth_resp(gmme, sres, msg);
+	rc = gprs_gmm_build_auth_ciph_resp(gmme, sres, msg);
 	if (rc < 0) {
 		msgb_free(msg);
 		return -EBADMSG;
@@ -1216,7 +1216,7 @@ static int gprs_gmm_rx_auth_ciph_req(struct gprs_gmm_entity *gmme, struct gsm48_
 			gmme->auth_ciph.req.ac_ref_nr = 0xff;
 			return rc;
 		}
-		rc = gprs_gmm_tx_ciph_auth_resp(gmme, NULL);
+		rc = gprs_gmm_tx_auth_ciph_resp(gmme, NULL);
 		/* invalidate active reference: */
 		gmme->auth_ciph.req.ac_ref_nr = 0xff;
 	}
