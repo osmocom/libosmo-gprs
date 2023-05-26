@@ -968,7 +968,7 @@ static int gprs_gmm_rx_att_rej(struct gprs_gmm_entity *gmme, struct gsm48_hdr *g
 		if (TLVP_PRES_LEN(&tp, GSM48_IE_GMM_TIMER_T3302, 1))
 			gmme->t3302 = *TLVP_VAL(&tp, GSM48_IE_GMM_TIMER_T3302);
 
-		if (TLVP_PRES_LEN(&tp, GSM48_IE_GMM_TIMER_T3302, 1))
+		if (TLVP_PRES_LEN(&tp, GSM48_IE_GMM_TIMER_T3346, 1))
 			gmme->t3346 = *TLVP_VAL(&tp, GSM48_IE_GMM_TIMER_T3346);
 	}
 
