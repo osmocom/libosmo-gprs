@@ -131,6 +131,12 @@ unsigned int gprs_rlcmac_ul_tbf_n3104_max(const struct gprs_rlcmac_ul_tbf *ul_tb
 	uint8_t bs_cv_max = g_rlcmac_ctx->si13_available ?
 				g_rlcmac_ctx->si13ro.u.PBCCH_Not_present.GPRS_Cell_Options.BS_CV_MAX :
 				15;
+
+	/* Table 12.24.2: "The value BS_CV_MAX=0 shall be interpreted as value
+	 * BS_CV_MAX=1 for calculation of T3200 and N3104max values." */
+	if (bs_cv_max == 0)
+		bs_cv_max = 1;
+
 	return 3 * (bs_cv_max + 3) * ul_tbf->cur_alloc.num_ts;
 }
 

@@ -67,23 +67,30 @@ RTS 0: FN=8
 test_rlcmac_prim_up_cb(): Rx GMMRR-LLC_TRANSMITTED.indication TLLI=0x00002342
 test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=8 ts=7 data_len=34 data=[3c 01 01 00 00 23 42 01 c0 00 08 01 01 d5 71 00 00 08 29 26 24 00 00 00 00 71 62 f2 24 6c 84 44 04 00 ]
 RTS 1: FN=13
-test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=13 ts=7 data_len=34 data=[00 01 02 1d 00 00 23 42 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 ]
+test_rlcmac_prim_up_cb(): Rx GMMRR-LLC_TRANSMITTED.indication TLLI=0x00002342
+test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=13 ts=7 data_len=34 data=[3c 01 02 1f 00 00 23 42 11 e5 10 00 e2 18 f2 01 c0 00 08 01 01 d5 71 00 00 08 29 26 24 00 00 00 00 00 ]
 RTS 2: FN=17
-test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=17 ts=7 data_len=34 data=[3c 01 01 00 00 23 42 01 c0 00 08 01 01 d5 71 00 00 08 29 26 24 00 00 00 00 71 62 f2 24 6c 84 44 04 00 ]
+test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=17 ts=7 data_len=34 data=[00 01 04 3d 00 00 23 42 71 62 f2 24 6c 84 44 04 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 ]
 RTS 3: FN=21
-test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=21 ts=7 data_len=34 data=[00 01 02 1d 00 00 23 42 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 ]
+test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=21 ts=7 data_len=34 data=[3c 01 01 00 00 23 42 01 c0 00 08 01 01 d5 71 00 00 08 29 26 24 00 00 00 00 71 62 f2 24 6c 84 44 04 00 ]
 RTS 4: FN=26
-test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=26 ts=7 data_len=34 data=[3c 01 01 00 00 23 42 01 c0 00 08 01 01 d5 71 00 00 08 29 26 24 00 00 00 00 71 62 f2 24 6c 84 44 04 00 ]
+test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=26 ts=7 data_len=34 data=[3c 01 02 1f 00 00 23 42 11 e5 10 00 e2 18 f2 01 c0 00 08 01 01 d5 71 00 00 08 29 26 24 00 00 00 00 00 ]
 RTS 5: FN=30
-test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=30 ts=7 data_len=34 data=[00 01 02 1d 00 00 23 42 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 ]
+test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=30 ts=7 data_len=34 data=[00 01 04 3d 00 00 23 42 71 62 f2 24 6c 84 44 04 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 ]
 RTS 6: FN=34
 test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=34 ts=7 data_len=34 data=[3c 01 01 00 00 23 42 01 c0 00 08 01 01 d5 71 00 00 08 29 26 24 00 00 00 00 71 62 f2 24 6c 84 44 04 00 ]
 RTS 7: FN=39
-test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=39 ts=7 data_len=34 data=[00 01 02 1d 00 00 23 42 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 ]
+test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=39 ts=7 data_len=34 data=[3c 01 02 1f 00 00 23 42 11 e5 10 00 e2 18 f2 01 c0 00 08 01 01 d5 71 00 00 08 29 26 24 00 00 00 00 00 ]
 RTS 8: FN=43
+test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=43 ts=7 data_len=34 data=[00 01 04 3d 00 00 23 42 71 62 f2 24 6c 84 44 04 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 ]
+RTS 9: FN=47
+test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=47 ts=7 data_len=34 data=[3c 01 01 00 00 23 42 01 c0 00 08 01 01 d5 71 00 00 08 29 26 24 00 00 00 00 71 62 f2 24 6c 84 44 04 00 ]
+RTS 10: FN=52
+test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=52 ts=7 data_len=34 data=[3c 01 02 1f 00 00 23 42 11 e5 10 00 e2 18 f2 01 c0 00 08 01 01 d5 71 00 00 08 29 26 24 00 00 00 00 00 ]
+RTS 11: FN=56
 test_rlcmac_prim_down_cb(): Rx L1CTL-CFG_UL_TBF.request ul_tbf_nr=0 ul_slotmask=0x00
 test_rlcmac_prim_down_cb(): Rx L1CTL-RACH.request ra=0x7b
-test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=43 ts=7 data_len=34 data=[3c 01 01 00 00 23 42 01 c0 00 08 01 01 d5 71 00 00 08 29 26 24 00 00 00 00 71 62 f2 24 6c 84 44 04 00 ]
+test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=56 ts=7 data_len=34 data=[00 01 04 3d 00 00 23 42 71 62 f2 24 6c 84 44 04 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 ]
 test_rlcmac_prim_down_cb(): Rx L1CTL-CFG_UL_TBF.request ul_tbf_nr=0 ul_slotmask=0x80
 === test_ul_tbf_n3104_timeout end ===
 test_rlcmac_prim_down_cb(): Rx L1CTL-CFG_UL_TBF.request ul_tbf_nr=0 ul_slotmask=0x00

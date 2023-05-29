@@ -781,19 +781,24 @@ static void test_ul_tbf_n3104_timeout(void)
 	uint8_t usf = 0;
 	uint32_t rts_fn = 4;
 	unsigned int i;
-	const unsigned int bs_cv_max = 0;
+	const unsigned int bs_cv_max = 1; /* 0 interpreted as 1 for N3104max */
 	const unsigned int num_ts = 1;
 	const unsigned int n3104_max = 3 * (bs_cv_max + 3) * num_ts;
 
 	/* Submit an SI13 with bs_cv_max=0: */
-	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_ccch_data_ind(0, create_si13(bs_cv_max));
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_ccch_data_ind(0, create_si13(0));
 	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
 	OSMO_ASSERT(rc == 0);
 
-	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_grr_unitdata_req(tlli, pdu_llc_gmm_att_req,
-					    sizeof(pdu_llc_gmm_att_req));
-	rlcmac_prim->grr.unitdata_req.sapi = OSMO_GPRS_RLCMAC_LLC_SAPI_GMM;
-	rc = osmo_gprs_rlcmac_prim_upper_down(rlcmac_prim);
+	/* Fill in several LLC PDUs: */
+	for (i = 0; i < 2; i++) {
+		rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_grr_unitdata_req(tlli, pdu_llc_gmm_att_req,
+						sizeof(pdu_llc_gmm_att_req));
+		rlcmac_prim->grr.unitdata_req.sapi = OSMO_GPRS_RLCMAC_LLC_SAPI_GMM;
+		rc = osmo_gprs_rlcmac_prim_upper_down(rlcmac_prim);
+		OSMO_ASSERT(rc == 0);
+	}
+
 
 	ccch_imm_ass_pkt_ul_tbf_normal[7] = last_rach_req_ra; /* Update RA to match */
 	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_ccch_data_ind(0, ccch_imm_ass_pkt_ul_tbf_normal);
