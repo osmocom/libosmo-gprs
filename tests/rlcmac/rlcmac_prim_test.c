@@ -934,6 +934,71 @@ static void test_ul_tbf_last_data_cv0_retrans_max(void)
 	cleanup_test();
 }
 
+/* 9.3.1 Countdown procedure */
+static void test_ul_tbf_countdown_procedure(void)
+{
+	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
+	int rc;
+
+	printf("=== %s start ===\n", __func__);
+	prepare_test();
+	uint32_t tlli = 0x2342;
+	uint8_t ul_tfi = 0;
+	uint8_t ts_nr = 7;
+	uint8_t usf = 0;
+	uint32_t rts_fn = 4;
+	uint8_t bs_cv_max = 4;
+	unsigned int i;
+	RlcMacDownlink_t dl_block;
+	struct msgb *llc_msg = msgb_alloc(200, "llc_msg");
+	Ack_Nack_Description_t *ack_desc = &dl_block.u.Packet_Uplink_Ack_Nack.u.PU_AckNack_GPRS_Struct.Ack_Nack_Description;
+
+	/* Submit an SI13 with bs_cv_max: */
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_ccch_data_ind(0, create_si13(bs_cv_max));
+	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+	OSMO_ASSERT(rc == 0);
+
+
+	/* Submit LLC bytes */
+	msgb_put(llc_msg, msgb_tailroom(llc_msg));
+	memset(msgb_data(llc_msg), 0xab, msgb_length(llc_msg));
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_grr_unitdata_req(tlli, msgb_data(llc_msg), msgb_length(llc_msg));
+	rlcmac_prim->grr.unitdata_req.sapi = OSMO_GPRS_RLCMAC_LLC_SAPI_SNDCP3;
+	rc = osmo_gprs_rlcmac_prim_upper_down(rlcmac_prim);
+
+	ccch_imm_ass_pkt_ul_tbf_normal[7] = last_rach_req_ra; /* Update RA to match */
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_ccch_data_ind(0, ccch_imm_ass_pkt_ul_tbf_normal);
+	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+	OSMO_ASSERT(rc == 0);
+
+	/* Trigger transmission of LLC data (first part) */
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_rts_ind(ts_nr, rts_fn, usf);
+	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+	OSMO_ASSERT(rc == 0);
+
+	/* PCU acks it: */
+	ul_ack_nack_init(&dl_block, ul_tfi, GPRS_RLCMAC_CS_2);
+	ack_desc->STARTING_SEQUENCE_NUMBER = 1;
+	ack_desc->FINAL_ACK_INDICATION = 0;
+	ul_ack_nack_mark(ack_desc, 0, true);
+	rlcmac_prim = create_dl_ctrl_block(&dl_block, ts_nr, rts_fn);
+	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+	OSMO_ASSERT(rc == 0);
+
+	for (i = 0; i < 6; i++) {
+		rts_fn = fn_next_block(rts_fn);
+		printf("RTS %u: FN=%u\n", i, rts_fn);
+		/* Trigger transmission of LLC data (GMM Attach) (second part) */
+		rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_rts_ind(ts_nr, rts_fn, usf);
+		rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+		OSMO_ASSERT(rc == 0);
+	}
+
+	printf("=== %s end ===\n", __func__);
+	msgb_free(llc_msg);
+	cleanup_test();
+}
+
 /* PCU allocates a DL TBF through PCH ImmAss for MS (when in packet-idle) */
 static void test_dl_tbf_ccch_assign(void)
 {
@@ -1128,6 +1193,7 @@ int main(int argc, char *argv[])
 	test_ul_tbf_n3104_timeout();
 	test_ul_tbf_t3182_timeout();
 	test_ul_tbf_last_data_cv0_retrans_max();
+	test_ul_tbf_countdown_procedure();
 	test_ul_tbf_request_another_ul_tbf();
 	test_dl_tbf_ccch_assign();
 	test_dl_tbf_ccch_assign_requests_ul_tbf_pacch();

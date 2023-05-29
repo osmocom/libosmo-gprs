@@ -54,6 +54,8 @@ int gprs_rlcmac_llc_queue_enqueue(struct gprs_rlcmac_llc_queue *q, uint8_t *ll_p
 struct msgb *gprs_rlcmac_llc_queue_dequeue(struct gprs_rlcmac_llc_queue *q);
 uint8_t gprs_rlcmac_llc_queue_highest_radio_prio_pending(struct gprs_rlcmac_llc_queue *q);
 
+void gprs_rlcmac_llc_queue_merge_prepend(struct gprs_rlcmac_llc_queue *q, struct gprs_rlcmac_llc_queue *old_q);
+
 static inline size_t gprs_rlcmac_llc_queue_size(const struct gprs_rlcmac_llc_queue *q)
 {
 	return q->queue_size;

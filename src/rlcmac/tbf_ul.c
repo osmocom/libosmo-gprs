@@ -72,6 +72,13 @@ void gprs_rlcmac_ul_tbf_free(struct gprs_rlcmac_ul_tbf *ul_tbf)
 	if (!ul_tbf)
 		return;
 
+	if (ul_tbf->countdown_proc.llc_queue) {
+		gprs_rlcmac_llc_queue_merge_prepend(ul_tbf->tbf.gre->llc_queue,
+						    ul_tbf->countdown_proc.llc_queue);
+		gprs_rlcmac_llc_queue_free(ul_tbf->countdown_proc.llc_queue);
+		ul_tbf->countdown_proc.llc_queue = NULL;
+	}
+
 	if (ul_tbf->tbf.gre->ul_tbf == ul_tbf)
 		ul_tbf->tbf.gre->ul_tbf = NULL;
 
@@ -146,7 +153,7 @@ bool gprs_rlcmac_ul_tbf_can_request_new_ul_tbf(const struct gprs_rlcmac_ul_tbf *
 		return false;
 
 	/* the mobile station has new data to transmit */
-	if (!gprs_rlcmac_ul_tbf_have_data(ul_tbf))
+	if (!gprs_rlcmac_entity_have_tx_data_queued(ul_tbf->tbf.gre))
 		return false;
 
 	/* "the mobile station has no other ongoing downlink TBFs */
@@ -312,8 +319,12 @@ free_ret:
 
 bool gprs_rlcmac_ul_tbf_have_data(const struct gprs_rlcmac_ul_tbf *ul_tbf)
 {
-	return (ul_tbf->llc_tx_msg && msgb_length(ul_tbf->llc_tx_msg) > 0) ||
-	       gprs_rlcmac_entity_have_tx_data_queued(ul_tbf->tbf.gre);
+	if (ul_tbf->llc_tx_msg && msgb_length(ul_tbf->llc_tx_msg) > 0)
+		return true;
+	if (ul_tbf->countdown_proc.active)
+		return gprs_rlcmac_llc_queue_size(ul_tbf->countdown_proc.llc_queue) > 0;
+	else
+		return gprs_rlcmac_entity_have_tx_data_queued(ul_tbf->tbf.gre);
 }
 
 bool gprs_rlcmac_ul_tbf_shall_keep_open(const struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_rts_block_ind *bi)
@@ -331,13 +342,20 @@ bool gprs_rlcmac_ul_tbf_shall_keep_open(const struct gprs_rlcmac_ul_tbf *ul_tbf,
 void gprs_rlcmac_ul_tbf_schedule_next_llc_frame(struct gprs_rlcmac_ul_tbf *ul_tbf)
 {
 	struct osmo_gprs_rlcmac_prim *rlcmac_prim_tx;
+	struct gprs_rlcmac_llc_queue *llc_queue;
 
 	if (ul_tbf->llc_tx_msg && msgb_length(ul_tbf->llc_tx_msg))
 		return;
 
 	msgb_free(ul_tbf->llc_tx_msg);
+
+	if (ul_tbf->countdown_proc.active)
+		llc_queue = ul_tbf->countdown_proc.llc_queue;
+	else
+		llc_queue = ul_tbf->tbf.gre->llc_queue;
+
 	/* dequeue next LLC frame, if any */
-	ul_tbf->llc_tx_msg = gprs_rlcmac_llc_queue_dequeue(ul_tbf->tbf.gre->llc_queue);
+	ul_tbf->llc_tx_msg = gprs_rlcmac_llc_queue_dequeue(llc_queue);
 	if (!ul_tbf->llc_tx_msg)
 		return;
 
@@ -354,9 +372,188 @@ void gprs_rlcmac_ul_tbf_schedule_next_llc_frame(struct gprs_rlcmac_ul_tbf *ul_tb
 	gprs_rlcmac_prim_call_up_cb(rlcmac_prim_tx);
 }
 
+/* TS 44.060 9.3.1.1 Countdown procedure */
+struct blk_count_state {
+	const struct gprs_rlcmac_ul_tbf *ul_tbf;
+	uint8_t blk_data_len; /* length of usable data block (single data unit w/o header) */
+	uint8_t bs_cv_max;
+	uint8_t nts;
+	uint8_t k;
+	uint8_t nts_x_k;
+	unsigned blk_count;
+	uint8_t offset; /* offset in bytes in the current blk */
+	bool extra_li0; /* if last appended chunk is an LI=0 case */
+};
+static void blk_count_state_init(struct blk_count_state *st, const struct gprs_rlcmac_ul_tbf *ul_tbf)
+{
+	OSMO_ASSERT(ul_tbf->cur_alloc.num_ts > 0);
+	memset(st, 0, sizeof(*st));
+	st->ul_tbf = ul_tbf;
+	st->blk_data_len = gprs_rlcmac_mcs_max_data_block_bytes(ul_tbf->tx_cs);
+	st->bs_cv_max = g_rlcmac_ctx->si13ro.u.PBCCH_Not_present.GPRS_Cell_Options.BS_CV_MAX;
+	st->nts = ul_tbf->cur_alloc.num_ts;
+	st->blk_count = 0;
+	st->offset = 0;
+
+	if (gprs_rlcmac_ul_tbf_in_contention_resolution(ul_tbf))
+		st->blk_data_len -= 4;
+
+	switch (ul_tbf->tx_cs) {
+	case GPRS_RLCMAC_MCS_7:
+	case GPRS_RLCMAC_MCS_8:
+	case GPRS_RLCMAC_MCS_9:
+		st->k = 2;
+		break;
+	default:
+		st->k = 1;
+	}
+	st->nts_x_k = st->nts * st->k;
+}
+
+static inline unsigned blk_count_to_x(const struct blk_count_state *st)
+{
+	if (st->blk_count == 0)
+		return 0;
+	return (st->blk_count + (st->nts_x_k - 1) - 1) / st->nts_x_k;
+}
+
+static void blk_count_append_llc(struct blk_count_state *st, unsigned int llc_payload_len)
+{
+	int chunk = llc_payload_len;
+	int space = st->blk_data_len - st->offset;
+	OSMO_ASSERT(st->offset < st->blk_data_len);
+
+	if (chunk == 0)
+		return; /* Should not happen in here? */
+
+	/* reset flag: */
+	st->extra_li0 = false;
+
+	/* if chunk will exceed block limit */
+	if (chunk > space) {
+		st->blk_count++;
+		st->offset = 0;
+		chunk -= space;
+		blk_count_append_llc(st, chunk);
+		return;
+	}
+	if (chunk == space) {
+		st->blk_count++;
+		st->offset = 0;
+		chunk -= space - 1; /* Extra LI=0 */
+		blk_count_append_llc(st, chunk);
+		/* case is_final==true (CV==0) has no extra LI=0. Store the
+		 * context to subtract if this was the last step. */
+		st->extra_li0 = true;
+		return;
+	}
+	/* chunk < space */
+	/* Append a new LI byte */
+	st->offset++;
+	st->offset += chunk;
+	if (st->blk_data_len - st->offset == 0) {
+		st->blk_count++;
+		st->offset = 0;
+	}
+}
+
+/* Returned as early return from function when amount of RLC blocks goes clearly over BS_CV_MAX */
+#define BLK_COUNT_TOOMANY 0xff
+/* We cannot early-check if extra_li0=true, since there may temporarily have too many rlc blocks: */
+#define BLK_COUNT_EARLY_CHECK_TOOMANY(st) (!(st)->extra_li0) && blk_count_to_x(st) > (st)->bs_cv_max)
+static uint8_t blk_count_append_llc_prio_queue(struct blk_count_state *st, const struct gprs_llc_prio_queue *pq)
+{
+	struct msgb *msg;
+
+	llist_for_each_entry(msg, &pq->queue, list) {
+		blk_count_append_llc(st, msgb_l2len(msg));
+		/* We cannot early-check if extra_li0=true, since there may temporarily have too many rlc blocks. */
+		if (BLK_COUNT_EARLY_CHECK_TOOMANY(st)
+			return BLK_COUNT_TOOMANY; /* early return, not entering countdown procedure */
+	}
+	return 0;
+}
+
+/* return BLK_COUNT_TOOMANY: not entering countdown procedure, X > BS_CV_MAX.
+_* return 0: check blk_count_to_x(st) */
+static uint8_t gprs_rlcmac_ul_tbf_calculate_cv(const struct gprs_rlcmac_ul_tbf *ul_tbf)
+{
+	struct blk_count_state st;
+	const struct gprs_rlcmac_llc_queue *q = ul_tbf->tbf.gre->llc_queue;
+	unsigned int i, j;
+	unsigned x;
+
+	blk_count_state_init(&st, ul_tbf);
+
+	/* TODO: Here we could do an heuristic optimization by doing a rough calculation
+	 * using gprs_rlcmac_llc_queue_size() and gprs_rlcmac_llc_queue_octets()
+	 * for cases were we are clearly above BS_CV_MAX. This is specially useful
+	 * when the LLC queue is long since we skip iterating counting lots of
+	 * data.
+	 * if (blk_count_herustic_toomany(&st))
+	 *	return 15;
+	 */
+
+	/* First of all, the current LLC frame in progress: */
+	if (ul_tbf->llc_tx_msg) {
+		blk_count_append_llc(&st, msgb_length(ul_tbf->llc_tx_msg));
+		if (BLK_COUNT_EARLY_CHECK_TOOMANY(&st)
+			goto done; /* early return, not entering countdown procedure */
+	}
+
+	for (i = 0; i < ARRAY_SIZE(q->pq); i++) {
+		for (j = 0; j < ARRAY_SIZE(q->pq[i]); j++) {
+			int rc;
+			if (llist_empty(&q->pq[i][j].queue))
+				continue;
+			rc = blk_count_append_llc_prio_queue(&st, &q->pq[i][j]);
+			if (rc == BLK_COUNT_TOOMANY)
+				goto done; /* early return, not entering countdown procedure */
+		}
+	}
+
+done:
+	/* In final block (CV==0), a chunk filling exactly an RLC block doesn't
+	 * have the LI=0 and 2 bytes (1 LI + 1 data) spanning next block. Fix calculation: */
+	if (st.extra_li0) {
+		OSMO_ASSERT(st.offset == 2);
+		st.offset -= 2;
+	}
+	/* Remaining one would already be a block. Include it before calculating "X": */
+	if (st.offset > 0) {
+		st.blk_count++;
+		st.offset = 0;
+	}
+	x = blk_count_to_x(&st);
+	return x <= st.bs_cv_max ? (uint8_t)x : 15;
+}
+
+static void gprs_rlcmac_ul_tbf_steal_llc_queue_from_gre(struct gprs_rlcmac_ul_tbf *ul_tbf)
+{
+	ul_tbf->countdown_proc.llc_queue = ul_tbf->tbf.gre->llc_queue;
+	ul_tbf->tbf.gre->llc_queue = gprs_rlcmac_llc_queue_alloc(ul_tbf->tbf.gre);
+}
+
+static void gprs_rlcmac_ul_tbf_check_countdown_proc(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_rts_block_ind *bi)
+{
+
+	if (ul_tbf->countdown_proc.active)
+		return;
+	ul_tbf->countdown_proc.cv = gprs_rlcmac_ul_tbf_calculate_cv(ul_tbf);
+	if (ul_tbf->countdown_proc.cv < 15) {
+		if (gprs_rlcmac_ul_tbf_shall_keep_open(ul_tbf, bi)) {
+			LOGPTBFUL(ul_tbf, LOGL_INFO, "Delaying start Countdown procedure CV=%u\n", ul_tbf->countdown_proc.cv);
+			ul_tbf->countdown_proc.cv = 15;
+			return;
+		}
+		LOGPTBFUL(ul_tbf, LOGL_DEBUG, "Entering Countdown procedure CV=%u\n", ul_tbf->countdown_proc.cv);
+		ul_tbf->countdown_proc.active = true;
+		gprs_rlcmac_ul_tbf_steal_llc_queue_from_gre(ul_tbf);
+	}
+}
+
 static int create_new_bsn(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_rts_block_ind *bi, enum gprs_rlcmac_coding_scheme cs)
 {
-	struct gprs_rlcmac_llc_queue *llc_queue = ul_tbf->tbf.gre->llc_queue;
 	const uint16_t bsn = gprs_rlcmac_rlc_ul_window_v_s(ul_tbf->ulw);
 	struct gprs_rlcmac_rlc_block *blk;
 	struct gprs_rlcmac_rlc_block_info *rdbi;
@@ -364,6 +561,8 @@ static int create_new_bsn(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_r
 	int num_chunks = 0;
 	int write_offset = 0;
 	enum gpr_rlcmac_append_result ar;
+
+	gprs_rlcmac_ul_tbf_check_countdown_proc(ul_tbf, bi);
 
 	if (!ul_tbf->llc_tx_msg || msgb_length(ul_tbf->llc_tx_msg) == 0)
 		gprs_rlcmac_ul_tbf_schedule_next_llc_frame(ul_tbf);
@@ -391,7 +590,7 @@ static int create_new_bsn(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_r
 	rdbi->data_len = block_data_len;
 
 	rdbi->ti = gprs_rlcmac_ul_tbf_in_contention_resolution(ul_tbf);
-	rdbi->cv = 15; /* Final Block Indicator, set late, if true */
+	rdbi->cv = ul_tbf->countdown_proc.cv--;
 	rdbi->bsn = bsn; /* Block Sequence Number */
 	rdbi->e = 1; /* Extension bit, maybe set later (1: no extension) */
 
@@ -407,7 +606,6 @@ static int create_new_bsn(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_r
 	}
 
 	do {
-		bool is_final;
 		int payload_written = 0;
 
 		if (msgb_length(ul_tbf->llc_tx_msg) == 0) {
@@ -424,14 +622,6 @@ static int create_new_bsn(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_r
 					  "LLC queue completely drained and there's "
 					  "still %d free bytes in rlcmac data block\n", space);
 
-				/* We may need to update fbi in header here
-				 * since ul_tbf->last_ul_drained_fn was updated above
-				 * Specially important when X2031 is 0. */
-				is_final = gprs_rlcmac_llc_queue_size(llc_queue) == 0 &&
-					   !gprs_rlcmac_ul_tbf_shall_keep_open(ul_tbf, bi);
-				if (is_final)
-					rdbi->cv = 0;
-
 				if (gprs_rlcmac_mcs_is_edge(cs)) {
 					/* in EGPRS there's no M bit, so we need
 					 * to flag padding with LI=127 */
@@ -442,12 +632,8 @@ static int create_new_bsn(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_r
 			}
 		}
 
-		is_final = gprs_rlcmac_llc_queue_size(llc_queue) == 0 &&
-			   !gprs_rlcmac_ul_tbf_shall_keep_open(ul_tbf, bi);
-
-		ar = gprs_rlcmac_enc_append_ul_data(rdbi, cs, ul_tbf->llc_tx_msg,
-						    &write_offset, &num_chunks, data,
-						    is_final, &payload_written);
+		ar = gprs_rlcmac_enc_append_ul_data(rdbi, cs, ul_tbf->llc_tx_msg, &write_offset,
+						    &num_chunks, data, &payload_written);
 
 		if (ar == GPRS_RLCMAC_AR_NEED_MORE_BLOCKS)
 			break;
@@ -460,8 +646,8 @@ static int create_new_bsn(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_r
 		gprs_rlcmac_ul_tbf_schedule_next_llc_frame(ul_tbf);
 	} while (ar == GPRS_RLCMAC_AR_COMPLETED_SPACE_LEFT);
 
-	LOGPTBFUL(ul_tbf, LOGL_DEBUG, "data block (BSN %d, %s): %s\n",
-		  bsn, gprs_rlcmac_mcs_name(blk->cs_last),
+	LOGPTBFUL(ul_tbf, LOGL_DEBUG, "data block (BSN=%d, %s, CV=%u): %s\n",
+		  bsn, gprs_rlcmac_mcs_name(blk->cs_last), rdbi->cv,
 		  osmo_hexdump(blk->buf, block_data_len));
 	/* raise send state and set ack state array */
 	gprs_rlcmac_rlc_v_b_mark_unacked(&ul_tbf->ulw->v_b, bsn);
@@ -850,8 +1036,8 @@ static struct msgb *create_ul_acked_block(struct gprs_rlcmac_ul_tbf *ul_tbf,
 		rdbi->bsn = bsn;
 		is_final = is_final || rdbi->cv == 0;
 
-		LOGPTBFUL(ul_tbf, LOGL_DEBUG, "Copying data unit %d (BSN %d)\n",
-			  data_block_idx, bsn);
+		LOGPTBFUL(ul_tbf, LOGL_DEBUG, "Copying data unit %d (BSN=%d CV=%d)\n",
+			  data_block_idx, bsn, rdbi->cv);
 
 		gprs_rlcmac_rlc_copy_from_aligned_buffer(&rlc, data_block_idx, msg_data, block_data);
 	}

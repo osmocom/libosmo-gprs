@@ -40,6 +40,13 @@ struct gprs_rlcmac_ul_tbf {
 
 	/* (M)CS used to transmit uplink blocks, assigned by PCU: */
 	enum gprs_rlcmac_coding_scheme tx_cs;
+
+	/* Whether the UL TBF entered the countdown procedure (TS 44.060 9.3.1)*/
+	struct {
+		bool active;
+		uint8_t cv;
+		struct gprs_rlcmac_llc_queue *llc_queue;
+	} countdown_proc;
 };
 
 struct gprs_rlcmac_ul_tbf *gprs_rlcmac_ul_tbf_alloc(struct gprs_rlcmac_entity *gre);

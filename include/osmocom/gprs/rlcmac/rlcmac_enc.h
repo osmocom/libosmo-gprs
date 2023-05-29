@@ -29,7 +29,7 @@ enum gpr_rlcmac_append_result gprs_rlcmac_enc_append_ul_data(
 				struct gprs_rlcmac_rlc_block_info *rdbi,
 				enum gprs_rlcmac_coding_scheme cs,
 				struct msgb *llc_msg, int *offset, int *num_chunks,
-				uint8_t *data_block, bool is_final, int *count_payload);
+				uint8_t *data_block, int *count_payload);
 
 void gprs_rlcmac_rlc_data_to_ul_append_egprs_li_padding(const struct gprs_rlcmac_rlc_block_info *rdbi,
 							int *offset, int *num_chunks, uint8_t *data_block);

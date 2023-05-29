@@ -227,3 +227,31 @@ uint8_t gprs_rlcmac_llc_queue_highest_radio_prio_pending(struct gprs_rlcmac_llc_
 	OSMO_ASSERT(prioq);
 	return prioq->radio_prio;
 }
+
+/* Merge old_q messages into q, prepending them. old_q must be freed by the caller. */
+void gprs_rlcmac_llc_queue_merge_prepend(struct gprs_rlcmac_llc_queue *q, struct gprs_rlcmac_llc_queue *old_q)
+{
+	unsigned int i, j;
+
+	/* Nothing to do: */
+	if (old_q->queue_size == 0)
+		return;
+
+	for (i = 0; i < ARRAY_SIZE(old_q->pq); i++) {
+		for (j = 0; j < ARRAY_SIZE(old_q->pq[i]); j++) {
+			struct llist_head *old_pq = &old_q->pq[i][j].queue;
+			struct llist_head *pq = &q->pq[i][j].queue;
+			struct llist_head *it;
+
+			/* Remove from old_pq and prepend to pq: */
+			while ((it = old_pq->next) != old_pq)
+				llist_move(it, pq);
+		}
+	}
+
+	q->queue_size += old_q->queue_size;
+	q->queue_octets += old_q->queue_octets;
+
+	old_q->queue_size = 0;
+	old_q->queue_octets = 0;
+}

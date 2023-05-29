@@ -67,12 +67,13 @@ enum gpr_rlcmac_append_result gprs_rlcmac_enc_append_ul_data(
 				struct gprs_rlcmac_rlc_block_info *rdbi,
 				enum gprs_rlcmac_coding_scheme cs,
 				struct msgb *llc_msg, int *offset, int *num_chunks,
-				uint8_t *data_block, bool is_final, int *count_payload)
+				uint8_t *data_block, int *count_payload)
 {
 	int chunk;
 	int space;
 	struct gprs_rlcmac_rlc_li_field *li;
 	uint8_t *delimiter, *data, *e_pointer;
+	const bool is_final = rdbi->cv == 0;
 
 	data = data_block + *offset;
 	delimiter = data_block + *num_chunks;
@@ -117,7 +118,6 @@ enum gpr_rlcmac_append_result gprs_rlcmac_enc_append_ul_data(
 			*count_payload = space;
 		*offset = rdbi->data_len;
 		(*num_chunks)++;
-		rdbi->cv = 0;
 		return GPRS_RLCMAC_AR_COMPLETED_BLOCK_FILLED;
 	}
 	/* if chunk would fit exactly in space left */
@@ -191,7 +191,6 @@ enum gpr_rlcmac_append_result gprs_rlcmac_enc_append_ul_data(
 	/* if we don't have more LLC frames */
 	if (is_final) {
 		LOGRLCMAC(LOGL_DEBUG, "-- Final block, so we done.\n");
-		rdbi->cv = 0;
 		return GPRS_RLCMAC_AR_COMPLETED_BLOCK_FILLED;
 	}
 	/* we have no space left */
