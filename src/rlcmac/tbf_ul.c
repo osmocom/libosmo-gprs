@@ -589,13 +589,6 @@ static int take_next_bsn(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rl
 			  gprs_rlcmac_rlc_ul_window_v_a(ul_tbf->ulw));
 		if (restart_bsn_cycle(ul_tbf))
 			return take_next_bsn(ul_tbf, bi, previous_bsn, may_combine);
-	} else {
-		/* Nothing left to send, create dummy LLC commands */
-		LOGPTBFUL(ul_tbf, LOGL_DEBUG, "Sending new dummy block at BSN %d, CS=%s\n",
-			  gprs_rlcmac_rlc_ul_window_v_s(ul_tbf->ulw),
-			  gprs_rlcmac_mcs_name(tx_cs));
-		bsn = create_new_bsn(ul_tbf, bi, tx_cs);
-		/* Don't send a second block, so don't set cs_current_trans */
 	}
 
 	if (bsn < 0) {
