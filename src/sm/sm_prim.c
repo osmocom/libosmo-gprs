@@ -493,6 +493,23 @@ static int gprs_sm_prim_handle_gmmsm_establish_cnf(struct osmo_gprs_gmm_prim *gm
 	return rc;
 }
 
+/* TS 24.007 9.5.1.2 GMMSM-RELEASE-IND */
+static int gprs_sm_prim_handle_gmmsm_release_ind(struct osmo_gprs_gmm_prim *gmm_prim)
+{
+	struct osmo_gprs_gmm_gmmsm_prim *gmmsm = &gmm_prim->gmmsm;
+	struct gprs_sm_entity *sme;
+	int rc;
+
+	sme = gprs_sm_find_sme_by_sess_id(gmmsm->sess_id);
+	if (!sme) {
+		LOGSM(LOGL_ERROR, "Rx GMMSM-RELEASE.ind for non existing SM Entity sess_id=%u\n", gmmsm->sess_id);
+		return -EINVAL;
+	}
+	rc = osmo_fsm_inst_dispatch(sme->ms_fsm.fi, GPRS_SM_MS_EV_GMM_RELEASE_IND, NULL);
+
+	return rc;
+}
+
 /* TS 24.007 9.5.1.6 GMMSM-UNITDATA-IND */
 static int gprs_sm_prim_handle_gmmsm_unitdata_ind(struct osmo_gprs_gmm_prim *gmm_prim)
 {
@@ -519,6 +536,9 @@ static int gprs_sm_prim_handle_gmmsm(struct osmo_gprs_gmm_prim *gmm_prim)
 	switch (OSMO_PRIM_HDR(&gmm_prim->oph)) {
 	case OSMO_PRIM(OSMO_GPRS_GMM_GMMSM_ESTABLISH, PRIM_OP_CONFIRM):
 		rc = gprs_sm_prim_handle_gmmsm_establish_cnf(gmm_prim);
+		break;
+	case OSMO_PRIM(OSMO_GPRS_GMM_GMMSM_RELEASE, PRIM_OP_INDICATION):
+		rc = gprs_sm_prim_handle_gmmsm_release_ind(gmm_prim);
 		break;
 	case OSMO_PRIM(OSMO_GPRS_GMM_GMMSM_UNITDATA, PRIM_OP_INDICATION):
 		rc = gprs_sm_prim_handle_gmmsm_unitdata_ind(gmm_prim);

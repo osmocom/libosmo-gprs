@@ -29,6 +29,7 @@ enum gprs_sm_ms_fsm_events {
 	GPRS_SM_MS_EV_TX_MOD_PDP_CTX_REQ,
 	GPRS_SM_MS_EV_RX_MOD_PDP_CTX_REJ,
 	GPRS_SM_MS_EV_RX_MOD_PDP_CTX_ACC,
+	GPRS_SM_MS_EV_GMM_RELEASE_IND, /* TS 24.007 9.5.1.4 GMMSM-RELEASE-IND */
 };
 
 struct gprs_sm_ms_fsm_ctx {

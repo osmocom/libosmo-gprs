@@ -98,6 +98,9 @@ static void st_sm_ms_pdp_active_pending(struct osmo_fsm_inst *fi, uint32_t event
 		sm_ms_fsm_state_chg(fi, GPRS_SM_MS_ST_PDP_ACTIVE);
 		gprs_sm_submit_smreg_pdp_act_cnf(ctx->sme, (enum gsm48_gsm_cause)0);
 		break;
+	case GPRS_SM_MS_EV_GMM_RELEASE_IND:
+		sm_ms_fsm_state_chg(fi, GPRS_SM_MS_ST_PDP_INACTIVE);
+		break;
 	default:
 		OSMO_ASSERT(0);
 	}
@@ -115,6 +118,9 @@ static void st_sm_ms_pdp_active(struct osmo_fsm_inst *fi, uint32_t event, void *
 		break;
 	case GPRS_SM_MS_EV_TX_MOD_PDP_CTX_REQ:
 		sm_ms_fsm_state_chg(fi, GPRS_SM_MS_ST_PDP_MODIFY_PENDING);
+		break;
+	case GPRS_SM_MS_EV_GMM_RELEASE_IND:
+		sm_ms_fsm_state_chg(fi, GPRS_SM_MS_ST_PDP_INACTIVE);
 		break;
 	default:
 		OSMO_ASSERT(0);
@@ -134,6 +140,9 @@ static void st_sm_ms_pdp_modify_pending(struct osmo_fsm_inst *fi, uint32_t event
 	case GPRS_SM_MS_EV_RX_MOD_PDP_CTX_ACC:
 		sm_ms_fsm_state_chg(fi, GPRS_SM_MS_ST_PDP_ACTIVE);
 		break;
+	case GPRS_SM_MS_EV_GMM_RELEASE_IND:
+		sm_ms_fsm_state_chg(fi, GPRS_SM_MS_ST_PDP_INACTIVE);
+		break;
 	default:
 		OSMO_ASSERT(0);
 	}
@@ -143,6 +152,9 @@ static void st_sm_ms_pdp_inactive_pending(struct osmo_fsm_inst *fi, uint32_t eve
 {
 	switch (event) {
 	case GPRS_SM_MS_EV_RX_DEACT_PDP_CTX_ACC:
+		sm_ms_fsm_state_chg(fi, GPRS_SM_MS_ST_PDP_INACTIVE);
+		break;
+	case GPRS_SM_MS_EV_GMM_RELEASE_IND:
 		sm_ms_fsm_state_chg(fi, GPRS_SM_MS_ST_PDP_INACTIVE);
 		break;
 	default:
@@ -201,7 +213,8 @@ static struct osmo_fsm_state sm_ms_fsm_states[] = {
 			X(GPRS_SM_MS_EV_RX_GMM_ESTABLISH_REJ) |
 			X(GPRS_SM_MS_EV_RX_ACT_PDP_CTX_REJ) |
 			X(GPRS_SM_MS_EV_RX_ACT_PDP_CTX_ACC) |
-			X(GPRS_SM_MS_EV_NSAPI_ACTIVATED),
+			X(GPRS_SM_MS_EV_NSAPI_ACTIVATED) |
+			X(GPRS_SM_MS_EV_GMM_RELEASE_IND),
 		.out_state_mask =
 			X(GPRS_SM_MS_ST_PDP_INACTIVE) |
 			X(GPRS_SM_MS_ST_PDP_ACTIVE_PENDING) |
@@ -214,7 +227,8 @@ static struct osmo_fsm_state sm_ms_fsm_states[] = {
 		.in_event_mask =
 			X(GPRS_SM_MS_EV_RX_DEACT_PDP_CTX_REQ) |
 			X(GPRS_SM_MS_EV_TX_DEACT_PDP_CTX_REQ)|
-			X(GPRS_SM_MS_EV_TX_MOD_PDP_CTX_REQ),
+			X(GPRS_SM_MS_EV_TX_MOD_PDP_CTX_REQ) |
+			X(GPRS_SM_MS_EV_GMM_RELEASE_IND),
 		.out_state_mask =
 			X(GPRS_SM_MS_ST_PDP_INACTIVE) |
 			X(GPRS_SM_MS_ST_PDP_INACTIVE_PENDING) |
@@ -226,7 +240,8 @@ static struct osmo_fsm_state sm_ms_fsm_states[] = {
 		.in_event_mask =
 			X(GPRS_SM_MS_EV_RX_DEACT_PDP_CTX_REQ) |
 			X(GPRS_SM_MS_EV_RX_MOD_PDP_CTX_REJ) |
-			X(GPRS_SM_MS_EV_RX_MOD_PDP_CTX_ACC),
+			X(GPRS_SM_MS_EV_RX_MOD_PDP_CTX_ACC) |
+			X(GPRS_SM_MS_EV_GMM_RELEASE_IND),
 		.out_state_mask =
 			X(GPRS_SM_MS_ST_PDP_INACTIVE) |
 			X(GPRS_SM_MS_ST_PDP_ACTIVE) |
@@ -236,7 +251,8 @@ static struct osmo_fsm_state sm_ms_fsm_states[] = {
 	},
 	[GPRS_SM_MS_ST_PDP_INACTIVE_PENDING] = {
 		.in_event_mask =
-			X(GPRS_SM_MS_EV_RX_DEACT_PDP_CTX_ACC),
+			X(GPRS_SM_MS_EV_RX_DEACT_PDP_CTX_ACC) |
+			X(GPRS_SM_MS_EV_GMM_RELEASE_IND),
 		.out_state_mask =
 			X(GPRS_SM_MS_ST_PDP_INACTIVE),
 		.name = "PDP_INACTIVE_PENDING",
@@ -257,6 +273,7 @@ const struct value_string sm_ms_fsm_event_names[] = {
 	{ GPRS_SM_MS_EV_TX_MOD_PDP_CTX_REQ,	"TX_MOD_PDP_CTX_REQ" },
 	{ GPRS_SM_MS_EV_RX_MOD_PDP_CTX_REJ,	"RX_MOD_PDP_CTX_REJ" },
 	{ GPRS_SM_MS_EV_RX_MOD_PDP_CTX_ACC,	"RX_MOD_PDP_CTX_ACC" },
+	{ GPRS_SM_MS_EV_GMM_RELEASE_IND,	"GMM_RELEASE_IND"},
 	{ 0, NULL }
 };
 

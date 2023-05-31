@@ -128,7 +128,7 @@ struct osmo_gprs_sm_smreg_prim {
 			uint8_t pco[OSMO_GPRS_SM_PCO_MAXLEN];
 			uint8_t pco_len;
 			/* TODO: MBMS protocol configuration options*/
-		} deact_req;
+		} pdp_deact_req;
 
 
 		/* OSMO_GPRS_SM_SMREG_PDP_DEACTIVATE | Cnf, 6.5.1.6 */
@@ -138,7 +138,7 @@ struct osmo_gprs_sm_smreg_prim {
 			uint8_t pco[OSMO_GPRS_SM_PCO_MAXLEN];
 			uint8_t pco_len;
 			/* TODO: MBMS protocol configuration options*/
-		} deact_cnf;
+		} pdp_deact_cnf;
 
 		/* OSMO_GPRS_SM_SMREG_PDP_DEACTIVATE | Ind, 6.5.1.7 */
 		struct {
@@ -149,7 +149,7 @@ struct osmo_gprs_sm_smreg_prim {
 			uint8_t pco[OSMO_GPRS_SM_PCO_MAXLEN];
 			uint8_t pco_len;
 			/* TODO: MBMS protocol configuration options */
-		} deact_ind;
+		} pdp_deact_ind;
 
 		/* OSMO_GPRS_SM_SMREG_PDP_MODIFY | Ind, 6.5.1.8 */
 		struct {
