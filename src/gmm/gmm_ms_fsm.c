@@ -97,8 +97,9 @@ static void st_gmm_ms_deregistered_on_enter(struct osmo_fsm_inst *fi, uint32_t p
 	gprs_gmm_gmme_t3312_stop(ctx->gmme);
 	gprs_gmm_gmme_t3316_stop(ctx->gmme);
 
-	/* TS 24.007 9.5.1.4: informs SM layerthat the MS has been GPRS detached, e.g. by timer expiry */
-	if (prev_state != GPRS_GMM_MS_ST_NULL)
+	/* TS 24.007 9.5.1.4: informs SM layer that the MS has been GPRS detached, e.g. by timer expiry */
+	if (prev_state != GPRS_GMM_MS_ST_NULL &&
+	    ctx->gmme->sess_id != GPRS_GMM_SESS_ID_UNASSIGNED)
 		gprs_gmm_submit_gmmsm_release_ind(ctx->gmme);
 }
 

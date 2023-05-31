@@ -23,7 +23,6 @@ test_gmm_prim_llc_down_cb(): Rx LLGMM-TRIGGER.request TLLI=0xec999002
 test_gmm_prim_llc_down_cb(): Rx LL-UNITDATA.request TLLI=0xec999002 SAPI=GMM l3=[08 05 20 0a 00 05 f4 ec 99 90 02 ]
 test_gmm_prim_llc_down_cb(): Rx LLGMM-ASSIGN.request old_TLLI=0xec999002 new_TLLI=0xffffffff
 test_gmm_prim_up_cb(): Rx GMMREG-DETACH.confirm detach_type='GPRS detach'
-test_gmm_prim_up_cb(): Rx GMMSM-RELEASE.indication sess_id=4294967295
 ==== test_gmm_prim_ms_gmmreg() [end] ====
 ==== test_gmm_prim_ms_gmmsm() [start] ====
 sys={0.000000}, mono={0.000000}: clock_override_set
