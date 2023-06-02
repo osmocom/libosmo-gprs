@@ -648,6 +648,7 @@ int osmo_gprs_rlcmac_decode_si13ro(SI13_RestOctets_t *storage,
 					data, data_len);
 }
 
+/* TS 44.018 10.5.2.16 IA Rest Octets */
 int osmo_gprs_rlcmac_decode_imm_ass_ro(IA_RestOctets_t *storage,
 				       const uint8_t *data, size_t data_len)
 {

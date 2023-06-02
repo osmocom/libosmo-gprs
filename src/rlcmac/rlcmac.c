@@ -260,6 +260,7 @@ int gprs_rlcmac_handle_ccch_imm_ass(const struct gsm48_imm_ass *ia, uint32_t fn)
 		return rc;
 	}
 
+	/* TS 44.018 10.5.2.16 IA Rest Octets */
 	rc = osmo_gprs_rlcmac_decode_imm_ass_ro(&iaro, iaro_raw, iaro_raw_len);
 	if (rc != 0) {
 		LOGRLCMAC(LOGL_ERROR, "Failed to decode IA Rest Octets IE\n");
@@ -294,8 +295,7 @@ int gprs_rlcmac_handle_ccch_imm_ass(const struct gsm48_imm_ass *ia, uint32_t fn)
 			case 0: /* iaro.u.hh.u.UplinkDownlinkAssignment.ul_dl.Packet_Uplink_ImmAssignment.* (Packet_Uplink_ImmAssignment_t) */
 				switch (iaro.u.hh.u.UplinkDownlinkAssignment.ul_dl.Packet_Uplink_ImmAssignment.UnionType) {
 				case 0: /* iaro.u.hh.u.UplinkDownlinkAssignment.ul_dl.Packet_Uplink_ImmAssignment.Access.SingleBlockAllocation.* (GPRS_SingleBlockAllocation_t) */
-					/* TODO: 2phase access support: Schedule transmit of PKT_RES_REQ on FN=(GPRS_SingleBlockAllocation_t).TBF_STARTING_TIME */
-					LOGRLCMAC(LOGL_ERROR, "ImmAss SingleBlock (2phase access) not yet supported!\n");
+					rc = gprs_rlcmac_handle_ccch_imm_ass_ul_tbf(ch_ts, fn, ia, &iaro);
 					break;
 				case 1: /* iaro.u.hh.u.UplinkDownlinkAssignment.ul_dl.Packet_Uplink_ImmAssignment.Access.DynamicOrFixedAllocation.* (GPRS_DynamicOrFixedAllocation_t) */
 					switch (iaro.u.hh.u.UplinkDownlinkAssignment.ul_dl.Packet_Uplink_ImmAssignment.Access.DynamicOrFixedAllocation.UnionType) {
