@@ -155,13 +155,21 @@ static struct gprs_rlcmac_ul_tbf *find_requested_ul_tbf_for_dummy(const struct g
 	return NULL;
 }
 
-
+/*! Select a CTRL message to transmit, based on different messages priority.
+ * \param[in] bi  RTS block indication information.
+ * \param[in] tbfs  TBF candidates having CTRL messages to send, filled in by get_ctrl_msg_tbf_candidates()
+ * \param[out] tbf_to_free  TBF to free after sending the generated message
+ */
 static struct msgb *sched_select_ctrl_msg(const struct gprs_rlcmac_rts_block_ind *bi,
-					     struct tbf_sched_ctrl_candidates *tbfs)
+					  const struct tbf_sched_ctrl_candidates *tbfs,
+					  struct gprs_rlcmac_tbf **tbf_to_free)
 {
 	struct msgb *msg = NULL;
 	struct gprs_rlcmac_entity *gre;
 	int rc;
+
+	/* No TBF to be freed by default: */
+	*tbf_to_free = NULL;
 
 	/* 8.1.2.2 1) (EGPRS) PACKET DOWNLINK ACK/NACK w/ FinalAckInd=1 */
 	if (tbfs->poll_dl_ack_final_ack) {
@@ -200,8 +208,8 @@ static struct msgb *sched_select_ctrl_msg(const struct gprs_rlcmac_rts_block_ind
 		LOGRLCMAC(LOGL_DEBUG, "(ts=%u,fn=%u,usf=%u) Tx Pkt Control Ack (UL ACK/NACK poll)\n",
 			  bi->ts, bi->fn, bi->usf);
 		msg = gprs_rlcmac_gre_create_pkt_ctrl_ack(ul_tbf_as_tbf(tbfs->poll_ul_ack)->gre);
-		/* Last UL message, freeing */
-		gprs_rlcmac_ul_tbf_free(tbfs->poll_ul_ack);
+		/* Last UL message, freeing (after passing msg to lower layers) */
+		*tbf_to_free = ul_tbf_as_tbf(tbfs->poll_ul_ack);
 		return msg;
 	}
 	if (tbfs->poll_dl_ass) {
@@ -280,6 +288,7 @@ int gprs_rlcmac_rcv_rts_block(struct gprs_rlcmac_rts_block_ind *bi)
 {
 	struct msgb *msg = NULL;
 	struct tbf_sched_ctrl_candidates tbf_cand = {0};
+	struct gprs_rlcmac_tbf *tbf_to_free;
 	struct osmo_gprs_rlcmac_prim *rlcmac_prim_tx;
 	int rc = 0;
 
@@ -287,7 +296,7 @@ int gprs_rlcmac_rcv_rts_block(struct gprs_rlcmac_rts_block_ind *bi)
 
 	get_ctrl_msg_tbf_candidates(bi, &tbf_cand);
 
-	if ((msg = sched_select_ctrl_msg(bi, &tbf_cand)))
+	if ((msg = sched_select_ctrl_msg(bi, &tbf_cand, &tbf_to_free)))
 		goto tx_msg;
 
 	if ((msg = sched_select_ul_data_msg(bi)))
@@ -305,6 +314,8 @@ tx_msg:
 	rlcmac_prim_tx->l1ctl.pdch_data_req.data_len = msgb_length(msg);
 	rc = gprs_rlcmac_prim_call_down_cb(rlcmac_prim_tx);
 	msgb_free(msg);
+	if (tbf_to_free)
+		gprs_rlcmac_tbf_free(tbf_to_free);
 
 ret_rc:
 	gprs_rlcmac_pdch_ulc_expire_fn(g_rlcmac_ctx->sched.ulc[bi->ts], bi->fn);
