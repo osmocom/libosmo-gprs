@@ -169,12 +169,14 @@ struct osmo_gprs_rlcmac_l1ctl_prim {
 		struct {
 			uint8_t ul_tbf_nr;
 			uint8_t ul_slotmask;
+			uint32_t start_fn; /* TBF starting time (absolute Fn), UINT32_MAX = Invalid */
 			uint8_t ul_usf[8]; /* USF for each PDCH indicated in the slotmask */
 		} cfg_ul_tbf_req;
 		/* OSMO_GPRS_RLCMAC_L1CTL_CFG_DL_TBF | Req */
 		struct {
 			uint8_t dl_tbf_nr;
 			uint8_t dl_slotmask;
+			uint32_t start_fn; /* TBF starting time (absolute Fn), UINT32_MAX = Invalid */
 			uint8_t dl_tfi; /* DL TFI for all PDCHs indicated in the slotmask */
 		} cfg_dl_tbf_req;
 		/* OSMO_GPRS_RLCMAC_L1CTL_PDCH_ESTABLISH | Req */

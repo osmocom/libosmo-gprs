@@ -314,6 +314,7 @@ struct osmo_gprs_rlcmac_prim *gprs_rlcmac_prim_alloc_l1ctl_cfg_dl_tbf_req(uint8_
 	rlcmac_prim = rlcmac_prim_l1ctl_alloc(OSMO_GPRS_RLCMAC_L1CTL_CFG_DL_TBF, PRIM_OP_REQUEST, 0);
 	rlcmac_prim->l1ctl.cfg_dl_tbf_req.dl_tbf_nr = tbf_nr;
 	rlcmac_prim->l1ctl.cfg_dl_tbf_req.dl_slotmask = slotmask;
+	rlcmac_prim->l1ctl.cfg_dl_tbf_req.start_fn = UINT32_MAX; /* invalid */
 	rlcmac_prim->l1ctl.cfg_dl_tbf_req.dl_tfi = dl_tfi;
 	return rlcmac_prim;
 }
@@ -325,6 +326,7 @@ struct osmo_gprs_rlcmac_prim *gprs_rlcmac_prim_alloc_l1ctl_cfg_ul_tbf_req(uint8_
 	rlcmac_prim = rlcmac_prim_l1ctl_alloc(OSMO_GPRS_RLCMAC_L1CTL_CFG_UL_TBF, PRIM_OP_REQUEST, 0);
 	rlcmac_prim->l1ctl.cfg_ul_tbf_req.ul_tbf_nr = ul_tbf_nr;
 	rlcmac_prim->l1ctl.cfg_ul_tbf_req.ul_slotmask = ul_slotmask;
+	rlcmac_prim->l1ctl.cfg_ul_tbf_req.start_fn = UINT32_MAX; /* invalid */
 	return rlcmac_prim;
 }
 
