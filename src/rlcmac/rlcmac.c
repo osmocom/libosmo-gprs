@@ -252,6 +252,7 @@ int gprs_rlcmac_handle_ccch_imm_ass(const struct gsm48_imm_ass *ia, uint32_t fn)
 	IA_RestOctets_t iaro;
 	const uint8_t *iaro_raw = ((uint8_t *)ia) + sizeof(*ia) + ia->mob_alloc_len;
 	size_t iaro_raw_len = GSM_MACBLOCK_LEN - (sizeof(*ia) + ia->mob_alloc_len);
+	struct osmo_gprs_rlcmac_prim *prim;
 
 	rc = rsl_dec_chan_nr(ia->chan_desc.chan_nr, &ch_type, &ch_subch, &ch_ts);
 	if (rc != 0) {
@@ -264,6 +265,43 @@ int gprs_rlcmac_handle_ccch_imm_ass(const struct gsm48_imm_ass *ia, uint32_t fn)
 	rc = osmo_gprs_rlcmac_decode_imm_ass_ro(&iaro, iaro_raw, iaro_raw_len);
 	if (rc != 0) {
 		LOGRLCMAC(LOGL_ERROR, "Failed to decode IA Rest Octets IE\n");
+		return rc;
+	}
+
+	prim = gprs_rlcmac_prim_alloc_l1ctl_pdch_est_req(ch_ts,
+							 ia->chan_desc.h0.tsc,
+							 ia->timing_advance);
+	if (!ia->chan_desc.h0.h) {
+		/* TODO: indirect encoding of hopping RF channel configuration
+		 * see 3GPP TS 44.018, section 10.5.2.25a */
+		if (ia->chan_desc.h0.spare & 0x02) {
+			LOGRLCMAC(LOGL_ERROR,
+				  "Indirect encoding of hopping RF channel "
+				  "configuration is not supported\n");
+			msgb_free(prim->oph.msg);
+			return -ENOTSUP;
+		}
+		/* non-hopping RF channel configuraion */
+		prim->l1ctl.pdch_est_req.fh = false;
+		prim->l1ctl.pdch_est_req.arfcn = (ia->chan_desc.h0.arfcn_low)
+					       | (ia->chan_desc.h0.arfcn_high << 8);
+	} else {
+		/* direct encoding of hopping RF channel configuration */
+		prim->l1ctl.pdch_est_req.fh = true;
+		prim->l1ctl.pdch_est_req.fhp.hsn = ia->chan_desc.h1.hsn;
+		prim->l1ctl.pdch_est_req.fhp.maio = (ia->chan_desc.h1.maio_low)
+						  | (ia->chan_desc.h1.maio_high << 2);
+
+		const size_t ma_len_max = sizeof(prim->l1ctl.pdch_est_req.fhp.ma);
+		prim->l1ctl.pdch_est_req.fhp.ma_len = OSMO_MIN(ia->mob_alloc_len, ma_len_max);
+		memcpy(&prim->l1ctl.pdch_est_req.fhp.ma[0], &ia->mob_alloc[0],
+		       prim->l1ctl.pdch_est_req.fhp.ma_len);
+	}
+
+	/* Request the lower layers to establish a PDCH channel */
+	rc = gprs_rlcmac_prim_call_down_cb(prim);
+	if (rc != 0) {
+		LOGRLCMAC(LOGL_ERROR, "PDCH channel establishment failed\n");
 		return rc;
 	}
 

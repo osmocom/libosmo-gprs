@@ -111,6 +111,8 @@ enum osmo_gprs_rlcmac_l1ctl_prim_type {
 	OSMO_GPRS_RLCMAC_L1CTL_PDCH_RTS,
 	OSMO_GPRS_RLCMAC_L1CTL_CFG_UL_TBF,
 	OSMO_GPRS_RLCMAC_L1CTL_CFG_DL_TBF,
+	OSMO_GPRS_RLCMAC_L1CTL_PDCH_ESTABLISH,
+	OSMO_GPRS_RLCMAC_L1CTL_PDCH_RELEASE,
 };
 
 extern const struct value_string osmo_gprs_rlcmac_l1ctl_prim_type_names[];
@@ -174,6 +176,22 @@ struct osmo_gprs_rlcmac_l1ctl_prim {
 			uint8_t dl_slotmask;
 			uint8_t dl_tfi; /* DL TFI for all PDCHs indicated in the slotmask */
 		} cfg_dl_tbf_req;
+		/* OSMO_GPRS_RLCMAC_L1CTL_PDCH_ESTABLISH | Req */
+		struct {
+			uint8_t ts_nr;	/* Timeslot Number */
+			uint8_t tsc;	/* Training Sequence Code */
+			uint8_t ta;	/* Timing Advance */
+			bool fh;	/* Frequency Hopping */
+			union {
+				uint16_t arfcn;
+				struct {
+					uint8_t hsn;
+					uint8_t maio;
+					uint8_t ma_len;
+					uint8_t ma[8];
+				} fhp; /* fh == true */
+			};
+		} pdch_est_req;
 	};
 };
 
@@ -211,3 +229,5 @@ struct osmo_gprs_rlcmac_prim *osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_data_ind(ui
 				uint8_t rx_lev, uint16_t ber10k, int16_t ci_cb,
 				uint8_t *data, uint8_t data_len);
 struct osmo_gprs_rlcmac_prim *osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_rts_ind(uint8_t ts_nr, uint32_t fn, uint8_t usf);
+struct osmo_gprs_rlcmac_prim *gprs_rlcmac_prim_alloc_l1ctl_pdch_est_req(uint8_t ts_nr, uint8_t tsc, uint8_t ta);
+struct osmo_gprs_rlcmac_prim *gprs_rlcmac_prim_alloc_l1ctl_pdch_rel_req(void);
