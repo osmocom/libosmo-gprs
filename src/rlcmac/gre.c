@@ -71,6 +71,8 @@ void gprs_rlcmac_entity_free(struct gprs_rlcmac_entity *gre)
 	if (!gre)
 		return;
 
+	gre->freeing = true;
+
 	gprs_rlcmac_tbf_dl_ass_fsm_destructor(&gre->dl_tbf_dl_ass_fsm);
 	gprs_rlcmac_dl_tbf_free(gre->dl_tbf);
 	gprs_rlcmac_ul_tbf_free(gre->ul_tbf);
@@ -83,16 +85,68 @@ void gprs_rlcmac_entity_free(struct gprs_rlcmac_entity *gre)
  * Hence memory pointed by "dl_tbf" is already freed and shall not be accessed. */
 void gprs_rlcmac_entity_dl_tbf_freed(struct gprs_rlcmac_entity *gre, const struct gprs_rlcmac_dl_tbf *dl_tbf)
 {
-	if (gre->dl_tbf == dl_tbf)
-		gre->dl_tbf = NULL;
+	OSMO_ASSERT(gre);
+	OSMO_ASSERT(gre->dl_tbf);
+	OSMO_ASSERT(dl_tbf);
+
+	/* GRE is freeing (destructor being called) do nothing */
+	if (gre->freeing)
+		return;
+
+	if (gre->dl_tbf != dl_tbf) {
+		/* This may happen if we already have a new DL TBF allocated
+		 * immediately prior to freeing the old one (PACCH assignment
+		 * reusing resources of old one). Nothing to do, simply wait for
+		 * new DL TBF to do its job.
+		 */
+		return;
+	}
+
+	gre->dl_tbf = NULL;
+
+	/* Nothing to do, we are still in packet-transfer-mode using UL TBF. */
+	if (gre->ul_tbf)
+		return;
+
+	/* we have no DL nor UL TBFs. Go back to PACKET-IDLE state, and start
+	 * packet-access-procedure if we still have data to be transmitted.
+	 */
+	gprs_rlcmac_submit_l1ctl_pdch_rel_req();
+	gprs_rlcmac_entity_start_ul_tbf_pkt_acc_proc_if_needed(gre);
 }
 
 /* Called by ul_tbf destructor to inform the UL TBF pointer has been freed.
  * Hence memory pointed by "ul_tbf" is already freed and shall not be accessed. */
 void gprs_rlcmac_entity_ul_tbf_freed(struct gprs_rlcmac_entity *gre, const struct gprs_rlcmac_ul_tbf *ul_tbf)
 {
-	if (gre->ul_tbf == ul_tbf)
-		gre->ul_tbf = NULL;
+	OSMO_ASSERT(gre);
+	OSMO_ASSERT(gre->ul_tbf);
+	OSMO_ASSERT(ul_tbf);
+
+	/* GRE is freeing (destructor being called) do nothing */
+	if (gre->freeing)
+		return;
+
+	if (gre->ul_tbf != ul_tbf) {
+		/* This may happen if we already have a new UL TBF allocated
+		 * immediately prior to freeing the old one (PACCH assignment
+		 * reusing resources of old one). Nothing to do, simply wait for
+		 * new UL TBF to do its job.
+		 */
+		return;
+	}
+
+	gre->ul_tbf = NULL;
+
+	/* Nothing to do, dl_tbf will eventually trigger request for UL TBF PACCH assignment. */
+	if (gre->dl_tbf)
+		return;
+
+	/* we have no DL nor UL TBFs. Go back to PACKET-IDLE state, and start
+	 * packet-access-procedure if we still have data to be transmitted.
+	 */
+	gprs_rlcmac_submit_l1ctl_pdch_rel_req();
+	gprs_rlcmac_entity_start_ul_tbf_pkt_acc_proc_if_needed(gre);
 }
 
 /* TS 44.060 5.3 In packet idle mode:
@@ -129,6 +183,27 @@ bool gprs_rlcmac_entity_have_tx_data_queued(const struct gprs_rlcmac_entity *gre
 	return gprs_rlcmac_llc_queue_size(gre->llc_queue) > 0;
 }
 
+/* Create a new UL TBF and start Packet access procedure to get an UL assignment if needed */
+int gprs_rlcmac_entity_start_ul_tbf_pkt_acc_proc_if_needed(struct gprs_rlcmac_entity *gre)
+{
+	/* TS 44.060 5.3 "In packet idle mode, upper layers may require the
+	* transfer of a upper layer PDU, which implicitly triggers the
+	* establishment of a TBF and the transition to packet transfer mode." */
+	if (!gprs_rlcmac_entity_in_packet_idle_mode(gre))
+		return 0;
+
+	if (!gprs_rlcmac_entity_have_tx_data_queued(gre))
+		return 0;
+
+	OSMO_ASSERT(!gre->ul_tbf);
+	/* We have data in the queue but we have no ul_tbf. Allocate one and start UL Assignment. */
+	gre->ul_tbf = gprs_rlcmac_ul_tbf_alloc(gre);
+	if (!gre->ul_tbf)
+		return -ENOMEM;
+	/* We always use 1phase for now... */
+	return gprs_rlcmac_tbf_ul_ass_start(gre->ul_tbf, GPRS_RLCMAC_TBF_UL_ASS_TYPE_1PHASE);
+}
+
 int gprs_rlcmac_entity_llc_enqueue(struct gprs_rlcmac_entity *gre, uint8_t *ll_pdu, unsigned int ll_pdu_len,
 				   enum osmo_gprs_rlcmac_llc_sapi sapi, uint8_t radio_prio)
 {
@@ -138,19 +213,7 @@ int gprs_rlcmac_entity_llc_enqueue(struct gprs_rlcmac_entity *gre, uint8_t *ll_p
 	if (rc < 0)
 		return rc;
 
-	/* TS 44.060 5.3 "In packet idle mode, upper layers may require the
-	* transfer of a upper layer PDU, which implicitly triggers the
-	* establishment of a TBF and the transition to packet transfer mode." */
-	if (gprs_rlcmac_entity_in_packet_idle_mode(gre)) {
-		OSMO_ASSERT(!gre->ul_tbf);
-		/* We have new data in the queue but we have no ul_tbf. Allocate one and start UL Assignment. */
-		gre->ul_tbf = gprs_rlcmac_ul_tbf_alloc(gre);
-		if (!gre->ul_tbf)
-			return -ENOMEM;
-		/* We always use 1phase for now... */
-		rc = gprs_rlcmac_tbf_ul_ass_start(gre->ul_tbf, GPRS_RLCMAC_TBF_UL_ASS_TYPE_1PHASE);
-	}
-
+	rc = gprs_rlcmac_entity_start_ul_tbf_pkt_acc_proc_if_needed(gre);
 	return rc;
 }
 

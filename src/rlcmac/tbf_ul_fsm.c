@@ -97,7 +97,7 @@ static void reinit_pkt_acces_procedure(struct gprs_rlcmac_tbf_ul_fsm_ctx *ctx)
 {
 	int rc;
 	/* TS 44.060 sub-clause 7.1.4. Reinitiate the packet access procedure:
-		* Move to NEW state, start Ass and wait for GPRS_RLCMAC_TBF_UL_ASS_EV_START */
+	 * Move to NEW state, start Ass and wait for GPRS_RLCMAC_TBF_UL_ASS_EV_START */
 	tbf_ul_fsm_state_chg(ctx->fi, GPRS_RLCMAC_TBF_UL_ST_NEW);
 	/* We always use 1phase for now... */
 	rc = gprs_rlcmac_tbf_ul_ass_start(ctx->ul_tbf, GPRS_RLCMAC_TBF_UL_ASS_TYPE_1PHASE);
@@ -139,6 +139,8 @@ static void st_new_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_state)
 	gprs_rlcmac_rlc_ul_window_mark_for_resend(ctx->ul_tbf->ulw);
 	/* Make sure the lower layers realize this tbf_nr has no longer any assigned resource: */
 	release_ul_tbf(ctx);
+	/* Move back to CCCH */
+	gprs_rlcmac_submit_l1ctl_pdch_rel_req();
 }
 
 static void st_new(struct osmo_fsm_inst *fi, uint32_t event, void *data)

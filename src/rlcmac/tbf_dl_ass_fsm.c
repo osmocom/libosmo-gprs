@@ -202,22 +202,23 @@ static void st_wait_tbf_starting_time(struct osmo_fsm_inst *fi, uint32_t event, 
 static void st_compl_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_state)
 {
 	struct gprs_rlcmac_tbf_dl_ass_fsm_ctx *ctx = (struct gprs_rlcmac_tbf_dl_ass_fsm_ctx *)fi->priv;
-	struct gprs_rlcmac_dl_tbf *dl_tbf;
+	struct gprs_rlcmac_dl_tbf *old_dl_tbf, *new_dl_tbf;
 
-	dl_tbf = gprs_rlcmac_dl_tbf_alloc(ctx->gre);
+	old_dl_tbf = ctx->gre->dl_tbf;
+	new_dl_tbf = gprs_rlcmac_dl_tbf_alloc(ctx->gre);
 
 	/* Update TBF with allocated content: */
-	memcpy(&dl_tbf->cur_alloc, &ctx->alloc, sizeof(ctx->alloc));
+	memcpy(&new_dl_tbf->cur_alloc, &ctx->alloc, sizeof(ctx->alloc));
 
 	/* Replace old DL TBF with new one. 8.1.1.1.3: "the mobile station shall
 	 * release all ongoing downlink TBFs not addressed by this message and
 	 * shall act on the message. All ongoing uplink TBFs shall be maintained;"
 	 */
-	gprs_rlcmac_dl_tbf_free(ctx->gre->dl_tbf);
-	ctx->gre->dl_tbf = dl_tbf;
+	ctx->gre->dl_tbf = new_dl_tbf;
+	gprs_rlcmac_dl_tbf_free(old_dl_tbf);
 
 	/* Inform the main TBF state about the assignment completed: */
-	osmo_fsm_inst_dispatch(dl_tbf->state_fsm.fi, GPRS_RLCMAC_TBF_DL_EV_DL_ASS_COMPL, NULL);
+	osmo_fsm_inst_dispatch(new_dl_tbf->state_fsm.fi, GPRS_RLCMAC_TBF_DL_EV_DL_ASS_COMPL, NULL);
 	/* Go back to IDLE state. */
 	tbf_dl_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_DL_ASS_ST_IDLE);
 }

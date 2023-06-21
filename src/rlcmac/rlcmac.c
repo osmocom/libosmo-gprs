@@ -189,6 +189,18 @@ struct gprs_rlcmac_ul_tbf *gprs_rlcmac_find_ul_tbf_by_tfi(uint8_t ul_tfi)
 	return NULL;
 }
 
+/* Request lower layers to go to packet-idle mode: */
+int gprs_rlcmac_submit_l1ctl_pdch_rel_req(void)
+{
+	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
+
+	rlcmac_prim = gprs_rlcmac_prim_alloc_l1ctl_pdch_rel_req();
+
+	LOGRLCMAC(LOGL_INFO, "Tx L1CTL-PDCH_REL.req\n");
+
+	return gprs_rlcmac_prim_call_down_cb(rlcmac_prim);
+}
+
 static int gprs_rlcmac_handle_ccch_imm_ass_ul_tbf(uint8_t ts_nr, uint32_t fn, const struct gsm48_imm_ass *ia, const IA_RestOctets_t *iaro)
 {
 	int rc = -ENOENT;

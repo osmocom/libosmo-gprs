@@ -90,6 +90,7 @@ struct gprs_rlcmac_entity *gprs_rlcmac_find_entity_by_ptmsi(uint32_t ptmsi);
 struct gprs_rlcmac_entity *gprs_rlcmac_find_entity_by_imsi(const char *imsi);
 struct gprs_rlcmac_dl_tbf *gprs_rlcmac_find_dl_tbf_by_tfi(uint8_t dl_tfi);
 struct gprs_rlcmac_ul_tbf *gprs_rlcmac_find_ul_tbf_by_tfi(uint8_t ul_tfi);
+int gprs_rlcmac_submit_l1ctl_pdch_rel_req(void);
 int gprs_rlcmac_handle_ccch_imm_ass(const struct gsm48_imm_ass *ia, uint32_t fn);
 int gprs_rlcmac_handle_ccch_pag_req1(const struct gsm48_paging1 *pag);
 int gprs_rlcmac_handle_ccch_pag_req2(const struct gsm48_paging2 *pag);
