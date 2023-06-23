@@ -69,18 +69,21 @@ err_tbf_destruct:
 
 void gprs_rlcmac_ul_tbf_free(struct gprs_rlcmac_ul_tbf *ul_tbf)
 {
+	struct gprs_rlcmac_tbf *tbf;
+	struct gprs_rlcmac_entity *gre;
+
 	if (!ul_tbf)
 		return;
 
+	tbf = ul_tbf_as_tbf(ul_tbf);
+	gre = tbf->gre;
+
 	if (ul_tbf->countdown_proc.llc_queue) {
-		gprs_rlcmac_llc_queue_merge_prepend(ul_tbf->tbf.gre->llc_queue,
+		gprs_rlcmac_llc_queue_merge_prepend(gre->llc_queue,
 						    ul_tbf->countdown_proc.llc_queue);
 		gprs_rlcmac_llc_queue_free(ul_tbf->countdown_proc.llc_queue);
 		ul_tbf->countdown_proc.llc_queue = NULL;
 	}
-
-	if (ul_tbf->tbf.gre->ul_tbf == ul_tbf)
-		ul_tbf->tbf.gre->ul_tbf = NULL;
 
 	talloc_free(ul_tbf->llc_tx_msg);
 
@@ -93,8 +96,10 @@ void gprs_rlcmac_ul_tbf_free(struct gprs_rlcmac_ul_tbf *ul_tbf)
 	gprs_rlcmac_tbf_ul_ass_fsm_destructor(ul_tbf);
 	gprs_rlcmac_tbf_ul_fsm_destructor(ul_tbf);
 
-	gprs_rlcmac_tbf_destructor(ul_tbf_as_tbf(ul_tbf));
+	gprs_rlcmac_tbf_destructor(tbf);
 	talloc_free(ul_tbf);
+	/* Inform the MS that the TBF pointer has been freed: */
+	gprs_rlcmac_entity_ul_tbf_freed(gre, ul_tbf);
 }
 
 /* whether the UL TBF is in Contention Resolution state (false = already succeeded)*/

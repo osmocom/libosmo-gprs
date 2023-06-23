@@ -61,11 +61,14 @@ err_tbf_destruct:
 
 void gprs_rlcmac_dl_tbf_free(struct gprs_rlcmac_dl_tbf *dl_tbf)
 {
+	struct gprs_rlcmac_tbf *tbf;
+	struct gprs_rlcmac_entity *gre;
+
 	if (!dl_tbf)
 		return;
 
-	if (dl_tbf->tbf.gre->dl_tbf == dl_tbf)
-		dl_tbf->tbf.gre->dl_tbf = NULL;
+	tbf = dl_tbf_as_tbf(dl_tbf);
+	gre = tbf->gre;
 
 	msgb_free(dl_tbf->llc_rx_msg);
 	dl_tbf->llc_rx_msg = NULL;
@@ -78,8 +81,10 @@ void gprs_rlcmac_dl_tbf_free(struct gprs_rlcmac_dl_tbf *dl_tbf)
 
 	gprs_rlcmac_tbf_dl_fsm_destructor(dl_tbf);
 
-	gprs_rlcmac_tbf_destructor(dl_tbf_as_tbf(dl_tbf));
+	gprs_rlcmac_tbf_destructor(tbf);
 	talloc_free(dl_tbf);
+	/* Inform the MS that the TBF pointer has been freed: */
+	gprs_rlcmac_entity_dl_tbf_freed(gre, dl_tbf);
 }
 
 

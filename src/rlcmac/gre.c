@@ -79,6 +79,22 @@ void gprs_rlcmac_entity_free(struct gprs_rlcmac_entity *gre)
 	talloc_free(gre);
 }
 
+/* Called by dl_tbf destructor to inform the DL TBF pointer has been freed.
+ * Hence memory pointed by "dl_tbf" is already freed and shall not be accessed. */
+void gprs_rlcmac_entity_dl_tbf_freed(struct gprs_rlcmac_entity *gre, const struct gprs_rlcmac_dl_tbf *dl_tbf)
+{
+	if (gre->dl_tbf == dl_tbf)
+		gre->dl_tbf = NULL;
+}
+
+/* Called by ul_tbf destructor to inform the UL TBF pointer has been freed.
+ * Hence memory pointed by "ul_tbf" is already freed and shall not be accessed. */
+void gprs_rlcmac_entity_ul_tbf_freed(struct gprs_rlcmac_entity *gre, const struct gprs_rlcmac_ul_tbf *ul_tbf)
+{
+	if (gre->ul_tbf == ul_tbf)
+		gre->ul_tbf = NULL;
+}
+
 /* TS 44.060 5.3 In packet idle mode:
 * - no temporary block flow (TBF) exists..
 * - the mobile station monitors the relevant paging subchannels on CCCH. In packet

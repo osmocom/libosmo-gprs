@@ -7,6 +7,7 @@
 
 struct gprs_rlcmac_dl_tbf;
 struct gprs_rlcmac_ul_tbf;
+struct gprs_rlcmac_tbf;
 
 struct gprs_rlcmac_entity {
 	struct llist_head entry; /* item in (struct gprs_rlcmac_ctx)->gre_list */
@@ -36,6 +37,10 @@ int gprs_rlcmac_entity_llc_enqueue(struct gprs_rlcmac_entity *gre, uint8_t *ll_p
 				   enum osmo_gprs_rlcmac_llc_sapi sapi, uint8_t radio_prio);
 
 struct msgb *gprs_rlcmac_gre_create_pkt_ctrl_ack(const struct gprs_rlcmac_entity *gre);
+
+void gprs_rlcmac_entity_dl_tbf_freed(struct gprs_rlcmac_entity *gre, const struct gprs_rlcmac_dl_tbf *ul_tbf);
+void gprs_rlcmac_entity_ul_tbf_freed(struct gprs_rlcmac_entity *gre, const struct gprs_rlcmac_ul_tbf *ul_tbf);
+
 
 #define LOGGRE(gre, level, fmt, args...) \
 	LOGRLCMAC(level, "GRE(%08x) " fmt, (gre)->tlli, ## args)

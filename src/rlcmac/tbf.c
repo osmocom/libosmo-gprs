@@ -40,6 +40,7 @@ void gprs_rlcmac_tbf_destructor(struct gprs_rlcmac_tbf *tbf)
 		gprs_rlcmac_pdch_ulc_release_tbf(g_rlcmac_ctx->sched.ulc[i], tbf);
 }
 
+/* Comodity function to call required ul/dl tbf function: */
 void gprs_rlcmac_tbf_free(struct gprs_rlcmac_tbf *tbf)
 {
 	if (tbf->direction == GPRS_RLCMAC_TBF_DIR_UL)
