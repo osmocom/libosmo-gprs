@@ -1,6 +1,8 @@
 /* GPRS RLC/MAC Entity (one per MS) */
 #pragma once
 
+#include <osmocom/gsm/gsm0502.h>
+
 #include <osmocom/gprs/rlcmac/rlcmac.h>
 #include <osmocom/gprs/rlcmac/llc_queue.h>
 #include <osmocom/gprs/rlcmac/tbf_dl_ass_fsm.h>
@@ -8,6 +10,13 @@
 struct gprs_rlcmac_dl_tbf;
 struct gprs_rlcmac_ul_tbf;
 struct gprs_rlcmac_tbf;
+
+/* We have to defer going to CCCH a bit to leave space for last PKT CTRL ACK to be transmitted
+ * The Uplink TDMA clock is (1 FN + 3 TS = 8+3 = 11 TS) delayed with regards to the Downlink.
+ * Furthermore, the UL block is distributed over next 4 FNs (8*4= 32 TS).
+ * That makes a total of 43 TS: 43 / 8 = 5.375 FNs of time required.
+ */
+#define DEFER_SCHED_PDCH_REL_REQ_uS (GSM_TDMA_FN_DURATION_uS*6) /* > GSM_TDMA_FN_DURATION_uS * 5.375 */
 
 struct gprs_rlcmac_entity {
 	struct llist_head entry; /* item in (struct gprs_rlcmac_ctx)->gre_list */
@@ -26,6 +35,7 @@ struct gprs_rlcmac_entity {
 	struct gprs_rlcmac_ul_tbf *ul_tbf;
 
 	bool freeing; /* Set to true during destructor */
+	struct osmo_timer_list defer_pkt_idle_timer;
 };
 
 struct gprs_rlcmac_entity *gprs_rlcmac_entity_alloc(uint32_t tlli);

@@ -35,6 +35,15 @@
 #include <osmocom/gprs/rlcmac/gre.h>
 #include <osmocom/gprs/rlcmac/rlcmac_enc.h>
 
+
+/* We have to defer going to CCCH a bit to leave space for last PKT CTRL ACK to be transmitted */
+static void _defer_pkt_idle_timer_cb(void *data)
+{
+	struct gprs_rlcmac_entity *gre = data;
+	gprs_rlcmac_submit_l1ctl_pdch_rel_req();
+	gprs_rlcmac_entity_start_ul_tbf_pkt_acc_proc_if_needed(gre);
+}
+
 struct gprs_rlcmac_entity *gprs_rlcmac_entity_alloc(uint32_t tlli)
 {
 	struct gprs_rlcmac_entity *gre;
@@ -43,6 +52,8 @@ struct gprs_rlcmac_entity *gprs_rlcmac_entity_alloc(uint32_t tlli)
 	gre = talloc_zero(g_rlcmac_ctx, struct gprs_rlcmac_entity);
 	if (!gre)
 		return NULL;
+
+	osmo_timer_setup(&gre->defer_pkt_idle_timer, _defer_pkt_idle_timer_cb, gre);
 
 	gre->llc_queue = gprs_rlcmac_llc_queue_alloc(gre);
 	if (!gre->llc_queue)
@@ -72,6 +83,8 @@ void gprs_rlcmac_entity_free(struct gprs_rlcmac_entity *gre)
 		return;
 
 	gre->freeing = true;
+
+	osmo_timer_del(&gre->defer_pkt_idle_timer);
 
 	gprs_rlcmac_tbf_dl_ass_fsm_destructor(&gre->dl_tbf_dl_ass_fsm);
 	gprs_rlcmac_dl_tbf_free(gre->dl_tbf);
@@ -111,8 +124,8 @@ void gprs_rlcmac_entity_dl_tbf_freed(struct gprs_rlcmac_entity *gre, const struc
 	/* we have no DL nor UL TBFs. Go back to PACKET-IDLE state, and start
 	 * packet-access-procedure if we still have data to be transmitted.
 	 */
-	gprs_rlcmac_submit_l1ctl_pdch_rel_req();
-	gprs_rlcmac_entity_start_ul_tbf_pkt_acc_proc_if_needed(gre);
+	/* We have to defer going to CCCH a bit to leave space for last PKT CTRL ACK to be transmitted */
+	osmo_timer_schedule(&gre->defer_pkt_idle_timer, 0, DEFER_SCHED_PDCH_REL_REQ_uS);
 }
 
 /* Called by ul_tbf destructor to inform the UL TBF pointer has been freed.
@@ -145,8 +158,8 @@ void gprs_rlcmac_entity_ul_tbf_freed(struct gprs_rlcmac_entity *gre, const struc
 	/* we have no DL nor UL TBFs. Go back to PACKET-IDLE state, and start
 	 * packet-access-procedure if we still have data to be transmitted.
 	 */
-	gprs_rlcmac_submit_l1ctl_pdch_rel_req();
-	gprs_rlcmac_entity_start_ul_tbf_pkt_acc_proc_if_needed(gre);
+	/* We have to defer going to CCCH a bit to leave space for last PKT CTRL ACK to be transmitted */
+	osmo_timer_schedule(&gre->defer_pkt_idle_timer, 0, DEFER_SCHED_PDCH_REL_REQ_uS);
 }
 
 /* TS 44.060 5.3 In packet idle mode:

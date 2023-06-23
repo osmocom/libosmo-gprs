@@ -566,6 +566,17 @@ void prepare_test(void)
 
 void cleanup_test(void)
 {
+	struct gprs_rlcmac_entity *gre;
+	llist_for_each_entry(gre, &g_rlcmac_ctx->gre_list, entry) {
+		if (osmo_timer_pending(&gre->defer_pkt_idle_timer)) {
+			/* increase time DEFER_SCHED_PDCH_REL_REQ_uS, defer_pkt_idle_timer should trigger */
+			clock_override_add(0, DEFER_SCHED_PDCH_REL_REQ_uS);
+			clock_debug("Expect defer_pkt_idle_timer timeout");
+			osmo_select_main(0);
+			break;
+		}
+	}
+
 	/* Reinit the RLCMAC layer so that data generated during the test is freed within the test context: */
 	osmo_gprs_rlcmac_init(OSMO_GPRS_RLCMAC_LOCATION_MS);
 }

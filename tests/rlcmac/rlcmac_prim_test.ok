@@ -8,8 +8,10 @@ test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=4 ts=7 data_len=34 dat
 test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=8 ts=7 data_len=34 data=[00 01 02 1d 00 00 23 42 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 ]
 test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=21 ts=7 data_len=23 data=[40 04 00 00 8d 08 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b ]
 test_rlcmac_prim_down_cb(): Rx L1CTL-CFG_UL_TBF.request ul_tbf_nr=0 ul_slotmask=0x00
-test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_RELEASE.request
 === test_ul_tbf_attach end ===
+sys={0.027690}, mono={0.027690}: clock_override_add
+sys={0.027690}, mono={0.027690}: Expect defer_pkt_idle_timer timeout
+test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_RELEASE.request
 === test_ul_tbf_t3164_timeout start ===
 sys={0.000000}, mono={0.000000}: clock_override_set
 test_rlcmac_prim_down_cb(): Rx L1CTL-RACH.request ra=0x79
@@ -39,9 +41,11 @@ test_rlcmac_prim_down_cb(): Rx L1CTL-CFG_UL_TBF.request ul_tbf_nr=0 ul_slotmask=
 sys={20.000000}, mono={20.000000}: clock_override_add
 sys={20.000000}, mono={20.000000}: Expect T3164 timeout
 test_rlcmac_prim_down_cb(): Rx L1CTL-CFG_UL_TBF.request ul_tbf_nr=0 ul_slotmask=0x00
+=== test_ul_tbf_t3164_timeout end ===
+sys={20.027690}, mono={20.027690}: clock_override_add
+sys={20.027690}, mono={20.027690}: Expect defer_pkt_idle_timer timeout
 test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_RELEASE.request
 test_rlcmac_prim_down_cb(): Rx L1CTL-RACH.request ra=0x7a
-=== test_ul_tbf_t3164_timeout end ===
 test_rlcmac_prim_down_cb(): Rx L1CTL-CFG_UL_TBF.request ul_tbf_nr=1 ul_slotmask=0x00
 === test_ul_tbf_t3166_timeout start ===
 sys={0.000000}, mono={0.000000}: clock_override_set
@@ -77,8 +81,10 @@ test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=4 ts=7 data_len=34 dat
 sys={20.000000}, mono={20.000000}: clock_override_add
 sys={20.000000}, mono={20.000000}: Expect T3166 timeout
 test_rlcmac_prim_down_cb(): Rx L1CTL-CFG_UL_TBF.request ul_tbf_nr=0 ul_slotmask=0x00
-test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_RELEASE.request
 === test_ul_tbf_t3166_timeout end ===
+sys={20.027690}, mono={20.027690}: clock_override_add
+sys={20.027690}, mono={20.027690}: Expect defer_pkt_idle_timer timeout
+test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_RELEASE.request
 === test_ul_tbf_n3104_timeout start ===
 sys={0.000000}, mono={0.000000}: clock_override_set
 test_rlcmac_prim_down_cb(): Rx L1CTL-RACH.request ra=0x7b
@@ -128,8 +134,10 @@ test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=8 ts=7 data_len=34 dat
 sys={5.000000}, mono={5.000000}: clock_override_add
 sys={5.000000}, mono={5.000000}: Expect T3182 timeout
 test_rlcmac_prim_down_cb(): Rx L1CTL-CFG_UL_TBF.request ul_tbf_nr=0 ul_slotmask=0x00
-test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_RELEASE.request
 === test_ul_tbf_t3182_timeout end ===
+sys={5.027690}, mono={5.027690}: clock_override_add
+sys={5.027690}, mono={5.027690}: Expect defer_pkt_idle_timer timeout
+test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_RELEASE.request
 === test_ul_tbf_last_data_cv0_retrans_max start ===
 sys={0.000000}, mono={0.000000}: clock_override_set
 test_rlcmac_prim_down_cb(): Rx L1CTL-RACH.request ra=0x7b
@@ -146,9 +154,11 @@ RTS 2: FN=21
 test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=21 ts=7 data_len=34 data=[00 00 02 1d 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 ]
 RTS 3: FN=26
 test_rlcmac_prim_down_cb(): Rx L1CTL-CFG_UL_TBF.request ul_tbf_nr=0 ul_slotmask=0x00
-test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_RELEASE.request
 test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=26 ts=7 data_len=34 data=[00 00 02 1d 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 ]
 === test_ul_tbf_last_data_cv0_retrans_max end ===
+sys={0.027690}, mono={0.027690}: clock_override_add
+sys={0.027690}, mono={0.027690}: Expect defer_pkt_idle_timer timeout
+test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_RELEASE.request
 === test_ul_tbf_countdown_procedure start ===
 sys={0.000000}, mono={0.000000}: clock_override_set
 test_rlcmac_prim_down_cb(): Rx L1CTL-RACH.request ra=0x7e

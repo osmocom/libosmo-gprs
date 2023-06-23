@@ -689,9 +689,9 @@ DLGLOBAL INFO UL_TBF_ASS{IDLE}: Deallocated
 DLGLOBAL INFO UL_TBF{FINISHED}: Send L1CTL-CFG_UL_TBF.req ul_tbf_nr=0 (release)
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-CFG_UL_TBF.request
 DLGLOBAL INFO UL_TBF{FINISHED}: Deallocated
+DLGLOBAL DEBUG Tx to lower layers: L1CTL-PDCH_DATA.request
 DLGLOBAL INFO Tx L1CTL-PDCH_REL.req
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-PDCH_RELEASE.request
-DLGLOBAL DEBUG Tx to lower layers: L1CTL-PDCH_DATA.request
 DLGLOBAL INFO DL_TBF_ASS{IDLE}: Deallocated
 DLGLOBAL DEBUG Rx from lower layers: L1CTL-CCCH_DATA.indication
 DLGLOBAL DEBUG Rx SI13 from lower layers
