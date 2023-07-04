@@ -243,6 +243,9 @@ static void st_gmm_ms_rau_initiated(struct osmo_fsm_inst *fi, uint32_t event, vo
 	enum gsm48_gmm_cause cause;
 
 	switch (event) {
+	case GPRS_GMM_MS_EV_LOW_LVL_FAIL:
+		gmm_ms_fsm_state_chg(fi, GPRS_GMM_MS_ST_REGISTERED);
+		break;
 	case GPRS_GMM_MS_EV_RAU_REJECTED:
 		cause = *(uint8_t *)data;
 		/* 3GPP TS 24.008 Figure 4.1b */
@@ -273,6 +276,9 @@ static void st_gmm_ms_rau_initiated(struct osmo_fsm_inst *fi, uint32_t event, vo
 static void st_gmm_ms_sr_initiated(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	switch (event) {
+	case GPRS_GMM_MS_EV_LOW_LVL_FAIL:
+		gmm_ms_fsm_state_chg(fi, GPRS_GMM_MS_ST_REGISTERED);
+		break;
 	case GPRS_GMM_MS_EV_SR_REJECTED:
 		gmm_ms_fsm_state_chg(fi, GPRS_GMM_MS_ST_REGISTERED);
 		break;
@@ -357,6 +363,7 @@ static struct osmo_fsm_state gmm_ms_fsm_states[] = {
 	},
 	[GPRS_GMM_MS_ST_RAU_INITIATED] = {
 		.in_event_mask =
+			X(GPRS_GMM_MS_EV_LOW_LVL_FAIL) |
 			X(GPRS_GMM_MS_EV_RAU_REJECTED) |
 			X(GPRS_GMM_MS_EV_RAU_ACCEPTED),
 		.out_state_mask =
@@ -367,6 +374,7 @@ static struct osmo_fsm_state gmm_ms_fsm_states[] = {
 	},
 	[GPRS_GMM_MS_ST_SR_INITIATED] = {
 		.in_event_mask =
+			X(GPRS_GMM_MS_EV_LOW_LVL_FAIL) |
 			X(GPRS_GMM_MS_EV_SR_REJECTED) |
 			X(GPRS_GMM_MS_EV_SR_ACCEPTED),
 		.out_state_mask =
