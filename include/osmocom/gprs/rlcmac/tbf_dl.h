@@ -33,14 +33,18 @@ struct gprs_rlcmac_dl_tbf {
 		struct gprs_rlcmac_rlc_window *w;
 		struct gprs_rlcmac_rlc_dl_window *dlw;
 	};
+
+	struct osmo_timer_list t3190;
 };
 
 struct gprs_rlcmac_dl_tbf *gprs_rlcmac_dl_tbf_alloc(struct gprs_rlcmac_entity *gre);
 void gprs_rlcmac_dl_tbf_free(struct gprs_rlcmac_dl_tbf *dl_tbf);
 
+void gprs_rlcmac_dl_tbf_t3190_start(struct gprs_rlcmac_dl_tbf *dl_tbf);
+
 int gprs_rlcmac_dl_tbf_configure_l1ctl(struct gprs_rlcmac_dl_tbf *dl_tbf);
 
-struct msgb *gprs_rlcmac_dl_tbf_create_pkt_dl_ack_nack(const struct gprs_rlcmac_dl_tbf *dl_tbf);
+struct msgb *gprs_rlcmac_dl_tbf_create_pkt_dl_ack_nack(struct gprs_rlcmac_dl_tbf *dl_tbf);
 
 int gprs_rlcmac_dl_tbf_rcv_data_block(struct gprs_rlcmac_dl_tbf *dl_tbf,
 				      const struct gprs_rlcmac_rlc_data_info *rlc,

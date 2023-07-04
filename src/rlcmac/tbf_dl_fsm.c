@@ -58,6 +58,8 @@ static void st_new(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 		/* Configure DL TBF on the lower MAC side: */
 		gprs_rlcmac_dl_tbf_configure_l1ctl(ctx->dl_tbf);
 		tbf_dl_fsm_state_chg(fi, GPRS_RLCMAC_TBF_DL_ST_FLOW);
+		/* FIXME: This should ideally be done after TbfStartTime has elapsed: */
+		gprs_rlcmac_dl_tbf_t3190_start(ctx->dl_tbf);
 		break;
 	default:
 		OSMO_ASSERT(0);

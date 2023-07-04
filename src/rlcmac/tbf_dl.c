@@ -27,6 +27,8 @@
 #include <osmocom/gprs/rlcmac/rlcmac_enc.h>
 #include <osmocom/gprs/rlcmac/pdch_ul_controller.h>
 
+static void gprs_rlcmac_dl_tbf_t3190_timer_cb(void *data);
+
 struct gprs_rlcmac_dl_tbf *gprs_rlcmac_dl_tbf_alloc(struct gprs_rlcmac_entity *gre)
 {
 	struct gprs_rlcmac_dl_tbf *dl_tbf;
@@ -51,6 +53,8 @@ struct gprs_rlcmac_dl_tbf *gprs_rlcmac_dl_tbf_alloc(struct gprs_rlcmac_entity *g
 	dl_tbf->blkst = gprs_rlcmac_rlc_block_store_alloc(dl_tbf);
 	OSMO_ASSERT(dl_tbf->blkst);
 
+	osmo_timer_setup(&dl_tbf->t3190, gprs_rlcmac_dl_tbf_t3190_timer_cb, dl_tbf);
+
 	return dl_tbf;
 
 err_tbf_destruct:
@@ -70,6 +74,8 @@ void gprs_rlcmac_dl_tbf_free(struct gprs_rlcmac_dl_tbf *dl_tbf)
 	tbf = dl_tbf_as_tbf(dl_tbf);
 	gre = tbf->gre;
 
+	osmo_timer_del(&dl_tbf->t3190);
+
 	msgb_free(dl_tbf->llc_rx_msg);
 	dl_tbf->llc_rx_msg = NULL;
 
@@ -87,6 +93,21 @@ void gprs_rlcmac_dl_tbf_free(struct gprs_rlcmac_dl_tbf *dl_tbf)
 	gprs_rlcmac_entity_dl_tbf_freed(gre, dl_tbf);
 }
 
+static void gprs_rlcmac_dl_tbf_t3190_timer_cb(void *data)
+{
+	struct gprs_rlcmac_dl_tbf *dl_tbf = data;
+
+	LOGPTBFDL(dl_tbf, LOGL_NOTICE, "Timeout of T3190\n");
+
+	gprs_rlcmac_dl_tbf_free(dl_tbf);
+}
+
+void gprs_rlcmac_dl_tbf_t3190_start(struct gprs_rlcmac_dl_tbf *dl_tbf)
+{
+	unsigned long val_sec;
+	val_sec = osmo_tdef_get(g_rlcmac_ctx->T_defs, 3190, OSMO_TDEF_S, -1);
+	osmo_timer_schedule(&dl_tbf->t3190, val_sec, 0);
+}
 
 static uint8_t dl_tbf_dl_slotmask(struct gprs_rlcmac_dl_tbf *dl_tbf)
 {
@@ -113,7 +134,7 @@ int gprs_rlcmac_dl_tbf_configure_l1ctl(struct gprs_rlcmac_dl_tbf *dl_tbf)
 	return gprs_rlcmac_prim_call_down_cb(rlcmac_prim);
 }
 
-struct msgb *gprs_rlcmac_dl_tbf_create_pkt_dl_ack_nack(const struct gprs_rlcmac_dl_tbf *dl_tbf)
+struct msgb *gprs_rlcmac_dl_tbf_create_pkt_dl_ack_nack(struct gprs_rlcmac_dl_tbf *dl_tbf)
 {
 	struct msgb *msg;
 	struct bitvec bv;
@@ -139,6 +160,10 @@ struct msgb *gprs_rlcmac_dl_tbf_create_pkt_dl_ack_nack(const struct gprs_rlcmac_
 		LOGPTBFDL(dl_tbf, LOGL_ERROR, "Encoding of Packet Downlink ACK/NACK failed (%d)\n", rc);
 		goto free_ret;
 	}
+
+	/* Stop T3190 if transmitting final Downlink Ack/Nack */
+	if (gprs_rlcmac_tbf_dl_state(dl_tbf) == GPRS_RLCMAC_TBF_DL_ST_FINISHED)
+		osmo_timer_del(&dl_tbf->t3190);
 
 	return msg;
 
@@ -214,7 +239,7 @@ int gprs_rlcmac_dl_tbf_rcv_data_block(struct gprs_rlcmac_dl_tbf *dl_tbf,
 {
 	const struct gprs_rlcmac_rlc_block_info *rdbi;
 	struct gprs_rlcmac_rlc_block *block;
-
+	unsigned int block_idx;
 	const uint16_t ws = gprs_rlcmac_rlc_window_ws(dl_tbf->w);
 
 	LOGPTBFDL(dl_tbf, LOGL_DEBUG, "DL DATA TFI=%d received (V(Q)=%d .. V(R)=%d)\n",
@@ -222,7 +247,8 @@ int gprs_rlcmac_dl_tbf_rcv_data_block(struct gprs_rlcmac_dl_tbf *dl_tbf,
 		  gprs_rlcmac_rlc_dl_window_v_q(dl_tbf->dlw),
 		  gprs_rlcmac_rlc_dl_window_v_r(dl_tbf->dlw));
 
-	unsigned int block_idx;
+	/* Re-arm T3190: */
+	gprs_rlcmac_dl_tbf_t3190_start(dl_tbf);
 
 	/* Loop over num_blocks */
 	for (block_idx = 0; block_idx < rlc->num_data_blocks; block_idx++) {
