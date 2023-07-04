@@ -35,6 +35,7 @@ struct gprs_rlcmac_dl_tbf {
 	};
 
 	struct osmo_timer_list t3190;
+	struct osmo_timer_list t3192;
 };
 
 struct gprs_rlcmac_dl_tbf *gprs_rlcmac_dl_tbf_alloc(struct gprs_rlcmac_entity *gre);

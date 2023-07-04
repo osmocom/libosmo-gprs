@@ -50,6 +50,7 @@ static struct osmo_tdef T_defs_rlcmac[] = {
 	{ .T=3168, .default_val=5000,	.unit = OSMO_TDEF_MS,	.desc="Wait for PACKET UPLINK ASSIGNMENT (updated by BCCH SI13) (ms)" },
 	{ .T=3182, .default_val=5,	.unit = OSMO_TDEF_S,	.desc="Wait for Acknowledgement (s)" },
 	{ .T=3190, .default_val=5,	.unit = OSMO_TDEF_S,	.desc="Wait for Valid Downlink Data Received from the Network (s)" },
+	{ .T=3192, .default_val=0,	.unit = OSMO_TDEF_MS,	.desc="Wait for release of the TBF after reception of the final block (ms)" },
 	{ 0 } /* empty item at the end */
 };
 
@@ -571,9 +572,18 @@ int gprs_rlcmac_handle_ccch_pag_req2(const struct gsm48_paging2 *pag)
 	return rc;
 }
 
+/* Decode T3192. 3GPP TS 44.060 Table 12.24.2: GPRS Cell Options information element details */
+static unsigned int gprs_rlcmac_decode_t3192(unsigned int t3192_encoded)
+{
+	static const unsigned int decode_t3192_tbl[8] = {500, 1000, 1500, 0, 80, 120, 160, 200};
+	OSMO_ASSERT(t3192_encoded <= 7);
+	return decode_t3192_tbl[t3192_encoded];
+}
+
 int gprs_rlcmac_handle_bcch_si13(const struct gsm48_system_information_type_13 *si13)
 {
 	int rc;
+	unsigned int t3192;
 
 	LOGRLCMAC(LOGL_DEBUG, "Rx SI13 from lower layers\n");
 	memcpy(g_rlcmac_ctx->si13, si13, GSM_MACBLOCK_LEN);
@@ -594,9 +604,9 @@ int gprs_rlcmac_handle_bcch_si13(const struct gsm48_system_information_type_13 *
 		      (g_rlcmac_ctx->si13ro.u.PBCCH_Not_present.GPRS_Cell_Options.T3168 + 1) * 500,
 		      OSMO_TDEF_MS);
 
-	/* TODO: Update tdef for T3192 as per TS 44.060 Table 12.24.2
-	 * osmo_tdef_set(g_rlcmac_ctx->T_defs, 3192, si13ro.u.PBCCH_Not_present.GPRS_Cell_Options.T3192, enum osmo_tdef_unit val_unit);
-	 */
+	/* Update tdef for T3192 as per TS 44.060 Table 12.24.2 */
+	t3192 = gprs_rlcmac_decode_t3192(g_rlcmac_ctx->si13ro.u.PBCCH_Not_present.GPRS_Cell_Options.T3192);
+	osmo_tdef_set(g_rlcmac_ctx->T_defs, 3192, t3192, OSMO_TDEF_MS);
 
 	return rc;
 }
@@ -673,6 +683,16 @@ static int gprs_rlcmac_handle_pkt_dl_ass(const struct osmo_gprs_rlcmac_prim *rlc
 					     poll_fn,
 					     GPRS_RLCMAC_PDCH_ULC_POLL_DL_ASS,
 					     gre);
+	}
+
+	/* 9.3.2.6 Release of downlink Temporary Block Flow:
+	 * If the MS, [...] receives a PACKET DOWNLINK ASSIGNMENT with the Control Ack bit
+	 * set to '1' [...] while its timer T3192 is running, the MS shall stop timer T3192,
+	 * consider this downlink TBF released and act upon the new assignments.
+	 */
+	if (dlass->CONTROL_ACK && gre->dl_tbf) {
+		if (osmo_timer_pending(&gre->dl_tbf->t3192))
+			gprs_rlcmac_dl_tbf_free(gre->dl_tbf);
 	}
 	return rc;
 }

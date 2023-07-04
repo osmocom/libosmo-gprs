@@ -80,6 +80,8 @@ static void st_flow(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 
 static void st_finished(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
+	/* Wait to be freed by T3190/T3192. */
+
 	//struct gprs_rlcmac_tbf_dl_fsm_ctx *ctx = (struct gprs_rlcmac_tbf_dl_fsm_ctx *)fi->priv;
 	switch (event) {
 	case GPRS_RLCMAC_TBF_DL_EV_LAST_DL_DATA_RECVD:

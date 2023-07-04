@@ -28,6 +28,7 @@
 #include <osmocom/gprs/rlcmac/pdch_ul_controller.h>
 
 static void gprs_rlcmac_dl_tbf_t3190_timer_cb(void *data);
+static void gprs_rlcmac_dl_tbf_t3192_timer_cb(void *data);
 
 struct gprs_rlcmac_dl_tbf *gprs_rlcmac_dl_tbf_alloc(struct gprs_rlcmac_entity *gre)
 {
@@ -54,6 +55,7 @@ struct gprs_rlcmac_dl_tbf *gprs_rlcmac_dl_tbf_alloc(struct gprs_rlcmac_entity *g
 	OSMO_ASSERT(dl_tbf->blkst);
 
 	osmo_timer_setup(&dl_tbf->t3190, gprs_rlcmac_dl_tbf_t3190_timer_cb, dl_tbf);
+	osmo_timer_setup(&dl_tbf->t3192, gprs_rlcmac_dl_tbf_t3192_timer_cb, dl_tbf);
 
 	return dl_tbf;
 
@@ -75,6 +77,7 @@ void gprs_rlcmac_dl_tbf_free(struct gprs_rlcmac_dl_tbf *dl_tbf)
 	gre = tbf->gre;
 
 	osmo_timer_del(&dl_tbf->t3190);
+	osmo_timer_del(&dl_tbf->t3192);
 
 	msgb_free(dl_tbf->llc_rx_msg);
 	dl_tbf->llc_rx_msg = NULL;
@@ -107,6 +110,29 @@ void gprs_rlcmac_dl_tbf_t3190_start(struct gprs_rlcmac_dl_tbf *dl_tbf)
 	unsigned long val_sec;
 	val_sec = osmo_tdef_get(g_rlcmac_ctx->T_defs, 3190, OSMO_TDEF_S, -1);
 	osmo_timer_schedule(&dl_tbf->t3190, val_sec, 0);
+}
+
+/* This timer is used on the mobile station side when the mobile station has
+ * received all of the RLC data blocks. When timer T3192 expires the mobile station
+ * shall release the resources associated with the TBF (e.g. TFI) and begin to
+ * monitor its paging channel. */
+static void gprs_rlcmac_dl_tbf_t3192_timer_cb(void *data)
+{
+	struct gprs_rlcmac_dl_tbf *dl_tbf = data;
+
+	LOGPTBFDL(dl_tbf, LOGL_INFO, "Timeout of T3192\n");
+
+	gprs_rlcmac_dl_tbf_free(dl_tbf);
+}
+
+void gprs_rlcmac_dl_tbf_t3192_start(struct gprs_rlcmac_dl_tbf *dl_tbf)
+{
+	unsigned long val_msec;
+	val_msec = osmo_tdef_get(g_rlcmac_ctx->T_defs, 3192, OSMO_TDEF_MS, -1);
+
+	LOGPTBFDL(dl_tbf, LOGL_INFO, "Starting T3192 (%lu ms)\n", val_msec);
+	OSMO_ASSERT(gprs_rlcmac_tbf_dl_state(dl_tbf) == GPRS_RLCMAC_TBF_DL_ST_FINISHED);
+	osmo_timer_schedule(&dl_tbf->t3192, val_msec / 1000, (val_msec % 1000) * 1000);
 }
 
 static uint8_t dl_tbf_dl_slotmask(struct gprs_rlcmac_dl_tbf *dl_tbf)
@@ -161,10 +187,11 @@ struct msgb *gprs_rlcmac_dl_tbf_create_pkt_dl_ack_nack(struct gprs_rlcmac_dl_tbf
 		goto free_ret;
 	}
 
-	/* Stop T3190 if transmitting final Downlink Ack/Nack */
-	if (gprs_rlcmac_tbf_dl_state(dl_tbf) == GPRS_RLCMAC_TBF_DL_ST_FINISHED)
+	/* Transmitting final Downlink Ack/Nack: Stop T3190 (if still armed), re-arm T3192 */
+	if (gprs_rlcmac_tbf_dl_state(dl_tbf) == GPRS_RLCMAC_TBF_DL_ST_FINISHED) {
 		osmo_timer_del(&dl_tbf->t3190);
-
+		gprs_rlcmac_dl_tbf_t3192_start(dl_tbf);
+	}
 	return msg;
 
 free_ret:
