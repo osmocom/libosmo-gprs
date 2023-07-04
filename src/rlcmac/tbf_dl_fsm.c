@@ -80,6 +80,9 @@ static void st_finished(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	//struct gprs_rlcmac_tbf_dl_fsm_ctx *ctx = (struct gprs_rlcmac_tbf_dl_fsm_ctx *)fi->priv;
 	switch (event) {
+	case GPRS_RLCMAC_TBF_DL_EV_LAST_DL_DATA_RECVD:
+		/* ignore, PCU is retransmitting last DL block (FBI=1) before we ACKed it */
+		break;
 	default:
 		OSMO_ASSERT(0);
 	}
@@ -103,7 +106,8 @@ static struct osmo_fsm_state tbf_dl_fsm_states[] = {
 		.action = st_flow,
 	},
 	[GPRS_RLCMAC_TBF_DL_ST_FINISHED] = {
-		.in_event_mask = 0,
+		.in_event_mask =
+			X(GPRS_RLCMAC_TBF_DL_EV_LAST_DL_DATA_RECVD),
 		.out_state_mask = 0,
 		.name = "FINISHED",
 		.action = st_finished,
