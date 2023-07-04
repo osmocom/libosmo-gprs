@@ -23,7 +23,7 @@ struct gprs_rlcmac_tbf_dl_fsm_ctx {
 
 enum tbf_dl_fsm_event {
 	GPRS_RLCMAC_TBF_DL_EV_LAST_DL_DATA_RECVD,
-	GPRS_RLCMAC_TBF_UL_EV_DL_ASS_COMPL,
+	GPRS_RLCMAC_TBF_DL_EV_DL_ASS_COMPL,
 };
 
 int gprs_rlcmac_tbf_dl_fsm_init(void);

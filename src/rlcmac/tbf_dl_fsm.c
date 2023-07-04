@@ -31,7 +31,7 @@
 
 static const struct value_string tbf_dl_fsm_event_names[] = {
 	{ GPRS_RLCMAC_TBF_DL_EV_LAST_DL_DATA_RECVD,	"LAST_DL_DATA_RECVD" },
-	{ GPRS_RLCMAC_TBF_UL_EV_DL_ASS_COMPL,		"DL_ASS_COMPL" },
+	{ GPRS_RLCMAC_TBF_DL_EV_DL_ASS_COMPL,		"DL_ASS_COMPL" },
 	{ 0, NULL }
 };
 
@@ -54,7 +54,7 @@ static void st_new(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	struct gprs_rlcmac_tbf_dl_fsm_ctx *ctx = (struct gprs_rlcmac_tbf_dl_fsm_ctx *)fi->priv;
 	switch (event) {
-	case GPRS_RLCMAC_TBF_UL_EV_DL_ASS_COMPL:
+	case GPRS_RLCMAC_TBF_DL_EV_DL_ASS_COMPL:
 		/* Configure DL TBF on the lower MAC side: */
 		gprs_rlcmac_dl_tbf_configure_l1ctl(ctx->dl_tbf);
 		tbf_dl_fsm_state_chg(fi, GPRS_RLCMAC_TBF_DL_ST_FLOW);
@@ -91,7 +91,7 @@ static void st_finished(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 static struct osmo_fsm_state tbf_dl_fsm_states[] = {
 	[GPRS_RLCMAC_TBF_DL_ST_NEW] = {
 		.in_event_mask =
-			X(GPRS_RLCMAC_TBF_UL_EV_DL_ASS_COMPL),
+			X(GPRS_RLCMAC_TBF_DL_EV_DL_ASS_COMPL),
 		.out_state_mask =
 			X(GPRS_RLCMAC_TBF_DL_ST_FLOW),
 		.name = "NEW",

@@ -217,7 +217,7 @@ static void st_compl_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_state)
 	ctx->gre->dl_tbf = dl_tbf;
 
 	/* Inform the main TBF state about the assignment completed: */
-	osmo_fsm_inst_dispatch(dl_tbf->state_fsm.fi, GPRS_RLCMAC_TBF_UL_EV_DL_ASS_COMPL, NULL);
+	osmo_fsm_inst_dispatch(dl_tbf->state_fsm.fi, GPRS_RLCMAC_TBF_DL_EV_DL_ASS_COMPL, NULL);
 	/* Go back to IDLE state. */
 	tbf_dl_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_DL_ASS_ST_IDLE);
 }
