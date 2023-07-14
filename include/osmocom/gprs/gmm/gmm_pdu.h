@@ -1,4 +1,4 @@
-/* GMM PDUs, 3GPP TS 9.4 24.008 GPRS Mobility Management Messages */
+/* GMM PDUs, 3GPP TS 24.008 9.4 GPRS Mobility Management Messages */
 #pragma once
 
 #include <osmocom/core/msgb.h>
