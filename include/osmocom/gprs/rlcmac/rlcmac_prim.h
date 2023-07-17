@@ -113,6 +113,7 @@ enum osmo_gprs_rlcmac_l1ctl_prim_type {
 	OSMO_GPRS_RLCMAC_L1CTL_CFG_DL_TBF,
 	OSMO_GPRS_RLCMAC_L1CTL_PDCH_ESTABLISH,
 	OSMO_GPRS_RLCMAC_L1CTL_PDCH_RELEASE,
+	OSMO_GPRS_RLCMAC_L1CTL_CCCH_READY,
 };
 
 extern const struct value_string osmo_gprs_rlcmac_l1ctl_prim_type_names[];
@@ -192,6 +193,9 @@ struct osmo_gprs_rlcmac_l1ctl_prim {
 				} fhp; /* fh == true */
 			};
 		} pdch_est_req;
+		/* OSMO_GPRS_RLCMAC_L1CTL_CCCH_READY | Ind */
+		struct {
+		} ccch_ready;
 	};
 };
 
@@ -231,3 +235,4 @@ struct osmo_gprs_rlcmac_prim *osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_data_ind(ui
 struct osmo_gprs_rlcmac_prim *osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_rts_ind(uint8_t ts_nr, uint32_t fn, uint8_t usf);
 struct osmo_gprs_rlcmac_prim *gprs_rlcmac_prim_alloc_l1ctl_pdch_est_req(uint8_t ts_nr, uint8_t tsc, uint8_t ta);
 struct osmo_gprs_rlcmac_prim *gprs_rlcmac_prim_alloc_l1ctl_pdch_rel_req(void);
+struct osmo_gprs_rlcmac_prim *osmo_gprs_rlcmac_prim_alloc_l1ctl_ccch_ready_ind(void);

@@ -39,9 +39,8 @@
 /* We have to defer going to CCCH a bit to leave space for last PKT CTRL ACK to be transmitted */
 static void _defer_pkt_idle_timer_cb(void *data)
 {
-	struct gprs_rlcmac_entity *gre = data;
 	gprs_rlcmac_submit_l1ctl_pdch_rel_req();
-	gprs_rlcmac_entity_start_ul_tbf_pkt_acc_proc_if_needed(gre);
+	/* Wait for L1CTL-CCCH_READY.ind before attempting new pkt-access-procedure if needed. */
 }
 
 struct gprs_rlcmac_entity *gprs_rlcmac_entity_alloc(uint32_t tlli)

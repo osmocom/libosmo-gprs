@@ -72,6 +72,7 @@ const struct value_string osmo_gprs_rlcmac_l1ctl_prim_type_names[] = {
 	{ OSMO_GPRS_RLCMAC_L1CTL_CFG_DL_TBF,	"CFG_DL_TBF" },
 	{ OSMO_GPRS_RLCMAC_L1CTL_PDCH_ESTABLISH, "PDCH_ESTABLISH" },
 	{ OSMO_GPRS_RLCMAC_L1CTL_PDCH_RELEASE,	"PDCH_RELEASE" },
+	{ OSMO_GPRS_RLCMAC_L1CTL_CCCH_READY,	"CCCH_READY" },
 	{ 0, NULL }
 };
 
@@ -346,6 +347,14 @@ struct osmo_gprs_rlcmac_prim *gprs_rlcmac_prim_alloc_l1ctl_pdch_rel_req(void)
 	return rlcmac_prim;
 }
 
+/* L1CTL-CCCH_READY.ind */
+struct osmo_gprs_rlcmac_prim *osmo_gprs_rlcmac_prim_alloc_l1ctl_ccch_ready_ind(void)
+{
+	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
+	rlcmac_prim = rlcmac_prim_l1ctl_alloc(OSMO_GPRS_RLCMAC_L1CTL_CCCH_READY, PRIM_OP_INDICATION, 0);
+	return rlcmac_prim;
+}
+
 int gprs_rlcmac_prim_handle_unsupported(struct osmo_gprs_rlcmac_prim *rlcmac_prim)
 {
 	LOGRLCMAC(LOGL_ERROR, "Unsupported rlcmac_prim! %s\n", osmo_gprs_rlcmac_prim_name(rlcmac_prim));
@@ -602,6 +611,19 @@ static int rlcmac_prim_handle_l1ctl_ccch_data_ind(struct osmo_gprs_rlcmac_prim *
 	return rc;
 }
 
+static int rlcmac_prim_handle_l1ctl_ccch_ready_ind(struct osmo_gprs_rlcmac_prim *rlcmac_prim)
+{
+	struct gprs_rlcmac_entity *gre;
+
+	/* Lower layers are synced to CCCH, check if some MS was waiting for
+	 * that condition to start packet-access-procedure (see
+	 * _defer_pkt_idle_timer_cb) */
+	llist_for_each_entry(gre, &g_rlcmac_ctx->gre_list, entry)
+		gprs_rlcmac_entity_start_ul_tbf_pkt_acc_proc_if_needed(gre);
+	return 0;
+
+}
+
 static int gprs_rlcmac_prim_l1ctl_lower_up(struct osmo_gprs_rlcmac_prim *rlcmac_prim)
 {
 	int rc;
@@ -615,6 +637,9 @@ static int gprs_rlcmac_prim_l1ctl_lower_up(struct osmo_gprs_rlcmac_prim *rlcmac_
 		break;
 	case OSMO_PRIM(OSMO_GPRS_RLCMAC_L1CTL_CCCH_DATA, PRIM_OP_INDICATION):
 		rc = rlcmac_prim_handle_l1ctl_ccch_data_ind(rlcmac_prim);
+		break;
+	case OSMO_PRIM(OSMO_GPRS_RLCMAC_L1CTL_CCCH_READY, PRIM_OP_INDICATION):
+		rc = rlcmac_prim_handle_l1ctl_ccch_ready_ind(rlcmac_prim);
 		break;
 	default:
 		rc = -ENOTSUP;
