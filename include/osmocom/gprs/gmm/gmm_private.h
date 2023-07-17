@@ -19,9 +19,6 @@
 #include <osmocom/gprs/gmm/gmm_prim.h>
 #include <osmocom/gprs/gmm/gmm_ms_fsm.h>
 
-/* 3GPP TS 44.064 § 8.3 TLLI assignment procedures */
-#define GPRS_GMM_TLLI_UNASSIGNED (0xffffffff)
-
 #define GPRS_GMM_SESS_ID_UNASSIGNED (0xffffffff)
 
 extern int g_gmm_log_cat[_OSMO_GPRS_GMM_LOGC_MAX];

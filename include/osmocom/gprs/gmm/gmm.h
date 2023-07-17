@@ -5,6 +5,9 @@
 #include <stdint.h>
 #include <stddef.h>
 
+/* 3GPP TS 44.064 § 8.3 TLLI assignment procedures */
+#define OSMO_GPRS_GMM_TLLI_UNASSIGNED (0xffffffff)
+
 /* Use stack as MS or as network? */
 enum osmo_gprs_gmm_location {
 	OSMO_GPRS_GMM_LOCATION_UNSET,

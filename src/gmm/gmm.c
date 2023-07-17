@@ -165,7 +165,7 @@ struct gprs_gmm_entity *gprs_gmm_gmme_alloc(uint32_t ptmsi, const char *imsi)
 	gmme->ptmsi_sig = GSM_RESERVED_TMSI;
 	gmme->ptmsi = ptmsi;
 	gmme->old_ptmsi = GSM_RESERVED_TMSI;
-	gmme->old_tlli = GPRS_GMM_TLLI_UNASSIGNED;
+	gmme->old_tlli = OSMO_GPRS_GMM_TLLI_UNASSIGNED;
 	gmme->auth_ciph.req.ac_ref_nr = 0xff; /* invalid value */
 	OSMO_STRLCPY_ARRAY(gmme->imsi, imsi);
 
@@ -299,7 +299,7 @@ uint32_t gprs_gmm_alloc_rand_tlli(void)
 	rc = -ERANGE;
 failed:
 	LOGGMM(LOGL_ERROR, "Failed to allocate a TLLI: %d (%s)\n", rc, strerror(-rc));
-	return GPRS_GMM_TLLI_UNASSIGNED;
+	return OSMO_GPRS_GMM_TLLI_UNASSIGNED;
 }
 
 /* TS 24.008 4.7.2.1.1 READY timer behaviour (A/Gb mode only) */
@@ -1000,7 +1000,7 @@ static int gprs_gmm_rx_detach_accept(struct gprs_gmm_entity *gmme, struct gsm48_
 
 	/* Submit LLGMM-ASSIGN-REQ as per TS 24.007 Annex C.3 */
 	gmme->old_tlli = gmme->tlli;
-	gmme->tlli = GPRS_GMM_TLLI_UNASSIGNED;
+	gmme->tlli = OSMO_GPRS_GMM_TLLI_UNASSIGNED;
 	rc = gprs_gmm_submit_llgmm_assing_req(gmme);
 	if (rc < 0)
 		goto rejected;
