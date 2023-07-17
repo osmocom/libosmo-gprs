@@ -414,7 +414,7 @@ void gprs_gmm_gmme_t3316_stop(struct gprs_gmm_entity *gmme)
 	osmo_timer_del(&gmme->t3316);
 }
 
-/* T3312 (Delete stored RAND & SRES) timer expiration: */
+/* T3316 (Delete stored RAND & SRES) timer expiration: */
 static void t3316_delete_rand_sres_cb(void *data)
 {
 	struct gprs_gmm_entity *gmme = (struct gprs_gmm_entity *)data;
