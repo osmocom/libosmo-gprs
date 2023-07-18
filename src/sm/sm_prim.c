@@ -187,6 +187,14 @@ struct osmo_gprs_sm_prim *gprs_sm_prim_alloc_smreg_pdp_act_ind(void)
 	return sm_prim;
 }
 
+/* TS 24.007 6.5.1.7 SMREG-PDP-ACTIVATE-IND */
+struct osmo_gprs_sm_prim *gprs_sm_prim_alloc_smreg_pdp_deact_ind(void)
+{
+	struct osmo_gprs_sm_prim *sm_prim;
+	sm_prim = sm_prim_smreg_alloc(OSMO_GPRS_SM_SMREG_PDP_DEACTIVATE, PRIM_OP_INDICATION, 0);
+	return sm_prim;
+}
+
 static int gprs_sm_prim_handle_unsupported(struct osmo_gprs_sm_prim *sm_prim)
 {
 	LOGSM(LOGL_ERROR, "Unsupported sm_prim! %s\n", osmo_gprs_sm_prim_name(sm_prim));
@@ -339,7 +347,7 @@ int gprs_sm_prim_call_sndcp_up_cb(struct osmo_gprs_sndcp_prim *sndcp_prim)
 	return rc;
 }
 
-/* TS 24.007 6.6.1.1 SMREG-Attach.request:*/
+/* TS 24.007 5.1.2.20 SNSM-ACTIVATE.response: */
 static int gprs_sm_prim_handle_snsm_act_resp(struct osmo_gprs_sndcp_prim *sndcp_prim)
 {
 	int rc;
@@ -365,6 +373,37 @@ static int gprs_sm_prim_handle_snsm_act_resp(struct osmo_gprs_sndcp_prim *sndcp_
 	return rc;
 }
 
+/* TS 24.007 5.1.2.22 SNSM-DEACTIVATE.response: */
+static int gprs_sm_prim_handle_snsm_deact_resp(struct osmo_gprs_sndcp_prim *sndcp_prim)
+{
+	int rc;
+	struct gprs_sm_ms *ms;
+	struct gprs_sm_entity *sme;
+
+	ms = gprs_sm_find_ms_by_tlli(sndcp_prim->snsm.tlli);
+	if (!ms) {
+		LOGSM(LOGL_ERROR, "Rx %s: Unable to find MS with TLLI=0x%08x\n",
+		      osmo_gprs_sndcp_prim_name(sndcp_prim), sndcp_prim->snsm.tlli);
+		return -ENOENT;
+	}
+
+	sme = gprs_sm_ms_get_pdp_ctx(ms, sndcp_prim->snsm.activate_rsp.nsapi);
+	if (!sme) {
+		LOGMS(ms, LOGL_ERROR, "Rx %s: Unable to find NSAPI=%u\n",
+		      osmo_gprs_sndcp_prim_name(sndcp_prim),
+		      sndcp_prim->snsm.activate_rsp.nsapi);
+		return -ENOENT;
+	}
+
+	rc = gprs_sm_submit_smreg_pdp_deact_ind(sme, GSM_CAUSE_REACT_RQD);
+
+	/* Submitting GMM_RELEASE.ind received the GMM release was delayed until
+	 * getting SNSM-DEACT.ind->rsp pingpong, since it would free the sme. Do it now:
+	*/
+	rc = osmo_fsm_inst_dispatch(sme->ms_fsm.fi, GPRS_SM_MS_EV_GMM_RELEASE_IND, NULL);
+	return rc;
+}
+
 /* SNDCP higher layers push SNDCP primitive (SNSM) down to SM layer: */
 static int gprs_sm_prim_handle_sndcp_snsm(struct osmo_gprs_sndcp_prim *sndcp_prim)
 {
@@ -375,6 +414,8 @@ static int gprs_sm_prim_handle_sndcp_snsm(struct osmo_gprs_sndcp_prim *sndcp_pri
 		rc = gprs_sm_prim_handle_snsm_act_resp(sndcp_prim);
 		break;
 	case OSMO_PRIM(OSMO_GPRS_SNDCP_SNSM_DEACTIVATE, PRIM_OP_RESPONSE):
+		rc = gprs_sm_prim_handle_snsm_deact_resp(sndcp_prim);
+		break;
 	case OSMO_PRIM(OSMO_GPRS_SNDCP_SNSM_MODIFY, PRIM_OP_RESPONSE):
 	case OSMO_PRIM(OSMO_GPRS_SNDCP_SNSM_STATUS, PRIM_OP_REQUEST):
 	case OSMO_PRIM(OSMO_GPRS_SNDCP_SNSM_SEQUENCE, PRIM_OP_RESPONSE):
@@ -530,6 +571,42 @@ static int gprs_sm_prim_handle_gmmsm_unitdata_ind(struct osmo_gprs_gmm_prim *gmm
 	return rc;
 }
 
+/* Osmocom specific, GMMSM-MODIFY-IND */
+static int gprs_sm_prim_handle_gmmsm_modify_ind(struct osmo_gprs_gmm_prim *gmm_prim)
+{
+	struct osmo_gprs_gmm_gmmsm_prim *gmmsm = &gmm_prim->gmmsm;
+	struct gprs_sm_entity *sme;
+	struct gprs_sm_ms *ms;
+	int rc = 0;
+
+	sme = gprs_sm_find_sme_by_sess_id(gmmsm->sess_id);
+	if (!sme) {
+		LOGSM(LOGL_ERROR, "Rx GMMSM-MODIFY.ind for non existing SM Entity\n");
+		return -EINVAL;
+	}
+
+	ms = sme->ms;
+
+	/* Update allocated PTMSI: */
+	if (gmm_prim->gmmsm.modify_ind.allocated_ptmsi != GSM_RESERVED_TMSI)
+		ms->gmm.ptmsi = gmm_prim->gmmsm.modify_ind.allocated_ptmsi;
+	ms->gmm.ptmsi_sig = gmm_prim->gmmsm.modify_ind.allocated_ptmsi_sig;
+	/* Update allocated TLLI: */
+	ms->gmm.tlli = gmm_prim->gmmsm.modify_ind.allocated_tlli;
+	/* Update the current RAI: */
+	memcpy(&ms->gmm.ra, &gmm_prim->gmmsm.modify_ind.rai, sizeof(ms->gmm.ra));
+
+	if (gmm_prim->gmmsm.modify_ind.pdp_ctx_status_present)
+		gprs_sm_handle_ie_pdp_ctx_status(ms, gmm_prim->gmmsm.modify_ind.pdp_ctx_status);
+	/* Note: sme may be freed here, it needs to be looked up again:
+	 * sme = gprs_sm_find_sme_by_sess_id(gmmsm->sess_id);
+	 */
+
+	/* TODO: Handle gmm_prim->gmmsm.modify_ind.rx_npdu_numbers_list
+	 * Submit SNSM-SEQUENCE-IND, see TS 24.007 "C.16(cont’d) Routing Area Update, Inter SGSN" */
+	return rc;
+}
+
 static int gprs_sm_prim_handle_gmmsm(struct osmo_gprs_gmm_prim *gmm_prim)
 {
 	int rc = 0;
@@ -542,6 +619,9 @@ static int gprs_sm_prim_handle_gmmsm(struct osmo_gprs_gmm_prim *gmm_prim)
 		break;
 	case OSMO_PRIM(OSMO_GPRS_GMM_GMMSM_UNITDATA, PRIM_OP_INDICATION):
 		rc = gprs_sm_prim_handle_gmmsm_unitdata_ind(gmm_prim);
+		break;
+	case OSMO_PRIM(OSMO_GPRS_GMM_GMMSM_MODIFY, PRIM_OP_INDICATION):
+		rc = gprs_sm_prim_handle_gmmsm_modify_ind(gmm_prim);
 		break;
 	default:
 		rc = gprs_sm_prim_handle_gmm_unsupported(gmm_prim);

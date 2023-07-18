@@ -156,6 +156,7 @@ int gprs_sm_prim_call_sndcp_up_cb(struct osmo_gprs_sndcp_prim *sndcp_prim);
 
 struct osmo_gprs_sm_prim *gprs_sm_prim_alloc_smreg_pdp_act_cnf(void);
 struct osmo_gprs_sm_prim *gprs_sm_prim_alloc_smreg_pdp_act_ind(void);
+struct osmo_gprs_sm_prim *gprs_sm_prim_alloc_smreg_pdp_deact_ind(void);
 
 /* sm.c: */
 struct gprs_sm_ms *gprs_sm_ms_alloc(uint32_t ms_id);
@@ -167,9 +168,13 @@ struct gprs_sm_entity *gprs_sm_entity_alloc(struct gprs_sm_ms *ms, uint32_t nsap
 void gprs_sm_entity_free(struct gprs_sm_entity *sme);
 struct gprs_sm_entity *gprs_sm_find_sme_by_sess_id(uint32_t sess_id);
 
+void gprs_sm_handle_ie_pdp_ctx_status(struct gprs_sm_ms *ms, const uint8_t *pdp_status);
+
 int gprs_sm_submit_gmmsm_assign_req(const struct gprs_sm_entity *sme);
 int gprs_sm_submit_smreg_pdp_act_cnf(const struct gprs_sm_entity *sme, enum gsm48_gsm_cause cause);
+int gprs_sm_submit_smreg_pdp_deact_ind(const struct gprs_sm_entity *sme, enum gsm48_gsm_cause cause);
 int gprs_sm_submit_snsm_act_ind(const struct gprs_sm_entity *sme);
+int gprs_sm_submit_snsm_deact_ind(const struct gprs_sm_entity *sme);
 int gprs_sm_tx_act_pdp_ctx_req(struct gprs_sm_entity *sme);
 int gprs_sm_rx(struct gprs_sm_entity *sme, struct gsm48_hdr *gh, unsigned int len);
 

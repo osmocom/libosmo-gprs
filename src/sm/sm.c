@@ -236,6 +236,24 @@ int gprs_sm_submit_smreg_pdp_act_cnf(const struct gprs_sm_entity *sme, enum gsm4
 	return rc;
 }
 
+int gprs_sm_submit_smreg_pdp_deact_ind(const struct gprs_sm_entity *sme, enum gsm48_gsm_cause cause)
+{
+	struct osmo_gprs_sm_prim *sm_prim_tx;
+	int rc;
+
+	sm_prim_tx = gprs_sm_prim_alloc_smreg_pdp_deact_ind();
+	sm_prim_tx->smreg.ms_id = sme->ms->ms_id;
+	sm_prim_tx->smreg.pdp_deact_ind.nsapi[0] = sme->nsapi;
+	sm_prim_tx->smreg.pdp_deact_ind.num_nsapi = 1;
+	sm_prim_tx->smreg.pdp_deact_ind.tear_down_ind = 0;
+	sm_prim_tx->smreg.pdp_deact_ind.cause = cause;
+	sm_prim_tx->smreg.pdp_deact_ind.pco_len = sme->pco_len;
+	if (sme->pco_len)
+		memcpy(sm_prim_tx->smreg.pdp_deact_cnf.pco, &sme->pco, sme->pco_len);
+
+	rc = gprs_sm_prim_call_up_cb(sm_prim_tx);
+	return rc;
+}
 
 int gprs_sm_submit_snsm_act_ind(const struct gprs_sm_entity *sme)
 {
@@ -248,6 +266,18 @@ int gprs_sm_submit_snsm_act_ind(const struct gprs_sm_entity *sme)
 				sme->llc_sapi);
 	//sndcp_prim_tx->snsm.activat_ind.qos_params = ; /* TODO */
 	//sndcp_prim_tx->snsm.activat_ind.radio_prio = 0; /* TODO */
+
+	rc = gprs_sm_prim_call_sndcp_up_cb(sndcp_prim_tx);
+	return rc;
+}
+
+int gprs_sm_submit_snsm_deact_ind(const struct gprs_sm_entity *sme)
+{
+	struct osmo_gprs_sndcp_prim *sndcp_prim_tx;
+	int rc;
+
+	sndcp_prim_tx = osmo_gprs_sndcp_prim_alloc_snsm_deactivate_ind(
+				sme->ms->gmm.tlli, sme->nsapi);
 
 	rc = gprs_sm_prim_call_sndcp_up_cb(sndcp_prim_tx);
 	return rc;
@@ -430,4 +460,33 @@ int gprs_sm_rx(struct gprs_sm_entity *sme, struct gsm48_hdr *gh, unsigned int le
 	}
 
 	return rc;
+}
+
+void gprs_sm_handle_ie_pdp_ctx_status(struct gprs_sm_ms *ms, const uint8_t *pdp_status)
+{
+	unsigned int i;
+	/* 24.008 4.7.5.1.3: If the PDP context status information element is
+	 * included in ROUTING AREA UPDATE REQUEST message, then the network
+	 * shall deactivate all those PDP contexts locally (without peer to
+	 * peer signalling between the MS and the network), which are not in SM
+	 * state PDP-INACTIVE on network side but are indicated by the MS as
+	 * being in state PDP-INACTIVE. */
+
+	for (i = 0; i < ARRAY_SIZE(ms->pdp); i++) {
+		struct gprs_sm_entity *sme = ms->pdp[i];
+		bool inactive;
+		if (!sme)
+			continue;
+
+		inactive = (sme->nsapi < 8) ?
+					!(pdp_status[0] & (1 << sme->nsapi)) :
+					!(pdp_status[1] & (1 << (sme->nsapi - 8)));
+		if (!inactive)
+			continue;
+		LOGSME(sme, LOGL_NOTICE,
+		       "PDP context status informs PDP context is PDP-INACTIVE, deleting\n");
+		gprs_sm_submit_snsm_deact_ind(sme);
+		/* See TS 24.007 Appendix C.10: Wait for SNSM-DEACTIVATE.rsp,
+		 * then submit SMREG-DEACTIVATE.ind and free the object */
+	}
 }
