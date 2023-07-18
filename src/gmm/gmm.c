@@ -1084,7 +1084,17 @@ static int gprs_gmm_rx_rau_acc(struct gprs_gmm_entity *gmme, struct gsm48_hdr *g
 			/* TODO: */
 		}
 
-		/* 10.5.5.11 List of Receive N-PDU Numbers: TODO */
+		/* 10.5.5.11 List of Receive N-PDU Numbers: */
+		if (TLVP_PRES_LEN(&tp, GSM48_IE_GMM_RX_NPDU_NUM_LIST, 2)) {
+			unsigned int ie_len = TLVP_LEN(&tp, GSM48_IE_GMM_RX_NPDU_NUM_LIST);
+			if (ie_len > sizeof(gmme->rx_npdu_numbers_list))
+				ie_len = sizeof(gmme->rx_npdu_numbers_list);
+			gmme->rx_npdu_numbers_list_present = true;
+			gmme->rx_npdu_numbers_list_len = ie_len;
+			memcpy(gmme->rx_npdu_numbers_list, TLVP_VAL(&tp, GSM48_IE_GMM_RX_NPDU_NUM_LIST), ie_len);
+		} else {
+			gmme->rx_npdu_numbers_list_present = false;
+		}
 
 		/* 10.5.7.3 Negotiated READY timer value */
 		if (TLVP_PRESENT(&tp, GSM48_IE_GMM_TIMER_READY)) {
@@ -1111,6 +1121,8 @@ static int gprs_gmm_rx_rau_acc(struct gprs_gmm_entity *gmme, struct gsm48_hdr *g
 
 		/* 10.5.1.13 Equivalent PLMNs: TODO */
 		/* 10.5.7.1 PDP context status: TODO */
+		if (TLVP_PRES_LEN(&tp, GSM48_IE_GMM_PDP_CTX_STATUS, 2))
+			memcpy(gmme->pdp_ctx_status, TLVP_VAL(&tp, GSM48_IE_GMM_PDP_CTX_STATUS), 2);
 
 		/* TODO: lots more Optional IEs */
 	}

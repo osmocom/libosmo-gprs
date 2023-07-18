@@ -66,6 +66,10 @@ struct gprs_gmm_entity {
 
 	uint8_t radio_prio;	/* TS 24.008 10.5.7.2 */
 	struct gprs_ra_id ra; /* TS 24.008  10.5.5.15 (decoded) */
+	uint8_t pdp_ctx_status[2]; /* TS 24.008 10.5.7.1 */
+	bool rx_npdu_numbers_list_present;
+	uint8_t rx_npdu_numbers_list[17]; /* TS 24.008 10.5.5.11 */
+	uint8_t rx_npdu_numbers_list_len; /* bitmask TS 24.008 10.5.5.11 */
 
 	struct {
 		/* Input params received from network: */
