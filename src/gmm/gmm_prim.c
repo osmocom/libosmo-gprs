@@ -64,6 +64,7 @@ const struct value_string osmo_gprs_gmm_gmmsm_prim_type_names[] = {
 	{ OSMO_GPRS_GMM_GMMSM_ESTABLISH, "ESTABLISH" },
 	{ OSMO_GPRS_GMM_GMMSM_RELEASE,	"RELEASE" },
 	{ OSMO_GPRS_GMM_GMMSM_UNITDATA, "UNITDATA" },
+	{ OSMO_GPRS_GMM_GMMSM_MODIFY,	"MODIFY" },
 	{ 0, NULL }
 };
 
@@ -314,6 +315,16 @@ struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmsm_release_ind(uint32_t id)
 {
 	struct osmo_gprs_gmm_prim *gmm_prim;
 	gmm_prim = gmm_prim_gmmsm_alloc(OSMO_GPRS_GMM_GMMSM_RELEASE, PRIM_OP_INDICATION, 0);
+	gmm_prim->gmmsm.sess_id = id;
+	return gmm_prim;
+}
+
+/* Osmocom specific, see missing primitive in TS 24.007 Annex C.16 around "STOP
+ * Trams". It is used to propagate TLLI update to SM (and then to SNDCP). */
+struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmsm_modify_ind(uint32_t id)
+{
+	struct osmo_gprs_gmm_prim *gmm_prim;
+	gmm_prim = gmm_prim_gmmsm_alloc(OSMO_GPRS_GMM_GMMSM_MODIFY, PRIM_OP_INDICATION, 0);
 	gmm_prim->gmmsm.sess_id = id;
 	return gmm_prim;
 }

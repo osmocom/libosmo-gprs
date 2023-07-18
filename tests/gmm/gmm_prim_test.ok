@@ -8,7 +8,7 @@ test_gmm_prim_llc_down_cb(): Rx LL-UNITDATA.request TLLI=0x80001234 SAPI=GMM l3=
 test_gmm_prim_llc_down_cb(): Rx LLGMM-ASSIGN.request old_TLLI=0x80001234 new_TLLI=0xea711b41
 test_gmm_prim_down_cb(): Rx GMRR-ASSIGN.request old_tlli=0x80001234 new_tlli=0xea711b41
 test_gmm_prim_llc_down_cb(): Rx LL-UNITDATA.request TLLI=0xea711b41 SAPI=GMM l3=[08 03 ]
-test_gmm_prim_up_cb(): Rx GMMREG-ATTACH.confirm accepted=1 allocated_ptmsi=0xea711b41 allocated_ptmsi_sig=0xffffffff
+test_gmm_prim_up_cb(): Rx GMMREG-ATTACH.confirm accepted=1 allocated_ptmsi=0xea711b41 allocated_ptmsi_sig=0xffffffff allocated_tlli=0xea711b41
 sys={44.000000}, mono={44.000000}: clock_override_add
 sys={44.000000}, mono={44.000000}: Expect T3314 (READY) timeout
 sys={644.000000}, mono={644.000000}: clock_override_add
@@ -37,4 +37,15 @@ test_gmm_prim_llc_down_cb(): Rx LL-UNITDATA.request TLLI=0xea711b41 SAPI=GMM l3=
 test_gmm_prim_up_cb(): Rx GMMSM-ESTABLISH.confirm sess_id=1234 accepted
 test_gmm_prim_llc_down_cb(): Rx LL-UNITDATA.request TLLI=0xea711b41 SAPI=GMM l3=[0a 28 29 30 ]
 test_gmm_prim_up_cb(): Rx GMMSM-UNITDATA.indication sess_id=1234 sm_pdu=0a 28 29 30 
+sys={44.000000}, mono={44.000000}: clock_override_add
+sys={44.000000}, mono={44.000000}: Expect T3314 (READY) timeout
+sys={644.000000}, mono={644.000000}: clock_override_add
+sys={644.000000}, mono={644.000000}: Expect T3312 (periodic RAU) timeout
+test_gmm_prim_llc_down_cb(): Rx LLGMM-SUSPEND.request TLLI=0xea711b41
+test_gmm_prim_llc_down_cb(): Rx LL-UNITDATA.request TLLI=0xea711b41 SAPI=GMM l3=[08 08 03 32 f4 07 00 05 00 00 17 16 0a 00 e5 02 00 00 e1 ]
+test_gmm_prim_llc_down_cb(): Rx LLGMM-ASSIGN.request old_TLLI=0xea711b41 new_TLLI=0xec999002
+test_gmm_prim_down_cb(): Rx GMRR-ASSIGN.request old_tlli=0xea711b41 new_tlli=0xec999002
+test_gmm_prim_up_cb(): Rx GMMSM-MODIFY.indication sess_id=1234 allocated_ptmsi=0xec999002 allocated_ptmsi_sig=0xffffffff allocated_tlli=0xec999002
+test_gmm_prim_llc_down_cb(): Rx LL-UNITDATA.request TLLI=0xec999002 SAPI=GMM l3=[08 0a ]
+test_gmm_prim_llc_down_cb(): Rx LLGMM-RESUME.request TLLI=0xec999002
 ==== test_gmm_prim_ms_gmmsm() [end] ====

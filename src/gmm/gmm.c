@@ -498,6 +498,30 @@ int gprs_gmm_submit_gmmsm_release_ind(struct gprs_gmm_entity *gmme)
 	return rc;
 }
 
+/* Osmocom specific, see missing primitive in TS 24.007 Annex C.16 around "STOP
+ * Trams". It is used to propagate TLLI update to SM (and then to SNDCP). */
+int gprs_gmm_submit_gmmsm_modify_ind(struct gprs_gmm_entity *gmme)
+{
+	struct osmo_gprs_gmm_prim *gmm_prim;
+	int rc;
+
+	gmm_prim = gprs_gmm_prim_alloc_gmmsm_modify_ind(gmme->sess_id);
+	gmm_prim->gmmsm.modify_ind.allocated_ptmsi = gmme->ptmsi;
+	gmm_prim->gmmsm.modify_ind.allocated_ptmsi_sig = gmme->ptmsi_sig;
+	gmm_prim->gmmsm.modify_ind.allocated_tlli = gmme->tlli;
+	memcpy(&gmm_prim->gmmsm.modify_ind.rai, &gmme->ra, sizeof(gmme->ra));
+	gmm_prim->gmmsm.modify_ind.pdp_ctx_status_present = gmme->pdp_ctx_status_present;
+	if (gmm_prim->gmmsm.modify_ind.pdp_ctx_status_present)
+		memcpy(&gmm_prim->gmmsm.modify_ind.pdp_ctx_status, &gmme->pdp_ctx_status, sizeof(gmme->pdp_ctx_status));
+	gmm_prim->gmmsm.modify_ind.rx_npdu_numbers_list_present = gmme->rx_npdu_numbers_list_present;
+	gmm_prim->gmmsm.modify_ind.rx_npdu_numbers_list_len = gmme->rx_npdu_numbers_list_len;
+	if (gmme->rx_npdu_numbers_list_len > 0)
+		memcpy(&gmm_prim->gmmsm.modify_ind.rx_npdu_numbers_list, &gmme->rx_npdu_numbers_list, gmme->rx_npdu_numbers_list_len);
+
+	rc = gprs_gmm_prim_call_up_cb(gmm_prim);
+	return rc;
+}
+
 static int gprs_gmm_submit_gmmrr_assing_req(struct gprs_gmm_entity *gmme)
 {
 	struct osmo_gprs_gmm_prim *gmm_prim_tx;
@@ -1121,21 +1145,31 @@ static int gprs_gmm_rx_rau_acc(struct gprs_gmm_entity *gmme, struct gsm48_hdr *g
 
 		/* 10.5.1.13 Equivalent PLMNs: TODO */
 		/* 10.5.7.1 PDP context status: TODO */
-		if (TLVP_PRES_LEN(&tp, GSM48_IE_GMM_PDP_CTX_STATUS, 2))
+		if (TLVP_PRES_LEN(&tp, GSM48_IE_GMM_PDP_CTX_STATUS, 2)) {
 			memcpy(gmme->pdp_ctx_status, TLVP_VAL(&tp, GSM48_IE_GMM_PDP_CTX_STATUS), 2);
-
+			gmme->pdp_ctx_status_present = true;
+		} else {
+			gmme->pdp_ctx_status_present = false;
+		}
 		/* TODO: lots more Optional IEs */
 	}
 
-	/* Submit LLGMM-ASSIGN-REQ as per TS 24.007 Annex C.1 */
+	/* Submit LLGMM-ASSIGN-REQ as per TS 24.007 Annex C.15 */
 	rc = gprs_gmm_submit_llgmm_assing_req(gmme);
 	if (rc < 0)
 		goto rejected;
 
-	/* Submit GMMRR-ASSIGN-REQ as per TS 24.007 Annex C.1 */
+	/* Submit GMMRR-ASSIGN-REQ as per TS 24.007 Annex C.15 */
 	rc = gprs_gmm_submit_gmmrr_assing_req(gmme);
 	if (rc < 0)
 		goto rejected;
+
+	/* Submit GMMSM-MODIFY-REQ, see missing primitive in TS 24.007 Annex C.16 around "STOP Trams" */
+	if (gmme->sess_id != GPRS_GMM_SESS_ID_UNASSIGNED) {
+		rc = gprs_gmm_submit_gmmsm_modify_ind(gmme);
+		if (rc < 0)
+			goto rejected;
+	}
 
 	rc = gprs_gmm_tx_rau_compl(gmme);
 	if (rc < 0)

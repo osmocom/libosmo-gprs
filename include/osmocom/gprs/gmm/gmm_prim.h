@@ -203,6 +203,7 @@ enum osmo_gprs_gmm_gmmsm_prim_type {
 	OSMO_GPRS_GMM_GMMSM_ESTABLISH,	/* Req, Cnf/Rej */
 	OSMO_GPRS_GMM_GMMSM_RELEASE,	/* Ind */
 	OSMO_GPRS_GMM_GMMSM_UNITDATA,	/* Req, Ind */
+	OSMO_GPRS_GMM_GMMSM_MODIFY,	/* Ind, osmocom extension */
 };
 extern const struct value_string osmo_gprs_gmm_gmmsm_prim_type_names[];
 static inline const char *osmo_gprs_gmm_gmmsm_prim_type_name(enum osmo_gprs_gmm_gmmsm_prim_type val)
@@ -257,6 +258,19 @@ struct osmo_gprs_gmm_gmmsm_prim {
 			uint8_t *smpdu;
 			uint16_t smpdu_len;
 		} unitdata_ind;
+		/* OSMO_GPRS_GMM_GMMSM_MODIFY | Ind */
+		struct {
+			/* PLMNs MT-caps, attach-type. */
+			uint32_t allocated_ptmsi;
+			uint32_t allocated_ptmsi_sig;
+			uint32_t allocated_tlli;
+			struct gprs_ra_id rai;
+			bool pdp_ctx_status_present;
+			uint8_t pdp_ctx_status[2]; /* bitmask TS 24.008 10.5.7.1 */
+			bool rx_npdu_numbers_list_present;
+			uint8_t rx_npdu_numbers_list[17]; /* TS 24.008 10.5.5.11 */
+			uint8_t rx_npdu_numbers_list_len; /* bitmask TS 24.008 10.5.5.11 */
+		} modify_ind;
 	};
 };
 

@@ -237,10 +237,11 @@ int test_gmm_prim_up_cb(struct osmo_gprs_gmm_prim *gmm_prim, void *user_data)
 		switch (OSMO_PRIM_HDR(&gmm_prim->oph)) {
 		case OSMO_PRIM(OSMO_GPRS_GMM_GMMREG_ATTACH, PRIM_OP_CONFIRM):
 			if (gmm_prim->gmmreg.attach_cnf.accepted) {
-				printf("%s(): Rx %s accepted=%u allocated_ptmsi=0x%08x allocated_ptmsi_sig=0x%06x\n", __func__, pdu_name,
+				printf("%s(): Rx %s accepted=%u allocated_ptmsi=0x%08x allocated_ptmsi_sig=0x%06x allocated_tlli=0x%08x\n", __func__, pdu_name,
 				       gmm_prim->gmmreg.attach_cnf.accepted,
 				       gmm_prim->gmmreg.attach_cnf.acc.allocated_ptmsi,
-				       gmm_prim->gmmreg.attach_cnf.acc.allocated_ptmsi_sig);
+				       gmm_prim->gmmreg.attach_cnf.acc.allocated_ptmsi_sig,
+				       gmm_prim->gmmreg.attach_cnf.acc.allocated_tlli);
 			} else {
 				printf("%s(): Rx %s accepted=%u rej_cause=%u\n", __func__, pdu_name,
 				       gmm_prim->gmmreg.attach_cnf.accepted,
@@ -297,6 +298,13 @@ int test_gmm_prim_up_cb(struct osmo_gprs_gmm_prim *gmm_prim, void *user_data)
 		case OSMO_PRIM(OSMO_GPRS_GMM_GMMSM_RELEASE, PRIM_OP_INDICATION):
 			printf("%s(): Rx %s sess_id=%u\n", __func__, pdu_name,
 			       gmm_prim->gmmsm.sess_id);
+			break;
+		case OSMO_PRIM(OSMO_GPRS_GMM_GMMSM_MODIFY, PRIM_OP_INDICATION):
+			printf("%s(): Rx %s sess_id=%u allocated_ptmsi=0x%08x allocated_ptmsi_sig=0x%06x allocated_tlli=0x%08x\n", __func__, pdu_name,
+			       gmm_prim->gmmsm.sess_id,
+			       gmm_prim->gmmsm.modify_ind.allocated_ptmsi,
+			       gmm_prim->gmmsm.modify_ind.allocated_ptmsi_sig,
+			       gmm_prim->gmmsm.modify_ind.allocated_tlli);
 			break;
 		default:
 			printf("%s(): Unexpected Rx %s\n", __func__, pdu_name);
@@ -510,6 +518,7 @@ static void test_gmm_prim_ms_gmmsm(void)
 	uint32_t ptmsi = 0x00001234;
 	uint32_t ptmsi_sig = 0x556677;
 	uint32_t rand_tlli = 0x80001234;
+	uint32_t tlli;
 	char *imsi = "1234567890";
 	char *imei = "42342342342342";
 	char *imeisv = "4234234234234275";
@@ -575,6 +584,27 @@ static void test_gmm_prim_ms_gmmsm(void)
 	rc = osmo_gprs_gmm_prim_llc_lower_up(llc_prim);
 	OSMO_ASSERT(rc == 0);
 	/* As a result, GMM submits GMMSM-UNITDATA.ind */
+
+	/* Wait for READY timer to expire: */
+	clock_override_add(44, 0); /* 44: See GMM Attach Accept (pdu_gmm_att_acc) fed above */
+	clock_debug("Expect T3314 (READY) timeout");
+	osmo_select_main(0);
+
+	clock_override_add(10*60, 0); /* 10*60: See GMM Attach Accept (pdu_gmm_att_acc) fed above */
+	clock_debug("Expect T3312 (periodic RAU) timeout");
+	osmo_select_main(0);
+
+	/* Network sends GMM RAU Accept */
+	llc_prim = gprs_llc_prim_alloc_ll_unitdata_ind(rand_tlli, OSMO_GPRS_LLC_SAPI_GMM, (uint8_t *)pdu_gmm_rau_acc, sizeof(pdu_gmm_rau_acc));
+	OSMO_ASSERT(llc_prim);
+	rc = osmo_gprs_gmm_prim_llc_lower_up(llc_prim);
+	OSMO_ASSERT(rc == 0);
+	/* update the used ptmsi to align with what was assigned from the network: */
+	ptmsi = 0xec999002;
+	tlli = gprs_tmsi2tlli(ptmsi, TLLI_LOCAL);
+	(void)tlli;
+	/* As a result, GMM submits GMMSM-MODIFY.ind */
+	/* As a result, MS answers GMM RAU Complete */
 
 	/* DEACT: TODO */
 

@@ -66,6 +66,7 @@ struct gprs_gmm_entity {
 
 	uint8_t radio_prio;	/* TS 24.008 10.5.7.2 */
 	struct gprs_ra_id ra; /* TS 24.008  10.5.5.15 (decoded) */
+	bool pdp_ctx_status_present;
 	uint8_t pdp_ctx_status[2]; /* TS 24.008 10.5.7.1 */
 	bool rx_npdu_numbers_list_present;
 	uint8_t rx_npdu_numbers_list[17]; /* TS 24.008 10.5.5.11 */
@@ -111,7 +112,7 @@ struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmrr_assign_req(uint32_t old_tll
 struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmsm_establish_cnf(uint32_t id, uint8_t cause);
 struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmsm_release_ind(uint32_t id);
 struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmsm_unitdata_ind(uint32_t id, uint8_t *smpdu, unsigned int smpdu_len);
-
+struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmsm_modify_ind(uint32_t id);
 /* gmm.c: */
 struct gprs_gmm_entity *gprs_gmm_gmme_alloc(uint32_t ptmsi, const char *imsi);
 void gprs_gmm_gmme_free(struct gprs_gmm_entity *gmme);
@@ -142,6 +143,7 @@ int gprs_gmm_tx_auth_ciph_fail(struct gprs_gmm_entity *gmme, enum gsm48_gmm_caus
 int gprs_gmm_submit_gmmreg_attach_cnf(struct gprs_gmm_entity *gmme, bool accepted, uint8_t cause);
 int gprs_gmm_submit_gmmsm_establish_cnf(struct gprs_gmm_entity *gmme, bool accepted, uint8_t cause);
 int gprs_gmm_submit_gmmsm_release_ind(struct gprs_gmm_entity *gmme);
+int gprs_gmm_submit_gmmsm_modify_ind(struct gprs_gmm_entity *gmme);
 int gprs_gmm_submit_llgmm_assing_req(const struct gprs_gmm_entity *gmme);
 
 /* misc.c */
