@@ -438,11 +438,11 @@ static void test_gmm_prim_ms_gmmreg(void)
 	/* As a result, MS submits GMMREG ATTACH.cnf */
 
 	/* Wait for READY timer to expire: */
-	clock_override_add(44, 0); /* 44: See GMM Attach Accept (pdu_gmm_att_acc) feed above */
+	clock_override_add(44, 0); /* 44: See GMM Attach Accept (pdu_gmm_att_acc) fed above */
 	clock_debug("Expect T3314 (READY) timeout");
 	osmo_select_main(0);
 
-	clock_override_add(10*60, 0); /* 44: See GMM Attach Accept (pdu_gmm_att_acc) feed above */
+	clock_override_add(10*60, 0); /* 10*60: See GMM Attach Accept (pdu_gmm_att_acc) fed above */
 	clock_debug("Expect T3312 (periodic RAU) timeout");
 	osmo_select_main(0);
 
@@ -452,7 +452,7 @@ static void test_gmm_prim_ms_gmmreg(void)
 	rc = osmo_gprs_gmm_prim_llc_lower_up(llc_prim);
 	OSMO_ASSERT(rc == 0);
 	/* update the used ptmsi to align with what was assigned from the network: */
-	ptmsi = 0xea711b41;
+	ptmsi = 0xec999002;
 	tlli = gprs_tmsi2tlli(ptmsi, TLLI_LOCAL);
 	/* As a result, MS answers GMM RAU Complete */
 
