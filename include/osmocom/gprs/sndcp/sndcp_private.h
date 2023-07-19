@@ -203,6 +203,7 @@ struct osmo_gprs_sndcp_prim *gprs_sndcp_prim_alloc_sn_unitdata_ind(uint32_t tlli
 struct osmo_gprs_sndcp_prim *gprs_sndcp_prim_alloc_sn_xid_ind(uint32_t tlli, uint8_t sapi, uint8_t nsapi);
 struct osmo_gprs_sndcp_prim *gprs_sndcp_prim_alloc_sn_xid_cnf(uint32_t tlli, uint8_t sapi, uint8_t nsapi);
 struct osmo_gprs_sndcp_prim *gprs_sndcp_prim_alloc_snsm_activate_rsp(uint32_t tlli, uint8_t nsapi);
+struct osmo_gprs_sndcp_prim *gprs_sndcp_prim_alloc_snsm_deactivate_rsp(uint32_t tlli, uint8_t nsapi);
 int gprs_sndcp_prim_call_up_cb(struct osmo_gprs_sndcp_prim *sndcp_prim);
 int gprs_sndcp_prim_call_down_cb(struct osmo_gprs_llc_prim *llc_prim);
 int gprs_sndcp_prim_call_snsm_cb(struct osmo_gprs_sndcp_prim *sndcp_prim);

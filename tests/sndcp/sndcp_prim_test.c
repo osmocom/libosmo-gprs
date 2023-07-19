@@ -97,6 +97,9 @@ int test_sndcp_prim_snsm_cb(struct osmo_gprs_sndcp_prim *sndcp_prim, void *user_
 	case OSMO_PRIM(OSMO_GPRS_SNDCP_SNSM_ACTIVATE, PRIM_OP_RESPONSE):
 		printf("%s(): Rx %s\n", __func__, npdu_name);
 		break;
+	case OSMO_PRIM(OSMO_GPRS_SNDCP_SNSM_DEACTIVATE, PRIM_OP_RESPONSE):
+		printf("%s(): Rx %s\n", __func__, npdu_name);
+		break;
 	default:
 		printf("%s(): Unexpected Rx %s\n", __func__, npdu_name);
 		OSMO_ASSERT(0);

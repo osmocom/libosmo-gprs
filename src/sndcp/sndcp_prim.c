@@ -279,6 +279,16 @@ struct osmo_gprs_sndcp_prim *osmo_gprs_sndcp_prim_alloc_snsm_deactivate_ind(uint
 	return sndcp_prim;
 }
 
+/* 5.1.2.22 SNSM-DEACTIVATE.response */
+struct osmo_gprs_sndcp_prim *gprs_sndcp_prim_alloc_snsm_deactivate_rsp(uint32_t tlli, uint8_t nsapi)
+{
+	struct osmo_gprs_sndcp_prim *sndcp_prim;
+	sndcp_prim = sndcp_prim_snsm_alloc(OSMO_GPRS_SNDCP_SNSM_DEACTIVATE, PRIM_OP_RESPONSE, 0);
+	sndcp_prim->snsm.tlli = tlli;
+	sndcp_prim->snsm.deactivate_rsp.nsapi = nsapi;
+	return sndcp_prim;
+}
+
 static int gprs_sndcp_prim_handle_unsupported(struct osmo_gprs_sndcp_prim *sndcp_prim)
 {
 	LOGSNDCP(LOGL_ERROR, "Unsupported sndcp_prim! %s\n", osmo_gprs_sndcp_prim_name(sndcp_prim));
@@ -656,6 +666,7 @@ static int gprs_sndcp_prim_handle_sndcp_snsm_deactivate_ind(struct osmo_gprs_snd
 	struct gprs_sndcp_entity *sne;
 	uint32_t tlli = sndcp_prim->snsm.tlli;
 	uint8_t nsapi = sndcp_prim->snsm.deactivate_ind.nsapi;
+	struct osmo_gprs_sndcp_prim *sndcp_prim_tx;
 
 	snme = gprs_sndcp_snme_find_by_tlli(tlli);
 	if (!snme) {
@@ -672,6 +683,11 @@ static int gprs_sndcp_prim_handle_sndcp_snsm_deactivate_ind(struct osmo_gprs_snd
 	}
 
 	gprs_sndcp_sne_free(sne);
+
+	/* TS 24.007 Appendix C.10 Submit SNSM-DEACTIVATE.rsp: */
+	sndcp_prim_tx = gprs_sndcp_prim_alloc_snsm_deactivate_rsp(tlli, nsapi);
+	OSMO_ASSERT(sndcp_prim_tx);
+	rc = gprs_sndcp_prim_call_snsm_cb(sndcp_prim_tx);
 	return rc;
 }
 
