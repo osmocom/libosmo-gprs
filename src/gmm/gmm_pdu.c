@@ -515,6 +515,11 @@ int gprs_gmm_build_rau_compl(struct gprs_gmm_entity *gmme, struct msgb *msg)
 	gh->proto_discr = GSM48_PDISC_MM_GPRS;
 	gh->msg_type = GSM48_MT_GMM_RA_UPD_COMPL;
 
+	/* TODO: 3GPP TS 24.008 4.7.5.1.3 "If Receive N-PDU Numbers were
+	 * included, the Receive N-PDU Numbers values valid in the MS, shall be included in
+	 * the ROUTING AREA UPDATE COMPLETE message."
+	 */
+
 	/* TODO: Add optional IEs */
 	return 0;
 }
