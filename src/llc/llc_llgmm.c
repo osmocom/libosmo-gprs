@@ -207,6 +207,9 @@ static int llc_prim_handle_llgmm_assign_req(struct osmo_gprs_llc_prim *llc_prim)
 		llme->old_tlli = old_tlli;
 		llme->tlli = new_tlli;
 		llme->state = OSMO_GPRS_LLC_LLMS_ASSIGNED;
+		/* Inform SNDCP about the TLLI change so it can update it too: */
+		if (old_tlli != new_tlli)
+			gprs_llc_llme_submit_prim_ll_assign_ind(old_tlli, new_tlli);
 	} else if (old_tlli != TLLI_UNASSIGNED && new_tlli == TLLI_UNASSIGNED) {
 		/* TLLI Unassignment 8.3.3) */
 		llme->tlli = llme->old_tlli = 0;

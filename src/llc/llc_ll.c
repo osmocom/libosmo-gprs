@@ -40,6 +40,7 @@ const struct value_string osmo_gprs_llc_ll_prim_type_names[] = {
 	{ OSMO_GPRS_LLC_LL_DATA,		"DATA" },
 	{ OSMO_GPRS_LLC_LL_UNITDATA,		"UNITDATA" },
 	{ OSMO_GPRS_LLC_LL_STATUS,		"STATUS" },
+	{ OSMO_GPRS_LLC_LL_ASSIGN,		"ASSIGN" },
 	{ 0, NULL }
 };
 
@@ -152,6 +153,17 @@ struct osmo_gprs_llc_prim *gprs_llc_prim_alloc_ll_unitdata_ind(
 	return llc_prim;
 }
 
+/* LL-ASSIGN.ind (MS/SGSN): Osmocom specific, used to inform TLLI update LLC->SNDCP */
+struct osmo_gprs_llc_prim *gprs_llc_prim_alloc_ll_assign_ind(uint32_t old_tlli, uint32_t new_tlli)
+{
+	struct osmo_gprs_llc_prim *llc_prim;
+	llc_prim = llc_prim_ll_alloc(OSMO_GPRS_LLC_LL_ASSIGN, PRIM_OP_INDICATION, 0);
+	llc_prim->ll.tlli = old_tlli;
+	llc_prim->ll.sapi = OSMO_GPRS_LLC_SAPI_SNDCP3; /* any SNDCP SAPI is good */
+	llc_prim->ll.assign_ind.tlli_new = new_tlli;
+	return llc_prim;
+}
+
 /********************************
  * Handling to upper layers:
  ********************************/
@@ -192,6 +204,16 @@ int gprs_llc_lle_submit_prim_ll_xid_cnf(struct gprs_llc_lle *lle,
 
 	return gprs_llc_prim_call_up_cb(llc_prim_tx);
 }
+
+int gprs_llc_llme_submit_prim_ll_assign_ind(uint32_t old_tlli, uint32_t new_tlli)
+{
+	struct osmo_gprs_llc_prim *llc_prim_tx;
+	llc_prim_tx = gprs_llc_prim_alloc_ll_assign_ind(old_tlli, new_tlli);
+	OSMO_ASSERT(llc_prim_tx);
+
+	return gprs_llc_prim_call_up_cb(llc_prim_tx);
+}
+
 /********************************
  * Handling from upper layers:
  ********************************/

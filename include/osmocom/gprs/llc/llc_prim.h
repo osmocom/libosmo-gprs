@@ -56,6 +56,7 @@ enum osmo_gprs_llc_ll_prim_type {
 	OSMO_GPRS_LLC_LL_DATA,		/* Req/Ind/Cnf: TLLI, L3-PDU, Ref, QoS, Radio Prio */
 	OSMO_GPRS_LLC_LL_UNITDATA,	/* Req/Ind: TLLI, L3-PDU, QoS, Radio Prio, Ciph, ... */
 	OSMO_GPRS_LLC_LL_STATUS,	/* Ind: TLLI, Cause */
+	OSMO_GPRS_LLC_LL_ASSIGN,	/* Ind: TLLI old, TLLI new; Osmocom specific */
 };
 
 extern const struct value_string osmo_gprs_llc_ll_prim_type_names[];
@@ -214,6 +215,10 @@ struct osmo_gprs_llc_ll_prim {
 		struct {
 			uint8_t cause;
 		} status_ind;
+		/* OSMO_GPRS_LLC_LL_ASSIGN | Ind */
+		struct {
+			uint32_t tlli_new;
+		} assign_ind;
 	};
 };
 

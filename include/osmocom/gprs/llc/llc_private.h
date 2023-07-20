@@ -297,6 +297,7 @@ struct osmo_gprs_llc_prim *gprs_llc_prim_alloc_ll_xid_ind(uint32_t tlli, enum os
 							  uint8_t *l3_par, unsigned int l3_par_len);
 struct osmo_gprs_llc_prim *gprs_llc_prim_alloc_ll_xid_cnf(uint32_t tlli, enum osmo_gprs_llc_sapi ll_sapi,
 							  uint8_t *l3_par, unsigned int l3_par_len);
+struct osmo_gprs_llc_prim *gprs_llc_prim_alloc_ll_assign_ind(uint32_t old_tlli, uint32_t new_tlli);
 struct osmo_gprs_llc_prim *gprs_llc_prim_alloc_ll_unitdata_ind(
 				uint32_t tlli, enum osmo_gprs_llc_sapi ll_sapi,
 				uint8_t *l3_pdu, size_t l3_pdu_len);
@@ -305,7 +306,7 @@ int gprs_llc_lle_submit_prim_ll_xid_ind(struct gprs_llc_lle *lle,
 int gprs_llc_lle_submit_prim_ll_xid_cnf(struct gprs_llc_lle *lle,
 					const struct gprs_llc_xid_field *xid_field_response_l3,
 					const struct gprs_llc_xid_field *xid_field_request_l3);
-
+int gprs_llc_llme_submit_prim_ll_assign_ind(uint32_t old_tlli, uint32_t new_tlli);
 /* llc_llgmm.c */
 int gprs_llc_prim_llgmm_upper_down(struct osmo_gprs_llc_prim *llc_prim);
 

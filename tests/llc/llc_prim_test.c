@@ -48,9 +48,17 @@ int test_llc_prim_up_cb(struct osmo_gprs_llc_prim *llc_prim, void *user_data)
 		printf("%s(): Rx %s TLLI=0x%08x\n", __func__, pdu_name, llc_prim->llgmm.tlli);
 		break;
 	case OSMO_GPRS_LLC_SAP_LL:
-		printf("%s(): Rx %s TLLI=0x%08x SAPI=%s l3=[%s]\n", __func__, pdu_name,
-		       llc_prim->ll.tlli, osmo_gprs_llc_sapi_name(llc_prim->ll.sapi),
-		       osmo_hexdump(llc_prim->ll.l3_pdu, llc_prim->ll.l3_pdu_len));
+		switch (OSMO_PRIM_HDR(&llc_prim->oph)) {
+		case OSMO_PRIM(OSMO_GPRS_LLC_LL_ASSIGN, PRIM_OP_INDICATION):
+			printf("%s(): Rx %s TLLI=0x%08x NEW_TLLI=x%08x\n", __func__, pdu_name,
+			       llc_prim->ll.tlli, llc_prim->ll.assign_ind.tlli_new);
+			break;
+		default:
+			printf("%s(): Rx %s TLLI=0x%08x SAPI=%s l3=[%s]\n", __func__, pdu_name,
+			       llc_prim->ll.tlli, osmo_gprs_llc_sapi_name(llc_prim->ll.sapi),
+			       osmo_hexdump(llc_prim->ll.l3_pdu, llc_prim->ll.l3_pdu_len));
+			break;
+		}
 		break;
 	default:
 		printf("%s(): Unexpected Rx %s\n", __func__, pdu_name);
