@@ -74,6 +74,6 @@ static inline const struct gprs_rlcmac_dl_tbf *tbf_as_dl_tbf_const(struct gprs_r
 }
 
 #define LOGPTBFDL(dl_tbf, lvl, fmt, args...) \
-	LOGP(g_rlcmac_log_cat[OSMO_GPRS_RLCMAC_LOGC_TBFUL], lvl, "TBF(DL:NR-%" PRIu8 ":TLLI-%08x) " fmt, \
+	LOGP(g_rlcmac_log_cat[OSMO_GPRS_RLCMAC_LOGC_TBFDL], lvl, "TBF(DL:NR-%" PRIu8 ":TLLI-%08x) " fmt, \
 	(dl_tbf)->tbf.nr, (dl_tbf)->tbf.gre->tlli, \
 	## args)
