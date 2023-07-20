@@ -34,6 +34,7 @@ struct gprs_rlcmac_tbf_ul_fsm_ctx {
 enum tbf_ul_fsm_event {
 	GPRS_RLCMAC_TBF_UL_EV_UL_ASS_START,
 	GPRS_RLCMAC_TBF_UL_EV_UL_ASS_COMPL,
+	GPRS_RLCMAC_TBF_UL_EV_UL_ASS_REJ,
 	GPRS_RLCMAC_TBF_UL_EV_FIRST_UL_DATA_SENT,
 	GPRS_RLCMAC_TBF_UL_EV_N3104_MAX,
 	GPRS_RLCMAC_TBF_UL_EV_RX_UL_ACK_NACK, /* data: struct tbf_ul_ass_ev_rx_ul_ack_nack* */

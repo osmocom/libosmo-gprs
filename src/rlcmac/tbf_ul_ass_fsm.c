@@ -262,12 +262,18 @@ static void st_idle_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_state)
 static void st_idle(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *ctx = (struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *)fi->priv;
+	int rc;
+
 	switch (event) {
 	case GPRS_RLCMAC_TBF_UL_ASS_EV_START:
 		/* Inform the main TBF state about the assignment starting: */
 		osmo_fsm_inst_dispatch(ctx->ul_tbf->state_fsm.fi, GPRS_RLCMAC_TBF_UL_EV_UL_ASS_START, NULL);
 		ctx->ass_type = *(enum gprs_rlcmac_tbf_ul_ass_type *)data;
-		submit_rach_req(ctx);
+		rc = submit_rach_req(ctx);
+		if (rc < 0) {
+			osmo_fsm_inst_dispatch(ctx->ul_tbf->state_fsm.fi, GPRS_RLCMAC_TBF_UL_EV_UL_ASS_REJ, NULL);
+			break;
+		}
 		tbf_ul_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_CCCH_IMM_ASS);
 		break;
 	case GPRS_RLCMAC_TBF_UL_ASS_EV_START_DIRECT_2PHASE:

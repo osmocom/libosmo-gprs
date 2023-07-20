@@ -33,6 +33,7 @@
 static const struct value_string tbf_ul_fsm_event_names[] = {
 	{ GPRS_RLCMAC_TBF_UL_EV_UL_ASS_START,			"UL_ASS_START" },
 	{ GPRS_RLCMAC_TBF_UL_EV_UL_ASS_COMPL,			"UL_ASS_COMPL" },
+	{ GPRS_RLCMAC_TBF_UL_EV_UL_ASS_REJ,			"UL_ASS_REJ" },
 	{ GPRS_RLCMAC_TBF_UL_EV_FIRST_UL_DATA_SENT,		"FIRST_UL_DATA_SENT" },
 	{ GPRS_RLCMAC_TBF_UL_EV_N3104_MAX,			"N3104_MAX" },
 	{ GPRS_RLCMAC_TBF_UL_EV_RX_UL_ACK_NACK,			"RX_UL_ACK_NACK" },
@@ -164,6 +165,9 @@ static void st_wait_assign(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 		configure_ul_tbf(ctx);
 		tbf_ul_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ST_FLOW);
 		break;
+	case GPRS_RLCMAC_TBF_UL_EV_UL_ASS_REJ:
+		gprs_rlcmac_ul_tbf_free(ctx->ul_tbf);
+		break;
 	default:
 		OSMO_ASSERT(0);
 	}
@@ -282,7 +286,8 @@ static struct osmo_fsm_state tbf_ul_fsm_states[] = {
 	},
 	[GPRS_RLCMAC_TBF_UL_ST_WAIT_ASSIGN] = {
 		.in_event_mask =
-			X(GPRS_RLCMAC_TBF_UL_EV_UL_ASS_COMPL),
+			X(GPRS_RLCMAC_TBF_UL_EV_UL_ASS_COMPL) |
+			X(GPRS_RLCMAC_TBF_UL_EV_UL_ASS_REJ),
 		.out_state_mask =
 			X(GPRS_RLCMAC_TBF_UL_ST_FLOW),
 		.name = "ASSIGN",
