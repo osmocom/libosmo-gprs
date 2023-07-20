@@ -619,7 +619,7 @@ static int create_new_bsn(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_r
 	do {
 		int payload_written = 0;
 
-		if (msgb_length(ul_tbf->llc_tx_msg) == 0) {
+		if (!ul_tbf->llc_tx_msg || msgb_length(ul_tbf->llc_tx_msg) == 0) {
 			/* The data just drained, store the current fn */
 			if (ul_tbf->last_ul_drained_fn < 0)
 				ul_tbf->last_ul_drained_fn = bi->fn;
