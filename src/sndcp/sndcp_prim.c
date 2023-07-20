@@ -536,6 +536,23 @@ static int gprs_sndcp_prim_handle_llc_ll_xid_cnf(struct osmo_gprs_llc_prim *llc_
 	return rc;
 }
 
+static int gprs_sndcp_prim_handle_llc_ll_assign_ind(struct osmo_gprs_llc_prim *llc_prim)
+{
+	struct gprs_sndcp_mgmt_entity *snme;
+
+	snme = gprs_sndcp_snme_find_by_tlli(llc_prim->ll.tlli);
+	if (!snme) {
+		LOGSNDCP(LOGL_ERROR, "SNDCP-LL-ASSIGN.ind: Message for non-existing SNDCP Entity (TLLI=%08x)\n",
+			 llc_prim->ll.tlli);
+		return -EIO;
+	}
+
+	LOGSNME(snme, LOGL_INFO, "TLLI update 0x%08x -> 0x%08x\n",
+		llc_prim->ll.tlli, llc_prim->ll.assign_ind.tlli_new);
+	snme->tlli = llc_prim->ll.assign_ind.tlli_new;
+	return 0;
+}
+
 int gprs_sndcp_prim_lower_up_llc_ll(struct osmo_gprs_llc_prim *llc_prim)
 {
 	int rc;
@@ -552,6 +569,9 @@ int gprs_sndcp_prim_lower_up_llc_ll(struct osmo_gprs_llc_prim *llc_prim)
 		break;
 	case OSMO_PRIM(OSMO_GPRS_LLC_LL_XID, PRIM_OP_CONFIRM):
 		rc = gprs_sndcp_prim_handle_llc_ll_xid_cnf(llc_prim);
+		break;
+	case OSMO_PRIM(OSMO_GPRS_LLC_LL_ASSIGN, PRIM_OP_INDICATION):
+		rc = gprs_sndcp_prim_handle_llc_ll_assign_ind(llc_prim);
 		break;
 	default:
 		rc = gprs_sndcp_prim_handle_llc_ll_unsupported(llc_prim);
