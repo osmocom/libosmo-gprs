@@ -62,7 +62,6 @@ void gprs_rlcmac_rlc_dl_window_raise_v_r(struct gprs_rlcmac_rlc_dl_window *dlw, 
 uint16_t gprs_rlcmac_rlc_dl_window_raise_v_q(struct gprs_rlcmac_rlc_dl_window *dlw);
 
 void gprs_rlcmac_rlc_dl_window_receive_bsn(struct gprs_rlcmac_rlc_dl_window *dlw, uint16_t bsn);
-bool gprs_rlcmac_rlc_dl_window_invalidate_bsn(struct gprs_rlcmac_rlc_dl_window *dlw, uint16_t bsn);
 
 static inline uint16_t gprs_rlcmac_rlc_dl_window_ssn(const struct gprs_rlcmac_rlc_dl_window *dlw)
 {

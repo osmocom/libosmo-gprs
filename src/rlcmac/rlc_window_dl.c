@@ -69,6 +69,11 @@ void gprs_rlcmac_rlc_v_n_mark_missing(struct gprs_rlcmac_rlc_v_n *v_n, int bsn)
 	return gprs_rlcmac_rlc_v_n_mark(v_n, bsn, GPRS_RLCMAC_RLC_DL_BSN_MISSING);
 }
 
+void gprs_rlcmac_rlc_v_n_mark_invalid(struct gprs_rlcmac_rlc_v_n *v_n, int bsn)
+{
+	return gprs_rlcmac_rlc_v_n_mark(v_n, bsn, GPRS_RLCMAC_RLC_DL_BSN_INVALID);
+}
+
 /*************
  * UL WINDOW
 *************/
@@ -220,8 +225,14 @@ void gprs_rlcmac_rlc_dl_window_raise_v_r(struct gprs_rlcmac_rlc_dl_window *dlw, 
 	/* Positive offset, so raise. */
 	if (offset_v_r < (gprs_rlcmac_rlc_window_sns(w) >> 1)) {
 		while (offset_v_r--) {
-			if (offset_v_r) /* all except the received block */
-				gprs_rlcmac_rlc_v_n_mark_missing(&dlw->v_n, gprs_rlcmac_rlc_dl_window_v_r(dlw));
+			const uint16_t v_r = gprs_rlcmac_rlc_dl_window_v_r(dlw);
+			const uint16_t bsn_no_longer_in_ws = gprs_rlcmac_rlc_window_mod_sns_bsn(w, v_r - gprs_rlcmac_rlc_window_ws(w));
+			LOGRLCMAC(LOGL_DEBUG, "- Mark BSN %u as INVALID\n", bsn_no_longer_in_ws);
+			gprs_rlcmac_rlc_v_n_mark_invalid(&dlw->v_n, bsn_no_longer_in_ws);
+			if (offset_v_r) {/* all except the received block */
+				LOGRLCMAC(LOGL_DEBUG, "- Mark BSN %u as MISSING\n", v_r);
+				gprs_rlcmac_rlc_v_n_mark_missing(&dlw->v_n, v_r);
+			}
 			gprs_rlcmac_rlc_dl_window_raise_v_r_to(dlw, 1);
 		}
 		LOGRLCMAC(LOGL_DEBUG, "- Raising V(R) to %d\n", gprs_rlcmac_rlc_dl_window_v_r(dlw));
@@ -254,12 +265,4 @@ void gprs_rlcmac_rlc_dl_window_receive_bsn(struct gprs_rlcmac_rlc_dl_window *dlw
 {
 	gprs_rlcmac_rlc_v_n_mark_received(&dlw->v_n, bsn);
 	gprs_rlcmac_rlc_dl_window_raise_v_r(dlw, bsn);
-}
-
-bool gprs_rlcmac_rlc_dl_window_invalidate_bsn(struct gprs_rlcmac_rlc_dl_window *dlw, uint16_t bsn)
-{
-	bool was_valid = gprs_rlcmac_rlc_v_n_is_received(&dlw->v_n, bsn);
-	gprs_rlcmac_rlc_v_n_mark_missing(&dlw->v_n, bsn);
-
-	return was_valid;
 }
