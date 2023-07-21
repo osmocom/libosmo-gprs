@@ -328,6 +328,18 @@ free_ret:
 	return NULL;
 }
 
+/* Returns the MS/GRE queue unless the UL TBF has entered Countdown Procedure.
+ * In that case, it returns the specific frozen queue. */
+static struct gprs_rlcmac_llc_queue *gprs_rlcmac_ul_tbf_llc_queue(const struct gprs_rlcmac_ul_tbf *ul_tbf)
+{
+	struct gprs_rlcmac_llc_queue *llc_queue;
+	if (ul_tbf->countdown_proc.active)
+		llc_queue = ul_tbf->countdown_proc.llc_queue;
+	else
+		llc_queue = ul_tbf->tbf.gre->llc_queue;
+	return llc_queue;
+}
+
 bool gprs_rlcmac_ul_tbf_have_data(const struct gprs_rlcmac_ul_tbf *ul_tbf)
 {
 	if (ul_tbf->llc_tx_msg && msgb_length(ul_tbf->llc_tx_msg) > 0)
@@ -360,10 +372,7 @@ void gprs_rlcmac_ul_tbf_schedule_next_llc_frame(struct gprs_rlcmac_ul_tbf *ul_tb
 
 	msgb_free(ul_tbf->llc_tx_msg);
 
-	if (ul_tbf->countdown_proc.active)
-		llc_queue = ul_tbf->countdown_proc.llc_queue;
-	else
-		llc_queue = ul_tbf->tbf.gre->llc_queue;
+	llc_queue = gprs_rlcmac_ul_tbf_llc_queue(ul_tbf);
 
 	/* dequeue next LLC frame, if any */
 	ul_tbf->llc_tx_msg = gprs_rlcmac_llc_queue_dequeue(llc_queue);
