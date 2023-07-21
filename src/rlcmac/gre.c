@@ -220,10 +220,15 @@ int gprs_rlcmac_entity_llc_enqueue(struct gprs_rlcmac_entity *gre, uint8_t *ll_p
 				   enum osmo_gprs_rlcmac_llc_sapi sapi, uint8_t radio_prio)
 {
 	int rc;
+	LOGGRE(gre, LOGL_DEBUG, "Enqueueing LLC-PDU len=%u SAPI=%s radio_prio=%u\n",
+	       ll_pdu_len, get_value_string(osmo_gprs_rlcmac_llc_sapi_names, sapi), radio_prio);
 	rc = gprs_rlcmac_llc_queue_enqueue(gre->llc_queue, ll_pdu, ll_pdu_len,
 					   sapi, radio_prio);
-	if (rc < 0)
+	if (rc < 0) {
+		LOGGRE(gre, LOGL_NOTICE, "Enqueueing LLC-PDU len=%u SAPI=%s radio_prio=%u failed!\n",
+		       ll_pdu_len, get_value_string(osmo_gprs_rlcmac_llc_sapi_names, sapi), radio_prio);
 		return rc;
+	}
 
 	rc = gprs_rlcmac_entity_start_ul_tbf_pkt_acc_proc_if_needed(gre);
 	return rc;
