@@ -127,6 +127,20 @@ static void arm_T3182_if_needed(struct gprs_rlcmac_tbf_ul_fsm_ctx *ctx)
 	}
 }
 
+static void _contention_resolution_succeeded(struct gprs_rlcmac_tbf_ul_fsm_ctx *ctx)
+{
+	LOGPFSML(ctx->fi, LOGL_INFO, "Contention resolution succeeded, stop T3166\n");
+	OSMO_ASSERT(ctx->ul_tbf->ul_ass_fsm.ass_type == GPRS_RLCMAC_TBF_UL_ASS_TYPE_1PHASE);
+	OSMO_ASSERT(ctx->fi->T == 3166);
+	osmo_timer_del(&ctx->fi->timer);
+	ctx->fi->T = 0;
+
+	/* TS 44.060 9.3.1.2: If in Countdown Procedure state, CV needs to be recalculated
+	 * since TBF is no longer transmitting TLLI in the block, hence 4 more bytes per
+	 * block are available. This means the new CV <= old CV. */
+	gprs_rlcmac_ul_tbf_countdown_proc_update_cv(ctx->ul_tbf);
+}
+
 /* This one is triggered when packet access procedure fails, which can happen
  * either in WAIT_IMM_ASS (ImmAss timeout), FLOW (T3164) or FINISHED (T3164, T3166) */
 static void st_new_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_state)
@@ -195,11 +209,7 @@ static void st_flow(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 		break;
 	case GPRS_RLCMAC_TBF_UL_EV_RX_UL_ACK_NACK:
 		if (gprs_rlcmac_ul_tbf_in_contention_resolution(ctx->ul_tbf)) {
-			LOGPFSML(ctx->fi, LOGL_INFO, "Contention resolution succeeded, stop T3166\n");
-			OSMO_ASSERT(ctx->ul_tbf->ul_ass_fsm.ass_type == GPRS_RLCMAC_TBF_UL_ASS_TYPE_1PHASE);
-			OSMO_ASSERT(fi->T == 3166);
-			osmo_timer_del(&fi->timer);
-			fi->T = 0;
+			_contention_resolution_succeeded(ctx);
 		}
 		/* It's impossible we receive a correct final_ack here, since we didn't
 		 * sent last data (FSM would be in FINISHED state then) */
@@ -224,11 +234,7 @@ static void st_finished(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 	case GPRS_RLCMAC_TBF_UL_EV_RX_UL_ACK_NACK:
 		ctx_ul_ack_nack = (struct tbf_ul_ass_ev_rx_ul_ack_nack *)data;
 		if (gprs_rlcmac_ul_tbf_in_contention_resolution(ctx->ul_tbf)) {
-			LOGPFSML(ctx->fi, LOGL_INFO, "Contention resolution succeeded, stop T3166\n");
-			OSMO_ASSERT(ctx->ul_tbf->ul_ass_fsm.ass_type == GPRS_RLCMAC_TBF_UL_ASS_TYPE_1PHASE);
-			OSMO_ASSERT(fi->T == 3166);
-			osmo_timer_del(&fi->timer);
-			fi->T = 0;
+			_contention_resolution_succeeded(ctx);
 		} else if (fi->T == 3182 && osmo_timer_pending(&fi->timer))  {
 			/* 9.3.3.3.2 "Upon reception of a PACKET UPLINK ACK/NACK message for this TBF
 			 * the mobile station shall stop timer T3182 for the TBF".

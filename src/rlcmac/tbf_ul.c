@@ -243,7 +243,13 @@ static void gprs_rlcmac_ul_tbf_update_tx_cs(struct gprs_rlcmac_ul_tbf *ul_tbf, e
 		  gprs_rlcmac_mcs_name(ul_tbf->tx_cs), gprs_rlcmac_mcs_name(tx_cs));
 	ul_tbf->tx_cs = tx_cs;
 
-	/* TODO: recalculate countdown_state, have to look a TS 44.060 specs on what to do exactly. */
+	/* TS 44.060 9.3.1.2: If in Countdown Procedure state, CV needs to be
+	 * recalculated since CS change means also block size change and hence
+	 * the new CV != old CV (new CV may be greater or lesser than old CV).
+	 * This means CV can go back to 15, but still be in Countdown Procedure,
+	 * aka no new enqueued LLC data in the MS is to be transmitted until the
+	 * current TBF finishes. */
+	gprs_rlcmac_ul_tbf_countdown_proc_update_cv(ul_tbf);
 }
 
 int gprs_rlcmac_ul_tbf_handle_pkt_ul_ack_nack(struct gprs_rlcmac_ul_tbf *ul_tbf,
@@ -517,7 +523,7 @@ _* return 0: check blk_count_to_x(st) */
 static uint8_t gprs_rlcmac_ul_tbf_calculate_cv(const struct gprs_rlcmac_ul_tbf *ul_tbf)
 {
 	struct blk_count_state st;
-	const struct gprs_rlcmac_llc_queue *q = ul_tbf->tbf.gre->llc_queue;
+	const struct gprs_rlcmac_llc_queue *q = gprs_rlcmac_ul_tbf_llc_queue(ul_tbf);
 	unsigned int i, j;
 	unsigned x;
 
@@ -572,11 +578,22 @@ static void gprs_rlcmac_ul_tbf_steal_llc_queue_from_gre(struct gprs_rlcmac_ul_tb
 	ul_tbf->tbf.gre->llc_queue = gprs_rlcmac_llc_queue_alloc(ul_tbf->tbf.gre);
 }
 
-static void gprs_rlcmac_ul_tbf_check_countdown_proc(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_rts_block_ind *bi)
+/* Check if UL TBF needs to enter Countdown Procedure everytime a new RLC/MAC block is to be transmitted */
+static void gprs_rlcmac_ul_tbf_countdown_proc_check_enter(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_rts_block_ind *bi)
 {
 
-	if (ul_tbf->countdown_proc.active)
+	if (ul_tbf->countdown_proc.active) {
+		/* This may happen if TBF entered Countdown Procedure state but
+		 * later on due to CS change the CV incremented to more than BS_CV_MAX.
+		 * In this case we cannot simply decrement the CV each time a
+		 * new block is transmitted, but we rather need to keep
+		 * calculating it here:
+		 */
+		if (ul_tbf->countdown_proc.cv == 15)
+			ul_tbf->countdown_proc.cv = gprs_rlcmac_ul_tbf_calculate_cv(ul_tbf);
 		return;
+	}
+	/* Not (yet) in Countdown Procedure, check if we need to enter into it */
 	ul_tbf->countdown_proc.cv = gprs_rlcmac_ul_tbf_calculate_cv(ul_tbf);
 	if (ul_tbf->countdown_proc.cv < 15) {
 		if (gprs_rlcmac_ul_tbf_shall_keep_open(ul_tbf, bi)) {
@@ -590,6 +607,18 @@ static void gprs_rlcmac_ul_tbf_check_countdown_proc(struct gprs_rlcmac_ul_tbf *u
 	}
 }
 
+/* Recalculate CV once in Countdown Procedure if conditions change (called by):
+ * - If contention resolution succeeds
+ * - If tx CS requested by network changes
+ */
+void gprs_rlcmac_ul_tbf_countdown_proc_update_cv(struct gprs_rlcmac_ul_tbf *ul_tbf)
+{
+
+	if (!ul_tbf->countdown_proc.active)
+		return;
+	ul_tbf->countdown_proc.cv = gprs_rlcmac_ul_tbf_calculate_cv(ul_tbf);
+}
+
 static int create_new_bsn(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_rts_block_ind *bi, enum gprs_rlcmac_coding_scheme cs)
 {
 	const uint16_t bsn = gprs_rlcmac_rlc_ul_window_v_s(ul_tbf->ulw);
@@ -600,7 +629,7 @@ static int create_new_bsn(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_r
 	int write_offset = 0;
 	enum gpr_rlcmac_append_result ar;
 
-	gprs_rlcmac_ul_tbf_check_countdown_proc(ul_tbf, bi);
+	gprs_rlcmac_ul_tbf_countdown_proc_check_enter(ul_tbf, bi);
 
 	if (!ul_tbf->llc_tx_msg || msgb_length(ul_tbf->llc_tx_msg) == 0)
 		gprs_rlcmac_ul_tbf_schedule_next_llc_frame(ul_tbf);
@@ -628,9 +657,16 @@ static int create_new_bsn(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_r
 	rdbi->data_len = block_data_len;
 
 	rdbi->ti = gprs_rlcmac_ul_tbf_in_contention_resolution(ul_tbf);
-	rdbi->cv = ul_tbf->countdown_proc.cv--;
+	rdbi->cv = ul_tbf->countdown_proc.cv;
 	rdbi->bsn = bsn; /* Block Sequence Number */
 	rdbi->e = 1; /* Extension bit, maybe set later (1: no extension) */
+
+	/* Once we enter countdown procedure, simply decrement the counter to
+	 * avoid recalculating all the time. */
+	if (ul_tbf->countdown_proc.cv < 15)
+		ul_tbf->countdown_proc.cv--;
+	/* else: It will be updated in next call to
+		 gprs_rlcmac_ul_tbf_countdown_proc_check_enter() above */
 
 	if (rdbi->ti) {
 		/* Append TLLI: */
