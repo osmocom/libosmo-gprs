@@ -51,7 +51,7 @@ void gprs_rlcmac_llc_queue_set_codel_params(struct gprs_rlcmac_llc_queue *q, boo
 
 int gprs_rlcmac_llc_queue_enqueue(struct gprs_rlcmac_llc_queue *q, uint8_t *ll_pdu, unsigned int ll_pdu_len,
 				   enum osmo_gprs_rlcmac_llc_sapi sapi, uint8_t radio_prio);
-struct msgb *gprs_rlcmac_llc_queue_dequeue(struct gprs_rlcmac_llc_queue *q);
+struct msgb *gprs_rlcmac_llc_queue_dequeue(struct gprs_rlcmac_llc_queue *q, bool can_discard);
 uint8_t gprs_rlcmac_llc_queue_highest_radio_prio_pending(struct gprs_rlcmac_llc_queue *q);
 
 void gprs_rlcmac_llc_queue_merge_prepend(struct gprs_rlcmac_llc_queue *q, struct gprs_rlcmac_llc_queue *old_q);

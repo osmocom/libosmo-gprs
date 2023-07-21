@@ -182,7 +182,7 @@ static struct msgb *gprs_rlcmac_llc_queue_pick_msg(struct gprs_rlcmac_llc_queue 
 	return msg;
 }
 
-struct msgb *gprs_rlcmac_llc_queue_dequeue(struct gprs_rlcmac_llc_queue *q)
+struct msgb *gprs_rlcmac_llc_queue_dequeue(struct gprs_rlcmac_llc_queue *q, bool can_discard)
 {
 	struct msgb *msg;
 	struct timespec tv_now;
@@ -194,7 +194,7 @@ struct msgb *gprs_rlcmac_llc_queue_dequeue(struct gprs_rlcmac_llc_queue *q)
 
 	while ((msg = gprs_rlcmac_llc_queue_pick_msg(q, &prioq))) {
 		ehdr = msgb_l1(msg);
-		if (q->use_codel) {
+		if (can_discard && q->use_codel) {
 			int bytes = gprs_rlcmac_llc_queue_octets(q);
 			if (gprs_codel_control(&prioq->codel_state, &ehdr->recv_time, &tv_now, bytes)) {
 				/* Drop frame: */

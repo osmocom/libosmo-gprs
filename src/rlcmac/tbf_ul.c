@@ -375,7 +375,11 @@ void gprs_rlcmac_ul_tbf_schedule_next_llc_frame(struct gprs_rlcmac_ul_tbf *ul_tb
 	llc_queue = gprs_rlcmac_ul_tbf_llc_queue(ul_tbf);
 
 	/* dequeue next LLC frame, if any */
-	ul_tbf->llc_tx_msg = gprs_rlcmac_llc_queue_dequeue(llc_queue);
+	/* Improve: Ideally we could be able to discard as long as current CV !=0
+	 * (because we must tell PCU that we are done), and if a frame is discarded probably do:
+	 * ul_tbf->countdown_proc.cv = gprs_rlcmac_ul_tbf_calculate_cv(ul_tbf);
+	 */
+	ul_tbf->llc_tx_msg = gprs_rlcmac_llc_queue_dequeue(llc_queue, !ul_tbf->countdown_proc.active);
 	if (!ul_tbf->llc_tx_msg)
 		return;
 
