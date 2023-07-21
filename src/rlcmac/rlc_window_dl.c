@@ -163,7 +163,7 @@ void gprs_rlcmac_rlc_dl_window_update_rbb(const struct gprs_rlcmac_rlc_dl_window
 	unsigned int i;
 
 	for (i = 0; i < ws; i++) {
-		if (gprs_rlcmac_rlc_v_n_is_received(&dlw->v_n, ssn - 1 - i) & mod_sns)
+		if (gprs_rlcmac_rlc_v_n_is_received(&dlw->v_n, (ssn - 1 - i) & mod_sns))
 			rbb[ws - 1 - i] = 'R';
 		else
 			rbb[ws - 1 - i] = 'I';
