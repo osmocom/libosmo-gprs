@@ -234,6 +234,18 @@ static int gprs_rlcmac_ul_tbf_update_window(struct gprs_rlcmac_ul_tbf *ul_tbf,
 	return 0;
 }
 
+static void gprs_rlcmac_ul_tbf_update_tx_cs(struct gprs_rlcmac_ul_tbf *ul_tbf, enum gprs_rlcmac_coding_scheme tx_cs)
+{
+	if (ul_tbf->tx_cs == tx_cs)
+		return;
+
+	LOGPTBFUL(ul_tbf, LOGL_INFO, "Tx CS update: %s -> %s\n",
+		  gprs_rlcmac_mcs_name(ul_tbf->tx_cs), gprs_rlcmac_mcs_name(tx_cs));
+	ul_tbf->tx_cs = tx_cs;
+
+	/* TODO: recalculate countdown_state, have to look a TS 44.060 specs on what to do exactly. */
+}
+
 int gprs_rlcmac_ul_tbf_handle_pkt_ul_ack_nack(struct gprs_rlcmac_ul_tbf *ul_tbf,
 					      const RlcMacDownlink_t *dl_block)
 {
@@ -275,6 +287,8 @@ int gprs_rlcmac_ul_tbf_handle_pkt_ul_ack_nack(struct gprs_rlcmac_ul_tbf *ul_tbf,
 		LOGPTBFUL(ul_tbf, LOGL_NOTICE,
 			  "Received acknowledge of all blocks, but without final ack indication (don't worry)\n");
 	}
+
+	gprs_rlcmac_ul_tbf_update_tx_cs(ul_tbf, gprs->CHANNEL_CODING_COMMAND + GPRS_RLCMAC_CS_1);
 
 	return rc;
 }

@@ -321,7 +321,7 @@ static void ul_ack_nack_init(RlcMacDownlink_t *dl_block, uint8_t ul_tfi, enum gp
 	ack->UPLINK_TFI = ul_tfi;
 	ack->UnionType = 0; /* GPRS */
 
-	gprs->CHANNEL_CODING_COMMAND = cs;
+	gprs->CHANNEL_CODING_COMMAND = gprs_rlcmac_mcs_chan_code(cs);
 }
 
 static void ul_ack_nack_mark(Ack_Nack_Description_t *ack_desc, unsigned int idx, bool received)
