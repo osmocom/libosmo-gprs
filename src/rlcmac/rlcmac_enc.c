@@ -360,14 +360,17 @@ static void gprs_rlcmac_enc_prepare_pkt_ack_nack_desc_gprs(Ack_Nack_Description_
 		.data = &ack_desc->RECEIVED_BLOCK_BITMAP[0],
 		.data_len = sizeof(ack_desc->RECEIVED_BLOCK_BITMAP),
 	};
+	uint16_t ssn = gprs_rlcmac_rlc_dl_window_ssn(dl_tbf->dlw);
+	bool final_ack = (gprs_rlcmac_tbf_dl_state(dl_tbf) == GPRS_RLCMAC_TBF_DL_ST_FINISHED);
 	char rbb[65];
 
 	gprs_rlcmac_rlc_dl_window_update_rbb(dl_tbf->dlw, rbb);
 	rbb[64] = 0;
-	LOGPTBFDL(dl_tbf, LOGL_DEBUG, "- V(N): \"%s\" R=Received I=Invalid\n", rbb);
+	LOGPTBFDL(dl_tbf, LOGL_DEBUG, "- SSN %" PRIu16 ", V(N): \"%s\" R=Received I=Invalid, FINAL_ACK=%u\n",
+		  ssn, rbb, final_ack);
 
-	ack_desc->FINAL_ACK_INDICATION = (gprs_rlcmac_tbf_dl_state(dl_tbf) == GPRS_RLCMAC_TBF_DL_ST_FINISHED);
-	ack_desc->STARTING_SEQUENCE_NUMBER = gprs_rlcmac_rlc_dl_window_ssn(dl_tbf->dlw);
+	ack_desc->FINAL_ACK_INDICATION = final_ack;
+	ack_desc->STARTING_SEQUENCE_NUMBER = ssn;
 	for (int i = 0; i < 64; i++) {
 		/* Set bit at the appropriate position (see 3GPP TS 44.060 9.1.8.1) */
 		bool is_ack = (rbb[i] == 'R');
