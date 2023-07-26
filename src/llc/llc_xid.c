@@ -320,3 +320,33 @@ struct gprs_llc_xid_field *gprs_llc_xid_deepcopy(void *ctx,
 	}
 	return dst_xid;
 }
+
+/* Dump a list with XID fields (Debug) */
+void gprs_llc_dump_xid_fields(const struct gprs_llc_xid_field *xid_fields,
+			      size_t xid_fields_len, unsigned int logl)
+{
+	unsigned int i;
+
+	OSMO_ASSERT(xid_fields);
+
+	for (i = 0; i < xid_fields_len; i++) {
+		const struct gprs_llc_xid_field *xid_field = &xid_fields[i];
+		const uint8_t len = gprs_llc_xid_field_get_len(xid_field);
+		if (len > 0) {
+			if (gprs_llc_xid_type_is_variable_len(xid_field->type)) {
+				OSMO_ASSERT(xid_field->var.val);
+				LOGLLC(logl, "XID: type %s, data_len=%d, data=%s\n",
+				       gprs_llc_xid_type_name(xid_field->type),
+				       xid_field->var.val_len,
+				       osmo_hexdump_nospc(xid_field->var.val, xid_field->var.val_len));
+			} else {
+				LOGLLC(logl, "XID: type %s, val_len=%d, val=%u\n",
+				       gprs_llc_xid_type_name(xid_field->type),
+				       len, xid_field->val);
+			}
+		} else {
+			LOGLLC(logl, "XID: type %s, data_len=0\n",
+			     gprs_llc_xid_type_name(xid_field->type));
+		}
+	}
+}

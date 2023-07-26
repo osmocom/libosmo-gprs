@@ -471,6 +471,8 @@ static int gprs_llc_lle_generate_xid(struct gprs_llc_lle *lle, uint8_t *bytes, i
 		xid_fields_len--;
 	}
 
+	gprs_llc_dump_xid_fields(xid_fields, xid_fields_len, LOGL_DEBUG);
+
 	/* Store generated XID for later reference */
 	talloc_free(lle->xid);
 	lle->xid = xid_fields;
@@ -561,6 +563,8 @@ static int gprs_llc_lle_process_xid_ind(struct gprs_llc_lle *lle,
 		return rc;
 	}
 	xid_fields_len = rc;
+
+	gprs_llc_dump_xid_fields(xid_fields, xid_fields_len, LOGL_DEBUG);
 
 	/* FIXME: Check the incoming XID parameters for
 	* for validity. Currently we just blindly

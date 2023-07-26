@@ -22,5 +22,9 @@ DLGLOBAL INFO LLME(e1c5d364/e1c5d364){ASSIGNED} LLGMM-RESET.request
 DLGLOBAL INFO Rx from upper layers: LL-ESTABLISH.request
 DLGLOBAL ERROR LLE(e1c5d364/e1c5d364,SNDCP3){UNASSIGNED} Tx SABM: ABM mode not supported yet!
 DLGLOBAL INFO Rx from upper layers: LL-XID.request
+DLGLOBAL DEBUG XID: type LLC-Version, val_len=1, val=0
+DLGLOBAL DEBUG XID: type N201-U, val_len=2, val=500
+DLGLOBAL DEBUG XID: type N201-I, val_len=2, val=1503
+DLGLOBAL DEBUG XID: type L3-Params, data_len=20, data=7869642d6c332d64756d6d792d62756666657200
 DLGLOBAL NOTICE LLE(e1c5d364/e1c5d364,SNDCP3){UNASSIGNED} Sending XID type L3-Params (30 bytes) request to MS...
 DLGLOBAL INFO Rx from upper layers: LL-UNITDATA.request
