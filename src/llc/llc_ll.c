@@ -180,6 +180,8 @@ int gprs_llc_lle_submit_prim_ll_xid_ind(struct gprs_llc_lle *lle,
 	if (llc_prim_tx->ll.l3_pdu_len > 0)
 		memcpy(llc_prim_tx->ll.l3_pdu, xid_field_request_l3->var.val,
 		       llc_prim_tx->ll.l3_pdu_len);
+	llc_prim_tx->ll.xid.n201_i = lle->params.n201_i;
+	llc_prim_tx->ll.xid.n201_u = lle->params.n201_u;
 	return gprs_llc_prim_call_up_cb(llc_prim_tx);
 }
 
@@ -197,7 +199,8 @@ int gprs_llc_lle_submit_prim_ll_xid_cnf(struct gprs_llc_lle *lle,
 	if (llc_prim_tx->ll.l3_pdu_len > 0)
 		memcpy(llc_prim_tx->ll.l3_pdu, xid_field_response_l3->var.val,
 		       llc_prim_tx->ll.l3_pdu_len);
-
+	llc_prim_tx->ll.xid.n201_i = lle->params.n201_i;
+	llc_prim_tx->ll.xid.n201_u = lle->params.n201_u;
 
 	/* TODO: do something with following. Is it actually needed? */
 	(void)xid_field_request_l3;

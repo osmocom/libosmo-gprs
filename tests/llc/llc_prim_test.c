@@ -160,6 +160,40 @@ GSM A-I/F DTAP - Identity Request
 */
 static uint8_t pdu_gmm_id_req[] = { 0x08, 0x15, 0x02 };
 
+/*
+MS-SGSN LLC (Mobile Station - Serving GPRS Support Node Logical Link Control)  SAPI: User data 3
+ Address field  SAPI: LL3
+  0... .... = Protocol Discriminator_bit: OK
+  .1.. .... = Command/Response bit: DownLink/UpLink = Command/Response
+  .... 0011 = SAPI: User data 3 (3)
+ Unnumbered frame: XID
+  111. .... = U format: 0x7
+  ...1 .... = P/F bit: True
+  .... 1011 = Command/Response: XID (0xb)
+ FCS: 0x4e7c8c (correct)
+ Information Field: Length = 8
+  XID Parameter Type: Version (LLC version number) - Value: 0
+   0... .... = XL Bit: 0x0
+   .000 00.. = Type: 0
+   .... ..01 = Length: 1
+   0000 0000 = Parameter Byte: 0x00
+  XID Parameter Type: N201-U (max info field length for U and UI frames) - Value: 500
+   0... .... = XL Bit: 0x0
+   .001 01.. = Type: 5
+   .... ..10 = Length: 2
+   0000 0001 = Parameter Byte: 0x01
+   1111 0100 = Parameter Byte: 0xf4
+  XID Parameter Type: N201-I (max info field length for I frames) - Value: 1503
+   0... .... = XL Bit: 0x0
+   .001 10.. = Type: 6
+   .... ..10 = Length: 2
+   0000 0101 = Parameter Byte: 0x05
+   1101 1111 = Parameter Byte: 0xdf
+*/
+static uint8_t pdu_llc_xid_cmd_dl[] = {
+	0x43, 0xfb, 0x01, 0x00, 0x16, 0x01, 0xf4, 0x1a, 0x05, 0xdf, 0x8c, 0x7c, 0x4e };
+
+
 static void test_llc_prim_ms(void)
 {
 	struct osmo_gprs_llc_prim *llc_prim;
@@ -183,6 +217,20 @@ static void test_llc_prim_ms(void)
 	/* Rx LLC-GMM-Attach-Accept at MS from SGSN (should be a response message
 	 * but we don't care about upper layers here): */
 	llc_prim = osmo_gprs_llc_prim_alloc_grr_unitdata_ind(tlli, pdu_llc_gmm_att_req, sizeof(pdu_llc_gmm_att_req));
+	OSMO_ASSERT(llc_prim);
+	rc = osmo_gprs_llc_prim_lower_up(llc_prim);
+	OSMO_ASSERT(rc == 0);
+
+	/* 3GPP TS 24.007 Appendix C.6: PDP Act Req + Acc happens here in upper
+	layers ... as a result, SNDCP submits LL-ESTABLISH-REQ: */
+	char xid_l3_pars[] = "xid-l3-dummy-buffer";
+	llc_prim = osmo_gprs_llc_prim_alloc_ll_establish_req(tlli, OSMO_GPRS_LLC_SAPI_SNDCP3, (uint8_t *)xid_l3_pars, sizeof(xid_l3_pars));
+	OSMO_ASSERT(llc_prim);
+	rc = osmo_gprs_llc_prim_upper_down(llc_prim);
+	OSMO_ASSERT(rc == -ENOTSUP); /* ABM mode not supported yet. */
+
+	/* Networks sends us a XID command: */
+	llc_prim = osmo_gprs_llc_prim_alloc_grr_unitdata_ind(tlli, pdu_llc_xid_cmd_dl, sizeof(pdu_llc_xid_cmd_dl));
 	OSMO_ASSERT(llc_prim);
 	rc = osmo_gprs_llc_prim_lower_up(llc_prim);
 	OSMO_ASSERT(rc == 0);

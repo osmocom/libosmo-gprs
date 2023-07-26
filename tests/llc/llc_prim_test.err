@@ -3,6 +3,17 @@ DLGLOBAL NOTICE Rx LL-UNITDATA.request: unknown TLLI 0xf43cec71, creating LLME o
 DLGLOBAL INFO Rx from lower layers: GRR-UNITDATA.indication
 DLGLOBAL DEBUG Rx GRR-UNITDATA.indication: SAPI=1 (GMM), UI func=UI C/R=0 PM=0 E=0 IP=0 N(U)=0 FCS=f218e2
 DLGLOBAL DEBUG LLE(ffffffff/f43cec71,GMM){UNASSIGNED} Rx SAPI=1 (GMM), UI func=UI C/R=0 PM=0 E=0 IP=0 N(U)=0 FCS=f218e2
+DLGLOBAL INFO Rx from upper layers: LL-ESTABLISH.request
+DLGLOBAL ERROR LLE(ffffffff/f43cec71,SNDCP3){UNASSIGNED} Tx SABM: ABM mode not supported yet!
+DLGLOBAL INFO Rx from lower layers: GRR-UNITDATA.indication
+DLGLOBAL DEBUG Rx GRR-UNITDATA.indication: SAPI=3 (SNDCP3), U func=XID C/R=1 P/F=1 FCS=4e7c8c
+DLGLOBAL DEBUG LLE(ffffffff/f43cec71,SNDCP3){UNASSIGNED} Rx SAPI=3 (SNDCP3), U func=XID C/R=1 P/F=1 FCS=4e7c8c
+DLGLOBAL NOTICE LLE(ffffffff/f43cec71,SNDCP3){UNASSIGNED} Received XID indication from MS.
+DLGLOBAL DEBUG XID: type LLC-Version, val_len=1, val=0
+DLGLOBAL DEBUG XID: type N201-U, val_len=2, val=500
+DLGLOBAL DEBUG XID: type N201-I, val_len=2, val=1503
+DLGLOBAL INFO LLE(ffffffff/f43cec71,SNDCP3){UNASSIGNED} Peer requested N201-U=500
+DLGLOBAL INFO LLE(ffffffff/f43cec71,SNDCP3){UNASSIGNED} Peer requested N201-I=1503
 DLGLOBAL INFO Rx from upper layers: LLGMM-TRIGGER.request
 DLGLOBAL INFO LLME(ffffffff/f43cec71){UNASSIGNED} LLGMM-TRIGGER.request
 DLGLOBAL INFO Rx from upper layers: LLGMM-TRIGGER.request

@@ -573,6 +573,21 @@ static int gprs_llc_lle_process_xid_ind(struct gprs_llc_lle *lle,
 	* when a MS submits values which defer from
 	* the default! */
 
+	for (i = 0; i < xid_fields_len; i++) {
+		switch (xid_fields[i].type) {
+		case OSMO_GPRS_LLC_XID_T_N201_U:
+			LOGLLE(lle, LOGL_INFO, "Peer requested N201-U=%u\n", xid_fields[i].val);
+			lle->params.n201_u = xid_fields[i].val;
+			break;
+		case OSMO_GPRS_LLC_XID_T_N201_I:
+			LOGLLE(lle, LOGL_INFO, "Peer requested N201-I=%u\n", xid_fields[i].val);
+			lle->params.n201_i = xid_fields[i].val;
+			break;
+		default:
+			continue;
+		}
+	}
+
 	/* Store last received XID-Ind from peer: */
 	lle->rx_xid = gprs_llc_xid_deepcopy(lle->llme, xid_fields, xid_fields_len);
 	OSMO_ASSERT(lle->rx_xid);

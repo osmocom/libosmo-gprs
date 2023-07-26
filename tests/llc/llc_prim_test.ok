@@ -1,6 +1,7 @@
 ==== test_llc_prim_ms() [start] ====
 test_llc_prim_down_cb(): Rx GRR-UNITDATA.request l3=[01 c0 01 08 01 02 e5 e0 01 0a 00 05 f4 f4 3c ec 71 32 f4 07 00 05 00 17 19 33 43 2b 37 15 9e f9 88 79 cb a2 8c 66 21 e7 26 88 b1 98 87 9c 00 17 05 22 96 cc ]
 test_llc_prim_up_cb(): Rx LL-UNITDATA.indication TLLI=0xf43cec71 SAPI=GMM l3=[08 01 01 d5 71 00 00 08 29 26 24 00 00 00 00 71 62 f2 24 6c 84 44 04 11 e5 10 00 ]
+test_llc_prim_down_cb(): Rx GRR-UNITDATA.request l3=[03 fb 01 00 16 01 f4 1a 05 df 68 40 d9 ]
 test_llc_prim_down_cb(): Rx GRR-UNITDATA.request l3=[01 c0 05 4a 85 74 ]
 test_llc_prim_down_cb(): Rx GRR-UNITDATA.request l3=[01 c0 09 ce 0d f7 ]
 test_llc_prim_down_cb(): Rx GRR-UNITDATA.request l3=[01 e0 1c a2 b3 ]
