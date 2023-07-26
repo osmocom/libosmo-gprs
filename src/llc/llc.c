@@ -554,6 +554,7 @@ static int gprs_llc_lle_process_xid_ind(struct gprs_llc_lle *lle,
 	unsigned int xid_fields_len;
 	int rc, i;
 	struct gprs_llc_xid_field *xid_field_request_l3 = NULL;
+	bool n201_changed = false;
 
 	/* Parse and analyze XID-Request */
 	rc = gprs_llc_xid_decode(xid_fields, ARRAY_SIZE(xid_fields),
@@ -577,11 +578,21 @@ static int gprs_llc_lle_process_xid_ind(struct gprs_llc_lle *lle,
 		switch (xid_fields[i].type) {
 		case OSMO_GPRS_LLC_XID_T_N201_U:
 			LOGLLE(lle, LOGL_INFO, "Peer requested N201-U=%u\n", xid_fields[i].val);
-			lle->params.n201_u = xid_fields[i].val;
+			if (lle->params.n201_u != xid_fields[i].val) {
+				lle->params.n201_u = xid_fields[i].val;
+				/* TS 44.064 8.5.3.0 "LL-XID-IND shall be indicated to layer 3 if N201-U or N201-I have been changed." */
+				n201_changed = true;
+			}
 			break;
 		case OSMO_GPRS_LLC_XID_T_N201_I:
 			LOGLLE(lle, LOGL_INFO, "Peer requested N201-I=%u\n", xid_fields[i].val);
-			lle->params.n201_i = xid_fields[i].val;
+			if (lle->params.n201_i != xid_fields[i].val) {
+				lle->params.n201_i = xid_fields[i].val;
+				n201_changed = true;
+			}
+			break;
+		case OSMO_GPRS_LLC_XID_T_L3_PAR:
+			xid_field_request_l3 = &xid_fields[i];
 			break;
 		default:
 			continue;
@@ -593,17 +604,19 @@ static int gprs_llc_lle_process_xid_ind(struct gprs_llc_lle *lle,
 	OSMO_ASSERT(lle->rx_xid);
 	lle->rx_xid_len = xid_fields_len;
 
-	/* Forward SNDCP-XID fields to Layer 3 (SNDCP) */
-	for (i = 0; i < xid_fields_len; i++) {
-		if (xid_fields[i].type == OSMO_GPRS_LLC_XID_T_L3_PAR) {
-			xid_field_request_l3 = &xid_fields[i];
-			gprs_llc_lle_submit_prim_ll_xid_ind(lle, xid_field_request_l3);
-			/* delay answer until we get LL-XID.resp from SNDCP: */
-			return rc;
-		}
+	if (n201_changed || xid_field_request_l3) {
+		/* TS 44.064 8.5.3.0 "LL-XID-IND shall be indicated to layer 3
+		 * if N201-U or N201-I have been changed." */
+		/* Forward SNDCP-XID fields to Layer 3 (SNDCP) */
+		rc = gprs_llc_lle_submit_prim_ll_xid_ind(lle, xid_field_request_l3);
 	}
 
-	rc = gprs_llc_lle_tx_xid_resp(lle, NULL, 0);
+	if (!xid_field_request_l3) {
+		/* TS 44.065 6.8: "If the SNDCP entity receives an LL-XID.indication without
+		 * an SNDCP XID block, it shall not respond with the LL-XID.response primitive."
+		 * Hence, if no SNDCP XID block, send response now: */
+		rc = gprs_llc_lle_tx_xid_resp(lle, NULL, 0);
+	} /* else: delay answer until we get LL-XID.resp from SNDCP. */
 	return rc;
 }
 
