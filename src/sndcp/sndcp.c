@@ -34,6 +34,23 @@
 
 struct gprs_sndcp_ctx *g_sndcp_ctx;
 
+struct gprs_sndcp_llc_params {
+	uint16_t n201_u;
+	uint16_t n201_i;
+};
+
+/* Section 8.9.9 LLC layer parameter default values */
+static const struct gprs_sndcp_llc_params llc_default_params[GPRS_SNDCP_NUM_NSAPIS] = {
+	[1] = { .n201_u		= 400, },
+	[2] = { .n201_u		= 270, },
+	[3] = { .n201_u		= 500, .n201_i	= 1503, },
+	[5] = { .n201_u		= 500, .n201_i	= 1503, },
+	[7] = { .n201_u		= 270, },
+	[8] = { .n201_u		= 270, },
+	[9] = { .n201_u		= 500, .n201_i	= 1503, },
+	[11] = { .n201_u	= 500, .n201_i	= 1503, },
+};
+
 int osmo_gprs_sndcp_init(enum osmo_gprs_sndcp_location location)
 {
 	if (g_sndcp_ctx)
@@ -125,6 +142,9 @@ struct gprs_sndcp_entity *gprs_sndcp_sne_alloc(struct gprs_sndcp_mgmt_entity *sn
 	//sne->fqueue.timer.cb = FIXME;
 	sne->rx_state = GPRS_SNDCP_RX_S_FIRST;
 	INIT_LLIST_HEAD(&sne->defrag.frag_list);
+
+	sne->n201_u = llc_default_params[llc_sapi].n201_u;
+	sne->n201_i = llc_default_params[llc_sapi].n201_i;
 
 	sne->snme = snme;
 	gprs_sndcp_snme_attach_sne(snme, sne);
