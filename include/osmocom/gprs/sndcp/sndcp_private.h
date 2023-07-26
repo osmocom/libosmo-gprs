@@ -171,7 +171,6 @@ struct gprs_sndcp_entity {
 	 * originated XID-Request from peer. NULL if not existing (and l3xid_req_len = 0) */
 	struct llist_head *l3_xid_comp_fields_req_from_peer;
 
-	/* TODO: taken from lle.params and not yet set ever in code! */
 	uint16_t n201_u;
 	uint16_t n201_i;
 };
@@ -220,8 +219,12 @@ int gprs_sndcp_sne_submit_llc_ll_xid_req(struct gprs_sndcp_entity *sne);
 int gprs_sndcp_sne_submit_snsm_activate_rsp(struct gprs_sndcp_entity *sne);
 int gprs_sndcp_sne_handle_llc_ll_unitdata_ind(struct gprs_sndcp_entity *sne,
 					  struct sndcp_common_hdr *sch, uint16_t len);
-int gprs_sndcp_snme_handle_llc_ll_xid_ind(struct gprs_sndcp_mgmt_entity *snme, uint32_t sapi, uint8_t *l3params, unsigned int l3params_len);
-int gprs_sndcp_snme_handle_llc_ll_xid_cnf(struct gprs_sndcp_mgmt_entity *snme, uint32_t sapi, uint8_t *l3params, unsigned int l3params_len);
+int gprs_sndcp_snme_handle_llc_ll_xid_ind(struct gprs_sndcp_mgmt_entity *snme, uint32_t sapi,
+					  uint16_t n201_u, uint16_t n201_i,
+					  uint8_t *l3params, unsigned int l3params_len);
+int gprs_sndcp_snme_handle_llc_ll_xid_cnf(struct gprs_sndcp_mgmt_entity *snme, uint32_t sapi,
+					  uint16_t n201_u, uint16_t n201_i,
+					  uint8_t *l3params, unsigned int l3params_len);
 int gprs_sndcp_sne_handle_sn_unitdata_req(struct gprs_sndcp_entity *sne, uint8_t *npdu, unsigned int npdu_len);
 int gprs_sndcp_sne_handle_sn_xid_req(struct gprs_sndcp_entity *sne, const struct osmo_gprs_sndcp_prim *sndcp_prim);
 int gprs_sndcp_sne_handle_sn_xid_rsp(struct gprs_sndcp_entity *sne, const struct osmo_gprs_sndcp_prim *sndcp_prim);

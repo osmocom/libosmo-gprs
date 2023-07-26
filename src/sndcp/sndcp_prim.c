@@ -514,6 +514,7 @@ static int gprs_sndcp_prim_handle_llc_ll_xid_ind(struct osmo_gprs_llc_prim *llc_
 	}
 
 	rc = gprs_sndcp_snme_handle_llc_ll_xid_ind(snme, llc_prim->ll.sapi,
+						   llc_prim->ll.xid.n201_u, llc_prim->ll.xid.n201_i,
 						   llc_prim->ll.l3_pdu, llc_prim->ll.l3_pdu_len);
 	return rc;
 }
@@ -532,6 +533,7 @@ static int gprs_sndcp_prim_handle_llc_ll_xid_cnf(struct osmo_gprs_llc_prim *llc_
 	}
 
 	rc = gprs_sndcp_snme_handle_llc_ll_xid_cnf(snme, llc_prim->ll.sapi,
+						   llc_prim->ll.xid.n201_u, llc_prim->ll.xid.n201_i,
 						   llc_prim->ll.l3_pdu, llc_prim->ll.l3_pdu_len);
 	return rc;
 }

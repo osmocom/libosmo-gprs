@@ -979,7 +979,9 @@ static int gprs_sndcp_snme_handle_dcomp_entities(struct gprs_sndcp_mgmt_entity *
 }
 
 /* 5.1.2.10 SN-XID.indication */
-int gprs_sndcp_snme_handle_llc_ll_xid_ind(struct gprs_sndcp_mgmt_entity *snme, uint32_t sapi, uint8_t *l3params, unsigned int l3params_len)
+int gprs_sndcp_snme_handle_llc_ll_xid_ind(struct gprs_sndcp_mgmt_entity *snme, uint32_t sapi,
+					  uint16_t n201_u, uint16_t n201_i,
+					  uint8_t *l3params, unsigned int l3params_len)
 {
 	int rc;
 	int compclass;
@@ -1005,10 +1007,15 @@ int gprs_sndcp_snme_handle_llc_ll_xid_ind(struct gprs_sndcp_mgmt_entity *snme, u
 		return -EINVAL;
 	}
 
+	sne->n201_u = n201_u;
+	sne->n201_i = n201_i;
+
 	/* Some phones send zero byte length SNDCP frames
 	 * and do require a confirmation response. */
 	if (l3params_len == 0) {
-		/* TODO: send empty (len=0) SN-XID.response? */
+		/* TS 44.065 6.8: "If the SNDCP entity receives an LL-XID.indication without
+		 * an SNDCP XID block, it shall not respond with the LL-XID.response primitive."
+		 */
 		return 0;
 	}
 
@@ -1057,7 +1064,9 @@ int gprs_sndcp_snme_handle_llc_ll_xid_ind(struct gprs_sndcp_mgmt_entity *snme, u
 /* 5.1.2.12 SN-XID.confirm
  * (See also: TS 144 065, Section 6.8 XID parameter negotiation)
  */
-int gprs_sndcp_snme_handle_llc_ll_xid_cnf(struct gprs_sndcp_mgmt_entity *snme, uint32_t sapi, uint8_t *l3params, unsigned int l3params_len)
+int gprs_sndcp_snme_handle_llc_ll_xid_cnf(struct gprs_sndcp_mgmt_entity *snme, uint32_t sapi,
+					  uint16_t n201_u, uint16_t n201_i,
+					  uint8_t *l3params, unsigned int l3params_len)
 {
 	/* Note: This function handles an incoming SNDCP-XID confirmation.
 	 * Since the confirmation fields may lack important parameters we
@@ -1091,6 +1100,9 @@ int gprs_sndcp_snme_handle_llc_ll_xid_cnf(struct gprs_sndcp_mgmt_entity *snme, u
 		LOGSNME(snme, LOGL_ERROR, "LL-XID.cnf: No SNDCP entity found having sent a LL-XID.req (SAPI=%u)\n", sapi);
 		return -EINVAL;
 	}
+
+	sne->n201_u = n201_u;
+	sne->n201_i = n201_i;
 
 	if (sne->l3xid_req && sne->l3xid_req_len > 0) {
 		/* Parse SNDCP-CID XID-Field */
