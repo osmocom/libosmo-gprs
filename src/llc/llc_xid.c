@@ -76,6 +76,24 @@ static const struct {
 	[OSMO_GPRS_LLC_XID_T_MAC_IOV_UI] = { .len = 4, .min = 0, .max = UINT32_MAX },
 };
 
+static inline bool gprs_llc_xid_type_is_variable_len(enum gprs_llc_xid_type t)
+{
+	return gprs_llc_xid_desc[t].var_len;
+}
+
+static inline bool gprs_llc_xid_type_is_fixed_len(enum gprs_llc_xid_type t)
+{
+	return !gprs_llc_xid_desc[t].var_len;
+}
+
+static inline uint8_t gprs_llc_xid_field_get_len(const struct gprs_llc_xid_field *field)
+{
+	if (gprs_llc_xid_type_is_variable_len(field->type))
+		return field->var.val_len;
+	else
+		return gprs_llc_xid_desc[field->type].len;
+}
+
 bool gprs_llc_xid_field_is_valid(const struct gprs_llc_xid_field *field)
 {
 	if (field->type >= ARRAY_SIZE(gprs_llc_xid_desc)) {
@@ -84,7 +102,7 @@ bool gprs_llc_xid_field_is_valid(const struct gprs_llc_xid_field *field)
 		return false;
 	}
 
-	if (gprs_llc_xid_desc[field->type].var_len)
+	if (gprs_llc_xid_type_is_variable_len(field->type))
 		return true;
 
 	if (field->var.val_len > 0) {
@@ -139,10 +157,7 @@ int gprs_llc_xid_encode(uint8_t *data, size_t data_len,
 		hdr[0] = (field->type & 0x1f) << 2;
 
 		/* XID field length */
-		if (gprs_llc_xid_desc[field->type].var_len)
-			len = field->var.val_len;
-		else
-			len = gprs_llc_xid_desc[field->type].len;
+		len = gprs_llc_xid_field_get_len(field);
 
 		if (len == 0)
 			continue;
@@ -158,7 +173,7 @@ int gprs_llc_xid_encode(uint8_t *data, size_t data_len,
 		}
 
 		/* XID field value (variable length) */
-		if (gprs_llc_xid_desc[field->type].var_len) {
+		if (gprs_llc_xid_type_is_variable_len(field->type)) {
 			if (wptr + len - data > data_len)
 				return -EINVAL;
 			memcpy(wptr, field->var.val, len);
@@ -240,7 +255,7 @@ int gprs_llc_xid_decode(struct gprs_llc_xid_field *fields,
 		data_len -= len;
 
 		/* XID field value (variable length) */
-		if (gprs_llc_xid_desc[field->type].var_len) {
+		if (gprs_llc_xid_type_is_variable_len(field->type)) {
 			field->var.val = len ? ptr : NULL;
 			field->var.val_len = len;
 		} else {
@@ -285,8 +300,8 @@ int gprs_llc_xid_decode(struct gprs_llc_xid_field *fields,
 
 /* Return Deep copy of a xid_field array allocated using talloc ctx. */
 struct gprs_llc_xid_field *gprs_llc_xid_deepcopy(void *ctx,
-						      const struct gprs_llc_xid_field *src_xid,
-						      size_t src_xid_len)
+						const struct gprs_llc_xid_field *src_xid,
+						size_t src_xid_len)
 {
 	size_t bytes_len = sizeof(*src_xid) * src_xid_len;
 	struct gprs_llc_xid_field *dst_xid;

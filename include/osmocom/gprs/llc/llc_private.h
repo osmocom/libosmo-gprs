@@ -343,8 +343,8 @@ int gprs_llc_xid_encode(uint8_t *data, size_t data_len,
 			     const struct gprs_llc_xid_field *fields,
 			     unsigned int num_fields);
 struct gprs_llc_xid_field *gprs_llc_xid_deepcopy(void *ctx,
-						      const struct gprs_llc_xid_field *src_xid,
-						      size_t src_xid_len);
+						 const struct gprs_llc_xid_field *src_xid,
+						 size_t src_xid_len);
 
 /* llc_pdu.c: */
 int gprs_llc_pdu_decode(struct gprs_llc_pdu_decoded *pdu,
