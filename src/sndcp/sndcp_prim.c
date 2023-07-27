@@ -661,6 +661,8 @@ static int gprs_sndcp_prim_handle_sndcp_snsm_activate_ind(struct osmo_gprs_sndcp
 	if (g_sndcp_ctx->location != OSMO_GPRS_SNDCP_LOCATION_MS)
 		return 0;
 
+	sne->radio_prio = sndcp_prim->snsm.activate_ind.radio_prio;
+
 	/* TODO: when supporting and using LLC ABM mode, flow should go through
 	 * LL-ESTABLISH.req, as per TS 24.007 C.6 "No LLC link exists yet,
 	 * establish a link and exchange XID"

@@ -222,6 +222,18 @@ int gprs_sndcp_sne_submit_llc_ll_xid_req(struct gprs_sndcp_entity *sne)
 	return rc;
 }
 
+int gprs_sndcp_sne_submit_llc_ll_unitdata_req(struct gprs_sndcp_entity *sne, uint8_t *data, unsigned int len)
+{
+	struct osmo_gprs_llc_prim *llc_prim_tx;
+	int rc;
+
+	llc_prim_tx = osmo_gprs_llc_prim_alloc_ll_unitdata_req(sne->snme->tlli, sne->llc_sapi, data, len);
+	OSMO_ASSERT(llc_prim_tx);
+	llc_prim_tx->ll.unitdata_req.radio_prio = sne->radio_prio;
+	rc = gprs_sndcp_prim_call_down_cb(llc_prim_tx);
+	return rc;
+}
+
 int gprs_sndcp_sne_submit_sn_xid_cnf(struct gprs_sndcp_entity *sne)
 {
 	struct osmo_gprs_sndcp_prim *sndcp_prim_tx;
@@ -530,7 +542,6 @@ static int gprs_sndcp_send_ud_frag(struct sndcp_frag_state *fs,
 	unsigned int len;
 	uint8_t *data;
 	int rc, more;
-	struct osmo_gprs_llc_prim *llc_prim_tx;
 
 	fmsg = msgb_alloc_headroom(sne->n201_u+256, 128, "SNDCP Frag");
 	if (!fmsg) {
@@ -588,9 +599,7 @@ static int gprs_sndcp_send_ud_frag(struct sndcp_frag_state *fs,
 	sch->more = more;
 
 	/* Send down the stack SNDCP->LLC as LL-UNITDATA.req: */
-	llc_prim_tx = osmo_gprs_llc_prim_alloc_ll_unitdata_req(sne->snme->tlli, sne->llc_sapi, fmsg->data, fmsg->len);
-	OSMO_ASSERT(llc_prim_tx);
-	rc = gprs_sndcp_prim_call_down_cb(llc_prim_tx);
+	rc = gprs_sndcp_sne_submit_llc_ll_unitdata_req(sne, fmsg->data, fmsg->len);
 	msgb_free(fmsg);
 	/* abort in case of error, do not advance frag_nr / next_byte */
 	if (rc < 0) {
@@ -622,7 +631,6 @@ int gprs_sndcp_sne_handle_sn_unitdata_req(struct gprs_sndcp_entity *sne, uint8_t
 	uint8_t dcomp = 0;
 	int rc;
 	struct msgb *msg = msgb_alloc_headroom(npdu_len + 256, 128, "sndcp-tx");
-	struct osmo_gprs_llc_prim *llc_prim_tx;
 
 	memcpy(msgb_put(msg, npdu_len), npdu, npdu_len);
 
@@ -711,9 +719,7 @@ int gprs_sndcp_sne_handle_sn_unitdata_req(struct gprs_sndcp_entity *sne, uint8_t
 	sch->nsapi = sne->nsapi;
 
 	/* Send down the stack SNDCP->LLC as LL-UNITDATA.req: */
-	llc_prim_tx = osmo_gprs_llc_prim_alloc_ll_unitdata_req(sne->snme->tlli, sne->llc_sapi, msg->data, msg->len);
-	OSMO_ASSERT(llc_prim_tx);
-	rc = gprs_sndcp_prim_call_down_cb(llc_prim_tx);
+	rc = gprs_sndcp_sne_submit_llc_ll_unitdata_req(sne, msg->data, msg->len);
 free_ret:
 	msgb_free(msg);
 	return rc;

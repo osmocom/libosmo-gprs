@@ -151,6 +151,9 @@ struct gprs_sndcp_entity {
 	/* The NSAPI we shall use on top of LLC */
 	uint8_t nsapi;
 
+	/* Radio Priority (MS only, used by LLC/RLCMAC), TS 24.008 10.5.7.2 */
+	uint8_t radio_prio;
+
 	/* NPDU number for the GTP->SNDCP side */
 	uint16_t tx_npdu_nr;
 	/* SNDCP eeceiver state */
