@@ -216,17 +216,19 @@ int gprs_rlcmac_entity_start_ul_tbf_pkt_acc_proc_if_needed(struct gprs_rlcmac_en
 	return gprs_rlcmac_tbf_ul_ass_start(gre->ul_tbf, GPRS_RLCMAC_TBF_UL_ASS_TYPE_1PHASE);
 }
 
-int gprs_rlcmac_entity_llc_enqueue(struct gprs_rlcmac_entity *gre, uint8_t *ll_pdu, unsigned int ll_pdu_len,
-				   enum osmo_gprs_rlcmac_llc_sapi sapi, uint8_t radio_prio)
+int gprs_rlcmac_entity_llc_enqueue(struct gprs_rlcmac_entity *gre,
+				   const uint8_t *ll_pdu, unsigned int ll_pdu_len,
+				   enum osmo_gprs_rlcmac_llc_sapi sapi,
+				   enum gprs_rlcmac_radio_priority radio_prio)
 {
 	int rc;
 	LOGGRE(gre, LOGL_DEBUG, "Enqueueing LLC-PDU len=%u SAPI=%s radio_prio=%u\n",
-	       ll_pdu_len, get_value_string(osmo_gprs_rlcmac_llc_sapi_names, sapi), radio_prio);
+	       ll_pdu_len, get_value_string(osmo_gprs_rlcmac_llc_sapi_names, sapi), radio_prio + 1);
 	rc = gprs_rlcmac_llc_queue_enqueue(gre->llc_queue, ll_pdu, ll_pdu_len,
 					   sapi, radio_prio);
 	if (rc < 0) {
 		LOGGRE(gre, LOGL_NOTICE, "Enqueueing LLC-PDU len=%u SAPI=%s radio_prio=%u failed!\n",
-		       ll_pdu_len, get_value_string(osmo_gprs_rlcmac_llc_sapi_names, sapi), radio_prio);
+		       ll_pdu_len, get_value_string(osmo_gprs_rlcmac_llc_sapi_names, sapi), radio_prio + 1);
 		return rc;
 	}
 

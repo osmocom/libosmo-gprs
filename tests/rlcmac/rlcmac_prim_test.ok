@@ -201,7 +201,7 @@ sys={0.000000}, mono={0.000000}: clock_override_set
 test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_ESTABLISH.request
 test_rlcmac_prim_down_cb(): Rx L1CTL-CFG_DL_TBF.request dl_tbf_nr=0 dl_slotmask=0x80 dl_tfi=0
 test_rlcmac_prim_up_cb(): Rx GRR-UNITDATA.indication TLLI=0x00000001 ll=[43 c0 01 2b 2b 2b ]
-test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=21 ts=7 data_len=23 data=[40 08 10 20 00 00 00 00 00 00 00 30 40 00 00 00 00 03 2b 2b 2b 2b 2b ]
+test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=21 ts=7 data_len=23 data=[40 08 10 20 00 00 00 00 00 00 00 30 00 00 00 00 00 03 2b 2b 2b 2b 2b ]
 test_rlcmac_prim_down_cb(): Rx L1CTL-CFG_UL_TBF.request ul_tbf_nr=0 ul_slotmask=0xc0
 test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=43 ts=7 data_len=23 data=[40 04 00 00 00 04 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b ]
 test_rlcmac_prim_up_cb(): Rx GMMRR-LLC_TRANSMITTED.indication TLLI=0x00000001

@@ -46,7 +46,7 @@ struct gprs_rlcmac_llc_queue *gprs_rlcmac_llc_queue_alloc(struct gprs_rlcmac_ent
 	q->avg_queue_delay = 0;
 	for (i = 0; i < ARRAY_SIZE(q->pq); i++) {
 		for (j = 0; j < ARRAY_SIZE(q->pq[i]); j++) {
-			q->pq[i][j].radio_prio = i + 1; /* range (1..4) */
+			q->pq[i][j].radio_prio = i; /* enum gprs_rlcmac_radio_priority, range (0..3) */
 			INIT_LLIST_HEAD(&q->pq[i][j].queue);
 			gprs_codel_init(&q->pq[i][j].codel_state);
 		}
@@ -89,18 +89,12 @@ static enum gprs_rlcmac_llc_queue_sapi_prio gprs_rlcmac_llc_sapi2prio(enum osmo_
 	}
 }
 
-int gprs_rlcmac_llc_queue_enqueue(struct gprs_rlcmac_llc_queue *q, uint8_t *ll_pdu, unsigned int ll_pdu_len,
-				   enum osmo_gprs_rlcmac_llc_sapi sapi, uint8_t radio_prio)
+int gprs_rlcmac_llc_queue_enqueue(struct gprs_rlcmac_llc_queue *q, const uint8_t *ll_pdu, unsigned int ll_pdu_len,
+				   enum osmo_gprs_rlcmac_llc_sapi sapi, enum gprs_rlcmac_radio_priority radio_prio)
 {
 	struct llc_queue_entry_hdr *ehdr;
 	enum gprs_rlcmac_llc_queue_sapi_prio sapi_prio;
 	struct msgb *msg;
-
-	/* Trim to expected values 1..4, (3GPP TS 24.008) 10.5.7.2 */
-	if (radio_prio < _GPRS_RLCMAC_RADIO_PRIO_HIGHEST)
-		radio_prio = _GPRS_RLCMAC_RADIO_PRIO_HIGHEST;
-	else if (radio_prio > _GPRS_RLCMAC_RADIO_PRIO_LOWEST)
-		radio_prio = _GPRS_RLCMAC_RADIO_PRIO_LOWEST;
 
 	sapi_prio = gprs_rlcmac_llc_sapi2prio(sapi);
 
@@ -117,7 +111,7 @@ int gprs_rlcmac_llc_queue_enqueue(struct gprs_rlcmac_llc_queue *q, uint8_t *ll_p
 		msg->l2h = NULL;
 	}
 
-	msgb_enqueue(&q->pq[RADIO_PRIO_NORM(radio_prio)][sapi_prio].queue, msg);
+	msgb_enqueue(&q->pq[radio_prio][sapi_prio].queue, msg);
 	q->queue_size += 1;
 	q->queue_octets += ll_pdu_len;
 
@@ -221,7 +215,7 @@ struct msgb *gprs_rlcmac_llc_queue_dequeue(struct gprs_rlcmac_llc_queue *q, bool
 	return msg;
 }
 
-uint8_t gprs_rlcmac_llc_queue_highest_radio_prio_pending(struct gprs_rlcmac_llc_queue *q)
+enum gprs_rlcmac_radio_priority gprs_rlcmac_llc_queue_highest_radio_prio_pending(struct gprs_rlcmac_llc_queue *q)
 {
 	struct gprs_llc_prio_queue *prioq = gprs_rlcmac_llc_queue_find_msg(q);
 	OSMO_ASSERT(prioq);

@@ -599,6 +599,7 @@ static void test_ul_tbf_attach(void)
 	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_grr_unitdata_req(tlli, pdu_llc_gmm_att_req,
 					    sizeof(pdu_llc_gmm_att_req));
 	rlcmac_prim->grr.unitdata_req.sapi = OSMO_GPRS_RLCMAC_LLC_SAPI_GMM;
+	rlcmac_prim->grr.unitdata_req.radio_prio = 1;
 	rc = osmo_gprs_rlcmac_prim_upper_down(rlcmac_prim);
 
 	OSMO_ASSERT(sizeof(ccch_imm_ass_pkt_ul_tbf_normal) == GSM_MACBLOCK_LEN);
@@ -662,6 +663,7 @@ static void test_ul_tbf_request_another_ul_tbf(void)
 	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_grr_unitdata_req(tlli, pdu_llc_gmm_att_req,
 					    14);
 	rlcmac_prim->grr.unitdata_req.sapi = OSMO_GPRS_RLCMAC_LLC_SAPI_GMM;
+	rlcmac_prim->grr.unitdata_req.radio_prio = 1;
 	rc = osmo_gprs_rlcmac_prim_upper_down(rlcmac_prim);
 
 	OSMO_ASSERT(sizeof(ccch_imm_ass_pkt_ul_tbf_normal) == GSM_MACBLOCK_LEN);
@@ -696,6 +698,7 @@ static void test_ul_tbf_request_another_ul_tbf(void)
 	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_grr_unitdata_req(tlli, pdu_llc_gmm_att_req,
 					    14);
 	rlcmac_prim->grr.unitdata_req.sapi = OSMO_GPRS_RLCMAC_LLC_SAPI_GMM;
+	rlcmac_prim->grr.unitdata_req.radio_prio = 1;
 	rc = osmo_gprs_rlcmac_prim_upper_down(rlcmac_prim);
 
 	/* Trigger transmission of PKT RES REQ: */
@@ -721,6 +724,7 @@ static void test_ul_tbf_t3164_timeout(void)
 	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_grr_unitdata_req(tlli, pdu_llc_gmm_att_req,
 					    sizeof(pdu_llc_gmm_att_req));
 	rlcmac_prim->grr.unitdata_req.sapi = OSMO_GPRS_RLCMAC_LLC_SAPI_GMM;
+	rlcmac_prim->grr.unitdata_req.radio_prio = 1;
 	rc = osmo_gprs_rlcmac_prim_upper_down(rlcmac_prim);
 
 	OSMO_ASSERT(sizeof(ccch_imm_ass_pkt_ul_tbf_normal) == GSM_MACBLOCK_LEN);
@@ -757,6 +761,7 @@ static void test_ul_tbf_t3166_timeout(void)
 	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_grr_unitdata_req(tlli, pdu_llc_gmm_att_req,
 					    sizeof(pdu_llc_gmm_att_req));
 	rlcmac_prim->grr.unitdata_req.sapi = OSMO_GPRS_RLCMAC_LLC_SAPI_GMM;
+	rlcmac_prim->grr.unitdata_req.radio_prio = 1;
 	rc = osmo_gprs_rlcmac_prim_upper_down(rlcmac_prim);
 
 	for (i = 0; i < 4; i++) {
@@ -806,6 +811,7 @@ static void test_ul_tbf_n3104_timeout(void)
 		rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_grr_unitdata_req(tlli, pdu_llc_gmm_att_req,
 						sizeof(pdu_llc_gmm_att_req));
 		rlcmac_prim->grr.unitdata_req.sapi = OSMO_GPRS_RLCMAC_LLC_SAPI_GMM;
+		rlcmac_prim->grr.unitdata_req.radio_prio = 1;
 		rc = osmo_gprs_rlcmac_prim_upper_down(rlcmac_prim);
 		OSMO_ASSERT(rc == 0);
 	}
@@ -853,6 +859,7 @@ static void test_ul_tbf_t3182_timeout(void)
 	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_grr_unitdata_req(tlli, pdu_llc_gmm_att_req,
 					    sizeof(pdu_llc_gmm_att_req));
 	rlcmac_prim->grr.unitdata_req.sapi = OSMO_GPRS_RLCMAC_LLC_SAPI_GMM;
+	rlcmac_prim->grr.unitdata_req.radio_prio = 1;
 	rc = osmo_gprs_rlcmac_prim_upper_down(rlcmac_prim);
 
 	ccch_imm_ass_pkt_ul_tbf_normal[7] = last_rach_req_ra; /* Update RA to match */
@@ -910,6 +917,7 @@ static void test_ul_tbf_last_data_cv0_retrans_max(void)
 	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_grr_unitdata_req(tlli, pdu_llc_gmm_att_req,
 					    sizeof(pdu_llc_gmm_att_req));
 	rlcmac_prim->grr.unitdata_req.sapi = OSMO_GPRS_RLCMAC_LLC_SAPI_GMM;
+	rlcmac_prim->grr.unitdata_req.radio_prio = 1;
 	rc = osmo_gprs_rlcmac_prim_upper_down(rlcmac_prim);
 
 	ccch_imm_ass_pkt_ul_tbf_normal[7] = last_rach_req_ra; /* Update RA to match */
@@ -980,6 +988,7 @@ static void test_ul_tbf_countdown_procedure(void)
 	memset(msgb_data(llc_msg), 0xab, msgb_length(llc_msg));
 	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_grr_unitdata_req(tlli, msgb_data(llc_msg), msgb_length(llc_msg));
 	rlcmac_prim->grr.unitdata_req.sapi = OSMO_GPRS_RLCMAC_LLC_SAPI_SNDCP3;
+	rlcmac_prim->grr.unitdata_req.radio_prio = 2;
 	rc = osmo_gprs_rlcmac_prim_upper_down(rlcmac_prim);
 
 	ccch_imm_ass_pkt_ul_tbf_normal[7] = last_rach_req_ra; /* Update RA to match */
@@ -1111,6 +1120,7 @@ static void test_dl_tbf_ccch_assign_requests_ul_tbf_pacch(void)
 	/* Submit 14 bytes to fit in 1 RLCMAC block to shorten test and end up in FINISHED state quickly: */
 	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_grr_unitdata_req(tlli, pdu_llc_gmm_att_req, 14);
 	rlcmac_prim->grr.unitdata_req.sapi = OSMO_GPRS_RLCMAC_LLC_SAPI_GMM;
+	rlcmac_prim->grr.unitdata_req.radio_prio = 1;
 	rc = osmo_gprs_rlcmac_prim_upper_down(rlcmac_prim);
 	OSMO_ASSERT(rc == 0);
 

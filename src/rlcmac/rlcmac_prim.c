@@ -375,6 +375,7 @@ static int rlcmac_prim_handle_grr_data_req(struct osmo_gprs_rlcmac_prim *rlcmac_
 static int rlcmac_prim_handle_grr_unitdata_req(struct osmo_gprs_rlcmac_prim *rlcmac_prim)
 {
 	struct gprs_rlcmac_entity *gre;
+	enum gprs_rlcmac_radio_priority radio_prio;
 	int rc;
 
 	gre = gprs_rlcmac_find_entity_by_tlli(rlcmac_prim->grr.tlli);
@@ -385,11 +386,24 @@ static int rlcmac_prim_handle_grr_unitdata_req(struct osmo_gprs_rlcmac_prim *rlc
 	}
 	OSMO_ASSERT(gre);
 
+	/* Expected values are integers 1..4, trim to known expected radio priorities (3GPP TS 24.008) 10.5.7.2 */
+	if (OSMO_UNLIKELY(rlcmac_prim->grr.unitdata_req.radio_prio < 1)) {
+		LOGGRE(gre, LOGL_NOTICE, "Rx UNITDATA.req with unexpected radio_prio=%u not in range (1..4)\n",
+		       rlcmac_prim->grr.unitdata_req.radio_prio);
+		radio_prio = GPRS_RLCMAC_RADIO_PRIORITY_1;
+	} else if (OSMO_UNLIKELY(rlcmac_prim->grr.unitdata_req.radio_prio > 4)) {
+		LOGGRE(gre, LOGL_NOTICE, "Rx UNITDATA.req with unexpected radio_prio=%u not in range (1..4)\n",
+		       rlcmac_prim->grr.unitdata_req.radio_prio);
+		radio_prio = GPRS_RLCMAC_RADIO_PRIORITY_4;
+	} else {
+		radio_prio = (enum gprs_rlcmac_radio_priority)(rlcmac_prim->grr.unitdata_req.radio_prio - 1);
+	}
+
 	rc = gprs_rlcmac_entity_llc_enqueue(gre,
 					    rlcmac_prim->grr.ll_pdu,
 					    rlcmac_prim->grr.ll_pdu_len,
 					    rlcmac_prim->grr.unitdata_req.sapi,
-					    rlcmac_prim->grr.unitdata_req.radio_prio);
+					    radio_prio);
 	msgb_free(rlcmac_prim->oph.msg);
 	return rc;
 }
