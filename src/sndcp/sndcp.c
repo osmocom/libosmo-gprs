@@ -229,6 +229,8 @@ int gprs_sndcp_sne_submit_llc_ll_unitdata_req(struct gprs_sndcp_entity *sne, uin
 
 	llc_prim_tx = osmo_gprs_llc_prim_alloc_ll_unitdata_req(sne->snme->tlli, sne->llc_sapi, data, len);
 	OSMO_ASSERT(llc_prim_tx);
+	llc_prim_tx->ll.unitdata_req.qos_params.peak_throughput = sne->peak_throughput;
+	llc_prim_tx->ll.unitdata_req.qos_params.reliability_class = sne->reliability_class;
 	llc_prim_tx->ll.unitdata_req.radio_prio = sne->radio_prio;
 	rc = gprs_sndcp_prim_call_down_cb(llc_prim_tx);
 	return rc;

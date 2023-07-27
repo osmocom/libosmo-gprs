@@ -124,6 +124,39 @@ static const  uint8_t sndcp_xid[] = {
 	0x01, 0x05, 0x00, 0x06, 0x00, 0x07, 0x01, 0x07, 0x00, 0x08, 0x01, 0x08,
 	0x80, 0x00, 0x04, 0x12, 0x00, 0x40, 0x07 };
 
+
+/* Quality Of Service - Negotiated QoS (taken from PDP Ctx Act msg)
+ 00.. .... = Spare bit(s): 0
+ ..10 0... = Quality of Service Delay class: Delay class 4 (best effort) (4)
+ .... .011 = Reliability class: Unacknowledged GTP/LLC, Ack RLC, Protected data (3)
+ 0110 .... = Peak throughput: Up to 32 000 octet/s (6)
+ .... 0... = Spare bit(s): 0
+ .... .010 = Precedence class: Normal priority (2)
+ 000. .... = Spare bit(s): 0
+ ...1 1111 = Mean throughput: Best effort (31)
+ 011. .... = Traffic class: Interactive class (3)
+ ...1 0... = Delivery order: Without delivery order ('no') (2)
+ .... .010 = Delivery of erroneous SDUs: Erroneous SDUs are delivered('yes') (2)
+ Maximum SDU size: 1520 octets (153)
+ Maximum bitrate for uplink: 63 kbps (63)
+ Maximum bitrate for downlink: 63 kbps (63)
+ 0001 .... = Residual Bit Error Rate (BER): 5*10-2 (1)
+ .... 0001 = SDU error ratio: 1*10-2 (1)
+ 0100 00.. = Transfer delay: 200 ms (16)
+ .... ..11 = Traffic handling priority: Priority level 3 (3)
+ Guaranteed bitrate for uplink: 0 kbps (255)
+ Guaranteed bitrate for downlink: 0 kbps (255)
+ 000. .... = Spare bit(s): 0
+ ...0 .... = Signalling indication: Not optimised for signalling traffic
+ .... 0000 = Source statistics description: unknown (0)
+ Maximum bitrate for downlink (extended): Use the value indicated by the Maximum bit rate for downlink (0)
+ Guaranteed bitrate for downlink (extended): Use the value indicated by the Guaranteed bit rate for downlink (0)
+*/
+static const uint8_t qos_profile_ie_val[] = {
+	0x23, 0x62, 0x1f, 0x72, 0x9, 0x3f, 0x3f, 0x11,
+	0x43, 0xff, 0xff, 0x00, 0x00, 0x00 };
+
+
 static void test_sndcp_prim_net(void)
 {
 	struct osmo_gprs_sndcp_prim *sndcp_prim;
@@ -211,6 +244,9 @@ static void test_sndcp_prim_ms(void)
 	 * LL-ESTABLISH.Req in ABM mode if we supported it): */
 	sndcp_prim = osmo_gprs_sndcp_prim_alloc_snsm_activate_ind(tlli, nsapi, ll_sapi);
 	OSMO_ASSERT(sndcp_prim);
+	sndcp_prim->snsm.activate_ind.radio_prio = 1;
+	sndcp_prim->snsm.activate_ind.qos_profile_len = sizeof(qos_profile_ie_val);
+	memcpy(sndcp_prim->snsm.activate_ind.qos_profile, qos_profile_ie_val, sizeof(qos_profile_ie_val));
 	rc = osmo_gprs_sndcp_prim_dispatch_snsm(sndcp_prim);
 	OSMO_ASSERT(rc == 0);
 

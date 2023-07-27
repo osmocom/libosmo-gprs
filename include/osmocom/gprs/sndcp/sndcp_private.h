@@ -151,6 +151,9 @@ struct gprs_sndcp_entity {
 	/* The NSAPI we shall use on top of LLC */
 	uint8_t nsapi;
 
+	/* Peak Throughput, Reliability Class, from QoS Profile TS 24.008 10.5.6.5 */
+	uint8_t peak_throughput;
+	uint8_t reliability_class;
 	/* Radio Priority (MS only, used by LLC/RLCMAC), TS 24.008 10.5.7.2 */
 	uint8_t radio_prio;
 

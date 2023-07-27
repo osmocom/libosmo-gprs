@@ -31,6 +31,8 @@
 #include <osmocom/gprs/sndcp/sndcp_prim.h>
 #include <osmocom/gprs/sndcp/sndcp_private.h>
 
+#include "../common/qos.h"
+
 #define SNDCP_MSGB_HEADROOM 0
 
 const struct value_string osmo_gprs_sndcp_prim_sap_names[] = {
@@ -635,6 +637,7 @@ static int gprs_sndcp_prim_handle_sndcp_snsm_activate_ind(struct osmo_gprs_sndcp
 	uint8_t nsapi = sndcp_prim->snsm.activate_ind.nsapi;
 	struct gprs_sndcp_mgmt_entity *snme;
 	struct gprs_sndcp_entity *sne;
+	struct osmo_gprs_sm_qos_profile_decoded decoded;
 
 	LOGSNDCP(LOGL_INFO, "SNSM-ACTIVATE.ind (TLLI=%08x, SAPI=%u, NSAPI=%u)\n",
 		 tlli, sapi, nsapi);
@@ -661,6 +664,17 @@ static int gprs_sndcp_prim_handle_sndcp_snsm_activate_ind(struct osmo_gprs_sndcp
 	if (g_sndcp_ctx->location != OSMO_GPRS_SNDCP_LOCATION_MS)
 		return 0;
 
+	if (gprs_qos_parse_qos_profile(&decoded,
+				       sndcp_prim->snsm.activate_ind.qos_profile,
+				       sndcp_prim->snsm.activate_ind.qos_profile_len) < 0) {
+		LOGSNE(sne, LOGL_ERROR, "Failed parsing QoS Profile len=%u: %s\n",
+		       sndcp_prim->snsm.activate_ind.qos_profile_len,
+		       osmo_hexdump(sndcp_prim->snsm.activate_ind.qos_profile,
+				    sndcp_prim->snsm.activate_ind.qos_profile_len));
+		return -EINVAL;
+	}
+	sne->peak_throughput = decoded.qos_profile.data.peak_throughput;
+	sne->reliability_class = decoded.qos_profile.data.reliability_class;
 	sne->radio_prio = sndcp_prim->snsm.activate_ind.radio_prio;
 
 	/* TODO: when supporting and using LLC ABM mode, flow should go through
