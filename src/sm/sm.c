@@ -264,8 +264,10 @@ int gprs_sm_submit_snsm_act_ind(const struct gprs_sm_entity *sme)
 				sme->ms->gmm.tlli,
 				sme->nsapi,
 				sme->llc_sapi);
-	//sndcp_prim_tx->snsm.activat_ind.qos_params = ; /* TODO */
-	//sndcp_prim_tx->snsm.activat_ind.radio_prio = 0; /* TODO */
+	sndcp_prim_tx->snsm.activate_ind.radio_prio = sme->radio_prio;
+	sndcp_prim_tx->snsm.activate_ind.qos_profile_len = sme->qos_len;
+	if (sme->qos_len)
+		memcpy(sndcp_prim_tx->snsm.activate_ind.qos_profile, &sme->qos, sme->qos_len);
 
 	rc = gprs_sm_prim_call_sndcp_up_cb(sndcp_prim_tx);
 	return rc;
