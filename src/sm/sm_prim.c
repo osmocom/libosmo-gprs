@@ -231,7 +231,7 @@ int gprs_sm_prim_call_up_cb(struct osmo_gprs_sm_prim *sm_prim)
 	return rc;
 }
 
-/* TS 24.007 6.6.1.1 SMREG-Attach.request:*/
+/* TS 24.007 6.5.1.1 SMREG-PDP_ACTIVATE.request:*/
 static int gprs_sm_prim_handle_smreg_pdp_act_req(struct osmo_gprs_sm_prim *sm_prim)
 {
 	int rc = 0;
