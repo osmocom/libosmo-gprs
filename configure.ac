@@ -90,6 +90,7 @@ AC_CONFIG_FILES([libosmo-csn1.pc
 		 include/osmocom/gprs/sndcp/Makefile
 		 include/osmocom/gprs/sm/Makefile
 		 src/Makefile
+		 src/common/Makefile
 		 src/csn1/Makefile
 		 src/gmm/Makefile
 		 src/llc/Makefile

@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include <osmocom/gprs/sm/sm_qos.h>
+
 /* 3GPP TS 24.008 10.5.6.1 */
 #define OSMO_GPRS_SM_APN_MAXLEN	100
 
@@ -13,9 +15,6 @@
 
 /* 3GPP TS 24.008 10.5.6.3 Protocol configuration options */
 #define OSMO_GPRS_SM_PCO_MAXLEN 253
-
-/* 3GPP TS 24.008 10.5.6.5 Quality of service */
-#define OSMO_GPRS_SM_QOS_MAXLEN 22
 
 /* 3GPP TS 24.008 10.5.6.21 NBIFOM container (T=1,L=1,V=255 => 257) */
 #define OSMO_GPRS_SM_MBIFORM_MAXLEN 255

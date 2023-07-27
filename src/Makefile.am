@@ -1,4 +1,5 @@
 SUBDIRS = \
+	common \
 	csn1 \
 	llc \
 	rlcmac \

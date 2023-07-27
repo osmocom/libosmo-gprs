@@ -23,6 +23,7 @@ libosmo_gprs_sm_la_SOURCES = \
 	sm_ms_fsm.c \
 	sm_pdu.c \
 	sm_prim.c \
+	sm_qos.c \
 	misc.c \
 	$(NULL)
 
@@ -35,7 +36,8 @@ libosmo_gprs_sm_la_LDFLAGS = \
 libosmo_gprs_sm_la_LIBADD = \
 	$(top_builddir)/src/gmm/libosmo-gprs-gmm.la \
 	$(top_builddir)/src/sndcp/libosmo-gprs-sndcp.la \
-	$(LIBOSMOCORE_LIBS) \
+	$(top_builddir)/src/common/libosmo-gprs-common.la \
 	$(LIBOSMOGSM_LIBS) \
+	$(LIBOSMOCORE_LIBS) \
 	-lm \
 	$(NULL)
