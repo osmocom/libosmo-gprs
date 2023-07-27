@@ -255,6 +255,7 @@ int gprs_llc_lle_tx_xid(const struct gprs_llc_lle *lle, uint8_t *xid_payload, un
 	int rc;
 	struct msgb *msg;
 	struct osmo_gprs_llc_prim *llc_prim;
+	const uint8_t radio_prio = 1; /* Use highest prio for GMM messages, TS 24.008 10.5.7.2 */
 	struct gprs_llc_pdu_decoded pdu_dec = {
 		.sapi = lle->sapi,
 		.fmt = OSMO_GPRS_LLC_FMT_U,
@@ -287,6 +288,7 @@ int gprs_llc_lle_tx_xid(const struct gprs_llc_lle *lle, uint8_t *xid_payload, un
 		llc_prim->grr.ll_pdu = msgb_l3(msg);
 		llc_prim->grr.ll_pdu_len = msgb_l3len(msg);
 		llc_prim->grr.unitdata_req.sapi = lle->sapi;
+		llc_prim->grr.unitdata_req.radio_prio = radio_prio;
 	}
 
 	/* Send GRR-UNITDATA.req */
@@ -299,6 +301,7 @@ int gprs_llc_lle_tx_null(const struct gprs_llc_lle *lle)
 {
 	int rc;
 	struct msgb *msg;
+	const uint8_t radio_prio = 4; /* Use lowest prio for GMM messages, TS 24.008 10.5.7.2 */
 	struct gprs_llc_pdu_decoded pdu_dec = {
 		.sapi = lle->sapi,
 		.fmt = OSMO_GPRS_LLC_FMT_U,
@@ -329,6 +332,7 @@ int gprs_llc_lle_tx_null(const struct gprs_llc_lle *lle)
 		llc_prim->grr.ll_pdu = msgb_l3(msg);
 		llc_prim->grr.ll_pdu_len = msgb_l3len(msg);
 		llc_prim->grr.unitdata_req.sapi = lle->sapi;
+		llc_prim->grr.unitdata_req.radio_prio = radio_prio;
 	}
 
 	/* Send BSSGP-DL-UNITDATA.req (SGSN) / GRR-UNITDATA.req (MS) */
@@ -340,7 +344,7 @@ int gprs_llc_lle_tx_null(const struct gprs_llc_lle *lle)
    'encryptable' indicates whether particular message can be encrypted according
    to 3GPP TS 24.008 § 4.7.1.2
  */
-int gprs_llc_lle_tx_ui(struct gprs_llc_lle *lle, uint8_t *l3_pdu, size_t l3_pdu_len, bool encryptable)
+int gprs_llc_lle_tx_ui(struct gprs_llc_lle *lle, uint8_t *l3_pdu, size_t l3_pdu_len, bool encryptable, uint8_t radio_prio)
 {
 	struct osmo_gprs_llc_prim *llc_prim;
 	struct msgb *msg;
@@ -393,6 +397,7 @@ int gprs_llc_lle_tx_ui(struct gprs_llc_lle *lle, uint8_t *l3_pdu, size_t l3_pdu_
 		llc_prim->grr.ll_pdu = msgb_l3(msg);
 		llc_prim->grr.ll_pdu_len = msgb_l3len(msg);
 		llc_prim->grr.unitdata_req.sapi = lle->sapi;
+		llc_prim->grr.unitdata_req.radio_prio = radio_prio;
 	}
 
 	/* Increment V(U) */

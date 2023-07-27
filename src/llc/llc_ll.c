@@ -309,7 +309,8 @@ static int llc_prim_handle_ll_unitdata_req(struct osmo_gprs_llc_prim *llc_prim)
 	}
 
 	rc = gprs_llc_lle_tx_ui(lle, llc_prim->ll.l3_pdu, llc_prim->ll.l3_pdu_len,
-				llc_prim->ll.unitdata_req.apply_gea);
+				llc_prim->ll.unitdata_req.apply_gea,
+				llc_prim->ll.unitdata_req.radio_prio);
 
 ret_free:
 	msgb_free(llc_prim->oph.msg);

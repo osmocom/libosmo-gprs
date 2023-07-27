@@ -323,7 +323,7 @@ int gprs_llc_lle_tx_sabm(struct gprs_llc_lle *lle, uint8_t *l3par, unsigned int 
 int gprs_llc_lle_tx_xid(const struct gprs_llc_lle *lle, uint8_t *xid_payload, unsigned int xid_payload_len, bool is_cmd);
 int gprs_llc_lle_tx_xid_req(struct gprs_llc_lle *lle, uint8_t *l3par, unsigned int l3par_len);
 int gprs_llc_lle_tx_xid_resp(struct gprs_llc_lle *lle, uint8_t *l3par, unsigned int l3par_len);
-int gprs_llc_lle_tx_ui(struct gprs_llc_lle *lle, uint8_t *l3_pdu, size_t l3_pdu_len, bool encryptable);
+int gprs_llc_lle_tx_ui(struct gprs_llc_lle *lle, uint8_t *l3_pdu, size_t l3_pdu_len, bool encryptable, uint8_t radio_prio);
 int gprs_llc_lle_tx_null(const struct gprs_llc_lle *lle);
 
 /* llc_prim.c: */

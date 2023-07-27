@@ -283,6 +283,7 @@ static int llc_prim_handle_llgmm_trigger_req(struct osmo_gprs_llc_prim *llc_prim
 	struct gprs_llc_lle *lle;
 	int rc;
 	struct gprs_llc_llme *llme = gprs_llc_find_llme_by_tlli(llc_prim->llgmm.tlli);
+	const uint8_t radio_prio = 1; /* Use highest prio for GMM messages, TS 24.008 10.5.7.2 */
 
 	if (!llme) {
 		LOGLLC(LOGL_NOTICE, "Rx %s: Unknown TLLI 0x%08x\n",
@@ -308,7 +309,7 @@ static int llc_prim_handle_llgmm_trigger_req(struct osmo_gprs_llc_prim *llc_prim
 	case OSMO_GPRS_LLC_LLGM_TRIGGER_CELL_UPDATE:
 	case OSMO_GPRS_LLC_LLGM_TRIGGER_PAGE_RESP:
 	default:
-		rc = gprs_llc_lle_tx_ui(lle, NULL, 0, false);
+		rc = gprs_llc_lle_tx_ui(lle, NULL, 0, false, radio_prio);
 		break;
 	}
 
