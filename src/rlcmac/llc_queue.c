@@ -47,6 +47,7 @@ struct gprs_rlcmac_llc_queue *gprs_rlcmac_llc_queue_alloc(struct gprs_rlcmac_ent
 	for (i = 0; i < ARRAY_SIZE(q->pq); i++) {
 		for (j = 0; j < ARRAY_SIZE(q->pq[i]); j++) {
 			q->pq[i][j].radio_prio = i; /* enum gprs_rlcmac_radio_priority, range (0..3) */
+			q->pq[i][j].sapi = i + 1; /* osmo_gprs_rlcmac_llc_sapi, range (1..11) */
 			INIT_LLIST_HEAD(&q->pq[i][j].queue);
 			gprs_codel_init(&q->pq[i][j].codel_state);
 		}
@@ -221,6 +222,14 @@ enum gprs_rlcmac_radio_priority gprs_rlcmac_llc_queue_highest_radio_prio_pending
 	OSMO_ASSERT(prioq);
 	return prioq->radio_prio;
 }
+
+enum osmo_gprs_rlcmac_llc_sapi gprs_rlcmac_llc_queue_highest_llc_sapi_pending(struct gprs_rlcmac_llc_queue *q)
+{
+	struct gprs_llc_prio_queue *prioq = gprs_rlcmac_llc_queue_find_msg(q);
+	OSMO_ASSERT(prioq);
+	return prioq->sapi;
+}
+
 
 /* Merge old_q messages into q, prepending them. old_q must be freed by the caller. */
 void gprs_rlcmac_llc_queue_merge_prepend(struct gprs_rlcmac_llc_queue *q, struct gprs_rlcmac_llc_queue *old_q)

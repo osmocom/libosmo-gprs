@@ -198,6 +198,9 @@ bool gprs_rlcmac_entity_have_tx_data_queued(const struct gprs_rlcmac_entity *gre
 /* Create a new UL TBF and start Packet access procedure to get an UL assignment if needed */
 int gprs_rlcmac_entity_start_ul_tbf_pkt_acc_proc_if_needed(struct gprs_rlcmac_entity *gre)
 {
+	enum osmo_gprs_rlcmac_llc_sapi tx_sapi;
+	enum gprs_rlcmac_tbf_ul_ass_type ul_ass_type;
+
 	/* TS 44.060 5.3 "In packet idle mode, upper layers may require the
 	* transfer of a upper layer PDU, which implicitly triggers the
 	* establishment of a TBF and the transition to packet transfer mode." */
@@ -212,8 +215,27 @@ int gprs_rlcmac_entity_start_ul_tbf_pkt_acc_proc_if_needed(struct gprs_rlcmac_en
 	gre->ul_tbf = gprs_rlcmac_ul_tbf_alloc(gre);
 	if (!gre->ul_tbf)
 		return -ENOMEM;
+
+	tx_sapi = gprs_rlcmac_llc_queue_highest_radio_prio_pending(gre->llc_queue);
+	/* 3GPP TS 44.018 3.5.2.1.2 "Initiation of the packet access procedure: channel request" */
+	switch (tx_sapi) {
+	case OSMO_GPRS_RLCMAC_LLC_SAPI_GMM:
+		/* "If the purpose [...] is to send a Page Response, a Cell update (the mobile
+		 * station was in GMM READY state before the cell reselection) or for any other
+		 * GPRS Mobility Management or GPRS Session Management procedure, the mobile station
+		 * shall request a one phase packet access" */
+		ul_ass_type = GPRS_RLCMAC_TBF_UL_ASS_TYPE_1PHASE;
+		break;
+	default:
+		/* "If the purpose [...] is to send user data and the requested RLC mode is
+		 * acknowledged mode, the mobile station shall request either a one phase packet
+		 * access or a single block packet access." */
+		/* TODO: We always use 1phase for now... ideally we should decide
+		 * based on amount of Tx data and configured MultiSlot Class? */
+		ul_ass_type = GPRS_RLCMAC_TBF_UL_ASS_TYPE_1PHASE;
+	}
 	/* We always use 1phase for now... */
-	return gprs_rlcmac_tbf_ul_ass_start(gre->ul_tbf, GPRS_RLCMAC_TBF_UL_ASS_TYPE_1PHASE);
+	return gprs_rlcmac_tbf_ul_ass_start(gre->ul_tbf, ul_ass_type);
 }
 
 int gprs_rlcmac_entity_llc_enqueue(struct gprs_rlcmac_entity *gre,
