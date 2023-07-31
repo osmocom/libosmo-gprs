@@ -581,9 +581,9 @@ static int gprs_gmm_tx_id_resp(struct gprs_gmm_entity *gmme,
 	}
 	llc_prim->ll.l3_pdu = msg->l3h;
 	llc_prim->ll.l3_pdu_len = msgb_l3len(msg);
+	llc_prim->ll.unitdata_req.radio_prio = 1; /* highest */
 	/* TODO:
 	llc_prim->ll.qos_params.*;
-	llc_prim->ll.radio_prio;
 	llc_prim->ll.apply_gea;
 	llc_prim->ll.apply_gia;
 	*/
@@ -615,9 +615,9 @@ int gprs_gmm_tx_auth_ciph_resp(const struct gprs_gmm_entity *gmme, const uint8_t
 	}
 	llc_prim->ll.l3_pdu = msg->l3h;
 	llc_prim->ll.l3_pdu_len = msgb_l3len(msg);
+	llc_prim->ll.unitdata_req.radio_prio = 1; /* highest */
 	/* TODO:
 	llc_prim->ll.qos_params.*;
-	llc_prim->ll.radio_prio;
 	llc_prim->ll.apply_gea;
 	llc_prim->ll.apply_gia;
 	*/
@@ -652,9 +652,9 @@ int gprs_gmm_tx_att_req(struct gprs_gmm_entity *gmme,
 	}
 	llc_prim->ll.l3_pdu = msg->l3h;
 	llc_prim->ll.l3_pdu_len = msgb_l3len(msg);
+	llc_prim->ll.unitdata_req.radio_prio = 1; /* highest */
 	/* TODO:
 	llc_prim->ll.qos_params.*;
-	llc_prim->ll.radio_prio;
 	llc_prim->ll.apply_gea;
 	llc_prim->ll.apply_gia;
 	*/
@@ -684,9 +684,9 @@ static int gprs_gmm_tx_att_compl(struct gprs_gmm_entity *gmme)
 	}
 	llc_prim->ll.l3_pdu = msg->l3h;
 	llc_prim->ll.l3_pdu_len = msgb_l3len(msg);
+	llc_prim->ll.unitdata_req.radio_prio = 1; /* highest */
 	/* TODO:
 	llc_prim->ll.qos_params.*;
-	llc_prim->ll.radio_prio;
 	llc_prim->ll.apply_gea;
 	llc_prim->ll.apply_gia;
 	*/
@@ -718,9 +718,9 @@ int gprs_gmm_tx_detach_req(struct gprs_gmm_entity *gmme,
 	}
 	llc_prim->ll.l3_pdu = msg->l3h;
 	llc_prim->ll.l3_pdu_len = msgb_l3len(msg);
+	llc_prim->ll.unitdata_req.radio_prio = 1; /* highest */
 	/* TODO:
 	llc_prim->ll.qos_params.*;
-	llc_prim->ll.radio_prio;
 	llc_prim->ll.apply_gea;
 	llc_prim->ll.apply_gia;
 	*/
@@ -750,9 +750,9 @@ static int gprs_gmm_tx_ptmsi_realloc_compl(struct gprs_gmm_entity *gmme)
 	}
 	llc_prim->ll.l3_pdu = msg->l3h;
 	llc_prim->ll.l3_pdu_len = msgb_l3len(msg);
+	llc_prim->ll.unitdata_req.radio_prio = 1; /* highest */
 	/* TODO:
 	llc_prim->ll.qos_params.*;
-	llc_prim->ll.radio_prio;
 	llc_prim->ll.apply_gea;
 	llc_prim->ll.apply_gia;
 	*/
@@ -784,9 +784,9 @@ int gprs_gmm_tx_auth_ciph_fail(struct gprs_gmm_entity *gmme, enum gsm48_gmm_caus
 	}
 	llc_prim->ll.l3_pdu = msg->l3h;
 	llc_prim->ll.l3_pdu_len = msgb_l3len(msg);
+	llc_prim->ll.unitdata_req.radio_prio = 1; /* highest */
 	/* TODO:
 	llc_prim->ll.qos_params.*;
-	llc_prim->ll.radio_prio;
 	llc_prim->ll.apply_gea;
 	llc_prim->ll.apply_gia;
 	*/
@@ -825,9 +825,9 @@ int gprs_gmm_tx_rau_req(struct gprs_gmm_entity *gmme,
 	}
 	llc_prim->ll.l3_pdu = msg->l3h;
 	llc_prim->ll.l3_pdu_len = msgb_l3len(msg);
+	llc_prim->ll.unitdata_req.radio_prio = 1; /* highest */
 	/* TODO:
 	llc_prim->ll.qos_params.*;
-	llc_prim->ll.radio_prio;
 	llc_prim->ll.apply_gea;
 	llc_prim->ll.apply_gia;
 	*/
@@ -857,9 +857,9 @@ static int gprs_gmm_tx_rau_compl(struct gprs_gmm_entity *gmme)
 	}
 	llc_prim->ll.l3_pdu = msg->l3h;
 	llc_prim->ll.l3_pdu_len = msgb_l3len(msg);
+	llc_prim->ll.unitdata_req.radio_prio = 1; /* highest */
 	/* TODO:
 	llc_prim->ll.qos_params.*;
-	llc_prim->ll.radio_prio;
 	llc_prim->ll.apply_gea;
 	llc_prim->ll.apply_gia;
 	*/
@@ -886,7 +886,8 @@ static int gprs_gmm_rx_att_ack(struct gprs_gmm_entity *gmme, struct gsm48_hdr *g
 	aa = (struct gsm48_attach_ack *)&gh->data[0];
 
 	periodic_rau_sec = gprs_gmm_gprs_tmr_to_secs(aa->ra_upd_timer);
-	gmme->radio_prio = aa->radio_prio;
+	gmme->radio_prio_sms = aa->radio_prio >> 4;
+	gmme->radio_prio_tom8 = aa->radio_prio & 0x0f;
 	gmme->t3312_assigned_sec = periodic_rau_sec >= 0 ? periodic_rau_sec : 0;
 	if (gmme->t3312_assigned_sec == 0)
 		gprs_gmm_gmme_t3312_stop(gmme);

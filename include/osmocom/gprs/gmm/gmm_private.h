@@ -64,7 +64,8 @@ struct gprs_gmm_entity {
 	char imei[GSM23003_IMEI_NUM_DIGITS + 1];
 	char imeisv[GSM23003_IMEISV_NUM_DIGITS+1];
 
-	uint8_t radio_prio;	/* TS 24.008 10.5.7.2 */
+	uint8_t radio_prio_sms;	/* TS 24.008 10.5.7.2 */
+	uint8_t radio_prio_tom8; /* TS 24.008 10.5.7.2 */
 	struct gprs_ra_id ra; /* TS 24.008  10.5.5.15 (decoded) */
 	bool pdp_ctx_status_present;
 	uint8_t pdp_ctx_status[2]; /* TS 24.008 10.5.7.1 */
