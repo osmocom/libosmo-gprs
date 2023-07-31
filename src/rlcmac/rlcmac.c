@@ -701,13 +701,14 @@ static int gprs_rlcmac_handle_pkt_ul_ack_nack(const struct osmo_gprs_rlcmac_prim
 {
 	struct gprs_rlcmac_ul_tbf *ul_tbf;
 	int rc;
+	const Packet_Uplink_Ack_Nack_t *pkt_ul_ack = &dl_block->u.Packet_Uplink_Ack_Nack;
 
-	ul_tbf = gprs_rlcmac_find_ul_tbf_by_tfi(dl_block->TFI);
+	ul_tbf = gprs_rlcmac_find_ul_tbf_by_tfi(pkt_ul_ack->UPLINK_TFI);
 	if (!ul_tbf) {
 		LOGRLCMAC(LOGL_INFO, "TS=%u FN=%u Rx Pkt UL ACK/NACK: UL_TBF TFI=%u not found\n",
 			  rlcmac_prim->l1ctl.pdch_data_ind.ts_nr,
 			  rlcmac_prim->l1ctl.pdch_data_ind.fn,
-			  dl_block->TFI);
+			  pkt_ul_ack->UPLINK_TFI);
 		return -ENOENT;
 	}
 
