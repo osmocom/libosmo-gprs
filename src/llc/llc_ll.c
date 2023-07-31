@@ -172,17 +172,22 @@ int gprs_llc_lle_submit_prim_ll_xid_ind(struct gprs_llc_lle *lle,
 					const struct gprs_llc_xid_field *xid_field_request_l3)
 {
 	struct osmo_gprs_llc_prim *llc_prim_tx;
-	llc_prim_tx = gprs_llc_prim_alloc_ll_xid_ind(lle->llme->tlli, lle->sapi, NULL, xid_field_request_l3->var.val_len);
-	OSMO_ASSERT(llc_prim_tx);
+
 	if (xid_field_request_l3) {
+		llc_prim_tx = gprs_llc_prim_alloc_ll_xid_ind(lle->llme->tlli, lle->sapi, NULL, xid_field_request_l3->var.val_len);
+		OSMO_ASSERT(llc_prim_tx);
 		llc_prim_tx->ll.l3_pdu_len = xid_field_request_l3->var.val_len;
 		llc_prim_tx->ll.l3_pdu = msgb_put(llc_prim_tx->oph.msg, llc_prim_tx->ll.l3_pdu_len);
 		if (llc_prim_tx->ll.l3_pdu_len > 0)
 			memcpy(llc_prim_tx->ll.l3_pdu, xid_field_request_l3->var.val,
 			       llc_prim_tx->ll.l3_pdu_len);
+	} else {
+		llc_prim_tx = gprs_llc_prim_alloc_ll_xid_ind(lle->llme->tlli, lle->sapi, NULL, 0);
+		OSMO_ASSERT(llc_prim_tx);
 	}
 	llc_prim_tx->ll.xid.n201_i = lle->params.n201_i;
 	llc_prim_tx->ll.xid.n201_u = lle->params.n201_u;
+
 	return gprs_llc_prim_call_up_cb(llc_prim_tx);
 }
 
