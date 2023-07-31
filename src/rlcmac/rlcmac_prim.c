@@ -469,6 +469,8 @@ static int rlcmac_prim_handle_gmmrr_assign_req(struct osmo_gprs_rlcmac_prim *rlc
 			rc = -ENOENT;
 			goto free_ret;
 		}
+		gre->old_tlli = old_tlli;
+		gre->tlli = GPRS_RLCMAC_TLLI_UNASSIGNED;
 		gprs_rlcmac_entity_free(gre);
 		gre = NULL;
 		goto free_ret;
@@ -481,7 +483,9 @@ static int rlcmac_prim_handle_gmmrr_assign_req(struct osmo_gprs_rlcmac_prim *rlc
 			goto free_ret;
 		}
 		LOGGRE(gre, LOGL_INFO, "Update TLLI 0x%08x -> 0x%08x\n", old_tlli, new_tlli);
+		gre->old_tlli = old_tlli;
 		gre->tlli = new_tlli;
+
 	}
 
 	/* cache/update knowledge about this GMME's PTMSI and IMSI. It will be

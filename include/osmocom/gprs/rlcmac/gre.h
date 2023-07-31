@@ -21,6 +21,7 @@ struct gprs_rlcmac_tbf;
 struct gprs_rlcmac_entity {
 	struct llist_head entry; /* item in (struct gprs_rlcmac_ctx)->gre_list */
 	uint32_t tlli;
+	uint32_t old_tlli;
 
 	/* Used to match paging requests coming from CS domain: */
 	uint32_t ptmsi;

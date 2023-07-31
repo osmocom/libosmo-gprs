@@ -66,6 +66,7 @@ struct gprs_rlcmac_entity *gprs_rlcmac_entity_alloc(uint32_t tlli)
 		goto err_free_gre;
 
 	gre->tlli = tlli;
+	gre->old_tlli = GPRS_RLCMAC_TLLI_UNASSIGNED;
 	gre->ptmsi = GSM_RESERVED_TMSI;
 	llist_add_tail(&gre->entry, &g_rlcmac_ctx->gre_list);
 

@@ -137,7 +137,7 @@ struct gprs_rlcmac_entity *gprs_rlcmac_find_entity_by_tlli(uint32_t tlli)
 {
 	struct gprs_rlcmac_entity *gre;
 	llist_for_each_entry(gre, &g_rlcmac_ctx->gre_list, entry) {
-		if (gre->tlli == tlli)
+		if (gre->tlli == tlli || gre->old_tlli == tlli)
 			return gre;
 	}
 	return NULL;
