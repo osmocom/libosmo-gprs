@@ -71,8 +71,8 @@ struct osmo_gprs_rlcmac_grr_prim {
  */
 enum osmo_gprs_rlcmac_gmmrr_prim_type {
 	OSMO_GPRS_RLCMAC_GMMRR_ASSIGN,	/* Req: newTLLI  */
-	OSMO_GPRS_RLCMAC_GMMRR_LLC_TRANSMITTED, /* Ind: TLLI */
 	OSMO_GPRS_RLCMAC_GMMRR_PAGE,	/* Ind: TLLI */
+	OSMO_GPRS_RLCMAC_GMMRR_LLC_TRANSMITTED, /* Ind: TLLI */
 };
 
 extern const struct value_string osmo_gprs_rlcmac_gmmrr_prim_type_names[];
