@@ -335,7 +335,7 @@ static int gprs_sndcp_prim_handle_sndcp_sn_data_req(struct osmo_gprs_sndcp_prim 
 					   sndcp_prim->sn.data_req.nsapi);
 	if (!sne) {
 		LOGSNDCP(LOGL_ERROR, "Message for non-existing SNDCP Entity "
-			 "(TLLI=%08x, SAPI=%u, NSAPI=%u)\n",
+			 "(TLLI=0x%08x, SAPI=%u, NSAPI=%u)\n",
 			 sndcp_prim->sn.tlli, sndcp_prim->sn.sapi,
 			 sndcp_prim->sn.data_req.nsapi);
 		rc = -EIO;
@@ -360,7 +360,7 @@ static int gprs_sndcp_prim_handle_sndcp_sn_unitdata_req(struct osmo_gprs_sndcp_p
 					   sndcp_prim->sn.unitdata_req.nsapi);
 	if (!sne) {
 		LOGSNDCP(LOGL_ERROR, "Message for non-existing SNDCP Entity "
-			 "(TLLI=%08x, SAPI=%u, NSAPI=%u)\n",
+			 "(TLLI=0x%08x, SAPI=%u, NSAPI=%u)\n",
 			 sndcp_prim->sn.tlli, sndcp_prim->sn.sapi,
 			 sndcp_prim->sn.unitdata_req.nsapi);
 		rc = -EIO;
@@ -383,7 +383,7 @@ static int gprs_sndcp_prim_handle_sndcp_sn_xid_req(struct osmo_gprs_sndcp_prim *
 					   sndcp_prim->sn.xid_req.nsapi);
 	if (!sne) {
 		LOGSNDCP(LOGL_ERROR, "Message for non-existing SNDCP Entity "
-			 "(TLLI=%08x, SAPI=%u, NSAPI=%u)\n",
+			 "(TLLI=0x%08x, SAPI=%u, NSAPI=%u)\n",
 			 sndcp_prim->sn.tlli, sndcp_prim->sn.sapi,
 			 sndcp_prim->sn.xid_req.nsapi);
 		rc = -EIO;
@@ -405,7 +405,7 @@ static int gprs_sndcp_prim_handle_sndcp_sn_xid_rsp(struct osmo_gprs_sndcp_prim *
 					   sndcp_prim->sn.xid_rsp.nsapi);
 	if (!sne) {
 		LOGSNDCP(LOGL_ERROR, "Message for non-existing SNDCP Entity "
-			 "(TLLI=%08x, SAPI=%u, NSAPI=%u)\n",
+			 "(TLLI=0x%08x, SAPI=%u, NSAPI=%u)\n",
 			 sndcp_prim->sn.tlli, sndcp_prim->sn.sapi,
 			 sndcp_prim->sn.xid_rsp.nsapi);
 		rc = -EIO;
@@ -476,7 +476,7 @@ static int gprs_sndcp_prim_handle_llc_ll_unitdata_ind(struct osmo_gprs_llc_prim 
 	sne = gprs_sndcp_sne_by_dlci_nsapi(llc_prim->ll.tlli, llc_prim->ll.sapi, sch->nsapi);
 	if (!sne) {
 		LOGSNDCP(LOGL_ERROR, "Message for non-existing SNDCP Entity "
-			 "(TLLI=%08x, SAPI=%u, NSAPI=%u)\n",
+			 "(TLLI=0x%08x, SAPI=%u, NSAPI=%u)\n",
 			 llc_prim->ll.tlli, llc_prim->ll.sapi, sch->nsapi);
 		return -EIO;
 	}
@@ -493,7 +493,7 @@ static int gprs_sndcp_prim_handle_llc_ll_establish_cnf(struct osmo_gprs_llc_prim
 	sne = gprs_sndcp_sne_by_dlci(llc_prim->ll.tlli, llc_prim->ll.sapi);
 	if (!sne) {
 		LOGSNDCP(LOGL_ERROR, "Message for non-existing SNDCP Entity "
-			 "(TLLI=%08x, SAPI=%u)\n",
+			 "(TLLI=0x%08x, SAPI=%u)\n",
 			 llc_prim->ll.tlli, llc_prim->ll.sapi);
 		return -EIO;
 	}
@@ -510,7 +510,7 @@ static int gprs_sndcp_prim_handle_llc_ll_xid_ind(struct osmo_gprs_llc_prim *llc_
 	snme = gprs_sndcp_snme_find_by_tlli(llc_prim->ll.tlli);
 	if (!snme) {
 		LOGSNDCP(LOGL_ERROR, "SNDCP-LL-XID.ind: Message for non-existing SNDCP Entity "
-			 "(TLLI=%08x, SAPI=%u)\n",
+			 "(TLLI=0x%08x, SAPI=%u)\n",
 			 llc_prim->ll.tlli, llc_prim->ll.sapi);
 		return -EIO;
 	}
@@ -529,7 +529,7 @@ static int gprs_sndcp_prim_handle_llc_ll_xid_cnf(struct osmo_gprs_llc_prim *llc_
 	snme = gprs_sndcp_snme_find_by_tlli(llc_prim->ll.tlli);
 	if (!snme) {
 		LOGSNDCP(LOGL_ERROR, "SNDCP-LL-XID.cnf: Message for non-existing SNDCP Entity "
-			 "(TLLI=%08x, SAPI=%u)\n",
+			 "(TLLI=0x%08x, SAPI=%u)\n",
 			 llc_prim->ll.tlli, llc_prim->ll.sapi);
 		return -EIO;
 	}
@@ -546,7 +546,7 @@ static int gprs_sndcp_prim_handle_llc_ll_assign_ind(struct osmo_gprs_llc_prim *l
 
 	snme = gprs_sndcp_snme_find_by_tlli(llc_prim->ll.tlli);
 	if (!snme) {
-		LOGSNDCP(LOGL_ERROR, "SNDCP-LL-ASSIGN.ind: Message for non-existing SNDCP Entity (TLLI=%08x)\n",
+		LOGSNDCP(LOGL_ERROR, "SNDCP-LL-ASSIGN.ind: Message for non-existing SNDCP Entity (TLLI=0x%08x)\n",
 			 llc_prim->ll.tlli);
 		return -EIO;
 	}
@@ -639,7 +639,7 @@ static int gprs_sndcp_prim_handle_sndcp_snsm_activate_ind(struct osmo_gprs_sndcp
 	struct gprs_sndcp_entity *sne;
 	struct osmo_gprs_sm_qos_profile_decoded decoded;
 
-	LOGSNDCP(LOGL_INFO, "SNSM-ACTIVATE.ind (TLLI=%08x, SAPI=%u, NSAPI=%u)\n",
+	LOGSNDCP(LOGL_INFO, "SNSM-ACTIVATE.ind (TLLI=0x%08x, SAPI=%u, NSAPI=%u)\n",
 		 tlli, sapi, nsapi);
 
 	snme = gprs_sndcp_snme_find_by_tlli(tlli);
@@ -709,14 +709,14 @@ static int gprs_sndcp_prim_handle_sndcp_snsm_deactivate_ind(struct osmo_gprs_snd
 	snme = gprs_sndcp_snme_find_by_tlli(tlli);
 	if (!snme) {
 		LOGSNDCP(LOGL_ERROR, "SNSM-DEACTIVATE.ind: Message for non-existing SNDCP Management Entity "
-		 "(TLLI=%08x, NSAPI=%u)\n", tlli, nsapi);
+		 "(TLLI=0x%08x, NSAPI=%u)\n", tlli, nsapi);
 		return -EIO;
 	}
 
 	sne = gprs_sndcp_snme_get_sne(snme, nsapi);
 	if (!sne) {
 		LOGSNDCP(LOGL_ERROR, "SNSM-DEACTIVATE.ind: Message for non-existing SNDCP Entity "
-		 "(TLLI=%08x, NSAPI=%u)\n", tlli, nsapi);
+		 "(TLLI=0x%08x, NSAPI=%u)\n", tlli, nsapi);
 		return -EIO;
 	}
 

@@ -166,7 +166,7 @@ static int llc_prim_handle_llgmm_assign_req(struct osmo_gprs_llc_prim *llc_prim)
 		goto ret_free;
 	}
 
-	LOGLLME(llme, LOGL_NOTICE, "LLGM Assign pre (%08x => %08x)\n", old_tlli, new_tlli);
+	LOGLLME(llme, LOGL_NOTICE, "LLGM Assign pre (0x%08x => 0x%08x)\n", old_tlli, new_tlli);
 
 	if (old_tlli == TLLI_UNASSIGNED && new_tlli != TLLI_UNASSIGNED) {
 		/* TLLI Assignment 8.3.1 */
@@ -221,7 +221,7 @@ static int llc_prim_handle_llgmm_assign_req(struct osmo_gprs_llc_prim *llc_prim)
 		free = true;
 	}
 
-	LOGLLME(llme, LOGL_NOTICE, "LLGM Assign post (%08x => %08x)\n", old_tlli, new_tlli);
+	LOGLLME(llme, LOGL_NOTICE, "LLGM Assign post (0x%08x => 0x%08x)\n", old_tlli, new_tlli);
 
 	if (free)
 		gprs_llc_llme_free(llme);
