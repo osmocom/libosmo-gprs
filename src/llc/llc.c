@@ -53,6 +53,11 @@ const struct value_string gprs_llc_lle_state_names[] = {
 	{ 0, NULL }
 };
 
+/* 3GPP TS 44.064 6.4.2.2 */
+static const uint8_t gprs_llc_ui_dummy_command[] = {
+	0x43, 0xc0, 0x01, 0x2b, 0x2b, 0x2b
+};
+
 /* Section 8.9.9 LLC layer parameter default values */
 static const struct gprs_llc_params llc_default_params[NUM_SAPIS] = {
 	[1] = {
@@ -844,6 +849,15 @@ int gprs_llc_lle_rx_unitdata_ind(struct gprs_llc_lle *lle, uint8_t *ll_pdu, size
 	if (~pdu_dec->flags & OSMO_GPRS_LLC_PDU_F_PROT_MODE)
 		crc_length = OSMO_MIN(crc_length, UI_HDR_LEN + N202);
 	if (pdu_dec->fcs != gprs_llc_fcs(ll_pdu, crc_length)) {
+		if (ll_pdu_len >= sizeof(gprs_llc_ui_dummy_command) ||
+		    memcmp(ll_pdu, gprs_llc_ui_dummy_command, sizeof(gprs_llc_ui_dummy_command)) == 0) {
+			/* 6.4.2.2: "If the LLC entity at the MS receives a UI Dummy command, it shall discard
+			 * it without any further actions" [...]
+			 * "The format specified for the UI Dummy command ensures that a receiving LLC entity
+			 * will always discard it, since the FCS field check always fails" "*/
+			LOGLLE(lle, LOGL_DEBUG, "Dropping UI Dummy command len=%zu\n", ll_pdu_len);
+			return 0;
+		}
 		LOGLLE(lle, LOGL_NOTICE, "Dropping frame with invalid FCS 0x%06x vs exp 0x%06x: %s\n",
 		       pdu_dec->fcs, gprs_llc_fcs(ll_pdu, crc_length),
 		       osmo_hexdump(ll_pdu, ll_pdu_len));
