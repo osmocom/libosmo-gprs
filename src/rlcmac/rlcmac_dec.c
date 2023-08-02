@@ -429,15 +429,17 @@ int gprs_rlcmac_decode_gprs_acknack_bits(const Ack_Nack_Description_t *desc,
 	return num_blocks;
 }
 
-/* 12.21 Starting Frame Number Description */
+/* TS 44.060 12.21 Starting Frame Number Description
+ * TS 44.018 10.5.2.38 Starting Time */
 uint32_t TBF_StartingTime_to_fn(const StartingTime_t *tbf_start_time, uint32_t curr_fn)
 {
-	const struct gsm_time g_time = {
-		.t1 = tbf_start_time->N32,
-		.t2 = tbf_start_time->N51,
-		.t3 = tbf_start_time->N26
-	};
-	return gsm_gsmtime2fn(&g_time);
+	const uint8_t t1p = tbf_start_time->N32;
+	const uint8_t t3 = tbf_start_time->N51;
+	const uint8_t t2 = tbf_start_time->N26;
+	const uint16_t rfn = 51 * OSMO_MOD_FLR((t3 - t2), 26) + t3 + 51 * 26 * t1p;
+	const uint32_t fn = gsm_rfn2fn(rfn, curr_fn);
+	LOGRLCMAC(LOGL_DEBUG, "curr_fn=%u + RFN=%u -> FN=%u\n", curr_fn, rfn, fn);
+	return fn;
 
 }
 

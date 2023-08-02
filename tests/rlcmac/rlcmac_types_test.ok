@@ -1,0 +1,24 @@
+=== test_tbf_starting_time_to_fn(cur_fn=0, fn=0) start ===
+cur_fn=0 fn=0 rfn=0 [T1'=0 T3=0 T2=0]
+res_fn=0
+=== test_tbf_starting_time_to_fn(cur_fn=0, fn=0) end ===
+=== test_tbf_starting_time_to_fn(cur_fn=0, fn=4) start ===
+cur_fn=0 fn=4 rfn=4 [T1'=0 T3=4 T2=4]
+res_fn=4
+=== test_tbf_starting_time_to_fn(cur_fn=0, fn=4) end ===
+=== test_tbf_starting_time_to_fn(cur_fn=4953, fn=4961) start ===
+cur_fn=4953 fn=4961 rfn=4961 [T1'=3 T3=14 T2=21]
+res_fn=4961
+=== test_tbf_starting_time_to_fn(cur_fn=4953, fn=4961) end ===
+=== test_tbf_starting_time_to_fn(cur_fn=2229729, fn=2229786) start ===
+cur_fn=2229729 fn=2229786 rfn=23322 [T1'=17 T3=15 T2=0]
+res_fn=2229786
+=== test_tbf_starting_time_to_fn(cur_fn=2229729, fn=2229786) end ===
+=== test_tbf_starting_time_to_fn(cur_fn=2229777, fn=2229786) start ===
+cur_fn=2229777 fn=2229786 rfn=23322 [T1'=17 T3=15 T2=0]
+res_fn=2229786
+=== test_tbf_starting_time_to_fn(cur_fn=2229777, fn=2229786) end ===
+=== test_tbf_starting_time_to_fn(cur_fn=1320458, fn=1320462) start ===
+cur_fn=1320458 fn=1320462 rfn=5070 [T1'=3 T3=21 T2=0]
+res_fn=1320462
+=== test_tbf_starting_time_to_fn(cur_fn=1320458, fn=1320462) end ===

@@ -64,6 +64,13 @@ cat $abs_srcdir/rlcmac/rlcmac_prim_test.err > experr
 AT_CHECK([$abs_top_builddir/tests/rlcmac/rlcmac_prim_test], [0], [expout], [experr])
 AT_CLEANUP
 
+AT_SETUP([rlcmac/rlcmac_types])
+AT_KEYWORDS([rlcmac rlcmac_types])
+cat $abs_srcdir/rlcmac/rlcmac_types_test.ok > expout
+cat $abs_srcdir/rlcmac/rlcmac_types_test.err > experr
+AT_CHECK([$abs_top_builddir/tests/rlcmac/rlcmac_types_test], [0], [expout], [experr])
+AT_CLEANUP
+
 AT_SETUP([sm/sm_prim])
 AT_KEYWORDS([sm sm_prim])
 cat $abs_srcdir/sm/sm_prim_test.ok > expout
