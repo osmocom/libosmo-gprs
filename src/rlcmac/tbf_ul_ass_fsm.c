@@ -152,8 +152,8 @@ static int handle_imm_ass(struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *ctx, const stru
 											d->fn);
 					ctx->phase1_alloc.ts[d->ts_nr].allocated = true;
 					ctx->phase1_alloc.num_ts = 1;
-					LOGPFSML(ctx->fi, LOGL_INFO, "ImmAss SingleBlock (2phase access) ts_nr=%u start_fn=%u\n", d->ts_nr, ctx->tbf_starting_time);
-					return -ENOTSUP;
+					LOGPFSML(ctx->fi, LOGL_INFO, "ImmAss SingleBlock (2phase access) cur_tn=%u cur_fn=%u start_fn=%u\n", d->ts_nr, d->fn, ctx->tbf_starting_time);
+					return 0;
 				case 1: /* d->iaro->u.hh.u.UplinkDownlinkAssignment.ul_dl.Packet_Uplink_ImmAssignment.Access.DynamicOrFixedAllocation.* (GPRS_DynamicOrFixedAllocation_t) */
 					ctx->phase1_alloc.ul_tfi = d->iaro->u.hh.u.UplinkDownlinkAssignment.ul_dl.Packet_Uplink_ImmAssignment.Access.DynamicOrFixedAllocation.TFI_ASSIGNMENT;
 					ctx->ul_tbf->tx_cs = d->iaro->u.hh.u.UplinkDownlinkAssignment.ul_dl.Packet_Uplink_ImmAssignment.Access.DynamicOrFixedAllocation.CHANNEL_CODING_COMMAND + 1;
@@ -161,8 +161,8 @@ static int handle_imm_ass(struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *ctx, const stru
 					if (ctx->tbf_starting_time_exists)
 						ctx->tbf_starting_time = TBF_StartingTime_to_fn(&d->iaro->u.hh.u.UplinkDownlinkAssignment.ul_dl.Packet_Uplink_ImmAssignment.Access.DynamicOrFixedAllocation.TBF_STARTING_TIME,
 												d->fn);
-					LOGPFSML(ctx->fi, LOGL_INFO, "ImmAss TFI=%u initCS=%s startTimeFN=%u\n",
-						 ctx->phase1_alloc.ul_tfi, gprs_rlcmac_mcs_name(ctx->ul_tbf->tx_cs), ctx->tbf_starting_time);
+					LOGPFSML(ctx->fi, LOGL_INFO, "ImmAss TFI=%u initCS=%s cur_tn=%u cur_fn=%u start_fn=%u\n",
+						 ctx->phase1_alloc.ul_tfi, gprs_rlcmac_mcs_name(ctx->ul_tbf->tx_cs), d->ts_nr, d->fn, ctx->tbf_starting_time);
 					switch (d->iaro->u.hh.u.UplinkDownlinkAssignment.ul_dl.Packet_Uplink_ImmAssignment.Access.DynamicOrFixedAllocation.UnionType) {
 					case 0: /* d->iaro->u.hh.u.UplinkDownlinkAssignment.ul_dl.Packet_Uplink_ImmAssignment.Access.DynamicOrFixedAllocation.Allocation.DynamicAllocation (DynamicAllocation_t) */
 						ctx->phase1_alloc.ts[d->ts_nr].allocated = true;
@@ -314,6 +314,16 @@ static void st_wait_ccch_imm_ass(struct osmo_fsm_inst *fi, uint32_t event, void 
 	default:
 		OSMO_ASSERT(0);
 	}
+}
+
+static void st_wait_tbf_starting_time1_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_state)
+{
+	struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *ctx = (struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *)fi->priv;
+
+	/* Configure lower layers to submit an RTS tick starting at tbf_starting_time
+	 * and scheduler will send event  GPRS_RLCMAC_TBF_UL_ASS_EV_TBF_STARTING_TIME to us. */
+	gprs_rlcmac_ul_tbf_submit_configure_req(ctx->ul_tbf, &ctx->phase1_alloc,
+						ctx->tbf_starting_time_exists, ctx->tbf_starting_time);
 }
 
 static void st_wait_tbf_starting_time1(struct osmo_fsm_inst *fi, uint32_t event, void *data)
@@ -481,6 +491,7 @@ static struct osmo_fsm_state tbf_ul_ass_fsm_states[] = {
 			X(GPRS_RLCMAC_TBF_UL_ASS_ST_SCHED_PKT_RES_REQ) |
 			X(GPRS_RLCMAC_TBF_UL_ASS_ST_COMPL),
 		.name = "WAIT_TBF_STARTING_TIME1",
+		.onenter = st_wait_tbf_starting_time1_on_enter,
 		.action = st_wait_tbf_starting_time1,
 	},
 	[GPRS_RLCMAC_TBF_UL_ASS_ST_SCHED_PKT_RES_REQ] = {
@@ -651,13 +662,23 @@ bool gprs_rlcmac_tbf_ul_ass_waiting_tbf_starting_time(const struct gprs_rlcmac_u
 /* The scheduled ticks the new FN, which may trigger changes internally if TBF Starting Time is reached */
 void gprs_rlcmac_tbf_ul_ass_fn_tick(const struct gprs_rlcmac_ul_tbf *ul_tbf, uint32_t fn, uint8_t ts_nr)
 {
+	int res;
+
 	OSMO_ASSERT(gprs_rlcmac_tbf_ul_ass_waiting_tbf_starting_time(ul_tbf));
 	OSMO_ASSERT(ul_tbf->ul_ass_fsm.tbf_starting_time_exists);
 	OSMO_ASSERT(ul_tbf->ul_ass_fsm.phase1_alloc.num_ts > 0);
-	if (fn != ul_tbf->ul_ass_fsm.tbf_starting_time ||
-	    !ul_tbf->ul_ass_fsm.phase1_alloc.ts[ts_nr].allocated)
+	if (!ul_tbf->ul_ass_fsm.phase1_alloc.ts[ts_nr].allocated)
 		return;
-
+	res = fn_cmp(fn, ul_tbf->ul_ass_fsm.tbf_starting_time);
+	if (res < 0) {/* fn BEFORE tbf_starting_time */
+		LOGPTBFUL(ul_tbf, LOGL_DEBUG, "TS=%" PRIu8 " FN=%u Waiting for tbf_starting_time=%u\n",
+			  ts_nr, fn, ul_tbf->ul_ass_fsm.tbf_starting_time);
+		return;
+	}
+	if (res > 0) /* fn AFTER tbf_starting time */
+		LOGPTBFUL(ul_tbf, LOGL_ERROR, "TS=%" PRIu8 " FN=%u Received late tick for tbf_starting_time=%u!\n",
+			  ts_nr, fn, ul_tbf->ul_ass_fsm.tbf_starting_time);
+	/* fn == tbf_starting time */
 	osmo_fsm_inst_dispatch(ul_tbf->ul_ass_fsm.fi, GPRS_RLCMAC_TBF_UL_ASS_EV_TBF_STARTING_TIME, NULL);
 }
 
