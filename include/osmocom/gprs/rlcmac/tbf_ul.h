@@ -52,6 +52,10 @@ struct gprs_rlcmac_ul_tbf {
 struct gprs_rlcmac_ul_tbf *gprs_rlcmac_ul_tbf_alloc(struct gprs_rlcmac_entity *gre);
 void gprs_rlcmac_ul_tbf_free(struct gprs_rlcmac_ul_tbf *ul_tbf);
 
+int gprs_rlcmac_ul_tbf_submit_configure_req(const struct gprs_rlcmac_ul_tbf *ul_tbf,
+					    const struct gprs_rlcmac_ul_tbf_allocation *alloc,
+					    bool starting_time_present, uint32_t starting_time_fn);
+
 void gprs_rlcmac_ul_tbf_countdown_proc_update_cv(struct gprs_rlcmac_ul_tbf *ul_tbf);
 
 bool gprs_rlcmac_ul_tbf_in_contention_resolution(const struct gprs_rlcmac_ul_tbf *ul_tbf);

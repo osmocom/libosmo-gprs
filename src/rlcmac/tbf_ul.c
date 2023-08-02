@@ -102,6 +102,36 @@ void gprs_rlcmac_ul_tbf_free(struct gprs_rlcmac_ul_tbf *ul_tbf)
 	gprs_rlcmac_entity_ul_tbf_freed(gre, ul_tbf);
 }
 
+int gprs_rlcmac_ul_tbf_submit_configure_req(const struct gprs_rlcmac_ul_tbf *ul_tbf,
+					    const struct gprs_rlcmac_ul_tbf_allocation *alloc,
+					    bool starting_time_present, uint32_t starting_time_fn)
+{
+	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
+
+	rlcmac_prim = gprs_rlcmac_prim_alloc_l1ctl_cfg_ul_tbf_req(ul_tbf->tbf.nr, 0x00);
+
+	if (starting_time_present)
+		rlcmac_prim->l1ctl.cfg_ul_tbf_req.start_fn = starting_time_fn;
+
+	for (unsigned int tn = 0; tn < ARRAY_SIZE(alloc->ts); tn++) {
+		const struct gprs_rlcmac_ul_tbf_allocation_ts *ts;
+
+		ts = &alloc->ts[tn];
+		if (!ts->allocated)
+			continue;
+		rlcmac_prim->l1ctl.cfg_ul_tbf_req.ul_slotmask |= (1 << tn);
+		rlcmac_prim->l1ctl.cfg_ul_tbf_req.ul_usf[tn] = ts->usf;
+	}
+
+	LOGPTBFUL(ul_tbf, LOGL_INFO,
+		 "Send L1CTL-CFG_UL_TBF.req ul_tbf_nr=%u ul_slotmask=0x%02x tbf_starting_time(present=%u fn=%u)\n",
+		 rlcmac_prim->l1ctl.cfg_ul_tbf_req.ul_tbf_nr,
+		 rlcmac_prim->l1ctl.cfg_ul_tbf_req.ul_slotmask,
+		 starting_time_present, starting_time_fn);
+
+	return gprs_rlcmac_prim_call_down_cb(rlcmac_prim);
+}
+
 /* whether the UL TBF is in Contention Resolution state (false = already succeeded)*/
 bool gprs_rlcmac_ul_tbf_in_contention_resolution(const struct gprs_rlcmac_ul_tbf *ul_tbf)
 {

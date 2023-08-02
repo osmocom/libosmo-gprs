@@ -59,26 +59,8 @@ static const struct osmo_tdef_state_timeout tbf_ul_fsm_timeouts[32] = {
 
 static int configure_ul_tbf(const struct gprs_rlcmac_tbf_ul_fsm_ctx *ctx)
 {
-	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
-
-	rlcmac_prim = gprs_rlcmac_prim_alloc_l1ctl_cfg_ul_tbf_req(ctx->tbf->nr, 0x00);
-
-	for (unsigned int tn = 0; tn < ARRAY_SIZE(ctx->ul_tbf->cur_alloc.ts); tn++) {
-		const struct gprs_rlcmac_ul_tbf_allocation_ts *ts;
-
-		ts = &ctx->ul_tbf->cur_alloc.ts[tn];
-		if (!ts->allocated)
-			continue;
-		rlcmac_prim->l1ctl.cfg_ul_tbf_req.ul_slotmask |= (1 << tn);
-		rlcmac_prim->l1ctl.cfg_ul_tbf_req.ul_usf[tn] = ts->usf;
-	}
-
-	LOGPFSML(ctx->fi, LOGL_INFO,
-		 "Send L1CTL-CFG_UL_TBF.req ul_tbf_nr=%u ul_slotmask=0x%02x\n",
-		 rlcmac_prim->l1ctl.cfg_ul_tbf_req.ul_tbf_nr,
-		 rlcmac_prim->l1ctl.cfg_ul_tbf_req.ul_slotmask);
-
-	return gprs_rlcmac_prim_call_down_cb(rlcmac_prim);
+	return gprs_rlcmac_ul_tbf_submit_configure_req(ctx->ul_tbf, &ctx->ul_tbf->cur_alloc,
+						       false, 0);
 }
 
 static int release_ul_tbf(const struct gprs_rlcmac_tbf_ul_fsm_ctx *ctx)
