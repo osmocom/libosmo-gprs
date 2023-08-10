@@ -40,6 +40,7 @@ struct gprs_rlcmac_tbf_ul_ass_fsm_ctx {
 	struct gprs_rlcmac_ul_tbf_allocation phase2_alloc;
 	bool tbf_starting_time_exists;
 	uint32_t tbf_starting_time;
+	bool sba; /* Single Block Allocation was received from the network */
 	/* Number of packet resource request transmitted (T3168) */
 	unsigned int pkt_res_req_proc_attempts;
 };

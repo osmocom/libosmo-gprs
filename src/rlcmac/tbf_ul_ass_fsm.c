@@ -147,6 +147,7 @@ static int handle_imm_ass(struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *ctx, const stru
 						LOGPFSML(ctx->fi, LOGL_INFO, "MS requested 1-Phase-Access, but Network forces 2-Phase-Access\n");
 						ctx->ass_type = GPRS_RLCMAC_TBF_UL_ASS_TYPE_2PHASE;
 					}
+					ctx->sba = true;
 					ctx->tbf_starting_time_exists = true;
 					ctx->tbf_starting_time = TBF_StartingTime_to_fn(&d->iaro->u.hh.u.UplinkDownlinkAssignment.ul_dl.Packet_Uplink_ImmAssignment.Access.SingleBlockAllocation.TBF_STARTING_TIME,
 											d->fn);
@@ -367,6 +368,7 @@ static void st_sched_pkt_res_req(struct osmo_fsm_inst *fi, uint32_t event, void 
 		data_ctx->msg = create_pkt_resource_req(ctx, data_ctx);
 		if (!data_ctx->msg)
 			return;
+		ctx->sba = false; /* Reset state */
 		tbf_ul_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_PKT_UL_ASS);
 		break;
 	default:
@@ -694,8 +696,12 @@ bool gprs_rlcmac_tbf_ul_ass_rts(const struct gprs_rlcmac_ul_tbf *ul_tbf, const s
 
 	switch (ctx->fi->state) {
 	case GPRS_RLCMAC_TBF_UL_ASS_ST_SCHED_PKT_RES_REQ:
-		return (ctx->phase1_alloc.ts[bi->ts].allocated &&
-			ctx->phase1_alloc.ts[bi->ts].usf == bi->usf);
+		if (!ctx->phase1_alloc.ts[bi->ts].allocated)
+			return false;
+		if (ctx->sba)
+			return (!ctx->tbf_starting_time_exists || ctx->tbf_starting_time == bi->fn);
+		/* No SBA, check assigned USF: */
+		return ctx->phase1_alloc.ts[bi->ts].usf == bi->usf;
 	default:
 		return false;
 	};
