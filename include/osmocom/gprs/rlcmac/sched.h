@@ -2,6 +2,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <osmocom/gsm/gsm_utils.h>
 
 struct gprs_rlcmac_rts_block_ind {
 	uint8_t ts;
@@ -31,4 +32,17 @@ static inline int fn_cmp(uint32_t fn1, uint32_t fn2)
 		return -1;
 	/* FN1 goes after FN2: */
 	return 1;
+}
+
+static inline uint32_t fn2bn(uint32_t fn)
+{
+	return (fn % 52) / 4;
+}
+
+static inline uint32_t fn_next_block(uint32_t fn)
+{
+	uint32_t bn = fn2bn(fn) + 1;
+	fn = fn - (fn % 52);
+	fn += bn * 4 + bn / 3;
+	return fn % GSM_MAX_FN;
 }

@@ -262,20 +262,6 @@ static void clock_override_add_debug(long sec, long usec, bool dbg)
 }
 #define clock_override_add(sec, usec) clock_override_add_debug(sec, usec, true)
 
-
-static inline unsigned fn2bn(unsigned fn)
-{
-	return (fn % 52) / 4;
-}
-
-static inline unsigned fn_next_block(unsigned fn)
-{
-	unsigned bn = fn2bn(fn) + 1;
-	fn = fn - (fn % 52);
-	fn += bn * 4 + bn / 3;
-	return fn % GSM_MAX_FN;
-}
-
 static struct osmo_gprs_rlcmac_prim *create_dl_ctrl_block_buf(uint8_t *buf, int num_bytes, uint8_t tn, uint32_t fn)
 {
 	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
