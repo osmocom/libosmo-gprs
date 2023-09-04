@@ -204,8 +204,9 @@ test_rlcmac_prim_up_cb(): Rx GRR-UNITDATA.indication TLLI=0x00000001 ll=[43 c0 0
 test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=21 ts=7 data_len=23 data=[40 08 10 20 00 00 00 00 00 00 00 30 00 00 00 00 00 03 2b 2b 2b 2b 2b ]
 test_rlcmac_prim_down_cb(): Rx L1CTL-CFG_UL_TBF.request ul_tbf_nr=0 ul_slotmask=0xc0
 test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=43 ts=7 data_len=23 data=[40 04 00 00 00 04 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b ]
+test_rlcmac_prim_down_cb(): Rx L1CTL-CFG_UL_TBF.request ul_tbf_nr=0 ul_slotmask=0xc0
 test_rlcmac_prim_up_cb(): Rx GMMRR-LLC_TRANSMITTED.indication TLLI=0x00000001
-test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=47 ts=6 data_len=34 data=[00 06 00 39 01 c0 00 08 01 01 d5 71 00 00 08 29 26 24 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 ]
+test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=52 ts=6 data_len=34 data=[00 06 00 39 01 c0 00 08 01 01 d5 71 00 00 08 29 26 24 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 ]
 === test_dl_tbf_ccch_assign_requests_ul_tbf_pacch end ===
 test_rlcmac_prim_down_cb(): Rx L1CTL-CFG_UL_TBF.request ul_tbf_nr=0 ul_slotmask=0x00
 === test_ccch_pag_req1 start ===

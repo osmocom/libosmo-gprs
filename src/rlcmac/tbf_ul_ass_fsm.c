@@ -30,6 +30,7 @@
 #include <osmocom/gprs/rlcmac/types.h>
 #include <osmocom/gprs/rlcmac/tbf_ul_ass_fsm.h>
 #include <osmocom/gprs/rlcmac/tbf_ul.h>
+#include <osmocom/gprs/rlcmac/tbf_dl.h>
 #include <osmocom/gprs/rlcmac/gre.h>
 #include <osmocom/gprs/rlcmac/sched.h>
 #include <osmocom/gprs/rlcmac/csn1_defs.h>
@@ -392,9 +393,17 @@ static void st_wait_pkt_ul_ass(struct osmo_fsm_inst *fi, uint32_t event, void *d
 		/* If RRBP contains valid data, schedule a response (PKT CONTROL ACK or PKT RESOURCE REQ). */
 		if (d->dl_block->SP) {
 			uint32_t poll_fn = rrbp2fn(d->fn, d->dl_block->RRBP);
+			uint32_t next_blk = fn_next_block(fn_next_block(poll_fn));
 			gprs_rlcmac_pdch_ulc_reserve(g_rlcmac_ctx->sched.ulc[d->ts_nr], poll_fn,
 						GPRS_RLCMAC_PDCH_ULC_POLL_UL_ASS,
 						ul_tbf_as_tbf(ctx->ul_tbf));
+			/* We need to wait at least until sending the PKT CTRL
+			 * ACK (in the old CTRL TS) before completing the
+			 * assignment and using the new TS assignment. */
+			if (!ctx->tbf_starting_time_exists && fn_cmp(ctx->tbf_starting_time, next_blk) < 0) {
+				ctx->tbf_starting_time_exists = true;
+				ctx->tbf_starting_time = next_blk;
+			}
 		}
 
 		if (ctx->tbf_starting_time_exists &&
@@ -409,10 +418,21 @@ static void st_wait_pkt_ul_ass(struct osmo_fsm_inst *fi, uint32_t event, void *d
 	}
 }
 
+static void st_wait_tbf_starting_time2_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_state)
+{
+	struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *ctx = (struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *)fi->priv;
+
+	/* Configure lower layers to submit an RTS tick starting at tbf_starting_time
+	 * and scheduler will send event GPRS_RLCMAC_TBF_UL_ASS_EV_TBF_STARTING_TIME to us. */
+	gprs_rlcmac_ul_tbf_submit_configure_req(ctx->ul_tbf, &ctx->phase2_alloc,
+						ctx->tbf_starting_time_exists, ctx->tbf_starting_time);
+}
+
 static void st_wait_tbf_starting_time2(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *ctx = (struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *)fi->priv;
 	struct tbf_ul_ass_ev_rx_pkt_ul_ass_ctx *d;
+	struct tbf_ul_ass_ev_create_rlcmac_msg_ctx *data_ctx;
 	int rc;
 
 	switch (event) {
@@ -425,9 +445,26 @@ static void st_wait_tbf_starting_time2(struct osmo_fsm_inst *fi, uint32_t event,
 		/* If RRBP contains valid data, schedule a response (PKT CONTROL ACK or PKT RESOURCE REQ). */
 		if (d->dl_block->SP) {
 			uint32_t poll_fn = rrbp2fn(d->fn, d->dl_block->RRBP);
+			uint32_t next_blk = fn_next_block(poll_fn);
+			/* FIXME: double fn_next_block() here is to delay
+			* release of old TS late enough so that the PKT CTRL ACK
+			* is transmitted. This is wrong since we basically lose
+			* the first TS in the new TBF, but otherwise lower layers
+			* may free the lchan while last burst of the last block is
+			* still not transmitted... IMHO lower layers need to be
+			* fixed to delay closing the lchan until all the
+			* blocks/bursts enqueued are transmitted... */
+			next_blk = fn_next_block(next_blk);
 			gprs_rlcmac_pdch_ulc_reserve(g_rlcmac_ctx->sched.ulc[d->ts_nr], poll_fn,
 						GPRS_RLCMAC_PDCH_ULC_POLL_UL_ASS,
 						ul_tbf_as_tbf(ctx->ul_tbf));
+			/* We need to wait at least until sending the PKT CTRL
+			 * ACK (in the old CTRL TS) before completing the
+			 * assignment and using the new TS assignment. */
+			if (!ctx->tbf_starting_time_exists && fn_cmp(ctx->tbf_starting_time, next_blk) < 0) {
+				ctx->tbf_starting_time_exists = true;
+				ctx->tbf_starting_time = next_blk;
+			}
 		}
 
 		if (ctx->tbf_starting_time_exists &&
@@ -439,6 +476,13 @@ static void st_wait_tbf_starting_time2(struct osmo_fsm_inst *fi, uint32_t event,
 		break;
 	case GPRS_RLCMAC_TBF_UL_ASS_EV_TBF_STARTING_TIME:
 		tbf_ul_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ASS_ST_COMPL);
+		break;
+	case GPRS_RLCMAC_TBF_UL_ASS_EV_CREATE_RLCMAC_MSG:
+		data_ctx = (struct tbf_ul_ass_ev_create_rlcmac_msg_ctx *)data;
+		LOGPFSML(fi, LOGL_INFO, "TS=%u FN=%u Tx Pkt Ctrl Ack\n", data_ctx->ts, data_ctx->fn);
+		data_ctx->msg = gprs_rlcmac_gre_create_pkt_ctrl_ack(ul_tbf_as_tbf(ctx->ul_tbf)->gre);
+		if (!data_ctx->msg)
+			return;
 		break;
 	default:
 		OSMO_ASSERT(0);
@@ -517,12 +561,14 @@ static struct osmo_fsm_state tbf_ul_ass_fsm_states[] = {
 	[GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_TBF_STARTING_TIME2] = {
 		.in_event_mask =
 			X(GPRS_RLCMAC_TBF_UL_ASS_EV_RX_PKT_UL_ASS) |
-			X(GPRS_RLCMAC_TBF_UL_ASS_EV_TBF_STARTING_TIME),
+			X(GPRS_RLCMAC_TBF_UL_ASS_EV_TBF_STARTING_TIME) |
+			X(GPRS_RLCMAC_TBF_UL_ASS_EV_CREATE_RLCMAC_MSG),
 		.out_state_mask =
 			X(GPRS_RLCMAC_TBF_UL_ASS_ST_SCHED_PKT_RES_REQ) |
 			X(GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_TBF_STARTING_TIME2) |
 			X(GPRS_RLCMAC_TBF_UL_ASS_ST_COMPL),
 		.name = "WAIT_TBF_STARTING_TIME2",
+		.onenter = st_wait_tbf_starting_time2_on_enter,
 		.action = st_wait_tbf_starting_time2,
 	},
 	[GPRS_RLCMAC_TBF_UL_ASS_ST_COMPL] = {
@@ -638,6 +684,10 @@ int gprs_rlcmac_tbf_ul_ass_start_from_dl_tbf_ack_nack(struct gprs_rlcmac_ul_tbf 
 {
 	int rc;
 	ul_tbf->ul_ass_fsm.dl_tbf = dl_tbf;
+	/* FIXME: Ideally this should only be the TS where the PKT UL ASS was received... */
+	ul_tbf->ul_ass_fsm.phase1_alloc.num_ts = dl_tbf->cur_alloc.num_ts;
+	memcpy(&ul_tbf->ul_ass_fsm.phase1_alloc.ts[0], &dl_tbf->cur_alloc.ts[0],
+	       sizeof(ul_tbf->ul_ass_fsm.phase1_alloc.ts));
 	rc = osmo_fsm_inst_dispatch(ul_tbf->ul_ass_fsm.fi,
 				    GPRS_RLCMAC_TBF_UL_ASS_EV_START_FROM_DL_TBF,
 				    NULL);
@@ -666,11 +716,21 @@ void gprs_rlcmac_tbf_ul_ass_fn_tick(const struct gprs_rlcmac_ul_tbf *ul_tbf, uin
 {
 	int res;
 
-	OSMO_ASSERT(gprs_rlcmac_tbf_ul_ass_waiting_tbf_starting_time(ul_tbf));
 	OSMO_ASSERT(ul_tbf->ul_ass_fsm.tbf_starting_time_exists);
-	OSMO_ASSERT(ul_tbf->ul_ass_fsm.phase1_alloc.num_ts > 0);
-	if (!ul_tbf->ul_ass_fsm.phase1_alloc.ts[ts_nr].allocated)
-		return;
+	switch (ul_tbf->ul_ass_fsm.fi->state) {
+	case GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_TBF_STARTING_TIME1:
+		OSMO_ASSERT(ul_tbf->ul_ass_fsm.phase1_alloc.num_ts > 0);
+		if (!ul_tbf->ul_ass_fsm.phase1_alloc.ts[ts_nr].allocated)
+			return;
+		break;
+	case GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_TBF_STARTING_TIME2:
+		OSMO_ASSERT(ul_tbf->ul_ass_fsm.phase2_alloc.num_ts > 0);
+		if (!ul_tbf->ul_ass_fsm.phase2_alloc.ts[ts_nr].allocated)
+			return;
+		break;
+	default:
+		OSMO_ASSERT(0);
+	}
 	res = fn_cmp(fn, ul_tbf->ul_ass_fsm.tbf_starting_time);
 	if (res < 0) {/* fn BEFORE tbf_starting_time */
 		LOGPTBFUL(ul_tbf, LOGL_DEBUG, "TS=%" PRIu8 " FN=%u Waiting for tbf_starting_time=%u\n",
@@ -681,6 +741,7 @@ void gprs_rlcmac_tbf_ul_ass_fn_tick(const struct gprs_rlcmac_ul_tbf *ul_tbf, uin
 		LOGPTBFUL(ul_tbf, LOGL_ERROR, "TS=%" PRIu8 " FN=%u Received late tick for tbf_starting_time=%u!\n",
 			  ts_nr, fn, ul_tbf->ul_ass_fsm.tbf_starting_time);
 	/* fn == tbf_starting time */
+	LOGPTBFUL(ul_tbf, LOGL_INFO, "TS=%" PRIu8 " FN=%u TBF_STARTING_TIME reached\n", fn, ts_nr);
 	osmo_fsm_inst_dispatch(ul_tbf->ul_ass_fsm.fi, GPRS_RLCMAC_TBF_UL_ASS_EV_TBF_STARTING_TIME, NULL);
 }
 

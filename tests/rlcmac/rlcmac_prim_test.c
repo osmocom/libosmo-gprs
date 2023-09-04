@@ -1136,6 +1136,9 @@ static void test_dl_tbf_ccch_assign_requests_ul_tbf_pacch(void)
 	rts_fn = fn_next_block(rts_fn);
 	ts_nr = 6;
 
+	/* FIXME: see extra fn_next_block() in libosmo-gprs-rlcmac st_wait_tbf_starting_time2() */
+	rts_fn = fn_next_block(rts_fn);
+
 	/* Trigger transmission of LLC data (GMM Attach) (first part) */
 	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_rts_ind(ts_nr, rts_fn, usf_li[ts_nr]);
 	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
