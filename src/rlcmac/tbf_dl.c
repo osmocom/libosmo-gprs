@@ -160,7 +160,8 @@ int gprs_rlcmac_dl_tbf_configure_l1ctl(struct gprs_rlcmac_dl_tbf *dl_tbf)
 	return gprs_rlcmac_prim_call_down_cb(rlcmac_prim);
 }
 
-struct msgb *gprs_rlcmac_dl_tbf_create_pkt_dl_ack_nack(struct gprs_rlcmac_dl_tbf *dl_tbf, uint8_t tn)
+struct msgb *gprs_rlcmac_dl_tbf_create_pkt_dl_ack_nack(struct gprs_rlcmac_dl_tbf *dl_tbf,
+						       const struct gprs_rlcmac_rts_block_ind *bi)
 {
 	struct msgb *msg;
 	struct bitvec bv;
@@ -179,11 +180,15 @@ struct msgb *gprs_rlcmac_dl_tbf_create_pkt_dl_ack_nack(struct gprs_rlcmac_dl_tbf
 	 * queued to send and no active UL TBF (TS 44.060 8.1.2.5) */
 	if (!gre->ul_tbf && gprs_rlcmac_entity_have_tx_data_queued(gre)) {
 		gre->ul_tbf = gprs_rlcmac_ul_tbf_alloc(gre);
-		rc = gprs_rlcmac_tbf_ul_ass_start_from_dl_tbf_ack_nack(gre->ul_tbf, dl_tbf, tn);
-		if (rc < 0)
-			LOGPTBFDL(dl_tbf, LOGL_ERROR, "Failed starting assignment of requested UL TBF (%d)\n", rc);
-		else
+		rc = gprs_rlcmac_tbf_ul_ass_start_from_dl_tbf_ack_nack(gre->ul_tbf, dl_tbf, bi->ts);
+		if (rc < 0) {
+			LOGPTBFDL(dl_tbf, LOGL_ERROR, "FN=%u TS=%u Failed starting assignment of requested UL TBF (%d)\n",
+				  bi->fn, bi->ts, rc);
+		} else {
+			LOGPTBFDL(dl_tbf, LOGL_DEBUG, "FN=%u TS=%u Requesting UL TBF through PKT DL ACK/NACK\n",
+				  bi->fn, bi->ts);
 			chan_req = true;
+		}
 	}
 
 	/* Initialize a bit vector that uses allocated msgb as the data buffer. */

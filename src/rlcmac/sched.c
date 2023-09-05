@@ -175,7 +175,7 @@ static struct msgb *sched_select_ctrl_msg(const struct gprs_rlcmac_rts_block_ind
 	if (tbfs->poll_dl_ack_final_ack) {
 		LOGRLCMAC(LOGL_DEBUG, "(ts=%u,fn=%u,usf=%u) Tx DL ACK/NACK FinalAck=1\n",
 			  bi->ts, bi->fn, bi->usf);
-		msg = gprs_rlcmac_dl_tbf_create_pkt_dl_ack_nack(tbfs->poll_dl_ack_final_ack, bi->ts);
+		msg = gprs_rlcmac_dl_tbf_create_pkt_dl_ack_nack(tbfs->poll_dl_ack_final_ack, bi);
 		if (msg)
 			return msg;
 	}
@@ -237,7 +237,7 @@ static struct msgb *sched_select_ctrl_msg(const struct gprs_rlcmac_rts_block_ind
 	if (tbfs->poll_dl_ack) {
 		LOGRLCMAC(LOGL_DEBUG, "(ts=%u,fn=%u,usf=%u) Tx DL ACK/NACK\n",
 			  bi->ts, bi->fn, bi->usf);
-		msg = gprs_rlcmac_dl_tbf_create_pkt_dl_ack_nack(tbfs->poll_dl_ack, bi->ts);
+		msg = gprs_rlcmac_dl_tbf_create_pkt_dl_ack_nack(tbfs->poll_dl_ack, bi);
 		if (msg)
 			return msg;
 	}
