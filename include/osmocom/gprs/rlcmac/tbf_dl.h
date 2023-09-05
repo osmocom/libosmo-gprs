@@ -45,7 +45,7 @@ void gprs_rlcmac_dl_tbf_t3190_start(struct gprs_rlcmac_dl_tbf *dl_tbf);
 
 int gprs_rlcmac_dl_tbf_configure_l1ctl(struct gprs_rlcmac_dl_tbf *dl_tbf);
 
-struct msgb *gprs_rlcmac_dl_tbf_create_pkt_dl_ack_nack(struct gprs_rlcmac_dl_tbf *dl_tbf);
+struct msgb *gprs_rlcmac_dl_tbf_create_pkt_dl_ack_nack(struct gprs_rlcmac_dl_tbf *dl_tbf, uint8_t tn);
 
 int gprs_rlcmac_dl_tbf_rcv_data_block(struct gprs_rlcmac_dl_tbf *dl_tbf,
 				      const struct gprs_rlcmac_rlc_data_info *rlc,

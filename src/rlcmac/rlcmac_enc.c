@@ -384,11 +384,9 @@ static void gprs_rlcmac_enc_prepare_channel_quality_report(Channel_Quality_Repor
 	/* TODO: fill cqr from info stored probably in the gre object. */
 }
 
-void gprs_rlcmac_enc_prepare_pkt_downlink_ack_nack(RlcMacUplink_t *block, const struct gprs_rlcmac_dl_tbf *dl_tbf)
+void gprs_rlcmac_enc_prepare_pkt_downlink_ack_nack(RlcMacUplink_t *block, const struct gprs_rlcmac_dl_tbf *dl_tbf, bool chan_req)
 {
 	Packet_Downlink_Ack_Nack_t *ack = &block->u.Packet_Downlink_Ack_Nack;
-	struct gprs_rlcmac_entity *gre = dl_tbf->tbf.gre;
-	int rc;
 
 	memset(block, 0, sizeof(*block));
 	ack->MESSAGE_TYPE = OSMO_GPRS_RLCMAC_UL_MSGT_PACKET_DOWNLINK_ACK_NACK;
@@ -398,9 +396,7 @@ void gprs_rlcmac_enc_prepare_pkt_downlink_ack_nack(RlcMacUplink_t *block, const 
 	ack->DOWNLINK_TFI = dl_tbf->cur_alloc.dl_tfi;
 	gprs_rlcmac_enc_prepare_pkt_ack_nack_desc_gprs(&ack->Ack_Nack_Description, dl_tbf);
 
-	/* Channel Request Description. Request a UL-TBF if we have UL data
-	 * queued to send and no active UL BF (TS 44.060 8.1.2.5) */
-	if (!gre->ul_tbf && gprs_rlcmac_entity_have_tx_data_queued(gre)) {
+	if (chan_req) {
 		Channel_Request_Description_t *chan_req = &ack->Channel_Request_Description;
 		ack->Exist_Channel_Request_Description = 1;
 		chan_req->PEAK_THROUGHPUT_CLASS = 0; /* TODO */
@@ -408,11 +404,6 @@ void gprs_rlcmac_enc_prepare_pkt_downlink_ack_nack(RlcMacUplink_t *block, const 
 		chan_req->RLC_MODE = GPRS_RLCMAC_RLC_MODE_ACKNOWLEDGED;
 		chan_req->LLC_PDU_TYPE = GPRS_RLCMAC_LLC_PDU_TYPE_ACKNOWLEDGED;
 		chan_req->RLC_OCTET_COUNT = 0; /* TODO */
-
-		gre->ul_tbf = gprs_rlcmac_ul_tbf_alloc(gre);
-		rc = gprs_rlcmac_tbf_ul_ass_start_from_dl_tbf_ack_nack(gre->ul_tbf, dl_tbf);
-		if (rc < 0)
-			LOGPTBFDL(dl_tbf, LOGL_ERROR, "Failed starting assignment of requested UL TBF (%d)\n", rc);
 	} else {
 		ack->Exist_Channel_Request_Description = 0;
 	}

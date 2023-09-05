@@ -680,14 +680,17 @@ int gprs_rlcmac_tbf_ul_ass_start_from_releasing_ul_tbf(struct gprs_rlcmac_ul_tbf
 
 /* A DL-TBF requested a UL TBF over DL ACK/NACK, wait to receive Pkt Ul Ass for
  * it, aka switch the FSM to trigger the 2hpase directly (tx Pkt Res Req) */
-int gprs_rlcmac_tbf_ul_ass_start_from_dl_tbf_ack_nack(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_dl_tbf *dl_tbf)
+int gprs_rlcmac_tbf_ul_ass_start_from_dl_tbf_ack_nack(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_dl_tbf *dl_tbf, uint8_t tn)
 {
 	int rc;
 	ul_tbf->ul_ass_fsm.dl_tbf = dl_tbf;
-	/* FIXME: Ideally this should only be the TS where the PKT UL ASS was received... */
-	ul_tbf->ul_ass_fsm.phase1_alloc.num_ts = dl_tbf->cur_alloc.num_ts;
-	memcpy(&ul_tbf->ul_ass_fsm.phase1_alloc.ts[0], &dl_tbf->cur_alloc.ts[0],
-	       sizeof(ul_tbf->ul_ass_fsm.phase1_alloc.ts));
+
+	/* The TS where the PKT UL ASS is to be received is the one where the DL
+	 * ACK/NACK was sent in the DL TBF (control TS): */
+	ul_tbf->ul_ass_fsm.phase1_alloc.num_ts = 1;
+	ul_tbf->ul_ass_fsm.phase1_alloc.ts[tn].allocated = true;
+	ul_tbf->ul_ass_fsm.phase1_alloc.ts[tn].usf = 0xff;
+
 	rc = osmo_fsm_inst_dispatch(ul_tbf->ul_ass_fsm.fi,
 				    GPRS_RLCMAC_TBF_UL_ASS_EV_START_FROM_DL_TBF,
 				    NULL);

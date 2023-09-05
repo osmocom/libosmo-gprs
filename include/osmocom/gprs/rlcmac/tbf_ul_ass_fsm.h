@@ -82,7 +82,7 @@ void gprs_rlcmac_tbf_ul_ass_fsm_destructor(struct gprs_rlcmac_ul_tbf *ul_tbf);
 
 int gprs_rlcmac_tbf_ul_ass_start(struct gprs_rlcmac_ul_tbf *ul_tbf, enum gprs_rlcmac_tbf_ul_ass_type type);
 int gprs_rlcmac_tbf_ul_ass_start_from_releasing_ul_tbf(struct gprs_rlcmac_ul_tbf *ul_tbf, struct gprs_rlcmac_ul_tbf *old_ul_tbf);
-int gprs_rlcmac_tbf_ul_ass_start_from_dl_tbf_ack_nack(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_dl_tbf *dl_tbf);
+int gprs_rlcmac_tbf_ul_ass_start_from_dl_tbf_ack_nack(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_dl_tbf *dl_tbf, uint8_t tn);
 
 bool gprs_rlcmac_tbf_ul_ass_pending(struct gprs_rlcmac_ul_tbf *ul_tbf);
 bool gprs_rlcmac_tbf_ul_ass_match_rach_req(struct gprs_rlcmac_ul_tbf *ul_tbf, uint8_t ra);
