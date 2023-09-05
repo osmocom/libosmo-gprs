@@ -565,6 +565,8 @@ static int rlcmac_prim_handle_l1ctl_pdch_rts_ind(struct osmo_gprs_rlcmac_prim *r
 		.usf = rlcmac_prim->l1ctl.pdch_rts_ind.usf,
 	};
 
+	LOGRLCMAC(LOGL_DEBUG, "Rx RTS.ind (fn=%u, ts=%u, usf=%u)\n", bi.fn, bi.ts, bi.usf);
+
 	rc = gprs_rlcmac_rcv_rts_block(&bi);
 	return rc;
 }
