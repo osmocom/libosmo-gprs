@@ -103,27 +103,24 @@ free_ret:
 	return NULL;
 }
 
-/* Generate a 8-bit CHANNEL REQUEST message as per 3GPP TS 44.018, 9.1.8 */
-static uint8_t gen_chan_req(bool single_block)
-{
-	uint8_t rnd = (uint8_t)rand();
-
-	if (single_block) /* 01110xxx */
-		return 0x70 | (rnd & 0x07);
-
-	/* 011110xx or 01111x0x or 01111xx0 */
-	if ((rnd & 0x07) == 0x07)
-		return 0x78;
-	return 0x78 | (rnd & 0x07);
-}
-
-static int submit_rach_req(struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *ctx)
+static int submit_packet_access_req(const struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *ctx)
 {
 	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
-	ctx->rach_req_ra = gen_chan_req(ctx->ass_type == GPRS_RLCMAC_TBF_UL_ASS_TYPE_2PHASE);
 
-	LOGPFSML(ctx->fi, LOGL_INFO, "Send RACH.req ra=0x%02x\n", ctx->rach_req_ra);
-	rlcmac_prim = gprs_rlcmac_prim_alloc_l1ctl_rach8_req(ctx->rach_req_ra);
+	switch (ctx->ass_type) {
+	case GPRS_RLCMAC_TBF_UL_ASS_TYPE_1PHASE:
+		/* 3GPP TS 44.018, table 9.1.8.1: cause 011110xx or 01111x0x or 01111xx0 */
+		LOGPFSML(ctx->fi, LOGL_INFO, "Requesting one-phase packet access using CCCH\n");
+		rlcmac_prim = gprs_rlcmac_prim_alloc_l1ctl_rach8_req(0x78);
+		break;
+	case GPRS_RLCMAC_TBF_UL_ASS_TYPE_2PHASE:
+		/* 3GPP TS 44.018, table 9.1.8.1: cause 011110xx */
+		LOGPFSML(ctx->fi, LOGL_INFO, "Requesting two-phase packet access using CCCH\n");
+		rlcmac_prim = gprs_rlcmac_prim_alloc_l1ctl_rach8_req(0x70);
+		break;
+	/* TODO: EGPRS specific modes (11-bit RACH) */
+	}
+
 	return gprs_rlcmac_prim_call_down_cb(rlcmac_prim);
 }
 
@@ -271,7 +268,7 @@ static void st_idle(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 		/* Inform the main TBF state about the assignment starting: */
 		osmo_fsm_inst_dispatch(ctx->ul_tbf->state_fsm.fi, GPRS_RLCMAC_TBF_UL_EV_UL_ASS_START, NULL);
 		ctx->ass_type = *(enum gprs_rlcmac_tbf_ul_ass_type *)data;
-		rc = submit_rach_req(ctx);
+		rc = submit_packet_access_req(ctx);
 		if (rc < 0) {
 			osmo_fsm_inst_dispatch(ctx->ul_tbf->state_fsm.fi, GPRS_RLCMAC_TBF_UL_EV_UL_ASS_REJ, NULL);
 			break;
@@ -702,10 +699,9 @@ bool gprs_rlcmac_tbf_ul_ass_pending(struct gprs_rlcmac_ul_tbf *ul_tbf)
 	return ul_tbf->ul_ass_fsm.fi->state != GPRS_RLCMAC_TBF_UL_ASS_ST_IDLE;
 }
 
-bool gprs_rlcmac_tbf_ul_ass_match_rach_req(struct gprs_rlcmac_ul_tbf *ul_tbf, uint8_t ra)
+bool gprs_rlcmac_tbf_ul_ass_wait_ccch_imm_ass(const struct gprs_rlcmac_ul_tbf *ul_tbf)
 {
-	return ul_tbf->ul_ass_fsm.fi->state == GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_CCCH_IMM_ASS &&
-		ul_tbf->ul_ass_fsm.rach_req_ra == ra;
+	return ul_tbf->ul_ass_fsm.fi->state == GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_CCCH_IMM_ASS;
 }
 
 bool gprs_rlcmac_tbf_ul_ass_waiting_tbf_starting_time(const struct gprs_rlcmac_ul_tbf *ul_tbf)

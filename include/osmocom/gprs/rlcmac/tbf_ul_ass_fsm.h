@@ -35,7 +35,6 @@ struct gprs_rlcmac_tbf_ul_ass_fsm_ctx {
 	};
 	const struct gprs_rlcmac_dl_tbf *dl_tbf; /* Not null if assignment was started by a DL TBF ACK/NACK */
 	enum gprs_rlcmac_tbf_ul_ass_type ass_type;
-	uint8_t rach_req_ra;
 	struct gprs_rlcmac_ul_tbf_allocation phase1_alloc;
 	struct gprs_rlcmac_ul_tbf_allocation phase2_alloc;
 	bool tbf_starting_time_exists;
@@ -85,7 +84,7 @@ int gprs_rlcmac_tbf_ul_ass_start_from_releasing_ul_tbf(struct gprs_rlcmac_ul_tbf
 int gprs_rlcmac_tbf_ul_ass_start_from_dl_tbf_ack_nack(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_dl_tbf *dl_tbf, uint8_t tn);
 
 bool gprs_rlcmac_tbf_ul_ass_pending(struct gprs_rlcmac_ul_tbf *ul_tbf);
-bool gprs_rlcmac_tbf_ul_ass_match_rach_req(struct gprs_rlcmac_ul_tbf *ul_tbf, uint8_t ra);
+bool gprs_rlcmac_tbf_ul_ass_wait_ccch_imm_ass(const struct gprs_rlcmac_ul_tbf *ul_tbf);
 bool gprs_rlcmac_tbf_ul_ass_waiting_tbf_starting_time(const struct gprs_rlcmac_ul_tbf *ul_tbf);
 void gprs_rlcmac_tbf_ul_ass_fn_tick(const struct gprs_rlcmac_ul_tbf *ul_tbf, uint32_t fn, uint8_t ts_nr);
 bool gprs_rlcmac_tbf_ul_ass_rts(const struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_rts_block_ind *bi);

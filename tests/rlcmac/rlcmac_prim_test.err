@@ -7,7 +7,7 @@ DLGLOBAL INFO UL_TBF_ASS{IDLE}: Allocated
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: Received Event START
 DLGLOBAL INFO UL_TBF{NEW}: Received Event UL_ASS_START
 DLGLOBAL INFO UL_TBF{NEW}: state_chg to ASSIGN
-DLGLOBAL INFO UL_TBF_ASS{IDLE}: Send RACH.req ra=0x7e
+DLGLOBAL INFO UL_TBF_ASS{IDLE}: Requesting one-phase packet access using CCCH
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-RACH.request
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: state_chg to WAIT_CCCH_IMM_ASS
 DLGLOBAL DEBUG Rx from lower layers: L1CTL-CCCH_DATA.indication
@@ -85,7 +85,7 @@ DLGLOBAL INFO UL_TBF_ASS{IDLE}: Allocated
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: Received Event START
 DLGLOBAL INFO UL_TBF{NEW}: Received Event UL_ASS_START
 DLGLOBAL INFO UL_TBF{NEW}: state_chg to ASSIGN
-DLGLOBAL INFO UL_TBF_ASS{IDLE}: Send RACH.req ra=0x79
+DLGLOBAL INFO UL_TBF_ASS{IDLE}: Requesting one-phase packet access using CCCH
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-RACH.request
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: state_chg to WAIT_CCCH_IMM_ASS
 DLGLOBAL DEBUG Rx from lower layers: L1CTL-CCCH_DATA.indication
@@ -109,7 +109,7 @@ DLGLOBAL DEBUG Tx to lower layers: L1CTL-PDCH_RELEASE.request
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: Received Event START
 DLGLOBAL INFO UL_TBF{NEW}: Received Event UL_ASS_START
 DLGLOBAL INFO UL_TBF{NEW}: state_chg to ASSIGN
-DLGLOBAL INFO UL_TBF_ASS{IDLE}: Send RACH.req ra=0x7b
+DLGLOBAL INFO UL_TBF_ASS{IDLE}: Requesting one-phase packet access using CCCH
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-RACH.request
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: state_chg to WAIT_CCCH_IMM_ASS
 DLGLOBAL DEBUG Rx from lower layers: L1CTL-CCCH_DATA.indication
@@ -133,7 +133,7 @@ DLGLOBAL DEBUG Tx to lower layers: L1CTL-PDCH_RELEASE.request
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: Received Event START
 DLGLOBAL INFO UL_TBF{NEW}: Received Event UL_ASS_START
 DLGLOBAL INFO UL_TBF{NEW}: state_chg to ASSIGN
-DLGLOBAL INFO UL_TBF_ASS{IDLE}: Send RACH.req ra=0x79
+DLGLOBAL INFO UL_TBF_ASS{IDLE}: Requesting one-phase packet access using CCCH
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-RACH.request
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: state_chg to WAIT_CCCH_IMM_ASS
 DLGLOBAL DEBUG Rx from lower layers: L1CTL-CCCH_DATA.indication
@@ -157,7 +157,7 @@ DLGLOBAL DEBUG Tx to lower layers: L1CTL-PDCH_RELEASE.request
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: Received Event START
 DLGLOBAL INFO UL_TBF{NEW}: Received Event UL_ASS_START
 DLGLOBAL INFO UL_TBF{NEW}: state_chg to ASSIGN
-DLGLOBAL INFO UL_TBF_ASS{IDLE}: Send RACH.req ra=0x78
+DLGLOBAL INFO UL_TBF_ASS{IDLE}: Requesting one-phase packet access using CCCH
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-RACH.request
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: state_chg to WAIT_CCCH_IMM_ASS
 DLGLOBAL DEBUG Rx from lower layers: L1CTL-CCCH_DATA.indication
@@ -190,7 +190,7 @@ DLGLOBAL INFO UL_TBF_ASS{IDLE}: Allocated
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: Received Event START
 DLGLOBAL INFO UL_TBF{NEW}: Received Event UL_ASS_START
 DLGLOBAL INFO UL_TBF{NEW}: state_chg to ASSIGN
-DLGLOBAL INFO UL_TBF_ASS{IDLE}: Send RACH.req ra=0x7a
+DLGLOBAL INFO UL_TBF_ASS{IDLE}: Requesting one-phase packet access using CCCH
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-RACH.request
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: state_chg to WAIT_CCCH_IMM_ASS
 DLGLOBAL DEBUG Rx from lower layers: L1CTL-CCCH_DATA.indication
@@ -229,7 +229,7 @@ DLGLOBAL DEBUG Tx to lower layers: L1CTL-PDCH_RELEASE.request
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: Received Event START
 DLGLOBAL INFO UL_TBF{NEW}: Received Event UL_ASS_START
 DLGLOBAL INFO UL_TBF{NEW}: state_chg to ASSIGN
-DLGLOBAL INFO UL_TBF_ASS{IDLE}: Send RACH.req ra=0x7c
+DLGLOBAL INFO UL_TBF_ASS{IDLE}: Requesting one-phase packet access using CCCH
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-RACH.request
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: state_chg to WAIT_CCCH_IMM_ASS
 DLGLOBAL DEBUG Rx from lower layers: L1CTL-CCCH_DATA.indication
@@ -265,7 +265,7 @@ DLGLOBAL DEBUG Tx to lower layers: L1CTL-PDCH_RELEASE.request
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: Received Event START
 DLGLOBAL INFO UL_TBF{NEW}: Received Event UL_ASS_START
 DLGLOBAL INFO UL_TBF{NEW}: state_chg to ASSIGN
-DLGLOBAL INFO UL_TBF_ASS{IDLE}: Send RACH.req ra=0x79
+DLGLOBAL INFO UL_TBF_ASS{IDLE}: Requesting one-phase packet access using CCCH
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-RACH.request
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: state_chg to WAIT_CCCH_IMM_ASS
 DLGLOBAL DEBUG Rx from lower layers: L1CTL-CCCH_DATA.indication
@@ -301,7 +301,7 @@ DLGLOBAL DEBUG Tx to lower layers: L1CTL-PDCH_RELEASE.request
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: Received Event START
 DLGLOBAL INFO UL_TBF{NEW}: Received Event UL_ASS_START
 DLGLOBAL INFO UL_TBF{NEW}: state_chg to ASSIGN
-DLGLOBAL INFO UL_TBF_ASS{IDLE}: Send RACH.req ra=0x7d
+DLGLOBAL INFO UL_TBF_ASS{IDLE}: Requesting one-phase packet access using CCCH
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-RACH.request
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: state_chg to WAIT_CCCH_IMM_ASS
 DLGLOBAL DEBUG Rx from lower layers: L1CTL-CCCH_DATA.indication
@@ -348,7 +348,7 @@ DLGLOBAL INFO UL_TBF_ASS{IDLE}: Allocated
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: Received Event START
 DLGLOBAL INFO UL_TBF{NEW}: Received Event UL_ASS_START
 DLGLOBAL INFO UL_TBF{NEW}: state_chg to ASSIGN
-DLGLOBAL INFO UL_TBF_ASS{IDLE}: Send RACH.req ra=0x7a
+DLGLOBAL INFO UL_TBF_ASS{IDLE}: Requesting one-phase packet access using CCCH
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-RACH.request
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: state_chg to WAIT_CCCH_IMM_ASS
 DLGLOBAL INFO Rx from upper layers: GRR-UNITDATA.request
@@ -507,7 +507,7 @@ DLGLOBAL DEBUG Tx to lower layers: L1CTL-PDCH_RELEASE.request
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: Received Event START
 DLGLOBAL INFO UL_TBF{NEW}: Received Event UL_ASS_START
 DLGLOBAL INFO UL_TBF{NEW}: state_chg to ASSIGN
-DLGLOBAL INFO UL_TBF_ASS{IDLE}: Send RACH.req ra=0x7b
+DLGLOBAL INFO UL_TBF_ASS{IDLE}: Requesting one-phase packet access using CCCH
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-RACH.request
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: state_chg to WAIT_CCCH_IMM_ASS
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-PDCH_DATA.request
@@ -536,7 +536,7 @@ DLGLOBAL INFO UL_TBF_ASS{IDLE}: Allocated
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: Received Event START
 DLGLOBAL INFO UL_TBF{NEW}: Received Event UL_ASS_START
 DLGLOBAL INFO UL_TBF{NEW}: state_chg to ASSIGN
-DLGLOBAL INFO UL_TBF_ASS{IDLE}: Send RACH.req ra=0x7a
+DLGLOBAL INFO UL_TBF_ASS{IDLE}: Requesting one-phase packet access using CCCH
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-RACH.request
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: state_chg to WAIT_CCCH_IMM_ASS
 DLGLOBAL DEBUG Rx from lower layers: L1CTL-CCCH_DATA.indication
@@ -606,7 +606,7 @@ DLGLOBAL INFO UL_TBF_ASS{IDLE}: Allocated
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: Received Event START
 DLGLOBAL INFO UL_TBF{NEW}: Received Event UL_ASS_START
 DLGLOBAL INFO UL_TBF{NEW}: state_chg to ASSIGN
-DLGLOBAL INFO UL_TBF_ASS{IDLE}: Send RACH.req ra=0x7b
+DLGLOBAL INFO UL_TBF_ASS{IDLE}: Requesting one-phase packet access using CCCH
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-RACH.request
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: state_chg to WAIT_CCCH_IMM_ASS
 DLGLOBAL DEBUG Rx from lower layers: L1CTL-CCCH_DATA.indication
@@ -726,7 +726,7 @@ DLGLOBAL INFO UL_TBF_ASS{IDLE}: Allocated
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: Received Event START
 DLGLOBAL INFO UL_TBF{NEW}: Received Event UL_ASS_START
 DLGLOBAL INFO UL_TBF{NEW}: state_chg to ASSIGN
-DLGLOBAL INFO UL_TBF_ASS{IDLE}: Send RACH.req ra=0x7b
+DLGLOBAL INFO UL_TBF_ASS{IDLE}: Requesting one-phase packet access using CCCH
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-RACH.request
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: state_chg to WAIT_CCCH_IMM_ASS
 DLGLOBAL DEBUG Rx from lower layers: L1CTL-CCCH_DATA.indication
@@ -843,7 +843,7 @@ DLGLOBAL INFO UL_TBF_ASS{IDLE}: Allocated
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: Received Event START
 DLGLOBAL INFO UL_TBF{NEW}: Received Event UL_ASS_START
 DLGLOBAL INFO UL_TBF{NEW}: state_chg to ASSIGN
-DLGLOBAL INFO UL_TBF_ASS{IDLE}: Send RACH.req ra=0x7e
+DLGLOBAL INFO UL_TBF_ASS{IDLE}: Requesting one-phase packet access using CCCH
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-RACH.request
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: state_chg to WAIT_CCCH_IMM_ASS
 DLGLOBAL DEBUG Rx from lower layers: L1CTL-CCCH_DATA.indication

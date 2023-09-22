@@ -219,7 +219,7 @@ static int gprs_rlcmac_handle_ccch_imm_ass_ul_tbf(uint8_t ts_nr, uint32_t fn, co
 		ul_tbf = gre->ul_tbf;
 		if (!ul_tbf)
 			continue;
-		if (!gprs_rlcmac_tbf_ul_ass_match_rach_req(ul_tbf, ia->req_ref.ra))
+		if (!gprs_rlcmac_tbf_ul_ass_wait_ccch_imm_ass(ul_tbf))
 			continue;
 		rc = osmo_fsm_inst_dispatch(ul_tbf->ul_ass_fsm.fi,
 					    GPRS_RLCMAC_TBF_UL_ASS_EV_RX_CCCH_IMM_ASS,
