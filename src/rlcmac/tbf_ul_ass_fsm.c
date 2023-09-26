@@ -118,7 +118,9 @@ static int submit_packet_access_req(const struct gprs_rlcmac_tbf_ul_ass_fsm_ctx 
 		LOGPFSML(ctx->fi, LOGL_INFO, "Requesting two-phase packet access using CCCH\n");
 		rlcmac_prim = gprs_rlcmac_prim_alloc_l1ctl_rach8_req(0x70);
 		break;
-	/* TODO: EGPRS specific modes (11-bit RACH) */
+	default:
+		/* TODO: EGPRS specific modes (11-bit RACH) */
+		return -ENOTSUP;
 	}
 
 	return gprs_rlcmac_prim_call_down_cb(rlcmac_prim);
