@@ -1115,7 +1115,7 @@ static struct msgb *create_ul_acked_block(struct gprs_rlcmac_ul_tbf *ul_tbf,
 		 * function returns the reseg status
 		 */
 		reseg_status = egprs_ul_get_data(ul_tbf, bsn, &block_data);
-		blk->spb_status.block_status_dl = reseg_status;
+		blk->spb_status.block_status_ul = reseg_status;
 
 		/*
 		 * If it is first segment of the split block set the state of
