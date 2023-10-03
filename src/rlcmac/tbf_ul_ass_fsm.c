@@ -128,6 +128,12 @@ static int submit_packet_access_req(const struct gprs_rlcmac_tbf_ul_ass_fsm_ctx 
 
 static int handle_imm_ass(struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *ctx, const struct tbf_ul_ass_ev_rx_ccch_imm_ass_ctx *d)
 {
+	/* reset previous state: */
+	memset(&ctx->phase1_alloc, 0, sizeof(ctx->phase1_alloc));
+	ctx->sba = true;
+	ctx->tbf_starting_time_exists = false;
+	ctx->tbf_starting_time = 0;
+
 	/* TS 44.018 10.5.2.16 IA Rest Octets */
 	switch (d->iaro->UnionType) {
 	case 1: /* d->iaro->u.lh.* (IA_RestOctetsLH_t) */
@@ -195,6 +201,12 @@ static int handle_pkt_ul_ass(struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *ctx, const s
 	const Timeslot_Allocation_t *ts_alloc;
 	const Timeslot_Allocation_Power_Ctrl_Param_t *ts_alloc_pwr_ctl;
 
+	/* reset previous state: */
+	memset(&ctx->phase2_alloc, 0, sizeof(ctx->phase2_alloc));
+	ctx->sba = false;
+	ctx->tbf_starting_time_exists = false;
+	ctx->tbf_starting_time = 0;
+
 	switch (ulass->UnionType) {
 	case 0: /* ulass->u.PUA_GPRS_Struct.* (PUA_GPRS_t) */
 		ctx->ul_tbf->tx_cs = ulass->u.PUA_GPRS_Struct.CHANNEL_CODING_COMMAND + 1;
@@ -258,6 +270,9 @@ static void st_idle_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_state)
 	ctx->dl_tbf = NULL;
 	memset(&ctx->phase1_alloc, 0, sizeof(ctx->phase1_alloc));
 	memset(&ctx->phase2_alloc, 0, sizeof(ctx->phase2_alloc));
+	ctx->sba = false;
+	ctx->tbf_starting_time_exists = false;
+	ctx->tbf_starting_time = 0;
 }
 
 static void st_idle(struct osmo_fsm_inst *fi, uint32_t event, void *data)
@@ -368,7 +383,6 @@ static void st_sched_pkt_res_req(struct osmo_fsm_inst *fi, uint32_t event, void 
 		data_ctx->msg = create_pkt_resource_req(ctx, data_ctx);
 		if (!data_ctx->msg)
 			return;
-		ctx->sba = false; /* Reset state */
 		tbf_ul_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_PKT_UL_ASS);
 		break;
 	default:
