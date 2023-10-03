@@ -318,7 +318,7 @@ static void st_wait_ccch_imm_ass(struct osmo_fsm_inst *fi, uint32_t event, void 
 		if (handle_imm_ass(ctx, ev_rx_ccch_imm_ass_ctx) < 0)
 			return;
 		if (ctx->tbf_starting_time_exists &&
-		    fn_cmp(ctx->tbf_starting_time, ev_rx_ccch_imm_ass_ctx->fn) > 0) {
+		    gsm0502_fncmp(ctx->tbf_starting_time, ev_rx_ccch_imm_ass_ctx->fn) > 0) {
 			tbf_ul_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_TBF_STARTING_TIME1);
 			return;
 		}
@@ -353,7 +353,7 @@ static void st_wait_tbf_starting_time1(struct osmo_fsm_inst *fi, uint32_t event,
 		if (handle_imm_ass(ctx, ev_rx_ccch_imm_ass_ctx) < 0)
 			return;
 		if (ctx->tbf_starting_time_exists &&
-		    fn_cmp(ctx->tbf_starting_time, ev_rx_ccch_imm_ass_ctx->fn) > 0) {
+		    gsm0502_fncmp(ctx->tbf_starting_time, ev_rx_ccch_imm_ass_ctx->fn) > 0) {
 			tbf_ul_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_TBF_STARTING_TIME1);
 			return;
 		}
@@ -413,14 +413,14 @@ static void st_wait_pkt_ul_ass(struct osmo_fsm_inst *fi, uint32_t event, void *d
 			/* We need to wait at least until sending the PKT CTRL
 			 * ACK (in the old CTRL TS) before completing the
 			 * assignment and using the new TS assignment. */
-			if (!ctx->tbf_starting_time_exists && fn_cmp(ctx->tbf_starting_time, next_blk) < 0) {
+			if (!ctx->tbf_starting_time_exists && gsm0502_fncmp(ctx->tbf_starting_time, next_blk) < 0) {
 				ctx->tbf_starting_time_exists = true;
 				ctx->tbf_starting_time = next_blk;
 			}
 		}
 
 		if (ctx->tbf_starting_time_exists &&
-		    fn_cmp(ctx->tbf_starting_time, d->fn) > 0) {
+		    gsm0502_fncmp(ctx->tbf_starting_time, d->fn) > 0) {
 			tbf_ul_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_TBF_STARTING_TIME2);
 		} else {
 			tbf_ul_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ASS_ST_COMPL);
@@ -474,14 +474,14 @@ static void st_wait_tbf_starting_time2(struct osmo_fsm_inst *fi, uint32_t event,
 			/* We need to wait at least until sending the PKT CTRL
 			 * ACK (in the old CTRL TS) before completing the
 			 * assignment and using the new TS assignment. */
-			if (!ctx->tbf_starting_time_exists && fn_cmp(ctx->tbf_starting_time, next_blk) < 0) {
+			if (!ctx->tbf_starting_time_exists && gsm0502_fncmp(ctx->tbf_starting_time, next_blk) < 0) {
 				ctx->tbf_starting_time_exists = true;
 				ctx->tbf_starting_time = next_blk;
 			}
 		}
 
 		if (ctx->tbf_starting_time_exists &&
-		    fn_cmp(ctx->tbf_starting_time, d->fn) > 0) {
+		    gsm0502_fncmp(ctx->tbf_starting_time, d->fn) > 0) {
 			tbf_ul_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ASS_ST_WAIT_TBF_STARTING_TIME2);
 		} else {
 			tbf_ul_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ASS_ST_COMPL);
@@ -746,7 +746,7 @@ void gprs_rlcmac_tbf_ul_ass_fn_tick(const struct gprs_rlcmac_ul_tbf *ul_tbf, uin
 	default:
 		OSMO_ASSERT(0);
 	}
-	res = fn_cmp(fn, ul_tbf->ul_ass_fsm.tbf_starting_time);
+	res = gsm0502_fncmp(fn, ul_tbf->ul_ass_fsm.tbf_starting_time);
 	if (res < 0) {/* fn BEFORE tbf_starting_time */
 		LOGPTBFUL(ul_tbf, LOGL_DEBUG, "TS=%" PRIu8 " FN=%u Waiting for tbf_starting_time=%u\n",
 			  ts_nr, fn, ul_tbf->ul_ass_fsm.tbf_starting_time);

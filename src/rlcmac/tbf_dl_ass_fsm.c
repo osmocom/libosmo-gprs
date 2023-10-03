@@ -24,6 +24,7 @@
 #include <osmocom/core/tdef.h>
 #include <osmocom/core/fsm.h>
 #include <osmocom/core/bitvec.h>
+#include <osmocom/gsm/gsm0502.h>
 
 #include <osmocom/gprs/rlcmac/types.h>
 #include <osmocom/gprs/rlcmac/tbf_dl_ass_fsm.h>
@@ -141,7 +142,7 @@ static void st_idle(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 			return;
 		memcpy(&ctx->iaro, ev_ccch_imm_ass->iaro, sizeof(ctx->iaro));
 		if (ctx->tbf_starting_time_exists &&
-		    fn_cmp(ctx->tbf_starting_time, ev_ccch_imm_ass->fn) > 0)
+		    gsm0502_fncmp(ctx->tbf_starting_time, ev_ccch_imm_ass->fn) > 0)
 			tbf_dl_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_DL_ASS_ST_WAIT_TBF_STARTING_TIME);
 		else
 			tbf_dl_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_DL_ASS_ST_COMPL);
@@ -152,7 +153,7 @@ static void st_idle(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 			return;
 		memcpy(&ctx->dl_block, ev_pacch_pkt_ass->dl_block, sizeof(ctx->dl_block));
 		if (ctx->tbf_starting_time_exists &&
-		    fn_cmp(ctx->tbf_starting_time, ev_pacch_pkt_ass->fn) > 0)
+		    gsm0502_fncmp(ctx->tbf_starting_time, ev_pacch_pkt_ass->fn) > 0)
 			tbf_dl_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_DL_ASS_ST_WAIT_TBF_STARTING_TIME);
 		else
 			tbf_dl_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_DL_ASS_ST_COMPL);
@@ -175,7 +176,7 @@ static void st_wait_tbf_starting_time(struct osmo_fsm_inst *fi, uint32_t event, 
 			return;
 		memcpy(&ctx->iaro, ev_ccch_imm_ass->iaro, sizeof(ctx->iaro));
 		if (ctx->tbf_starting_time_exists &&
-		    fn_cmp(ctx->tbf_starting_time, ev_ccch_imm_ass->fn) > 0)
+		    gsm0502_fncmp(ctx->tbf_starting_time, ev_ccch_imm_ass->fn) > 0)
 			tbf_dl_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_DL_ASS_ST_WAIT_TBF_STARTING_TIME);
 		else
 			tbf_dl_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_DL_ASS_ST_COMPL);
@@ -186,7 +187,7 @@ static void st_wait_tbf_starting_time(struct osmo_fsm_inst *fi, uint32_t event, 
 			return;
 		memcpy(&ctx->dl_block, ev_pacch_pkt_ass->dl_block, sizeof(ctx->dl_block));
 		if (ctx->tbf_starting_time_exists &&
-		    fn_cmp(ctx->tbf_starting_time, ev_pacch_pkt_ass->fn) > 0)
+		    gsm0502_fncmp(ctx->tbf_starting_time, ev_pacch_pkt_ass->fn) > 0)
 			tbf_dl_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_DL_ASS_ST_WAIT_TBF_STARTING_TIME);
 		else
 			tbf_dl_ass_fsm_state_chg(fi, GPRS_RLCMAC_TBF_DL_ASS_ST_COMPL);

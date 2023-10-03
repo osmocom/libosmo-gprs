@@ -22,6 +22,7 @@
 #include <osmocom/core/linuxlist.h>
 #include <osmocom/core/linuxrbtree.h>
 #include <osmocom/gsm/gsm_utils.h>
+#include <osmocom/gsm/gsm0502.h>
 
 #include <osmocom/gprs/rlcmac/pdch_ul_controller.h>
 #include <osmocom/gprs/rlcmac/rlcmac_private.h>
@@ -61,7 +62,7 @@ struct gprs_rlcmac_pdch_ulc_node *gprs_rlcmac_pdch_ulc_get_node(struct gprs_rlcm
 
 	while (node) {
 		it = rb_entry(node, struct gprs_rlcmac_pdch_ulc_node, node);
-		res = fn_cmp(it->fn, fn);
+		res = gsm0502_fncmp(it->fn, fn);
 		if (res > 0) /* it->fn AFTER fn */
 			node = node->rb_left;
 		else if (res < 0) /* it->fn BEFORE fn */
@@ -105,7 +106,7 @@ static int gprs_rlcmac_pdch_ulc_add_node(struct gprs_rlcmac_pdch_ulc *ulc, struc
 		it = container_of(*n, struct gprs_rlcmac_pdch_ulc_node, node);
 
 		parent = *n;
-		res = fn_cmp(item->fn, it->fn);
+		res = gsm0502_fncmp(item->fn, it->fn);
 		if (res < 0) { /* item->fn "BEFORE" it->fn */
 			n = &((*n)->rb_left);
 		} else if (res > 0) { /* item->fn "AFTER" it->fn */
@@ -180,7 +181,7 @@ void gprs_rlcmac_pdch_ulc_expire_fn(struct gprs_rlcmac_pdch_ulc *ulc, uint32_t f
 	struct rb_node *first;
 	while ((first = rb_first(&ulc->tree_root))) {
 		item = container_of(first, struct gprs_rlcmac_pdch_ulc_node, node);
-		res = fn_cmp(item->fn, fn);
+		res = gsm0502_fncmp(item->fn, fn);
 		if (res > 0) /* item->fn AFTER fn */
 			break;
 		if (res < 0) { /* item->fn BEFORE fn */

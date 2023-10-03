@@ -20,20 +20,6 @@ static inline bool fn_valid(uint32_t fn)
 	return f == 0 || f == 4 || f == 8;
 }
 
-#define GSM_MAX_FN_THRESH (GSM_MAX_FN >> 1)
-/* 0: equal, -1: fn1 BEFORE fn2, 1: fn1 AFTER fn2 */
-static inline int fn_cmp(uint32_t fn1, uint32_t fn2)
-{
-	if (fn1 == fn2)
-		return 0;
-	/* FN1 goes before FN2: */
-	if ((fn1 < fn2 && (fn2 - fn1) < GSM_MAX_FN_THRESH) ||
-	    (fn1 > fn2 && (fn1 - fn2) > GSM_MAX_FN_THRESH))
-		return -1;
-	/* FN1 goes after FN2: */
-	return 1;
-}
-
 static inline uint32_t fn2bn(uint32_t fn)
 {
 	return (fn % 52) / 4;
