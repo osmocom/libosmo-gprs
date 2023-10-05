@@ -130,7 +130,7 @@ static int handle_imm_ass(struct gprs_rlcmac_tbf_ul_ass_fsm_ctx *ctx, const stru
 {
 	/* reset previous state: */
 	memset(&ctx->phase1_alloc, 0, sizeof(ctx->phase1_alloc));
-	ctx->sba = true;
+	ctx->sba = false;
 	ctx->tbf_starting_time_exists = false;
 	ctx->tbf_starting_time = 0;
 
