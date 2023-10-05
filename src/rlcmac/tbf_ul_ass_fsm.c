@@ -413,7 +413,7 @@ static void st_wait_pkt_ul_ass(struct osmo_fsm_inst *fi, uint32_t event, void *d
 			/* We need to wait at least until sending the PKT CTRL
 			 * ACK (in the old CTRL TS) before completing the
 			 * assignment and using the new TS assignment. */
-			if (!ctx->tbf_starting_time_exists && gsm0502_fncmp(ctx->tbf_starting_time, next_blk) < 0) {
+			if (!ctx->tbf_starting_time_exists || gsm0502_fncmp(ctx->tbf_starting_time, next_blk) < 0) {
 				ctx->tbf_starting_time_exists = true;
 				ctx->tbf_starting_time = next_blk;
 			}
@@ -474,7 +474,7 @@ static void st_wait_tbf_starting_time2(struct osmo_fsm_inst *fi, uint32_t event,
 			/* We need to wait at least until sending the PKT CTRL
 			 * ACK (in the old CTRL TS) before completing the
 			 * assignment and using the new TS assignment. */
-			if (!ctx->tbf_starting_time_exists && gsm0502_fncmp(ctx->tbf_starting_time, next_blk) < 0) {
+			if (!ctx->tbf_starting_time_exists || gsm0502_fncmp(ctx->tbf_starting_time, next_blk) < 0) {
 				ctx->tbf_starting_time_exists = true;
 				ctx->tbf_starting_time = next_blk;
 			}
