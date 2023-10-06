@@ -826,7 +826,18 @@ static void test_ul_tbf_n3104_timeout(void)
 	cleanup_test();
 }
 
-static void test_ul_tbf_t3182_timeout(void)
+/* 9.3.2.4.2 (acked mode): When the mobile station has sent the RLC data block
+ * with CV = 0 and there are no elements in the V(B) array set to the value
+ * Nacked, it shall start timer T3182 for this TBF. The mobile station shall
+ * continue to send RLC data blocks on each assigned uplink data block,
+ * according to the algorithm defined in sub-clause 9.1.3.
+ * 9.3.3.3.2 (unacked mode): Upon each retransmission of the last block with
+ * CV=0, the mobile station shall restart timer T3182 for the TBF. The block
+ * with CV=0 shall not be retransmitted more than four times. If the medium
+ * access mode is dynamic allocation, the repetitions are transmitted when the
+ * mobile station is scheduled USFs.
+ */
+static void test_ul_tbf_t3182_timeout(bool acked_mode)
 {
 	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
 	int rc;
@@ -873,6 +884,19 @@ static void test_ul_tbf_t3182_timeout(void)
 	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
 	OSMO_ASSERT(rc == 0);
 
+	if (acked_mode) {
+		/* Make sure we don't apply the max-4-cv0-tx limit as with unacked mode: */
+		unsigned int i;
+		for (i = 0; i < 5; i++) {
+			rts_fn = fn_next_block(rts_fn);
+			printf("RTS %u: FN=%u\n", i, rts_fn);
+			/* Trigger transmission of LLC data (GMM Attach) (second part) */
+			rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_rts_ind(ts_nr, rts_fn, usf);
+			rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+			OSMO_ASSERT(rc == 0);
+		}
+	}
+
 	/* increase time 5 seconds, timeout should trigger */
 	clock_override_add(5, 0);
 	clock_debug("Expect T3182 timeout");
@@ -882,8 +906,10 @@ static void test_ul_tbf_t3182_timeout(void)
 	cleanup_test();
 }
 
+#if 0
+/* FIXME: enable this whenever unacknowledged mode is supported. */
 /* 9.3.3.3.2: The block with CV=0 shall not be retransmitted more than four times. */
-static void test_ul_tbf_last_data_cv0_retrans_max(void)
+static void test_ul_tbf_unack_mode_last_data_cv0_retrans_max(void)
 {
 	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
 	int rc;
@@ -943,6 +969,7 @@ static void test_ul_tbf_last_data_cv0_retrans_max(void)
 	printf("=== %s end ===\n", __func__);
 	cleanup_test();
 }
+#endif
 
 /* 9.3.1 Countdown procedure */
 static void test_ul_tbf_countdown_procedure(void)
@@ -1206,8 +1233,11 @@ int main(int argc, char *argv[])
 	test_ul_tbf_t3164_timeout();
 	test_ul_tbf_t3166_timeout();
 	test_ul_tbf_n3104_timeout();
-	test_ul_tbf_t3182_timeout();
-	test_ul_tbf_last_data_cv0_retrans_max();
+	test_ul_tbf_t3182_timeout(true);
+#if 0
+	test_ul_tbf_t3182_timeout(false);
+	test_ul_tbf_unack_mode_last_data_cv0_retrans_max();
+#endif
 	test_ul_tbf_countdown_procedure();
 	test_ul_tbf_request_another_ul_tbf();
 	test_dl_tbf_ccch_assign();

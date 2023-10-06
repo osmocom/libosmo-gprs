@@ -233,18 +233,22 @@ static void st_finished(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 		}
 		break;
 	case GPRS_RLCMAC_TBF_UL_EV_LAST_UL_DATA_SENT:
-		/* If LAST_UL_DATA_SENT is received in this state, it means the
-		 * UL TBF is retransmitting the block.
-		 * 9.3.3.3.2: The block with CV=0 shall not be retransmitted more than four times.
-		 */
+		/* If LAST_UL_DATA_SENT is received in this state, it means the UL TBF is retransmitting the block. */
 		ctx->last_data_block_retrans_attempts++;
 		LOGPFSML(ctx->fi, LOGL_INFO, "Data block with CV=0 retransmit attempts=%u\n", ctx->last_data_block_retrans_attempts);
 		arm_T3182_if_needed(ctx);
+		/* 9.3.2.4.2 (Acknowledged mode): When the mobile station has sent the RLC data block with CV = 0 and there are no
+		 * elements in the V(B) array set to the value Nacked, it shall start timer T3182 for this TBF [...and ...] shall
+		 * continue to send RLC data blocks on each assigned uplink data block */
+#if 0
+		/*  9.3.3.3.2 (Unacknowledged mode): The block with CV=0 shall not be retransmitted more than four times.
+		 * FIXME: Remove "if 0" when unacknowledged mode support is added. */
 		if (ctx->last_data_block_retrans_attempts == 4) {
 			LOGPFSML(ctx->fi, LOGL_NOTICE, "TBF establishment failure (Data block with CV=0 retransmit attempts=%u)\n",
 				 ctx->last_data_block_retrans_attempts);
 			gprs_rlcmac_ul_tbf_free(ctx->ul_tbf);
 		}
+#endif
 		break;
 	default:
 		OSMO_ASSERT(0);
