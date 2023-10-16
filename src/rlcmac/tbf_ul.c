@@ -29,6 +29,8 @@
 #include <osmocom/gprs/rlcmac/rlc_window_ul.h>
 #include <osmocom/gprs/rlcmac/rlc.h>
 
+static void gprs_rlcmac_ul_tbf_t3180_timer_cb(void *data);
+
 struct gprs_rlcmac_ul_tbf *gprs_rlcmac_ul_tbf_alloc(struct gprs_rlcmac_entity *gre)
 {
 	struct gprs_rlcmac_ul_tbf *ul_tbf;
@@ -57,6 +59,8 @@ struct gprs_rlcmac_ul_tbf *gprs_rlcmac_ul_tbf_alloc(struct gprs_rlcmac_entity *g
 	ul_tbf->blkst = gprs_rlcmac_rlc_block_store_alloc(ul_tbf);
 	OSMO_ASSERT(ul_tbf->blkst);
 
+	osmo_timer_setup(&ul_tbf->t3180, gprs_rlcmac_ul_tbf_t3180_timer_cb, ul_tbf);
+
 	return ul_tbf;
 
 err_state_fsm_destruct:
@@ -77,6 +81,8 @@ void gprs_rlcmac_ul_tbf_free(struct gprs_rlcmac_ul_tbf *ul_tbf)
 
 	tbf = ul_tbf_as_tbf(ul_tbf);
 	gre = tbf->gre;
+
+	osmo_timer_del(&ul_tbf->t3180);
 
 	if (ul_tbf->countdown_proc.llc_queue) {
 		gprs_rlcmac_llc_queue_merge_prepend(gre->llc_queue,
@@ -100,6 +106,22 @@ void gprs_rlcmac_ul_tbf_free(struct gprs_rlcmac_ul_tbf *ul_tbf)
 	talloc_free(ul_tbf);
 	/* Inform the MS that the TBF pointer has been freed: */
 	gprs_rlcmac_entity_ul_tbf_freed(gre, ul_tbf);
+}
+
+static void gprs_rlcmac_ul_tbf_t3180_timer_cb(void *data)
+{
+	struct gprs_rlcmac_ul_tbf *ul_tbf = data;
+
+	LOGPTBFUL(ul_tbf, LOGL_NOTICE, "Timeout of T3180\n");
+
+	gprs_rlcmac_ul_tbf_free(ul_tbf);
+}
+
+static void gprs_rlcmac_ul_tbf_t3180_start(struct gprs_rlcmac_ul_tbf *ul_tbf)
+{
+	unsigned long val_sec;
+	val_sec = osmo_tdef_get(g_rlcmac_ctx->T_defs, 3180, OSMO_TDEF_S, -1);
+	osmo_timer_schedule(&ul_tbf->t3180, val_sec, 0);
 }
 
 int gprs_rlcmac_ul_tbf_submit_configure_req(const struct gprs_rlcmac_ul_tbf *ul_tbf,
@@ -344,7 +366,7 @@ int gprs_rlcmac_ul_tbf_handle_pkt_ul_ass(struct gprs_rlcmac_ul_tbf *ul_tbf,
 	return rc;
 }
 
-struct msgb *gprs_rlcmac_ul_tbf_dummy_create(const struct gprs_rlcmac_ul_tbf *ul_tbf)
+struct msgb *gprs_rlcmac_ul_tbf_dummy_create(struct gprs_rlcmac_ul_tbf *ul_tbf)
 {
 	struct msgb *msg;
 	struct bitvec bv;
@@ -371,6 +393,7 @@ struct msgb *gprs_rlcmac_ul_tbf_dummy_create(const struct gprs_rlcmac_ul_tbf *ul
 		goto free_ret;
 	}
 
+	gprs_rlcmac_ul_tbf_t3180_start(ul_tbf);
 	return msg;
 
 free_ret:
@@ -1183,6 +1206,7 @@ struct msgb *gprs_rlcmac_ul_tbf_data_create(struct gprs_rlcmac_ul_tbf *ul_tbf, c
 	int bsn;
 	int bsn2 = -1;
 	bool may_combine;
+	struct msgb *msg;
 
 	bsn = take_next_bsn(ul_tbf, bi, -1, &may_combine);
 	if (bsn < 0)
@@ -1191,5 +1215,9 @@ struct msgb *gprs_rlcmac_ul_tbf_data_create(struct gprs_rlcmac_ul_tbf *ul_tbf, c
 	if (may_combine)
 		bsn2 = take_next_bsn(ul_tbf, bi, bsn, &may_combine);
 
-	return create_ul_acked_block(ul_tbf, bi, bsn, bsn2);
+	msg = create_ul_acked_block(ul_tbf, bi, bsn, bsn2);
+	if (!msg)
+		return NULL;
+	gprs_rlcmac_ul_tbf_t3180_start(ul_tbf);
+	return msg;
 }

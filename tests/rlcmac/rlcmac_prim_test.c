@@ -779,6 +779,49 @@ static void test_ul_tbf_t3166_timeout(void)
 	cleanup_test();
 }
 
+static void test_ul_tbf_t3180_timeout(void)
+{
+	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
+	int rc;
+
+	printf("=== %s start ===\n", __func__);
+	prepare_test();
+	uint32_t tlli = 0x2342;
+	uint8_t ts_nr = 7;
+	uint8_t usf = 0;
+	uint32_t rts_fn = 4;
+
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_grr_unitdata_req(tlli, pdu_llc_gmm_att_req,
+					    sizeof(pdu_llc_gmm_att_req));
+	rlcmac_prim->grr.unitdata_req.sapi = OSMO_GPRS_RLCMAC_LLC_SAPI_GMM;
+	rlcmac_prim->grr.unitdata_req.radio_prio = 1;
+	rc = osmo_gprs_rlcmac_prim_upper_down(rlcmac_prim);
+
+	OSMO_ASSERT(sizeof(ccch_imm_ass_pkt_ul_tbf_normal) == GSM_MACBLOCK_LEN);
+	ccch_imm_ass_pkt_ul_tbf_normal[7] = last_rach_req_ra; /* Update RA to match */
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_ccch_data_ind(0, ccch_imm_ass_pkt_ul_tbf_normal);
+	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+
+	/* Trigger transmission of LLC data (GMM Attach) (first part) */
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_rts_ind(ts_nr, rts_fn, usf);
+	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+	OSMO_ASSERT(rc == 0);
+
+	/* Transmit another block */
+	rts_fn = fn_next_block(rts_fn);
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_rts_ind(ts_nr, rts_fn, usf);
+	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+	OSMO_ASSERT(rc == 0);
+
+	/* increase time 5 seconds, T3180 timeout should trigger */
+	clock_override_add(5, 0);
+	clock_debug("Expect T3180 timeout");
+	osmo_select_main(0);
+
+	printf("=== %s end ===\n", __func__);
+	cleanup_test();
+}
+
 static void test_ul_tbf_n3104_timeout(void)
 {
 	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
@@ -1256,6 +1299,7 @@ int main(int argc, char *argv[])
 	test_ul_tbf_attach();
 	test_ul_tbf_t3164_timeout();
 	test_ul_tbf_t3166_timeout();
+	test_ul_tbf_t3180_timeout();
 	test_ul_tbf_n3104_timeout();
 	test_ul_tbf_t3182_timeout(true);
 #if 0

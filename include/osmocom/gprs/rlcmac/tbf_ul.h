@@ -47,6 +47,8 @@ struct gprs_rlcmac_ul_tbf {
 		uint8_t cv;
 		struct gprs_rlcmac_llc_queue *llc_queue;
 	} countdown_proc;
+
+	struct osmo_timer_list t3180;
 };
 
 struct gprs_rlcmac_ul_tbf *gprs_rlcmac_ul_tbf_alloc(struct gprs_rlcmac_entity *gre);
@@ -66,7 +68,7 @@ bool gprs_rlcmac_ul_tbf_data_rts(const struct gprs_rlcmac_ul_tbf *ul_tbf, const 
 bool gprs_rlcmac_ul_tbf_dummy_rts(const struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_rts_block_ind *bi);
 
 struct msgb *gprs_rlcmac_ul_tbf_data_create(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_rlcmac_rts_block_ind *bi);
-struct msgb *gprs_rlcmac_ul_tbf_dummy_create(const struct gprs_rlcmac_ul_tbf *ul_tbf);
+struct msgb *gprs_rlcmac_ul_tbf_dummy_create(struct gprs_rlcmac_ul_tbf *ul_tbf);
 
 int gprs_rlcmac_ul_tbf_handle_pkt_ul_ack_nack(struct gprs_rlcmac_ul_tbf *ul_tbf,
 					      const RlcMacDownlink_t *dl_block);

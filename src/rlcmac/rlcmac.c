@@ -48,6 +48,7 @@ static struct osmo_tdef T_defs_rlcmac[] = {
 	{ .T=3166, .default_val=5,	.unit = OSMO_TDEF_S,	.desc="Wait for Packet Uplink ACK/NACK after sending of first data block (s)" },
 	/* T3168: dynamically updated with what's received in BCCH SI13 */
 	{ .T=3168, .default_val=5000,	.unit = OSMO_TDEF_MS,	.desc="Wait for PACKET UPLINK ASSIGNMENT (updated by BCCH SI13) (ms)" },
+	{ .T=3180, .default_val=5,	.unit = OSMO_TDEF_S,	.desc="Wait for Uplink State Flag After Data Block (s)" },
 	{ .T=3182, .default_val=5,	.unit = OSMO_TDEF_S,	.desc="Wait for Acknowledgement (s)" },
 	{ .T=3190, .default_val=5,	.unit = OSMO_TDEF_S,	.desc="Wait for Valid Downlink Data Received from the Network (s)" },
 	{ .T=3192, .default_val=0,	.unit = OSMO_TDEF_MS,	.desc="Wait for release of the TBF after reception of the final block (ms)" },
