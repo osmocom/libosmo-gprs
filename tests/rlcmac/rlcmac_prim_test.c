@@ -841,6 +841,7 @@ static void test_ul_tbf_t3182_timeout(bool acked_mode)
 {
 	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
 	int rc;
+	unsigned int i;
 
 	printf("=== %s start ===\n", __func__);
 	prepare_test();
@@ -884,10 +885,26 @@ static void test_ul_tbf_t3182_timeout(bool acked_mode)
 	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
 	OSMO_ASSERT(rc == 0);
 
+	/* Now T3182 is armed and will trigger in 5 seconds. */
+
 	if (acked_mode) {
-		/* Make sure we don't apply the max-4-cv0-tx limit as with unacked mode: */
-		unsigned int i;
+		/* Keep sending some USF-polling from PCU to avoid T3180 triggering.
+		 * while at it, make sure we don't apply the max-4-cv0-tx limit as with unacked mode: */
 		for (i = 0; i < 5; i++) {
+			/* increase time 1 seconds, timeout should trigger */
+			clock_override_add(1, 0);
+			rts_fn = fn_next_block(rts_fn);
+			printf("RTS %u: FN=%u\n", i, rts_fn);
+			/* Trigger transmission of LLC data (GMM Attach) (second part) */
+			rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_rts_ind(ts_nr, rts_fn, usf);
+			rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+			OSMO_ASSERT(rc == 0);
+		}
+	} else {
+		for (i = 0; i < 2; i++) {
+			/* Keep sending some USF-polling from PCU to avoid T3180 triggering:
+			 * increase time 2.500 seconds 2 times = 5s, */
+			clock_override_add(2, 500000);
 			rts_fn = fn_next_block(rts_fn);
 			printf("RTS %u: FN=%u\n", i, rts_fn);
 			/* Trigger transmission of LLC data (GMM Attach) (second part) */
@@ -897,8 +914,7 @@ static void test_ul_tbf_t3182_timeout(bool acked_mode)
 		}
 	}
 
-	/* increase time 5 seconds, timeout should trigger */
-	clock_override_add(5, 0);
+	/* Timeout should trigger now: */
 	clock_debug("Expect T3182 timeout");
 	osmo_select_main(0);
 

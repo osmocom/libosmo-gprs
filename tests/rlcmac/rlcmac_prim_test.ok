@@ -129,17 +129,21 @@ test_rlcmac_prim_down_cb(): Rx L1CTL-CFG_UL_TBF.request ul_tbf_nr=0 ul_slotmask=
 test_rlcmac_prim_up_cb(): Rx GMMRR-LLC_TRANSMITTED.indication TLLI=0x00002342
 test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=4 ts=7 data_len=34 data=[3c 01 01 00 00 23 42 01 c0 00 08 01 01 d5 71 00 00 08 29 26 24 00 00 00 00 71 62 f2 24 6c 84 44 04 00 ]
 test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=8 ts=7 data_len=34 data=[00 00 02 1d 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 ]
+sys={1.000000}, mono={1.000000}: clock_override_add
 RTS 0: FN=13
 test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=13 ts=7 data_len=34 data=[00 00 02 1d 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 ]
+sys={2.000000}, mono={2.000000}: clock_override_add
 RTS 1: FN=17
 test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=17 ts=7 data_len=34 data=[00 00 02 1d 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 ]
+sys={3.000000}, mono={3.000000}: clock_override_add
 RTS 2: FN=21
 test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=21 ts=7 data_len=34 data=[00 00 02 1d 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 ]
+sys={4.000000}, mono={4.000000}: clock_override_add
 RTS 3: FN=26
 test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=26 ts=7 data_len=34 data=[00 00 02 1d 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 ]
+sys={5.000000}, mono={5.000000}: clock_override_add
 RTS 4: FN=30
 test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=30 ts=7 data_len=34 data=[00 00 02 1d 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 ]
-sys={5.000000}, mono={5.000000}: clock_override_add
 sys={5.000000}, mono={5.000000}: Expect T3182 timeout
 test_rlcmac_prim_down_cb(): Rx L1CTL-CFG_UL_TBF.request ul_tbf_nr=0 ul_slotmask=0x00
 === test_ul_tbf_t3182_timeout end ===
