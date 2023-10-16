@@ -599,7 +599,6 @@ DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying data unit 0 (BSN=1 CV=0)
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) msg block (BSN 1, CS-2): 00 00 02 1d 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 
 DLGLOBAL INFO UL_TBF{FINISHED}: Received Event LAST_UL_DATA_SENT
 DLGLOBAL INFO UL_TBF{FINISHED}: Data block with CV=0 retransmit attempts=1
-DLGLOBAL INFO UL_TBF{FINISHED}: Last UL block sent (CV=0), start T3182
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-PDCH_DATA.request
 DLGLOBAL DEBUG Rx from lower layers: L1CTL-PDCH_RTS.indication
 DLGLOBAL DEBUG Rx RTS.ind (fn=17, ts=7, usf=0)
@@ -611,7 +610,6 @@ DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying data unit 0 (BSN=1 CV=0)
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) msg block (BSN 1, CS-2): 00 00 02 1d 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 
 DLGLOBAL INFO UL_TBF{FINISHED}: Received Event LAST_UL_DATA_SENT
 DLGLOBAL INFO UL_TBF{FINISHED}: Data block with CV=0 retransmit attempts=2
-DLGLOBAL INFO UL_TBF{FINISHED}: Last UL block sent (CV=0), start T3182
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-PDCH_DATA.request
 DLGLOBAL DEBUG Rx from lower layers: L1CTL-PDCH_RTS.indication
 DLGLOBAL DEBUG Rx RTS.ind (fn=21, ts=7, usf=0)
@@ -623,7 +621,6 @@ DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying data unit 0 (BSN=1 CV=0)
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) msg block (BSN 1, CS-2): 00 00 02 1d 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 
 DLGLOBAL INFO UL_TBF{FINISHED}: Received Event LAST_UL_DATA_SENT
 DLGLOBAL INFO UL_TBF{FINISHED}: Data block with CV=0 retransmit attempts=3
-DLGLOBAL INFO UL_TBF{FINISHED}: Last UL block sent (CV=0), start T3182
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-PDCH_DATA.request
 DLGLOBAL DEBUG Rx from lower layers: L1CTL-PDCH_RTS.indication
 DLGLOBAL DEBUG Rx RTS.ind (fn=26, ts=7, usf=0)
@@ -635,7 +632,6 @@ DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying data unit 0 (BSN=1 CV=0)
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) msg block (BSN 1, CS-2): 00 00 02 1d 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 
 DLGLOBAL INFO UL_TBF{FINISHED}: Received Event LAST_UL_DATA_SENT
 DLGLOBAL INFO UL_TBF{FINISHED}: Data block with CV=0 retransmit attempts=4
-DLGLOBAL INFO UL_TBF{FINISHED}: Last UL block sent (CV=0), start T3182
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-PDCH_DATA.request
 DLGLOBAL DEBUG Rx from lower layers: L1CTL-PDCH_RTS.indication
 DLGLOBAL DEBUG Rx RTS.ind (fn=30, ts=7, usf=0)
@@ -647,7 +643,6 @@ DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying data unit 0 (BSN=1 CV=0)
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) msg block (BSN 1, CS-2): 00 00 02 1d 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 
 DLGLOBAL INFO UL_TBF{FINISHED}: Received Event LAST_UL_DATA_SENT
 DLGLOBAL INFO UL_TBF{FINISHED}: Data block with CV=0 retransmit attempts=5
-DLGLOBAL INFO UL_TBF{FINISHED}: Last UL block sent (CV=0), start T3182
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-PDCH_DATA.request
 DLGLOBAL INFO UL_TBF{FINISHED}: Timeout of T3182
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: Deallocated

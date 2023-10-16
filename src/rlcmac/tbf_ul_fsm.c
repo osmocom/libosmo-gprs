@@ -88,9 +88,13 @@ static void reinit_pkt_acces_procedure(struct gprs_rlcmac_tbf_ul_fsm_ctx *ctx)
 		gprs_rlcmac_ul_tbf_free(ctx->ul_tbf);
 }
 
-/* 9.3.3.3.2: Upon each retransmission of the last block with CV=0, the mobile station shall restart timer T3182 for the TBF.
-* Slight impl deviation from spec: If tbf is still in contention resolution, keep using T3166, otherwise start T3182
-*/
+/* 9.3.2.4.2 (acknowledged mode): When the mobile station has sent the RLC data
+ * block with CV = 0 and there are no elements in the V(B) array set to the value
+ * Nacked, it shall start timer T3182 for this TBF.
+ * 9.3.3.3.2 (unacknowledged mode): Upon each retransmission of the last block
+ * with CV=0, the mobile station shall restart timer T3182 for the TBF.
+ * Slight impl deviation from spec: If tbf is still in contention resolution, keep using T3166, otherwise start T3182
+ */
 static void arm_T3182_if_needed(struct gprs_rlcmac_tbf_ul_fsm_ctx *ctx)
 {
 	struct osmo_fsm_inst *fi = ctx->fi;
@@ -102,10 +106,13 @@ static void arm_T3182_if_needed(struct gprs_rlcmac_tbf_ul_fsm_ctx *ctx)
 	} else {
 		OSMO_ASSERT(!osmo_timer_pending(&fi->timer) ||
 			    (osmo_timer_pending(&fi->timer) && fi->T == 3182));
-		LOGPFSML(ctx->fi, LOGL_INFO, "Last UL block sent (CV=0), start T3182\n");
-		fi->T = 3182;
-		val_sec = osmo_tdef_get(g_rlcmac_ctx->T_defs, fi->T, OSMO_TDEF_S, -1);
-		osmo_timer_schedule(&fi->timer, val_sec, 0);
+		/* TODO: once unacked mode is supported: || unacked_mode(ctx->ul_tbf) */
+		if (!osmo_timer_pending(&fi->timer)) {
+			LOGPFSML(ctx->fi, LOGL_INFO, "Last UL block sent (CV=0), start T3182\n");
+			fi->T = 3182;
+			val_sec = osmo_tdef_get(g_rlcmac_ctx->T_defs, fi->T, OSMO_TDEF_S, -1);
+			osmo_timer_schedule(&fi->timer, val_sec, 0);
+		}
 	}
 }
 
