@@ -750,7 +750,7 @@ static void test_ul_tbf_t3166_timeout(void)
 	rlcmac_prim->grr.unitdata_req.radio_prio = 1;
 	rc = osmo_gprs_rlcmac_prim_upper_down(rlcmac_prim);
 
-	for (i = 0; i < 4; i++) {
+	for (i = 0; i < 4; i++) { /* 4 packet access procedure attempts */
 		OSMO_ASSERT(sizeof(ccch_imm_ass_pkt_ul_tbf_normal) == GSM_MACBLOCK_LEN);
 		ccch_imm_ass_pkt_ul_tbf_normal[7] = last_rach_req_ra; /* Update RA to match */
 		rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_ccch_data_ind(0, ccch_imm_ass_pkt_ul_tbf_normal);
@@ -761,8 +761,16 @@ static void test_ul_tbf_t3166_timeout(void)
 		rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
 		OSMO_ASSERT(rc == 0);
 
-		/* increase time 5 seconds, timeout should trigger */
-		clock_override_add(5, 0);
+		/* In 5 seconds, T3166 will trigger. T3180 has also been armed
+		* at 5s, so scenify PCU USF-polling the MS to avoid trigger T3180
+		* instead of T3166. First increase 2 of the 5 seconds: */
+		clock_override_add(2, 0);
+		rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_rts_ind(ts_nr, rts_fn, usf);
+		rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+		OSMO_ASSERT(rc == 0);
+
+		/* Increase time (remaining 3 out of 5 seconds), T3166 timeout should trigger */
+		clock_override_add(3, 0);
 		clock_debug("Expect T3166 timeout");
 		osmo_select_main(0);
 	}
