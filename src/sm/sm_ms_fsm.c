@@ -281,7 +281,6 @@ struct osmo_fsm sm_ms_fsm = {
 	.name = "SM_MS",
 	.states = sm_ms_fsm_states,
 	.num_states = ARRAY_SIZE(sm_ms_fsm_states),
-	.timer_cb = sm_ms_fsm_timer_cb,
 	.event_names = sm_ms_fsm_event_names,
 	.log_subsys = DLGLOBAL, /* updated dynamically through gprs_sm_ms_fsm_set_log_cat() */
 	.timer_cb = sm_ms_fsm_timer_cb,
