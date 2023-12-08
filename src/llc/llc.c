@@ -475,7 +475,7 @@ static int gprs_llc_lle_generate_xid(struct gprs_llc_lle *lle, uint8_t *bytes, i
 	xid_fields[2].type = OSMO_GPRS_LLC_XID_T_N201_I;
 	xid_fields[2].val = lle->params.n201_i;
 
-	if (l3par_len > 0) {
+	if (l3par != NULL && l3par_len > 0) {
 		xid_fields[3].type = OSMO_GPRS_LLC_XID_T_L3_PAR;
 		xid_fields[3].var.val_len = l3par_len;
 		if (l3par_len > 0) {
