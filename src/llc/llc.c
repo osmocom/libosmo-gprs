@@ -534,10 +534,10 @@ int gprs_llc_lle_tx_xid_req(struct gprs_llc_lle *lle, uint8_t *l3par, unsigned i
 int gprs_llc_lle_tx_xid_resp(struct gprs_llc_lle *lle, uint8_t *l3par, unsigned int l3par_len)
 {
 	uint8_t bytes_response[1024];
-	unsigned int rc, i;
+	int rc;
 
 	/* Replace the SNDCP L3 xid_field with response from our upper layer: */
-	for (i = 0; i < lle->rx_xid_len; i++) {
+	for (unsigned int i = 0; i < lle->rx_xid_len; i++) {
 		struct gprs_llc_xid_field *xid_field_l3;
 		if (lle->rx_xid[i].type != OSMO_GPRS_LLC_XID_T_L3_PAR)
 			continue;
