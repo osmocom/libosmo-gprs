@@ -25,6 +25,7 @@ pkgconfig_DATA = \
 BUILT_SOURCES = $(top_srcdir)/.version
 EXTRA_DIST = \
 	.version \
+	README.md \
 	contrib/libosmo-gprs.spec.in \
 	git-version-gen \
 	debian \
