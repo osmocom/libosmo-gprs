@@ -46,6 +46,7 @@ static const struct osmo_tdef_state_timeout tbf_ul_fsm_timeouts[32] = {
 	[GPRS_RLCMAC_TBF_UL_ST_WAIT_ASSIGN] = { },
 	[GPRS_RLCMAC_TBF_UL_ST_FLOW] = { .T = 3164 },
 	[GPRS_RLCMAC_TBF_UL_ST_FINISHED] = { .keep_timer = true }, /* keep FLOW state's T3164 / T3166 */
+	[GPRS_RLCMAC_TBF_UL_ST_RELEASING] = { },
 };
 
 /* Transition to a state, using the T timer defined in tbf_fsm_timeouts.
