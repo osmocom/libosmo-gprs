@@ -69,6 +69,8 @@ DLGLOBAL DEBUG Rx RTS.ind (fn=21, ts=7, usf=0)
 DLGLOBAL DEBUG (ts=7,fn=21,usf=0) Tx Pkt Control Ack (UL ACK/NACK poll)
 DLGLOBAL DEBUG GRE(00002342) Tx Packet Control Ack
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-PDCH_DATA.request
+DLGLOBAL DEBUG Rx from lower layers: L1CTL-PDCH_DATA.confirm
+DLGLOBAL INFO UL_TBF{RELEASING}: Received Event TX_COMPL_PKT_CTRL_ACK
 DLGLOBAL INFO UL_TBF_ASS{IDLE}: Deallocated
 DLGLOBAL INFO UL_TBF{RELEASING}: Send L1CTL-CFG_UL_TBF.req ul_tbf_nr=0 (release)
 DLGLOBAL DEBUG Tx to lower layers: L1CTL-CFG_UL_TBF.request

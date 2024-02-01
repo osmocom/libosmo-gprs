@@ -41,6 +41,7 @@ static const struct value_string tbf_ul_fsm_event_names[] = {
 	{ GPRS_RLCMAC_TBF_UL_EV_N3104_MAX,			"N3104_MAX" },
 	{ GPRS_RLCMAC_TBF_UL_EV_RX_UL_ACK_NACK,			"RX_UL_ACK_NACK" },
 	{ GPRS_RLCMAC_TBF_UL_EV_LAST_UL_DATA_SENT,		"LAST_UL_DATA_SENT" },
+	{ GPRS_RLCMAC_TBF_UL_EV_TX_COMPL_PKT_CTRL_ACK,		"TX_COMPL_PKT_CTRL_ACK" },
 	{ 0, NULL }
 };
 
@@ -248,6 +249,7 @@ static void st_finished(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 		const Packet_Uplink_Ack_Nack_t *ack = &dlbi->dl_block.u.Packet_Uplink_Ack_Nack;
 		const PU_AckNack_GPRS_t *gprs = &ack->u.PU_AckNack_GPRS_Struct;
 		const Ack_Nack_Description_t *ack_desc = &gprs->Ack_Nack_Description;
+		uint32_t poll_fn = 0xffffffff; /* Invalid FN */
 
 		if (gprs_rlcmac_ul_tbf_in_contention_resolution(ctx->ul_tbf)) {
 			_contention_resolution_succeeded(ctx);
@@ -262,7 +264,7 @@ static void st_finished(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 		}
 		/* If RRBP contains valid data, schedule a response (PKT CONTROL ACK or PKT RESOURCE REQ). */
 		if (dlbi->dl_block.SP) {
-			uint32_t poll_fn = rrbp2fn(dlbi->fn, dlbi->dl_block.RRBP);
+			poll_fn = rrbp2fn(dlbi->fn, dlbi->dl_block.RRBP);
 			gprs_rlcmac_pdch_ulc_reserve(g_rlcmac_ctx->sched.ulc[dlbi->ts_nr], poll_fn,
 						     GPRS_RLCMAC_PDCH_ULC_POLL_UL_ACK,
 						     ul_tbf_as_tbf(ctx->ul_tbf));
@@ -270,7 +272,9 @@ static void st_finished(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 		if (ack_desc->FINAL_ACK_INDICATION) {
 			bool tbf_est = (gprs->Exist_AdditionsR99 && gprs->AdditionsR99.TBF_EST);
 			LOGPFSMLDLBI(ctx->fi, dlbi, LOGL_DEBUG, "Final ACK received\n");
-			ctx->rx_final_pkt_ul_ack_nack_has_tbf_est = tbf_est;
+			ctx->rx_final_pkt_ul_ack_nack.has_tbf_est = tbf_est;
+			ctx->rx_final_pkt_ul_ack_nack.pkt_ctrl_ack_fn = poll_fn;
+			ctx->rx_final_pkt_ul_ack_nack.pkt_ctrl_ack_tn = dlbi->ts_nr;
 			tbf_ul_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ST_RELEASING);
 		}
 		break;
@@ -301,8 +305,11 @@ static void st_finished(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 /* Waiting for scheduler to transmit PKT CTRL ACK for the already received UL ACK/NACK FinalAck=1 */
 static void st_releasing(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
-	//struct gprs_rlcmac_tbf_ul_fsm_ctx *ctx = (struct gprs_rlcmac_tbf_ul_fsm_ctx *)fi->priv;
+	struct gprs_rlcmac_tbf_ul_fsm_ctx *ctx = (struct gprs_rlcmac_tbf_ul_fsm_ctx *)fi->priv;
 	switch (event) {
+	case GPRS_RLCMAC_TBF_UL_EV_TX_COMPL_PKT_CTRL_ACK:
+		gprs_rlcmac_ul_tbf_free(ctx->ul_tbf);
+		break;
 	default:
 		OSMO_ASSERT(0);
 	}
@@ -352,7 +359,7 @@ static struct osmo_fsm_state tbf_ul_fsm_states[] = {
 		.action = st_finished,
 	},
 	[GPRS_RLCMAC_TBF_UL_ST_RELEASING] = {
-		.in_event_mask = 0,
+		.in_event_mask = X(GPRS_RLCMAC_TBF_UL_EV_TX_COMPL_PKT_CTRL_ACK),
 		.out_state_mask = 0,
 		.name = "RELEASING",
 		.action = st_releasing,
@@ -448,4 +455,16 @@ enum gprs_rlcmac_tbf_ul_fsm_states gprs_rlcmac_tbf_ul_state(const struct gprs_rl
 {
 	const struct gprs_rlcmac_tbf_ul_fsm_ctx *ctx = &ul_tbf->state_fsm;
 	return ctx->fi->state;
+}
+
+/* Whether the UL TBF requested a Tx confirmation for a Pkt Ctrl Ack it transmitted at {FN,TN}. */
+bool gprs_rlcmac_ul_tbf_waiting_pkt_ctrl_ack_tx_confirmation(const struct gprs_rlcmac_ul_tbf *ul_tbf, uint32_t fn, uint8_t ts_nr)
+{
+	const struct gprs_rlcmac_tbf_ul_fsm_ctx *ctx = &ul_tbf->state_fsm;
+	/* PKT CTRL ACK Tx confirmation is only needed for final ack, to avoid
+	 * freeing (unregistering with lower layers) the TBF too early. */
+	if (ctx->fi->state != GPRS_RLCMAC_TBF_UL_ST_RELEASING)
+		return false;
+	return ctx->rx_final_pkt_ul_ack_nack.pkt_ctrl_ack_fn == fn &&
+		ctx->rx_final_pkt_ul_ack_nack.pkt_ctrl_ack_tn == ts_nr;
 }

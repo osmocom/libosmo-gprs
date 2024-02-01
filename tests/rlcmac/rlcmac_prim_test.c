@@ -623,6 +623,12 @@ static void test_ul_tbf_attach(void)
 	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
 	OSMO_ASSERT(rc == 0);
 
+	/* Trigger transmission confirmation of PKT CTRL ACK */
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_data_cnf(ts_nr, rts_fn, NULL, 0);
+	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+	OSMO_ASSERT(rc == 0);
+
+
 	printf("=== %s end ===\n", __func__);
 	cleanup_test();
 }

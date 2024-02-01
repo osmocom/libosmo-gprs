@@ -212,7 +212,7 @@ bool gprs_rlcmac_ul_tbf_can_request_new_ul_tbf(const struct gprs_rlcmac_ul_tbf *
 		return false;
 
 	/* "TBF Est field is set to '1'"" */
-	if (!ul_tbf->state_fsm.rx_final_pkt_ul_ack_nack_has_tbf_est)
+	if (!ul_tbf->state_fsm.rx_final_pkt_ul_ack_nack.has_tbf_est)
 		return false;
 
 	/* the mobile station has new data to transmit */
