@@ -646,6 +646,36 @@ static int rlcmac_prim_handle_l1ctl_ccch_data_ind(struct osmo_gprs_rlcmac_prim *
 	return rc;
 }
 
+static int rlcmac_prim_handle_l1ctl_pdch_data_cnf(struct osmo_gprs_rlcmac_prim *rlcmac_prim)
+{
+	struct gprs_rlcmac_entity *gre;
+
+#if 0
+	/* TODO: enable once we have originating req data in primitive coming from lower layers. */
+	/* 3GPP TS 44.060 10.3.2 Uplink RLC/MAC control block: */
+	enum osmo_gprs_rlcmac_ul_msg_type msg_type;
+	if (rlcmac_prim->l1ctl.pdch_data_cnf.data_len < 1)
+		return -EINVAL;
+	msg_type = (rlcmac_prim->l1ctl.pdch_data_cnf.data & 0xC0) >> 2;
+	if (msg_type != OSMO_GPRS_RLCMAC_UL_MSGT_PACKET_CONTROL_ACK)
+		return -EINVAL;
+#endif
+
+	llist_for_each_entry(gre, &g_rlcmac_ctx->gre_list, entry) {
+		if (!gre->ul_tbf)
+			continue;
+		if (!gprs_rlcmac_ul_tbf_waiting_pkt_ctrl_ack_tx_confirmation(gre->ul_tbf,
+									     rlcmac_prim->l1ctl.pdch_data_cnf.fn,
+									     rlcmac_prim->l1ctl.pdch_data_cnf.ts_nr))
+			continue;
+
+		osmo_fsm_inst_dispatch(gre->ul_tbf->state_fsm.fi, GPRS_RLCMAC_TBF_UL_EV_TX_COMPL_PKT_CTRL_ACK, NULL);
+		/* gre->ul_tbf is NULL here. */
+		break;
+	}
+	return 0;
+}
+
 static int rlcmac_prim_handle_l1ctl_ccch_ready_ind(struct osmo_gprs_rlcmac_prim *rlcmac_prim)
 {
 	struct gprs_rlcmac_entity *gre;
@@ -669,6 +699,9 @@ static int gprs_rlcmac_prim_l1ctl_lower_up(struct osmo_gprs_rlcmac_prim *rlcmac_
 		break;
 	case OSMO_PRIM(OSMO_GPRS_RLCMAC_L1CTL_PDCH_DATA, PRIM_OP_INDICATION):
 		rc = rlcmac_prim_handle_l1ctl_pdch_data_ind(rlcmac_prim);
+		break;
+	case OSMO_PRIM(OSMO_GPRS_RLCMAC_L1CTL_PDCH_DATA, PRIM_OP_CONFIRM):
+		rc = rlcmac_prim_handle_l1ctl_pdch_data_cnf(rlcmac_prim);
 		break;
 	case OSMO_PRIM(OSMO_GPRS_RLCMAC_L1CTL_CCCH_DATA, PRIM_OP_INDICATION):
 		rc = rlcmac_prim_handle_l1ctl_ccch_data_ind(rlcmac_prim);
