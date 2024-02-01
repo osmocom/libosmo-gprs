@@ -280,6 +280,19 @@ struct osmo_gprs_rlcmac_prim *gprs_rlcmac_prim_alloc_l1ctl_pdch_data_req(uint8_t
 	return rlcmac_prim;
 }
 
+/* L1CTL-PDCH_DATA.cnf */
+struct osmo_gprs_rlcmac_prim *osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_data_cnf(uint8_t ts_nr, uint32_t fn,
+									 uint8_t *data, uint8_t data_len)
+{
+	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
+	rlcmac_prim = rlcmac_prim_l1ctl_alloc(OSMO_GPRS_RLCMAC_L1CTL_PDCH_DATA, PRIM_OP_CONFIRM, 0);
+	rlcmac_prim->l1ctl.pdch_data_cnf.fn = fn;
+	rlcmac_prim->l1ctl.pdch_data_cnf.ts_nr = ts_nr;
+	rlcmac_prim->l1ctl.pdch_data_ind.data_len = data_len;
+	rlcmac_prim->l1ctl.pdch_data_ind.data = data;
+	return rlcmac_prim;
+}
+
 /* L1CTL-PDCH_DATA.ind */
 struct osmo_gprs_rlcmac_prim *osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_data_ind(uint8_t ts_nr, uint32_t fn,
 				uint8_t rx_lev, uint16_t ber10k, int16_t ci_cb, uint8_t *data, uint8_t data_len)

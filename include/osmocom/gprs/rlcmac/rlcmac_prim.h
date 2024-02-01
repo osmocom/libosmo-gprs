@@ -149,6 +149,13 @@ struct osmo_gprs_rlcmac_l1ctl_prim {
 			uint8_t data_len;
 			uint8_t *data;
 		} pdch_data_req;
+		/* OSMO_GPRS_RLCMAC_L1CTL_PDCH_DATA | Cnf */
+		struct {
+			uint32_t fn;
+			uint8_t ts_nr;
+			uint8_t data_len;
+			uint8_t *data;
+		} pdch_data_cnf;
 		/* OSMO_GPRS_RLCMAC_L1CTL_PDCH_DATA | Ind */
 		struct {
 			uint32_t fn;
@@ -234,6 +241,8 @@ struct osmo_gprs_rlcmac_prim *osmo_gprs_rlcmac_prim_alloc_l1ctl_ccch_data_ind(ui
 struct osmo_gprs_rlcmac_prim *osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_data_ind(uint8_t ts_nr, uint32_t fn,
 				uint8_t rx_lev, uint16_t ber10k, int16_t ci_cb,
 				uint8_t *data, uint8_t data_len);
+struct osmo_gprs_rlcmac_prim *osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_data_cnf(uint8_t ts_nr, uint32_t fn,
+									      uint8_t *data, uint8_t data_len);
 struct osmo_gprs_rlcmac_prim *osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_rts_ind(uint8_t ts_nr, uint32_t fn, uint8_t usf);
 struct osmo_gprs_rlcmac_prim *gprs_rlcmac_prim_alloc_l1ctl_pdch_est_req(uint8_t ts_nr, uint8_t tsc, uint8_t ta);
 struct osmo_gprs_rlcmac_prim *gprs_rlcmac_prim_alloc_l1ctl_pdch_rel_req(void);
