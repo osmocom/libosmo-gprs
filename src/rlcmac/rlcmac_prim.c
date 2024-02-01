@@ -633,6 +633,29 @@ static int rlcmac_prim_handle_l1ctl_ccch_data_ind(struct osmo_gprs_rlcmac_prim *
 	return rc;
 }
 
+static int rlcmac_prim_handle_l1ctl_pdch_data_cnf(struct osmo_gprs_rlcmac_prim *rlcmac_prim)
+{
+	int rc;
+
+	if (get_rlcmac_block_ctrl_type(rlcmac_prim->l1ctl.ccch_data_cnf.req.data) != OSMO_GPRS_RLCMAC_UL_MSGT_PACKET_CONTROL_ACK)
+		return 0;
+
+	struct gprs_rlcmac_entity *gre;
+	llist_for_each_entry(gre, &g_rlcmac_ctx->gre_list, entry) {
+		if (!gre->ul_tbf)
+			continue;
+		if (!gprs_rlcmac_ul_tbf_waiting_pkt_ctrl_ack_confirmation(gre->ul_tbf,
+									 rlcmac_prim->l1ctl.ccch_data_cnf.req.fn,
+									 rlcmac_prim->l1ctl.ccch_data_cnf.req.ts))
+			continue;
+
+		osmo_fsm_inst_dispatch(gre->ul_tbf->state_fsm.fi, GPRS_RLCMAC_TBF_UL_EV_TX_COMPL_PKT_CTRL_ACK, NULL);
+		/* gre->ul_tbf is NULL here. */
+		break;
+	}
+	return 0;
+}
+
 static int rlcmac_prim_handle_l1ctl_ccch_ready_ind(struct osmo_gprs_rlcmac_prim *rlcmac_prim)
 {
 	struct gprs_rlcmac_entity *gre;
@@ -656,6 +679,9 @@ static int gprs_rlcmac_prim_l1ctl_lower_up(struct osmo_gprs_rlcmac_prim *rlcmac_
 		break;
 	case OSMO_PRIM(OSMO_GPRS_RLCMAC_L1CTL_PDCH_DATA, PRIM_OP_INDICATION):
 		rc = rlcmac_prim_handle_l1ctl_pdch_data_ind(rlcmac_prim);
+		break;
+	case OSMO_PRIM(OSMO_GPRS_RLCMAC_L1CTL_PDCH_DATA, PRIM_OP_CONFIRM):
+		rc = rlcmac_prim_handle_l1ctl_pdch_data_cnf(rlcmac_prim);
 		break;
 	case OSMO_PRIM(OSMO_GPRS_RLCMAC_L1CTL_CCCH_DATA, PRIM_OP_INDICATION):
 		rc = rlcmac_prim_handle_l1ctl_ccch_data_ind(rlcmac_prim);

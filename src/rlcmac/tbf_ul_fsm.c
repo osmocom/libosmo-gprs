@@ -266,8 +266,11 @@ static void st_finished(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 /* Waiting for scheduler to transmit PKT CTRL ACK for the already received UL ACK/NACK FinalAck=1 */
 static void st_releasing(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
-	//struct gprs_rlcmac_tbf_ul_fsm_ctx *ctx = (struct gprs_rlcmac_tbf_ul_fsm_ctx *)fi->priv;
+	struct gprs_rlcmac_tbf_ul_fsm_ctx *ctx = (struct gprs_rlcmac_tbf_ul_fsm_ctx *)fi->priv;
 	switch (event) {
+	case GPRS_RLCMAC_TBF_UL_EV_TX_COMPL_PKT_CTRL_ACK:
+		tbf_ul_free(ctx->ul_tbf);
+		break;
 	default:
 		OSMO_ASSERT(0);
 	}
