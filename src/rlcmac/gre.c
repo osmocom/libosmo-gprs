@@ -259,6 +259,30 @@ int gprs_rlcmac_entity_llc_enqueue(struct gprs_rlcmac_entity *gre,
 	return rc;
 }
 
+/* Calculate TS 44.060 Table 12.7.2 RLC_OCTET_COUNT. 0 = unable to count. */
+uint16_t gprs_rlcmac_entity_calculate_new_ul_tbf_rlc_octet_count(const struct gprs_rlcmac_entity *gre)
+{
+	/* The RLC_OCTET_COUNT field indicates the number of RLC data octets,
+	 * plus the number of RLC data block length octets, that the mobile
+	 * station wishes to transfer. The value '0' indicates that the mobile
+	 * station does not provide any information on the TBF size.
+	 */
+	uint32_t rlc_oct_cnt = 0;
+	const struct gprs_rlcmac_llc_queue *q = gre->llc_queue;
+
+	for (unsigned int i = 0; i < ARRAY_SIZE(q->pq); i++) {
+		for (unsigned int j = 0; j < ARRAY_SIZE(q->pq[i]); j++) {
+			struct msgb *msg;
+			llist_for_each_entry(msg, &q->pq[i][j].queue, list) {
+				rlc_oct_cnt += 1 + msgb_l2len(msg);
+				if (rlc_oct_cnt >= UINT16_MAX)
+					return UINT16_MAX;
+			}
+		}
+	}
+	return rlc_oct_cnt;
+}
+
 struct msgb *gprs_rlcmac_gre_create_pkt_ctrl_ack(const struct gprs_rlcmac_entity *gre)
 {
 	struct msgb *msg;
