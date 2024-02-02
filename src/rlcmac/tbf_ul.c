@@ -503,6 +503,8 @@ static void blk_count_state_init(struct blk_count_state *st, const struct gprs_r
 		st->k = 1;
 	}
 	st->nts_x_k = st->nts * st->k;
+
+	LOGPTBFUL(ul_tbf, LOGL_NOTICE, "calculate_cv blk_state_init: tx_cs=%u bs_cv_max=%u blk_data_len=%u\n", ul_tbf->tx_cs, st->bs_cv_max, st->blk_data_len);
 }
 
 static inline unsigned blk_count_to_x(const struct blk_count_state *st)
@@ -592,6 +594,7 @@ static uint8_t gprs_rlcmac_ul_tbf_calculate_cv(const struct gprs_rlcmac_ul_tbf *
 	/* First of all, the current LLC frame in progress: */
 	if (ul_tbf->llc_tx_msg) {
 		blk_count_append_llc(&st, msgb_length(ul_tbf->llc_tx_msg));
+		LOGPTBFUL(ul_tbf, LOGL_NOTICE, "calculate_cv after llc_tx_msg: blk_count=%u offset=%u\n", st.blk_count, st.offset);
 		if (BLK_COUNT_EARLY_CHECK_TOOMANY(&st))
 			goto done; /* early return, not entering countdown procedure */
 	}
@@ -602,12 +605,14 @@ static uint8_t gprs_rlcmac_ul_tbf_calculate_cv(const struct gprs_rlcmac_ul_tbf *
 			if (llist_empty(&q->pq[i][j].queue))
 				continue;
 			rc = blk_count_append_llc_prio_queue(&st, &q->pq[i][j]);
+			LOGPTBFUL(ul_tbf, LOGL_NOTICE, "calculate_cv after pq[%u][%u]: blk_count=%u offset=%u\n", i, j, st.blk_count, st.offset);
 			if (rc == BLK_COUNT_TOOMANY)
 				goto done; /* early return, not entering countdown procedure */
 		}
 	}
 
 done:
+	LOGPTBFUL(ul_tbf, LOGL_NOTICE, "calculate_cv after done: blk_count=%u offset=%u\n", st.blk_count, st.offset);
 	/* In final block (CV==0), a chunk filling exactly an RLC block doesn't
 	 * have the LI=0 and 2 bytes (1 LI + 1 data) spanning next block. Fix calculation: */
 	if (st.extra_li0) {
@@ -619,7 +624,9 @@ done:
 		st.blk_count++;
 		st.offset = 0;
 	}
+	LOGPTBFUL(ul_tbf, LOGL_NOTICE, "calculate_cv after adapting: : blk_count=%u offset=%u\n", st.blk_count, st.offset);
 	x = blk_count_to_x(&st);
+	LOGPTBFUL(ul_tbf, LOGL_NOTICE, "blk_count after adapting: blk_count=%u offset=%u -> x=%u bs_cv_max=%u\n", st.blk_count, st.offset, x, st.bs_cv_max);
 	return x <= st.bs_cv_max ? (uint8_t)x : 15;
 }
 
