@@ -27,8 +27,11 @@
 #include <osmocom/gprs/rlcmac/tbf_ul.h>
 #include <osmocom/gprs/rlcmac/rlc_window_ul.h>
 #include <osmocom/gprs/rlcmac/gre.h>
+#include <osmocom/gprs/rlcmac/pdch_ul_controller.h>
 
 #define X(s) (1 << (s))
+#define LOGPFSMLDLBI(fi, dlbi, lvl, fmt, args...) \
+	LOGPFSML(fi, lvl, "(ts=%u,fn=%u) " fmt, (dlbi)->ts_nr, (dlbi)->fn, ## args)
 
 static const struct value_string tbf_ul_fsm_event_names[] = {
 	{ GPRS_RLCMAC_TBF_UL_EV_UL_ASS_START,			"UL_ASS_START" },
@@ -198,12 +201,30 @@ static void st_flow(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 		reinit_pkt_acces_procedure(ctx);
 		break;
 	case GPRS_RLCMAC_TBF_UL_EV_RX_UL_ACK_NACK:
+	{
+		struct tbf_ul_ass_ev_rx_ul_ack_nack *ctx_ul_ack_nack = (struct tbf_ul_ass_ev_rx_ul_ack_nack *)data;
+		const struct gprs_rlcmac_dl_block_ind *dlbi = ctx_ul_ack_nack->dlbi;
+		const Packet_Uplink_Ack_Nack_t *ack = &dlbi->dl_block.u.Packet_Uplink_Ack_Nack;
+		const PU_AckNack_GPRS_t *gprs = &ack->u.PU_AckNack_GPRS_Struct;
+		const Ack_Nack_Description_t *ack_desc = &gprs->Ack_Nack_Description;
+
 		if (gprs_rlcmac_ul_tbf_in_contention_resolution(ctx->ul_tbf)) {
 			_contention_resolution_succeeded(ctx);
 		}
+		/* If RRBP contains valid data, schedule a response (PKT CONTROL ACK or PKT RESOURCE REQ). */
+		if (dlbi->dl_block.SP) {
+			uint32_t poll_fn = rrbp2fn(dlbi->fn, dlbi->dl_block.RRBP);
+			gprs_rlcmac_pdch_ulc_reserve(g_rlcmac_ctx->sched.ulc[dlbi->ts_nr], poll_fn,
+						     GPRS_RLCMAC_PDCH_ULC_POLL_UL_ACK,
+						     ul_tbf_as_tbf(ctx->ul_tbf));
+		}
 		/* It's impossible we receive a correct final_ack here, since we didn't
 		 * sent last data (FSM would be in FINISHED state then) */
+		if (ack_desc->FINAL_ACK_INDICATION)
+			LOGPFSMLDLBI(ctx->fi, dlbi, LOGL_INFO, "Rx unexpected final_ack while not finished sending blocks. Network bug!\n");
+
 		break;
+	}
 	case GPRS_RLCMAC_TBF_UL_EV_LAST_UL_DATA_SENT:
 		arm_T3182_if_needed(ctx);
 		tbf_ul_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ST_FINISHED);
@@ -216,13 +237,18 @@ static void st_flow(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 static void st_finished(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	struct gprs_rlcmac_tbf_ul_fsm_ctx *ctx = (struct gprs_rlcmac_tbf_ul_fsm_ctx *)fi->priv;
-	struct tbf_ul_ass_ev_rx_ul_ack_nack *ctx_ul_ack_nack;
 	switch (event) {
 	case GPRS_RLCMAC_TBF_UL_EV_N3104_MAX:
 		reinit_pkt_acces_procedure(ctx);
 		break;
 	case GPRS_RLCMAC_TBF_UL_EV_RX_UL_ACK_NACK:
-		ctx_ul_ack_nack = (struct tbf_ul_ass_ev_rx_ul_ack_nack *)data;
+	{
+		struct tbf_ul_ass_ev_rx_ul_ack_nack *ctx_ul_ack_nack = (struct tbf_ul_ass_ev_rx_ul_ack_nack *)data;
+		const struct gprs_rlcmac_dl_block_ind *dlbi = ctx_ul_ack_nack->dlbi;
+		const Packet_Uplink_Ack_Nack_t *ack = &dlbi->dl_block.u.Packet_Uplink_Ack_Nack;
+		const PU_AckNack_GPRS_t *gprs = &ack->u.PU_AckNack_GPRS_Struct;
+		const Ack_Nack_Description_t *ack_desc = &gprs->Ack_Nack_Description;
+
 		if (gprs_rlcmac_ul_tbf_in_contention_resolution(ctx->ul_tbf)) {
 			_contention_resolution_succeeded(ctx);
 		} else if (fi->T == 3182 && osmo_timer_pending(&fi->timer))  {
@@ -230,16 +256,25 @@ static void st_finished(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 			 * the mobile station shall stop timer T3182 for the TBF".
 			 * In our case we only use T3128 once we are out of contention resolution (T3166)
 			 */
-			LOGPFSML(ctx->fi, LOGL_DEBUG, "Rx Pkt UL ACK/NACK, stop T3182\n");
+			LOGPFSMLDLBI(ctx->fi, dlbi, LOGL_DEBUG, "Rx Pkt UL ACK/NACK, stop T3182\n");
 			osmo_timer_del(&fi->timer);
 			fi->T = 0;
 		}
-		if (ctx_ul_ack_nack->final_ack) {
-			LOGPFSML(ctx->fi, LOGL_DEBUG, "Final ACK received\n");
-			ctx->rx_final_pkt_ul_ack_nack_has_tbf_est = ctx_ul_ack_nack->tbf_est;
+		/* If RRBP contains valid data, schedule a response (PKT CONTROL ACK or PKT RESOURCE REQ). */
+		if (dlbi->dl_block.SP) {
+			uint32_t poll_fn = rrbp2fn(dlbi->fn, dlbi->dl_block.RRBP);
+			gprs_rlcmac_pdch_ulc_reserve(g_rlcmac_ctx->sched.ulc[dlbi->ts_nr], poll_fn,
+						     GPRS_RLCMAC_PDCH_ULC_POLL_UL_ACK,
+						     ul_tbf_as_tbf(ctx->ul_tbf));
+		}
+		if (ack_desc->FINAL_ACK_INDICATION) {
+			bool tbf_est = (gprs->Exist_AdditionsR99 && gprs->AdditionsR99.TBF_EST);
+			LOGPFSMLDLBI(ctx->fi, dlbi, LOGL_DEBUG, "Final ACK received\n");
+			ctx->rx_final_pkt_ul_ack_nack_has_tbf_est = tbf_est;
 			tbf_ul_fsm_state_chg(fi, GPRS_RLCMAC_TBF_UL_ST_RELEASING);
 		}
 		break;
+	}
 	case GPRS_RLCMAC_TBF_UL_EV_LAST_UL_DATA_SENT:
 		/* If LAST_UL_DATA_SENT is received in this state, it means the UL TBF is retransmitting the block. */
 		ctx->last_data_block_retrans_attempts++;

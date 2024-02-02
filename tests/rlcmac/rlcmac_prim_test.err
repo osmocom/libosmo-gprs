@@ -61,9 +61,9 @@ DLGLOBAL DEBUG - got ack for BSN=1
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) V(B): (V(A)=2)""(V(S)-1=1)  A=Acked N=Nacked U=Unacked X=Resend-Unacked I=Invalid
 DLGLOBAL INFO UL_TBF{FINISHED}: Received Event RX_UL_ACK_NACK
 DLGLOBAL INFO UL_TBF{FINISHED}: Contention resolution succeeded, stop T3166
-DLGLOBAL DEBUG UL_TBF{FINISHED}: Final ACK received
-DLGLOBAL INFO UL_TBF{FINISHED}: state_chg to RELEASING
 DLGLOBAL DEBUG Register POLL (TS=7 FN=21, reason=UL_ACK)
+DLGLOBAL DEBUG UL_TBF{FINISHED}: (ts=7,fn=8) Final ACK received
+DLGLOBAL INFO UL_TBF{FINISHED}: state_chg to RELEASING
 DLGLOBAL DEBUG Rx from lower layers: L1CTL-PDCH_RTS.indication
 DLGLOBAL DEBUG Rx RTS.ind (fn=21, ts=7, usf=0)
 DLGLOBAL DEBUG (ts=7,fn=21,usf=0) Tx Pkt Control Ack (UL ACK/NACK poll)
@@ -933,9 +933,9 @@ DLGLOBAL DEBUG - got ack for BSN=0
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) V(B): (V(A)=1)""(V(S)-1=0)  A=Acked N=Nacked U=Unacked X=Resend-Unacked I=Invalid
 DLGLOBAL INFO UL_TBF{FINISHED}: Received Event RX_UL_ACK_NACK
 DLGLOBAL INFO UL_TBF{FINISHED}: Contention resolution succeeded, stop T3166
-DLGLOBAL DEBUG UL_TBF{FINISHED}: Final ACK received
-DLGLOBAL INFO UL_TBF{FINISHED}: state_chg to RELEASING
 DLGLOBAL DEBUG Register POLL (TS=7 FN=17, reason=UL_ACK)
+DLGLOBAL DEBUG UL_TBF{FINISHED}: (ts=7,fn=4) Final ACK received
+DLGLOBAL INFO UL_TBF{FINISHED}: state_chg to RELEASING
 DLGLOBAL INFO Rx from upper layers: GRR-UNITDATA.request
 DLGLOBAL DEBUG GRE(00002342) Enqueueing LLC-PDU len=14 SAPI=GMM radio_prio=1
 DLGLOBAL DEBUG Rx from lower layers: L1CTL-PDCH_RTS.indication

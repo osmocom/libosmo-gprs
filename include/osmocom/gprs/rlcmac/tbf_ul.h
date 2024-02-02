@@ -71,7 +71,7 @@ struct msgb *gprs_rlcmac_ul_tbf_data_create(struct gprs_rlcmac_ul_tbf *ul_tbf, c
 struct msgb *gprs_rlcmac_ul_tbf_dummy_create(struct gprs_rlcmac_ul_tbf *ul_tbf);
 
 int gprs_rlcmac_ul_tbf_handle_pkt_ul_ack_nack(struct gprs_rlcmac_ul_tbf *ul_tbf,
-					      const RlcMacDownlink_t *dl_block);
+					      const struct gprs_rlcmac_dl_block_ind *dlbi);
 int gprs_rlcmac_ul_tbf_handle_pkt_ul_ass(struct gprs_rlcmac_ul_tbf *ul_tbf,
 					 const struct gprs_rlcmac_dl_block_ind *dlbi);
 
