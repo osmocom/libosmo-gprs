@@ -352,14 +352,13 @@ int gprs_rlcmac_ul_tbf_handle_pkt_ul_ack_nack(struct gprs_rlcmac_ul_tbf *ul_tbf,
 }
 
 int gprs_rlcmac_ul_tbf_handle_pkt_ul_ass(struct gprs_rlcmac_ul_tbf *ul_tbf,
-					 const struct osmo_gprs_rlcmac_prim *rlcmac_prim,
-					 const RlcMacDownlink_t *dl_block)
+					 const struct gprs_rlcmac_dl_block_ind *dlbi)
 {
 	int rc;
 	struct tbf_ul_ass_ev_rx_pkt_ul_ass_ctx d = {
-		.ts_nr = rlcmac_prim->l1ctl.pdch_data_ind.ts_nr,
-		.fn = rlcmac_prim->l1ctl.pdch_data_ind.fn,
-		.dl_block = dl_block,
+		.ts_nr = dlbi->ts_nr,
+		.fn = dlbi->fn,
+		.dl_block = &dlbi->dl_block,
 	};
 
 	rc = osmo_fsm_inst_dispatch(ul_tbf->ul_ass_fsm.fi, GPRS_RLCMAC_TBF_UL_ASS_EV_RX_PKT_UL_ASS, &d);
