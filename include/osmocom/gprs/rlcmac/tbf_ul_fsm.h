@@ -42,8 +42,7 @@ enum tbf_ul_fsm_event {
 };
 
 struct tbf_ul_ass_ev_rx_ul_ack_nack {
-	bool final_ack;
-	bool tbf_est;
+	const struct gprs_rlcmac_dl_block_ind *dlbi;
 };
 
 int gprs_rlcmac_tbf_ul_fsm_init(void);

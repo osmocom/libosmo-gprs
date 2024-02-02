@@ -305,9 +305,9 @@ static void gprs_rlcmac_ul_tbf_update_tx_cs(struct gprs_rlcmac_ul_tbf *ul_tbf, e
 }
 
 int gprs_rlcmac_ul_tbf_handle_pkt_ul_ack_nack(struct gprs_rlcmac_ul_tbf *ul_tbf,
-					      const RlcMacDownlink_t *dl_block)
+					      const struct gprs_rlcmac_dl_block_ind *dlbi)
 {
-	const Packet_Uplink_Ack_Nack_t *ack = &dl_block->u.Packet_Uplink_Ack_Nack;
+	const Packet_Uplink_Ack_Nack_t *ack = &dlbi->dl_block.u.Packet_Uplink_Ack_Nack;
 	const PU_AckNack_GPRS_t *gprs = &ack->u.PU_AckNack_GPRS_Struct;
 	const Ack_Nack_Description_t *ack_desc = &gprs->Ack_Nack_Description;
 	int bsn_begin, bsn_end;
@@ -321,8 +321,7 @@ int gprs_rlcmac_ul_tbf_handle_pkt_ul_ack_nack(struct gprs_rlcmac_ul_tbf *ul_tbf,
 	};
 	int rc;
 	struct tbf_ul_ass_ev_rx_ul_ack_nack ev_ack = {
-		.final_ack = ack_desc->FINAL_ACK_INDICATION,
-		.tbf_est = (gprs->Exist_AdditionsR99 && gprs->AdditionsR99.TBF_EST),
+		.dlbi = dlbi,
 	};
 
 	num_blocks = gprs_rlcmac_decode_gprs_acknack_bits(

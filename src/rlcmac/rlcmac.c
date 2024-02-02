@@ -710,16 +710,7 @@ static int gprs_rlcmac_handle_pkt_ul_ack_nack(const struct gprs_rlcmac_dl_block_
 			  dlbi->ts_nr, dlbi->fn, pkt_ul_ack->UPLINK_TFI);
 		return -ENOENT;
 	}
-
-	rc = gprs_rlcmac_ul_tbf_handle_pkt_ul_ack_nack(ul_tbf, &dlbi->dl_block);
-
-	/* If RRBP contains valid data, schedule a response (PKT CONTROL ACK or PKT RESOURCE REQ). */
-	if (dlbi->dl_block.SP) {
-		uint32_t poll_fn = rrbp2fn(dlbi->fn, dlbi->dl_block.RRBP);
-		gprs_rlcmac_pdch_ulc_reserve(g_rlcmac_ctx->sched.ulc[dlbi->ts_nr], poll_fn,
-					     GPRS_RLCMAC_PDCH_ULC_POLL_UL_ACK,
-					     ul_tbf_as_tbf(ul_tbf));
-	}
+	rc = gprs_rlcmac_ul_tbf_handle_pkt_ul_ack_nack(ul_tbf, dlbi);
 	return rc;
 }
 
