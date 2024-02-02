@@ -642,10 +642,11 @@ static struct gprs_rlcmac_entity *find_gre_by_global_tfi(const Global_TFI_t *gtf
 }
 
 
-static int gprs_rlcmac_handle_pkt_dl_ass(const struct osmo_gprs_rlcmac_prim *rlcmac_prim, const RlcMacDownlink_t *dl_block)
+static int gprs_rlcmac_handle_pkt_dl_ass(const struct gprs_rlcmac_dl_block_ind *dlbi)
 {
 	struct gprs_rlcmac_tbf *tbf = NULL;
 	struct gprs_rlcmac_entity *gre = NULL;
+	const RlcMacDownlink_t *dl_block = &dlbi->dl_block;
 	const Packet_Downlink_Assignment_t *dlass = &dl_block->u.Packet_Downlink_Assignment;
 	struct tbf_start_ev_rx_pacch_pkt_ass_ctx ev_data;
 	int rc;
@@ -666,21 +667,20 @@ static int gprs_rlcmac_handle_pkt_dl_ass(const struct osmo_gprs_rlcmac_prim *rlc
 
 	if (!gre) {
 		LOGRLCMAC(LOGL_INFO, "TS=%u FN=%u Rx Pkt DL ASS: MS not found\n",
-			  rlcmac_prim->l1ctl.pdch_data_ind.ts_nr,
-			  rlcmac_prim->l1ctl.pdch_data_ind.fn);
+			  dlbi->ts_nr, dlbi->fn);
 		return -ENOENT;
 	}
 
 	ev_data = (struct tbf_start_ev_rx_pacch_pkt_ass_ctx) {
-		.ts_nr = rlcmac_prim->l1ctl.pdch_data_ind.ts_nr,
-		.fn = rlcmac_prim->l1ctl.pdch_data_ind.fn,
+		.ts_nr = dlbi->ts_nr,
+		.fn = dlbi->fn,
 		.dl_block = dl_block,
 	};
 	rc = gprs_rlcmac_tbf_start_from_pacch(&gre->dl_tbf_dl_ass_fsm, &ev_data);
 
 	if (dl_block->SP) {
-		uint32_t poll_fn = rrbp2fn(rlcmac_prim->l1ctl.pdch_data_ind.fn, dl_block->RRBP);
-		gprs_rlcmac_pdch_ulc_reserve(g_rlcmac_ctx->sched.ulc[rlcmac_prim->l1ctl.pdch_data_ind.ts_nr],
+		uint32_t poll_fn = rrbp2fn(dlbi->fn, dl_block->RRBP);
+		gprs_rlcmac_pdch_ulc_reserve(g_rlcmac_ctx->sched.ulc[dlbi->ts_nr],
 					     poll_fn,
 					     GPRS_RLCMAC_PDCH_ULC_POLL_DL_ASS,
 					     gre);
@@ -698,37 +698,35 @@ static int gprs_rlcmac_handle_pkt_dl_ass(const struct osmo_gprs_rlcmac_prim *rlc
 	return rc;
 }
 
-static int gprs_rlcmac_handle_pkt_ul_ack_nack(const struct osmo_gprs_rlcmac_prim *rlcmac_prim, const RlcMacDownlink_t *dl_block)
+static int gprs_rlcmac_handle_pkt_ul_ack_nack(const struct gprs_rlcmac_dl_block_ind *dlbi)
 {
 	struct gprs_rlcmac_ul_tbf *ul_tbf;
 	int rc;
-	const Packet_Uplink_Ack_Nack_t *pkt_ul_ack = &dl_block->u.Packet_Uplink_Ack_Nack;
+	const Packet_Uplink_Ack_Nack_t *pkt_ul_ack = &dlbi->dl_block.u.Packet_Uplink_Ack_Nack;
 
 	ul_tbf = gprs_rlcmac_find_ul_tbf_by_tfi(pkt_ul_ack->UPLINK_TFI);
 	if (!ul_tbf) {
 		LOGRLCMAC(LOGL_INFO, "TS=%u FN=%u Rx Pkt UL ACK/NACK: UL_TBF TFI=%u not found\n",
-			  rlcmac_prim->l1ctl.pdch_data_ind.ts_nr,
-			  rlcmac_prim->l1ctl.pdch_data_ind.fn,
-			  pkt_ul_ack->UPLINK_TFI);
+			  dlbi->ts_nr, dlbi->fn, pkt_ul_ack->UPLINK_TFI);
 		return -ENOENT;
 	}
 
-	rc = gprs_rlcmac_ul_tbf_handle_pkt_ul_ack_nack(ul_tbf, dl_block);
+	rc = gprs_rlcmac_ul_tbf_handle_pkt_ul_ack_nack(ul_tbf, &dlbi->dl_block);
 
 	/* If RRBP contains valid data, schedule a response (PKT CONTROL ACK or PKT RESOURCE REQ). */
-	if (dl_block->SP) {
-		uint32_t poll_fn = rrbp2fn(rlcmac_prim->l1ctl.pdch_data_ind.fn, dl_block->RRBP);
-		gprs_rlcmac_pdch_ulc_reserve(g_rlcmac_ctx->sched.ulc[rlcmac_prim->l1ctl.pdch_data_ind.ts_nr], poll_fn,
+	if (dlbi->dl_block.SP) {
+		uint32_t poll_fn = rrbp2fn(dlbi->fn, dlbi->dl_block.RRBP);
+		gprs_rlcmac_pdch_ulc_reserve(g_rlcmac_ctx->sched.ulc[dlbi->ts_nr], poll_fn,
 					     GPRS_RLCMAC_PDCH_ULC_POLL_UL_ACK,
 					     ul_tbf_as_tbf(ul_tbf));
 	}
 	return rc;
 }
 
-static int gprs_rlcmac_handle_pkt_ul_ass(const struct osmo_gprs_rlcmac_prim *rlcmac_prim, const RlcMacDownlink_t *dl_block)
+static int gprs_rlcmac_handle_pkt_ul_ass(const struct gprs_rlcmac_dl_block_ind *dlbi)
 {
 	struct gprs_rlcmac_entity *gre = NULL;
-	const Packet_Uplink_Assignment_t *ulass = &dl_block->u.Packet_Uplink_Assignment;
+	const Packet_Uplink_Assignment_t *ulass = &dlbi->dl_block.u.Packet_Uplink_Assignment;
 	int rc;
 
 	/* Attempt to find relevant MS owning UL TBF in assignment state from ID (set "gre" ptr): */
@@ -742,27 +740,23 @@ static int gprs_rlcmac_handle_pkt_ul_ass(const struct osmo_gprs_rlcmac_prim *rlc
 	case 2: /* TQI */
 	case 3: /* Packet_Request_Reference */
 		LOGRLCMAC(LOGL_NOTICE, "TS=%u FN=%u Rx Pkt UL ASS: HANDLING OF ID=%u NOT IMPLEMENTED!\n",
-			  ulass->ID.UnionType,
-			  rlcmac_prim->l1ctl.pdch_data_ind.ts_nr,
-			  rlcmac_prim->l1ctl.pdch_data_ind.fn);
+			  ulass->ID.UnionType, dlbi->ts_nr, dlbi->fn);
 		break;
 	}
 
 	if (!gre) {
 		LOGRLCMAC(LOGL_INFO, "TS=%u FN=%u Rx Pkt UL ASS: MS not found\n",
-			  rlcmac_prim->l1ctl.pdch_data_ind.ts_nr,
-			  rlcmac_prim->l1ctl.pdch_data_ind.fn);
+			  dlbi->ts_nr, dlbi->fn);
 		return -ENOENT;
 	}
 
 	if (!gre->ul_tbf) {
 		LOGGRE(gre, LOGL_INFO, "TS=%u FN=%u Rx Pkt UL ASS: MS has no UL TBF\n",
-		       rlcmac_prim->l1ctl.pdch_data_ind.ts_nr,
-		       rlcmac_prim->l1ctl.pdch_data_ind.fn);
+		       dlbi->ts_nr, dlbi->fn);
 		return -ENOENT;
 	}
 
-	rc = gprs_rlcmac_ul_tbf_handle_pkt_ul_ass(gre->ul_tbf, rlcmac_prim, dl_block);
+	rc = gprs_rlcmac_ul_tbf_handle_pkt_ul_ass(gre->ul_tbf, dlbi);
 
 	return rc;
 }
@@ -770,7 +764,7 @@ static int gprs_rlcmac_handle_pkt_ul_ass(const struct osmo_gprs_rlcmac_prim *rlc
 static int gprs_rlcmac_handle_gprs_dl_ctrl_block(const struct osmo_gprs_rlcmac_prim *rlcmac_prim)
 {
 	struct bitvec *bv;
-	RlcMacDownlink_t *dl_ctrl_block;
+	struct gprs_rlcmac_dl_block_ind *dlbi;
 	size_t max_len = gprs_rlcmac_mcs_max_bytes_dl(GPRS_RLCMAC_CS_1);
 	int rc;
 
@@ -778,9 +772,11 @@ static int gprs_rlcmac_handle_gprs_dl_ctrl_block(const struct osmo_gprs_rlcmac_p
 	OSMO_ASSERT(bv);
 	bitvec_unpack(bv, rlcmac_prim->l1ctl.pdch_data_ind.data);
 
-	dl_ctrl_block = (RlcMacDownlink_t *)talloc_zero(g_rlcmac_ctx, RlcMacDownlink_t);
-	OSMO_ASSERT(dl_ctrl_block);
-	rc = osmo_gprs_rlcmac_decode_downlink(bv, dl_ctrl_block);
+	dlbi = talloc_zero(g_rlcmac_ctx, struct gprs_rlcmac_dl_block_ind);
+	OSMO_ASSERT(dlbi);
+	dlbi->fn = rlcmac_prim->l1ctl.pdch_data_ind.fn;
+	dlbi->ts_nr = rlcmac_prim->l1ctl.pdch_data_ind.ts_nr;
+	rc = osmo_gprs_rlcmac_decode_downlink(bv, &dlbi->dl_block);
 	if (rc < 0) {
 		LOGRLCMAC(LOGL_NOTICE, "Failed decoding dl ctrl block: %s\n",
 			  osmo_hexdump(rlcmac_prim->l1ctl.pdch_data_ind.data,
@@ -788,32 +784,30 @@ static int gprs_rlcmac_handle_gprs_dl_ctrl_block(const struct osmo_gprs_rlcmac_p
 		goto free_ret;
 	}
 
-	LOGRLCMAC(LOGL_INFO, "TS=%u FN=%u Rx %s\n",
-		  rlcmac_prim->l1ctl.pdch_data_ind.ts_nr,
-		  rlcmac_prim->l1ctl.pdch_data_ind.fn,
-		  get_value_string(osmo_gprs_rlcmac_dl_msg_type_names, dl_ctrl_block->u.MESSAGE_TYPE));
+	LOGRLCMAC(LOGL_INFO, "TS=%u FN=%u Rx %s\n", dlbi->ts_nr, dlbi->fn,
+		  get_value_string(osmo_gprs_rlcmac_dl_msg_type_names, dlbi->dl_block.u.MESSAGE_TYPE));
 
-	switch (dl_ctrl_block->u.MESSAGE_TYPE) {
+	switch (dlbi->dl_block.u.MESSAGE_TYPE) {
 	case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_DOWNLINK_ASSIGNMENT:
-		rc = gprs_rlcmac_handle_pkt_dl_ass(rlcmac_prim, dl_ctrl_block);
+		rc = gprs_rlcmac_handle_pkt_dl_ass(dlbi);
 		break;
 	case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_UPLINK_ACK_NACK:
-		rc = gprs_rlcmac_handle_pkt_ul_ack_nack(rlcmac_prim, dl_ctrl_block);
+		rc = gprs_rlcmac_handle_pkt_ul_ack_nack(dlbi);
 		break;
 	case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_UPLINK_ASSIGNMENT:
-		rc = gprs_rlcmac_handle_pkt_ul_ass(rlcmac_prim, dl_ctrl_block);
+		rc = gprs_rlcmac_handle_pkt_ul_ass(dlbi);
 		break;
 	case OSMO_GPRS_RLCMAC_DL_MSGT_PACKET_DOWNLINK_DUMMY_CONTROL_BLOCK:
 		break; /* Ignore dummy blocks */
 	default:
 		LOGRLCMAC(LOGL_ERROR, "TS=%u FN=%u Rx %s NOT SUPPORTED! ignoring\n",
-			  rlcmac_prim->l1ctl.pdch_data_ind.ts_nr,
-			  rlcmac_prim->l1ctl.pdch_data_ind.fn,
-			  get_value_string(osmo_gprs_rlcmac_dl_msg_type_names, dl_ctrl_block->u.MESSAGE_TYPE));
+			  dlbi->ts_nr,
+			  dlbi->fn,
+			  get_value_string(osmo_gprs_rlcmac_dl_msg_type_names, dlbi->dl_block.u.MESSAGE_TYPE));
 	}
 
 free_ret:
-	talloc_free(dl_ctrl_block);
+	talloc_free(dlbi);
 	bitvec_free(bv);
 	return rc;
 }

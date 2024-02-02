@@ -42,6 +42,13 @@ struct gprs_rlcmac_dl_tbf_allocation {
 	struct gprs_rlcmac_dl_tbf_allocation_ts ts[8];
 };
 
+/* PDCH_DATA.ind coming from lower layers, but with data already decoded as RlcMacDownlink_t */
+struct gprs_rlcmac_dl_block_ind {
+	RlcMacDownlink_t dl_block;
+	uint32_t fn;
+	uint8_t ts_nr;
+};
+
 extern int g_rlcmac_log_cat[_OSMO_GPRS_RLCMAC_LOGC_MAX];
 
 #define LOGRLCMAC(lvl, fmt, args...) LOGP(g_rlcmac_log_cat[OSMO_GPRS_RLCMAC_LOGC_RLCMAC], lvl, fmt, ## args)
