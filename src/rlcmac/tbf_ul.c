@@ -555,7 +555,7 @@ static void blk_count_append_llc(struct blk_count_state *st, unsigned int llc_pa
 /* Returned as early return from function when amount of RLC blocks goes clearly over BS_CV_MAX */
 #define BLK_COUNT_TOOMANY 0xff
 /* We cannot early-check if extra_li0=true, since there may temporarily have too many rlc blocks: */
-#define BLK_COUNT_EARLY_CHECK_TOOMANY(st) (!(st)->extra_li0) && blk_count_to_x(st) > (st)->bs_cv_max)
+#define BLK_COUNT_EARLY_CHECK_TOOMANY(st) (!((st)->extra_li0) && blk_count_to_x(st) > (st)->bs_cv_max)
 static uint8_t blk_count_append_llc_prio_queue(struct blk_count_state *st, const struct gprs_llc_prio_queue *pq)
 {
 	struct msgb *msg;
@@ -563,7 +563,7 @@ static uint8_t blk_count_append_llc_prio_queue(struct blk_count_state *st, const
 	llist_for_each_entry(msg, &pq->queue, list) {
 		blk_count_append_llc(st, msgb_l2len(msg));
 		/* We cannot early-check if extra_li0=true, since there may temporarily have too many rlc blocks. */
-		if (BLK_COUNT_EARLY_CHECK_TOOMANY(st)
+		if (BLK_COUNT_EARLY_CHECK_TOOMANY(st))
 			return BLK_COUNT_TOOMANY; /* early return, not entering countdown procedure */
 	}
 	return 0;
@@ -592,7 +592,7 @@ static uint8_t gprs_rlcmac_ul_tbf_calculate_cv(const struct gprs_rlcmac_ul_tbf *
 	/* First of all, the current LLC frame in progress: */
 	if (ul_tbf->llc_tx_msg) {
 		blk_count_append_llc(&st, msgb_length(ul_tbf->llc_tx_msg));
-		if (BLK_COUNT_EARLY_CHECK_TOOMANY(&st)
+		if (BLK_COUNT_EARLY_CHECK_TOOMANY(&st))
 			goto done; /* early return, not entering countdown procedure */
 	}
 
