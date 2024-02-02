@@ -46,6 +46,7 @@ bool gprs_rlcmac_entity_in_packet_idle_mode(const struct gprs_rlcmac_entity *gre
 bool gprs_rlcmac_entity_in_packet_transfer_mode(const struct gprs_rlcmac_entity *gre);
 bool gprs_rlcmac_entity_have_tx_data_queued(const struct gprs_rlcmac_entity *gre);
 int gprs_rlcmac_entity_start_ul_tbf_pkt_acc_proc_if_needed(struct gprs_rlcmac_entity *gre);
+uint16_t gprs_rlcmac_entity_calculate_new_ul_tbf_rlc_octet_count(const struct gprs_rlcmac_entity *gre);
 
 int gprs_rlcmac_entity_llc_enqueue(struct gprs_rlcmac_entity *gre,
 				   const uint8_t *ll_pdu, unsigned int ll_pdu_len,
