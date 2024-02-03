@@ -69,6 +69,19 @@ static uint8_t pdu_llc_gmm_att_req[] = {
 	0x11, 0xe5, 0x10, 0x00, 0xe2, 0x18, 0xf2
 };
 
+/* GMM Attach Compl */
+static uint8_t pdu_llc_gmm_att_compl[] = { 0x01, 0xc0, 0x0d, 0x08, 0x03, 0x55, 0x1c, 0xea };
+
+/* SM Activate PDP Context Request */
+static uint8_t pdu_llc_sm_act_pdp_ctx_req[] = {
+	0x01, 0xc0, 0x11, 0x8a, 0x41, 0x06, 0x03, 0x0e,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x01,
+	0x21, 0x28, 0x09, 0x08, 0x69, 0x6e, 0x74, 0x65,
+	0x72, 0x6e, 0x65, 0x74, 0x9e, 0x49, 0x7a
+};
+
+
 /**
 GSM CCCH - Immediate Assignment
 	L2 Pseudo Length
@@ -1280,6 +1293,77 @@ static void test_ccch_pag_req1(void)
 	cleanup_test();
 }
 
+
+/* Validate 2 LLC frames (GMM Attach Compl + SM Act PDP Context Req) in the tx
+ * queue are transmitted in 1 UL TBF in CS4 (OS#6351): */
+static void test_ul_tbf_2_llc_blocks_in_1_cs4_rlc_block(void)
+{
+	struct osmo_gprs_rlcmac_prim *rlcmac_prim;
+	int rc;
+
+	printf("=== %s start ===\n", __func__);
+	prepare_test();
+	uint32_t tlli = 0x2342;
+	uint8_t ts_nr = 7;
+	uint8_t usf = 0;
+	uint32_t rts_fn = 4;
+	uint8_t bs_cv_max = 15;
+	struct msgb *llc_msg = msgb_alloc(200, "llc_msg");
+	uint8_t imm_ass[sizeof(ccch_imm_ass_pkt_ul_tbf_normal)];
+
+	/* Submit an SI13 with bs_cv_max: */
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_ccch_data_ind(0, create_si13(bs_cv_max));
+	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+	OSMO_ASSERT(rc == 0);
+
+
+	/* Submit LLC bytes containing GMM ATTACH COMPL */
+	memcpy(msgb_put(llc_msg, sizeof(pdu_llc_gmm_att_compl)),
+			pdu_llc_gmm_att_compl,
+			sizeof(pdu_llc_gmm_att_compl));
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_grr_unitdata_req(tlli, msgb_data(llc_msg), msgb_length(llc_msg));
+	rlcmac_prim->grr.unitdata_req.sapi = OSMO_GPRS_RLCMAC_LLC_SAPI_GMM;
+	rlcmac_prim->grr.unitdata_req.radio_prio = 1;
+	rc = osmo_gprs_rlcmac_prim_upper_down(rlcmac_prim);
+	OSMO_ASSERT(rc == 0);
+
+	/* Submit LLC bytes containing SM ACT PDP CTX REQ */
+	msgb_trim(llc_msg, 0);
+	memcpy(msgb_put(llc_msg, sizeof(pdu_llc_sm_act_pdp_ctx_req)),
+			pdu_llc_sm_act_pdp_ctx_req,
+			sizeof(pdu_llc_sm_act_pdp_ctx_req));
+	/* -4: The scenario where this was seen is actually reproduced by having
+	 * a DL TBF sending GMM Attach Accept, and MS requesting a UL TBF through
+	 * DL AKC/NACK and getting it assigned over PACCH. As a result, no
+	 * contention resolution is needed and the UL TBF block doesn't contain
+	 * TLLI. Since it's far easy writing here a test by directlly allocating
+	 * the UL TBF, we simply account for the extra TLLI added in the RLC block
+	 * by discounting 4 bytes from the upper LLC layer payload to end up with
+	 * the same packet size as the one reproduced in the real case scenario.
+	 */
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_grr_unitdata_req(tlli, msgb_data(llc_msg), msgb_length(llc_msg) - 4);
+	rlcmac_prim->grr.unitdata_req.sapi = OSMO_GPRS_RLCMAC_LLC_SAPI_GMM;
+	rlcmac_prim->grr.unitdata_req.radio_prio = 1;
+	rc = osmo_gprs_rlcmac_prim_upper_down(rlcmac_prim);
+	OSMO_ASSERT(rc == 0);
+
+	memcpy(imm_ass, ccch_imm_ass_pkt_ul_tbf_normal, sizeof(imm_ass));
+	imm_ass[7] = last_rach_req_ra; /* Update RA to match */
+	imm_ass[14] = 0x70; /* Set CS4 */
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_ccch_data_ind(0, imm_ass);
+	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+	OSMO_ASSERT(rc == 0);
+
+	/* Trigger transmission of LLC data (first part) */
+	rlcmac_prim = osmo_gprs_rlcmac_prim_alloc_l1ctl_pdch_rts_ind(ts_nr, rts_fn, usf);
+	rc = osmo_gprs_rlcmac_prim_lower_up(rlcmac_prim);
+	OSMO_ASSERT(rc == 0);
+
+	printf("=== %s end ===\n", __func__);
+	msgb_free(llc_msg);
+	cleanup_test();
+}
+
 static const struct log_info_cat test_log_categories[] = { };
 static const struct log_info test_log_info = {
 	.cat = test_log_categories,
@@ -1317,6 +1401,7 @@ int main(int argc, char *argv[])
 	test_dl_tbf_ccch_assign();
 	test_dl_tbf_ccch_assign_requests_ul_tbf_pacch();
 	test_ccch_pag_req1();
+	test_ul_tbf_2_llc_blocks_in_1_cs4_rlc_block();
 
 	talloc_free(tall_ctx);
 }
