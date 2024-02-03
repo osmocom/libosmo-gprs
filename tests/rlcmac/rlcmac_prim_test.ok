@@ -229,3 +229,13 @@ test_rlcmac_prim_down_cb(): Rx L1CTL-CFG_UL_TBF.request ul_tbf_nr=0 ul_slotmask=
 sys={0.000000}, mono={0.000000}: clock_override_set
 test_rlcmac_prim_up_cb(): Rx GMMRR-PAGE.indication TLLI=0x00000001
 === test_ccch_pag_req1 end ===
+=== test_ul_tbf_2_llc_blocks_in_1_cs4_rlc_block start ===
+sys={0.000000}, mono={0.000000}: clock_override_set
+test_rlcmac_prim_down_cb(): Rx L1CTL-RACH.request ra=0x78
+test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_ESTABLISH.request
+test_rlcmac_prim_down_cb(): Rx L1CTL-CFG_UL_TBF.request ul_tbf_nr=0 ul_slotmask=0x80
+test_rlcmac_prim_up_cb(): Rx GMMRR-LLC_TRANSMITTED.indication TLLI=0x00002342
+test_rlcmac_prim_up_cb(): Rx GMMRR-LLC_TRANSMITTED.indication TLLI=0x00002342
+test_rlcmac_prim_down_cb(): Rx L1CTL-PDCH_DATA.request fn=4 ts=7 data_len=54 data=[00 01 00 21 00 00 23 42 01 c0 0d 08 03 55 1c ea 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 ]
+=== test_ul_tbf_2_llc_blocks_in_1_cs4_rlc_block end ===
+test_rlcmac_prim_down_cb(): Rx L1CTL-CFG_UL_TBF.request ul_tbf_nr=0 ul_slotmask=0x00
