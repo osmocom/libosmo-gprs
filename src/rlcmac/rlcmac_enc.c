@@ -185,14 +185,8 @@ enum gpr_rlcmac_append_result gprs_rlcmac_enc_append_ul_data(
 	space -= chunk;
 	(*offset) += chunk;
 	/* if we have more data and we have space left */
-	if (space > 0 && !is_final)
+	if (space > 0)
 		return GPRS_RLCMAC_AR_COMPLETED_SPACE_LEFT;
-
-	/* if we don't have more LLC frames */
-	if (is_final) {
-		LOGRLCMAC(LOGL_DEBUG, "-- Final block, so we done.\n");
-		return GPRS_RLCMAC_AR_COMPLETED_BLOCK_FILLED;
-	}
 	/* we have no space left */
 	LOGRLCMAC(LOGL_DEBUG, "-- No space left, so we are done.\n");
 	return GPRS_RLCMAC_AR_COMPLETED_BLOCK_FILLED;
