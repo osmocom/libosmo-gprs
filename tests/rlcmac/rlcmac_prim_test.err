@@ -41,8 +41,8 @@ DLGLOBAL DEBUG Rx RTS.ind (fn=8, ts=7, usf=0)
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Sending new block at BSN 1, CS=CS-2
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Entering Countdown procedure CV=0
 DLGLOBAL DEBUG -- Chunk with length 7 is less than remaining space (26): add length header to delimit LLC frame
-DLGLOBAL DEBUG -- Final block, so we done.
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Complete UL frame, len=0
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) LLC queue completely drained and there's still 18 free bytes in rlcmac data block
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) data block (BSN=1, CS-2, CV=0): 1d 00 00 23 42 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) need_padding 0 spb_status 0 spb 0 (BSN1 1 BSN2 -1)
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying 1 RLC blocks, 1 BSNs
@@ -226,8 +226,8 @@ DLGLOBAL DEBUG Rx RTS.ind (fn=4, ts=7, usf=0)
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Sending new block at BSN 1, CS=CS-2
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Entering Countdown procedure CV=0
 DLGLOBAL DEBUG -- Chunk with length 7 is less than remaining space (26): add length header to delimit LLC frame
-DLGLOBAL DEBUG -- Final block, so we done.
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Complete UL frame, len=0
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) LLC queue completely drained and there's still 18 free bytes in rlcmac data block
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) data block (BSN=1, CS-2, CV=0): 1d 00 00 23 42 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) need_padding 0 spb_status 0 spb 0 (BSN1 1 BSN2 -1)
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying 1 RLC blocks, 1 BSNs
@@ -431,8 +431,8 @@ DLGLOBAL DEBUG Rx RTS.ind (fn=8, ts=7, usf=0)
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Sending new block at BSN 1, CS=CS-2
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Entering Countdown procedure CV=0
 DLGLOBAL DEBUG -- Chunk with length 7 is less than remaining space (26): add length header to delimit LLC frame
-DLGLOBAL DEBUG -- Final block, so we done.
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Complete UL frame, len=0
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) LLC queue completely drained and there's still 18 free bytes in rlcmac data block
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) data block (BSN=1, CS-2, CV=0): 1d 00 00 23 42 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) need_padding 0 spb_status 0 spb 0 (BSN1 1 BSN2 -1)
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying 1 RLC blocks, 1 BSNs
@@ -511,8 +511,8 @@ DLGLOBAL DEBUG Rx RTS.ind (fn=17, ts=7, usf=0)
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Sending new block at BSN 2, CS=CS-2
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Entering Countdown procedure CV=0
 DLGLOBAL DEBUG -- Chunk with length 15 is less than remaining space (26): add length header to delimit LLC frame
-DLGLOBAL DEBUG -- Final block, so we done.
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Complete UL frame, len=0
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) LLC queue completely drained and there's still 10 free bytes in rlcmac data block
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) data block (BSN=2, CS-2, CV=0): 3d 00 00 23 42 71 62 f2 24 6c 84 44 04 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) need_padding 0 spb_status 0 spb 0 (BSN1 2 BSN2 -1)
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying 1 RLC blocks, 1 BSNs
@@ -691,8 +691,8 @@ DLGLOBAL DEBUG Rx RTS.ind (fn=8, ts=7, usf=0)
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Sending new block at BSN 1, CS=CS-2
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Entering Countdown procedure CV=0
 DLGLOBAL DEBUG -- Chunk with length 7 is less than remaining space (30): add length header to delimit LLC frame
-DLGLOBAL DEBUG -- Final block, so we done.
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Complete UL frame, len=0
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) LLC queue completely drained and there's still 22 free bytes in rlcmac data block
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) data block (BSN=1, CS-2, CV=0): 1d 11 e5 10 00 e2 18 f2 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) need_padding 0 spb_status 0 spb 0 (BSN1 1 BSN2 -1)
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying 1 RLC blocks, 1 BSNs
@@ -868,8 +868,8 @@ DLGLOBAL DEBUG Rx from lower layers: L1CTL-PDCH_RTS.indication
 DLGLOBAL DEBUG Rx RTS.ind (fn=30, ts=7, usf=0)
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Sending new block at BSN 6, CS=CS-2
 DLGLOBAL DEBUG -- Chunk with length 24 is less than remaining space (30): add length header to delimit LLC frame
-DLGLOBAL DEBUG -- Final block, so we done.
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Complete UL frame, len=0
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) LLC queue completely drained and there's still 5 free bytes in rlcmac data block
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) data block (BSN=6, CS-2, CV=0): 61 ab ab ab ab ab ab ab ab ab ab ab ab ab ab ab ab ab ab ab ab ab ab ab ab 2b 2b 2b 2b 2b 
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) need_padding 0 spb_status 0 spb 0 (BSN1 6 BSN2 -1)
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying 1 RLC blocks, 1 BSNs
@@ -913,8 +913,8 @@ DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Sending new block at BSN 0, CS=CS-2
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Entering Countdown procedure CV=0
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Dequeue next LLC (len=14)
 DLGLOBAL DEBUG -- Chunk with length 14 is less than remaining space (26): add length header to delimit LLC frame
-DLGLOBAL DEBUG -- Final block, so we done.
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Complete UL frame, len=0
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) LLC queue completely drained and there's still 11 free bytes in rlcmac data block
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) data block (BSN=0, CS-2, CV=0): 39 00 00 23 42 01 c0 00 08 01 01 d5 71 00 00 08 29 26 24 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) need_padding 0 spb_status 0 spb 0 (BSN1 0 BSN2 -1)
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying 1 RLC blocks, 1 BSNs
@@ -1077,8 +1077,8 @@ DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00000001) Sending new block at BSN 0, CS=CS-2
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00000001) Entering Countdown procedure CV=0
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00000001) Dequeue next LLC (len=14)
 DLGLOBAL DEBUG -- Chunk with length 14 is less than remaining space (30): add length header to delimit LLC frame
-DLGLOBAL DEBUG -- Final block, so we done.
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00000001) Complete UL frame, len=0
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00000001) LLC queue completely drained and there's still 15 free bytes in rlcmac data block
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00000001) data block (BSN=0, CS-2, CV=0): 39 01 c0 00 08 01 01 d5 71 00 00 08 29 26 24 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00000001) need_padding 0 spb_status 0 spb 0 (BSN1 0 BSN2 -1)
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00000001) Copying 1 RLC blocks, 1 BSNs
@@ -1135,14 +1135,16 @@ DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Sending new block at BSN 0, CS=CS-4
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Entering Countdown procedure CV=0
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Dequeue next LLC (len=8)
 DLGLOBAL DEBUG -- Chunk with length 8 is less than remaining space (46): add length header to delimit LLC frame
-DLGLOBAL DEBUG -- Final block, so we done.
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Complete UL frame, len=0
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Dequeue next LLC (len=35)
-DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) data block (BSN=0, CS-4, CV=0): 21 00 00 23 42 01 c0 0d 08 03 55 1c ea 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 
+DLGLOBAL DEBUG -- Chunk with length 35 is less than remaining space (37): add length header to delimit LLC frame
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Complete UL frame, len=0
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) LLC queue completely drained and there's still 1 free bytes in rlcmac data block
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) data block (BSN=0, CS-4, CV=0): 22 8d 00 00 23 42 01 c0 0d 08 03 55 1c ea 01 c0 11 8a 41 06 03 0e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 02 01 21 28 09 08 69 6e 74 65 72 6e 65 2b 
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) need_padding 0 spb_status 0 spb 0 (BSN1 0 BSN2 -1)
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying 1 RLC blocks, 1 BSNs
 DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) Copying data unit 0 (BSN=0 CV=0)
-DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) msg block (BSN 0, CS-4): 00 01 00 21 00 00 23 42 01 c0 0d 08 03 55 1c ea 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 2b 00 
+DLGLOBAL DEBUG TBF(UL:NR-0:TLLI-00002342) msg block (BSN 0, CS-4): 00 01 00 22 8d 00 00 23 42 01 c0 0d 08 03 55 1c ea 01 c0 11 8a 41 06 03 0e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 02 01 21 28 09 08 69 6e 74 65 72 6e 65 2b 00 
 DLGLOBAL INFO UL_TBF{FLOW}: Received Event FIRST_UL_DATA_SENT
 DLGLOBAL INFO UL_TBF{FLOW}: First UL block sent, stop T3164
 DLGLOBAL INFO UL_TBF{FLOW}: First UL block sent (1 phase access), start T3166
