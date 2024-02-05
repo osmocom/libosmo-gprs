@@ -291,18 +291,16 @@ void gprs_rlcmac_rlc_ul_window_update(struct gprs_rlcmac_rlc_ul_window *ulw, con
 unsigned int gprs_rlcmac_rlc_ul_window_move_window(struct gprs_rlcmac_rlc_ul_window *ulw)
 {
 	struct gprs_rlcmac_rlc_window *w = rlc_ulw_as_w(ulw);
-	unsigned int i;
-	uint16_t bsn;
 	unsigned int moved = 0;
+	uint16_t bsn;
 
-	for (i = 0, bsn = gprs_rlcmac_rlc_ul_window_v_a(ulw);
+	for (bsn = gprs_rlcmac_rlc_ul_window_v_a(ulw);
 	     bsn != gprs_rlcmac_rlc_ul_window_v_s(ulw);
-	     i++, bsn = gprs_rlcmac_rlc_window_mod_sns_bsn(w, bsn + 1)) {
-		if (gprs_rlcmac_rlc_v_b_is_acked(&ulw->v_b, bsn)) {
-			gprs_rlcmac_rlc_v_b_mark_invalid(&ulw->v_b, bsn);
-			moved += 1;
-		} else
+	     bsn = gprs_rlcmac_rlc_window_mod_sns_bsn(w, bsn + 1)) {
+		if (!gprs_rlcmac_rlc_v_b_is_acked(&ulw->v_b, bsn))
 			break;
+		moved += 1;
+		gprs_rlcmac_rlc_v_b_mark_invalid(&ulw->v_b, bsn);
 	}
 
 	return moved;
