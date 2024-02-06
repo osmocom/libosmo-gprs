@@ -684,6 +684,7 @@ static int create_new_bsn(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_r
 
 	if (!ul_tbf->llc_tx_msg || msgb_length(ul_tbf->llc_tx_msg) == 0)
 		gprs_rlcmac_ul_tbf_schedule_next_llc_frame(ul_tbf);
+	/* This function shall only be called if there's some LLC payload not yet transmitted: */
 	OSMO_ASSERT(ul_tbf->llc_tx_msg);
 
 	OSMO_ASSERT(gprs_rlcmac_mcs_is_valid(cs));
@@ -734,27 +735,29 @@ static int create_new_bsn(struct gprs_rlcmac_ul_tbf *ul_tbf, const struct gprs_r
 		int payload_written = 0;
 
 		if (!ul_tbf->llc_tx_msg || msgb_length(ul_tbf->llc_tx_msg) == 0) {
+			const int space = block_data_len - write_offset;
+			/* Only get here in case we already encoded the end of
+			 * some LLC payload chunk and there's no more new LLC
+			 * payloads to send */
+			OSMO_ASSERT(num_chunks > 0);
+
 			/* The data just drained, store the current fn */
 			if (ul_tbf->last_ul_drained_fn < 0)
 				ul_tbf->last_ul_drained_fn = bi->fn;
 
-			int space = block_data_len - write_offset;
+			/* Nothing to send, and we already put some data in
+			 * rlcmac data block, we are done */
+			LOGPTBFUL(ul_tbf, LOGL_DEBUG,
+				  "LLC queue completely drained and there's "
+				  "still %d free bytes in rlcmac data block\n", space);
 
-			if (num_chunks != 0) {
-				/* Nothing to send, and we already put some data in
-				 * rlcmac data block, we are done */
-				LOGPTBFUL(ul_tbf, LOGL_DEBUG,
-					  "LLC queue completely drained and there's "
-					  "still %d free bytes in rlcmac data block\n", space);
-
-				if (gprs_rlcmac_mcs_is_edge(cs)) {
-					/* in EGPRS there's no M bit, so we need
-					 * to flag padding with LI=127 */
-					gprs_rlcmac_rlc_data_to_ul_append_egprs_li_padding(
-						rdbi, &write_offset, &num_chunks, data);
-				}
-				break;
+			if (gprs_rlcmac_mcs_is_edge(cs)) {
+				/* in EGPRS there's no M bit, so we need to flag
+				 * padding with LI=127 */
+				gprs_rlcmac_rlc_data_to_ul_append_egprs_li_padding(
+					rdbi, &write_offset, &num_chunks, data);
 			}
+			break;
 		}
 
 		ar = gprs_rlcmac_enc_append_ul_data(rdbi, cs, ul_tbf->llc_tx_msg, &write_offset,
