@@ -15,6 +15,7 @@ AM_LDFLAGS = \
 check_PROGRAMS = \
 	gmm_misc_test \
 	gmm_prim_ms_test \
+	gmm_prim_network_test \
 	$(NULL)
 
 EXTRA_DIST = \
@@ -22,6 +23,12 @@ EXTRA_DIST = \
 	gmm_misc_test.ok \
 	gmm_prim_ms_test.err \
 	gmm_prim_ms_test.ok \
+	gmm_prim_network_test.err \
+	gmm_prim_network_test.ok \
+	$(NULL)
+
+noinst_HEADERS = \
+	gmm_prim_test.h \
 	$(NULL)
 
 # libosmo-gprs-gmm.a is used below to access non-exported private symbols used in the test:
@@ -50,6 +57,23 @@ gmm_prim_ms_test_LDADD = \
 	$(NULL)
 
 gmm_prim_ms_test_LDFLAGS = \
+	-Wl,--wrap=osmo_get_rand_id \
+	-no-install \
+	$(NULL)
+
+# libosmo-gprs-llc.a is used below to access non-exported private symbols used in the test:
+# libosmo-gprs-rlcmac.a is used below to access non-exported private symbols used in the test:
+gmm_prim_network_test_SOURCES = gmm_prim_network_test.c
+gmm_prim_network_test_LDADD = \
+	$(top_builddir)/src/gmm/libosmo-gprs-gmm.la \
+	$(top_builddir)/src/llc/.libs/libosmo-gprs-llc.a \
+	$(top_builddir)/src/rlcmac/.libs/libosmo-gprs-rlcmac.a \
+	$(top_builddir)/src/csn1/libosmo-csn1.la \
+	$(LIBOSMOCORE_LIBS) \
+	$(LIBOSMOGSM_LIBS) \
+	$(NULL)
+
+gmm_prim_network_test_LDFLAGS = \
 	-Wl,--wrap=osmo_get_rand_id \
 	-no-install \
 	$(NULL)

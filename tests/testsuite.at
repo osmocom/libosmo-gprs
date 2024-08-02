@@ -15,6 +15,13 @@ cat $abs_srcdir/gmm/gmm_prim_ms_test.err > experr
 AT_CHECK([$abs_top_builddir/tests/gmm/gmm_prim_ms_test], [0], [expout], [experr])
 AT_CLEANUP
 
+AT_SETUP([gmm/gmm_prim_network])
+AT_KEYWORDS([gmm gmm_prim_network])
+cat $abs_srcdir/gmm/gmm_prim_network_test.ok > expout
+cat $abs_srcdir/gmm/gmm_prim_network_test.err > experr
+AT_CHECK([$abs_top_builddir/tests/gmm/gmm_prim_network_test], [0], [expout], [experr])
+AT_CLEANUP
+
 AT_SETUP([llc/llc])
 AT_KEYWORDS([llc llc])
 cat $abs_srcdir/llc/llc_test.ok > expout

@@ -1,0 +1,4 @@
+DLGLOBAL INFO Rx from lower layers: LL-UNITDATA.indication
+DLGLOBAL NOTICE Rx LL-UNITDATA.indication: Unknown TLLI 0x80001234
+DLGLOBAL INFO Rx from lower layers: LL-UNITDATA.indication
+DLGLOBAL NOTICE Rx LL-UNITDATA.indication: Unknown TLLI 0x80001234
