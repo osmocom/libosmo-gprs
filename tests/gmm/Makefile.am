@@ -14,14 +14,14 @@ AM_LDFLAGS = \
 
 check_PROGRAMS = \
 	gmm_misc_test \
-	gmm_prim_test \
+	gmm_prim_ms_test \
 	$(NULL)
 
 EXTRA_DIST = \
 	gmm_misc_test.err \
 	gmm_misc_test.ok \
-	gmm_prim_test.err \
-	gmm_prim_test.ok \
+	gmm_prim_ms_test.err \
+	gmm_prim_ms_test.ok \
 	$(NULL)
 
 # libosmo-gprs-gmm.a is used below to access non-exported private symbols used in the test:
@@ -39,8 +39,8 @@ gmm_misc_test_LDFLAGS = \
 
 # libosmo-gprs-llc.a is used below to access non-exported private symbols used in the test:
 # libosmo-gprs-rlcmac.a is used below to access non-exported private symbols used in the test:
-gmm_prim_test_SOURCES = gmm_prim_test.c
-gmm_prim_test_LDADD = \
+gmm_prim_ms_test_SOURCES = gmm_prim_ms_test.c
+gmm_prim_ms_test_LDADD = \
 	$(top_builddir)/src/gmm/libosmo-gprs-gmm.la \
 	$(top_builddir)/src/llc/.libs/libosmo-gprs-llc.a \
 	$(top_builddir)/src/rlcmac/.libs/libosmo-gprs-rlcmac.a \
@@ -49,7 +49,7 @@ gmm_prim_test_LDADD = \
 	$(LIBOSMOGSM_LIBS) \
 	$(NULL)
 
-gmm_prim_test_LDFLAGS = \
+gmm_prim_ms_test_LDFLAGS = \
 	-Wl,--wrap=osmo_get_rand_id \
 	-no-install \
 	$(NULL)
