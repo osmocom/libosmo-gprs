@@ -30,6 +30,7 @@ enum osmo_gprs_gmm_prim_sap {
 	OSMO_GPRS_GMM_SAP_GMMRABM, /* UMTS only */
 	OSMO_GPRS_GMM_SAP_GMMSS,
 	OSMO_GPRS_GMM_SAP_GMMSS2,
+	OSMO_GPRS_GMM_SAP_GMMBSSGP, /* TS 48.018 5.3 */
 };
 extern const struct value_string osmo_gprs_gmm_prim_sap_names[];
 static inline const char *osmo_gprs_gmm_prim_sap_name(enum osmo_gprs_gmm_prim_sap val)
@@ -197,6 +198,63 @@ struct osmo_gprs_gmm_gmmrr_prim {
 	};
 };
 
+/* TS 48.018 Section 5.3 "GMM<->BSSGP"
+ * This interface wasn't described in TS 24.007 like the others, but can be seen
+ * greyed up in TS 24.007 Annex C diagrams.
+ */
+enum osmo_gprs_gmm_gmmbssgp_prim_type {
+	OSMO_GPRS_GMM_GMMBSSGP_PAGING,	/* Req: BVCI, NSEI,... */
+	OSMO_GPRS_GMM_GMMBSSGP_RA_CAPABILITY,	/* Req: BVCI, NSEI,... */
+	OSMO_GPRS_GMM_GMMBSSGP_RA_CAPABILITY_UPDATE, /* Ind, Resp */
+	OSMO_GPRS_GMM_GMMBSSGP_RADIO_STATUS, /* Ind: BVCI, NSEI,... */
+	OSMO_GPRS_GMM_GMMBSSGP_SUSPEND, /* Ind: BVCI, NSEI,... */
+	OSMO_GPRS_GMM_GMMBSSGP_RESUME, /* Ind: BVCI, NSEI,... */
+	OSMO_GPRS_GMM_GMMBSSGP_MS_REGISTRATION_ENQUIRY, /* Ind, Resp */
+};
+extern const struct value_string osmo_gprs_gmm_gmmbssgp_prim_type_names[];
+static inline const char *osmo_gprs_gmm_gmmbssgp_prim_type_name(enum osmo_gprs_gmm_gmmbssgp_prim_type val)
+{
+	return get_value_string(osmo_gprs_gmm_gmmbssgp_prim_type_names, val);
+}
+
+/* Parameters for OSMO_GPRS_GMM_BSSGP_* prims
+ * Same as struct osmo_gprs_rlcmac_gmmbssgp_prim.
+ */
+struct osmo_gprs_gmm_gmmbssgp_prim {
+	/* Common fields */
+	uint16_t bvci;
+	uint16_t nsei;
+	union {
+		/* OSMO_GPRS_GMM_GMMBSSGP_PAGING | Req */
+		struct {
+		} paging_req;
+		/* OSMO_GPRS_GMM_GMMBSSGP_RA_CAPABILITY | Req */
+		struct {
+		} ra_capability_req;
+		/* OSMO_GPRS_GMM_GMMBSSGP_RA_CAPABILITY_UPDATE | Ind */
+		struct {
+		} ra_capability_update_ind;
+		/* OSMO_GPRS_GMM_GMMBSSGP_RA_CAPABILITY_UPDATE | Resp */
+		struct {
+		} ra_capability_update_resp;
+		/* OSMO_GPRS_GMM_GMMBSSGP_RADIO_STATUS | Ind */
+		struct {
+		} radio_status_ind;
+		/* OSMO_GPRS_GMM_GMMBSSGP_SUSPEND | Ind */
+		struct {
+		} suspend_ind;
+		/* OSMO_GPRS_GMM_GMMBSSGP_RESUME | Ind */
+		struct {
+		} resume_ind;
+		/* OSMO_GPRS_GMM_GMMBSSGP_MS_REGISTRATION_ENQUIRY | Ind */
+		struct {
+		} ms_registration_enquiry_ind;
+		/* OSMO_GPRS_GMM_GMMBSSGP_MS_REGISTRATION_ENQUIRY | Resp */
+		struct {
+		} ms_registration_enquiry_resp;
+	};
+};
+
 /* TS 24.007 Section 9.5.1 "Service primitives for GMMSM-SAP"
  */
 enum osmo_gprs_gmm_gmmsm_prim_type {
@@ -279,6 +337,7 @@ struct osmo_gprs_gmm_prim {
 	union {
 		struct osmo_gprs_gmm_gmmreg_prim gmmreg;
 		struct osmo_gprs_gmm_gmmrr_prim gmmrr;
+		struct osmo_gprs_gmm_gmmbssgp_prim gmmbssgp;
 		struct osmo_gprs_gmm_gmmsm_prim gmmsm;
 	};
 };
@@ -306,6 +365,13 @@ struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmreg_sim_auth_rsp(void);
 
 /* Alloc primitive for GMMRR SAP: */
 struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmrr_page_ind(uint32_t tlli);
+
+/* Alloc primitive for GMMBSSGP SAP: */
+struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmbssgp_ra_capability_update_ind(uint16_t bvci, uint16_t nsei);
+struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmbssgp_radio_status_ind(uint16_t bvci, uint16_t nsei);
+struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmbssgp_suspend_ind(uint16_t bvci, uint16_t nsei);
+struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmbssgp_resume_ind(uint16_t bvci, uint16_t nsei);
+struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmbssgp_ms_registration_enquiry_ind(uint16_t bvci, uint16_t nsei);
 
 /* Alloc primitive for GMMSM SAP: */
 struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmsm_establish_req(uint32_t id);

@@ -110,10 +110,16 @@ struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmreg_sim_auth_ind(void);
 
 struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmrr_assign_req(uint32_t old_tlli, uint32_t new_tlli);
 
+struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmbssgp_paging_req(uint16_t bvci, uint16_t nsei);
+struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmbssgp_ra_capability_req(uint16_t bvci, uint16_t nsei);
+struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmbssgp_ra_capability_update_resp(uint16_t bvci, uint16_t nsei);
+struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmbssgp_ms_registration_enquiry_resp(uint16_t bvci, uint16_t nsei);
+
 struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmsm_establish_cnf(uint32_t id, uint8_t cause);
 struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmsm_release_ind(uint32_t id);
 struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmsm_unitdata_ind(uint32_t id, uint8_t *smpdu, unsigned int smpdu_len);
 struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmsm_modify_ind(uint32_t id);
+
 /* gmm.c: */
 struct gprs_gmm_entity *gprs_gmm_gmme_alloc(uint32_t ptmsi, const char *imsi);
 void gprs_gmm_gmme_free(struct gprs_gmm_entity *gmme);

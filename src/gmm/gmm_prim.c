@@ -43,6 +43,7 @@ const struct value_string osmo_gprs_gmm_prim_sap_names[] = {
 	{ OSMO_GPRS_GMM_SAP_GMMRABM,	"GMMRABM" },
 	{ OSMO_GPRS_GMM_SAP_GMMSS,	"GMMSS" },
 	{ OSMO_GPRS_GMM_SAP_GMMSS2,	"GMMSS2" },
+	{ OSMO_GPRS_GMM_SAP_GMMBSSGP,	"GMMBSSGP" },
 	{ 0, NULL }
 };
 
@@ -57,6 +58,17 @@ const struct value_string osmo_gprs_gmm_gmmrr_prim_type_names[] = {
 	{ OSMO_GPRS_GMM_GMMRR_ASSIGN,	"ASSIGN" },
 	{ OSMO_GPRS_GMM_GMMRR_PAGE,	"PAGE" },
 	{ OSMO_GPRS_GMM_GMMRR_LLC_TRANSMITTED, "LLC_TRANSMITTED" },
+	{ 0, NULL }
+};
+
+const struct value_string osmo_gprs_gmm_gmmbssgp_prim_type_names[] = {
+	{ OSMO_GPRS_GMM_GMMBSSGP_PAGING,		"AGING" },
+	{ OSMO_GPRS_GMM_GMMBSSGP_RA_CAPABILITY,		"A_CAPABILITY" },
+	{ OSMO_GPRS_GMM_GMMBSSGP_RA_CAPABILITY_UPDATE,	"A_CAPABILITY_UPDATE" },
+	{ OSMO_GPRS_GMM_GMMBSSGP_RADIO_STATUS,		"RADIO_STATUS" },
+	{ OSMO_GPRS_GMM_GMMBSSGP_SUSPEND,		"SUSPEND" },
+	{ OSMO_GPRS_GMM_GMMBSSGP_RESUME,		"RESUME" },
+	{ OSMO_GPRS_GMM_GMMBSSGP_MS_REGISTRATION_ENQUIRY, "MS_REGISTRATION_ENQUIRY" },
 	{ 0, NULL }
 };
 
@@ -106,6 +118,9 @@ const char *osmo_gprs_gmm_prim_name(const struct osmo_gprs_gmm_prim *gmm_prim)
 		break;
 	case OSMO_GPRS_GMM_SAP_GMMSM:
 		type = osmo_gprs_gmm_gmmsm_prim_type_name(gmm_prim->oph.primitive);
+		break;
+	case OSMO_GPRS_GMM_SAP_GMMBSSGP:
+		type = osmo_gprs_gmm_gmmbssgp_prim_type_name(gmm_prim->oph.primitive);
 		break;
 	default:
 		type = "unsupported-gmm-sap";
@@ -280,6 +295,105 @@ struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmrr_page_ind(uint32_t tlli
 	gmm_prim->gmmrr.tlli = tlli;
 	return gmm_prim;
 }
+
+/*** GMMBSSGP ***/
+static inline struct osmo_gprs_gmm_prim *gmm_prim_gmmbssgp_alloc(enum osmo_gprs_gmm_gmmbssgp_prim_type type,
+								 enum osmo_prim_operation operation,
+								 unsigned int extra_size)
+{
+	return gprs_gmm_prim_alloc(OSMO_GPRS_GMM_SAP_GMMBSSGP, type, operation, extra_size);
+}
+
+/* 3GPP TS 48.018 5.3.4 GMM-PAGING.req: */
+struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmbssgp_paging_req(uint16_t bvci, uint16_t nsei)
+{
+	struct osmo_gprs_gmm_prim *gmm_prim;
+	gmm_prim = gmm_prim_gmmrr_alloc(OSMO_GPRS_GMM_GMMBSSGP_PAGING, PRIM_OP_REQUEST, 0);
+	gmm_prim->gmmbssgp.bvci = bvci;
+	gmm_prim->gmmbssgp.nsei = nsei;
+	return gmm_prim;
+}
+
+/* 3GPP TS 48.018 5.3.5 GMM-RA-CAPABILITY.req: */
+struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmbssgp_ra_capability_req(uint16_t bvci, uint16_t nsei)
+{
+	struct osmo_gprs_gmm_prim *gmm_prim;
+	gmm_prim = gmm_prim_gmmrr_alloc(OSMO_GPRS_GMM_GMMBSSGP_RA_CAPABILITY, PRIM_OP_REQUEST, 0);
+	gmm_prim->gmmbssgp.bvci = bvci;
+	gmm_prim->gmmbssgp.nsei = nsei;
+	return gmm_prim;
+}
+
+/* 3GPP TS 48.018 5.3.6 GMM-RA-CAPABILITY-UPDATE.ind: */
+struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmbssgp_ra_capability_update_ind(uint16_t bvci, uint16_t nsei)
+{
+	struct osmo_gprs_gmm_prim *gmm_prim;
+	gmm_prim = gmm_prim_gmmrr_alloc(OSMO_GPRS_GMM_GMMBSSGP_RA_CAPABILITY_UPDATE, PRIM_OP_INDICATION, 0);
+	gmm_prim->gmmbssgp.bvci = bvci;
+	gmm_prim->gmmbssgp.nsei = nsei;
+	return gmm_prim;
+}
+
+/* 3GPP TS 48.018 5.3.7 GMM-RA-CAPABILITY-UPDATE.res: */
+struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmbssgp_ra_capability_update_resp(uint16_t bvci, uint16_t nsei)
+{
+	struct osmo_gprs_gmm_prim *gmm_prim;
+	gmm_prim = gmm_prim_gmmrr_alloc(OSMO_GPRS_GMM_GMMBSSGP_RA_CAPABILITY_UPDATE, PRIM_OP_RESPONSE, 0);
+	gmm_prim->gmmbssgp.bvci = bvci;
+	gmm_prim->gmmbssgp.nsei = nsei;
+	return gmm_prim;
+}
+
+/* 3GPP TS 48.018 5.3.8 GMM-RADIO-STATUS.ind: */
+struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmbssgp_radio_status_ind(uint16_t bvci, uint16_t nsei)
+{
+	struct osmo_gprs_gmm_prim *gmm_prim;
+	gmm_prim = gmm_prim_gmmrr_alloc(OSMO_GPRS_GMM_GMMBSSGP_RADIO_STATUS, PRIM_OP_INDICATION, 0);
+	gmm_prim->gmmbssgp.bvci = bvci;
+	gmm_prim->gmmbssgp.nsei = nsei;
+	return gmm_prim;
+}
+
+/* 3GPP TS 48.018 5.3.9 GMM-SUSPEND.ind: */
+struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmbssgp_suspend_ind(uint16_t bvci, uint16_t nsei)
+{
+	struct osmo_gprs_gmm_prim *gmm_prim;
+	gmm_prim = gmm_prim_gmmrr_alloc(OSMO_GPRS_GMM_GMMBSSGP_SUSPEND, PRIM_OP_INDICATION, 0);
+	gmm_prim->gmmbssgp.bvci = bvci;
+	gmm_prim->gmmbssgp.nsei = nsei;
+	return gmm_prim;
+}
+
+/* 3GPP TS 48.018 5.3.10 GMM-RESUME.ind: */
+struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmbssgp_resume_ind(uint16_t bvci, uint16_t nsei)
+{
+	struct osmo_gprs_gmm_prim *gmm_prim;
+	gmm_prim = gmm_prim_gmmrr_alloc(OSMO_GPRS_GMM_GMMBSSGP_RESUME, PRIM_OP_INDICATION, 0);
+	gmm_prim->gmmbssgp.bvci = bvci;
+	gmm_prim->gmmbssgp.nsei = nsei;
+	return gmm_prim;
+}
+
+/* 3GPP TS 48.018 5.3.10a GMM-MS-REGISTRATION-ENQUIRY.ind: */
+struct osmo_gprs_gmm_prim *osmo_gprs_gmm_prim_alloc_gmmbssgp_ms_registration_enquiry_ind(uint16_t bvci, uint16_t nsei)
+{
+	struct osmo_gprs_gmm_prim *gmm_prim;
+	gmm_prim = gmm_prim_gmmrr_alloc(OSMO_GPRS_GMM_GMMBSSGP_MS_REGISTRATION_ENQUIRY, PRIM_OP_INDICATION, 0);
+	gmm_prim->gmmbssgp.bvci = bvci;
+	gmm_prim->gmmbssgp.nsei = nsei;
+	return gmm_prim;
+}
+
+/* 3GPP TS 48.018 5.3.10b GMM-MS-REGISTRATION-ENQUIRY.res: */
+struct osmo_gprs_gmm_prim *gprs_gmm_prim_alloc_gmmbssgp_ms_registration_enquiry_resp(uint16_t bvci, uint16_t nsei)
+{
+	struct osmo_gprs_gmm_prim *gmm_prim;
+	gmm_prim = gmm_prim_gmmrr_alloc(OSMO_GPRS_GMM_GMMBSSGP_MS_REGISTRATION_ENQUIRY, PRIM_OP_RESPONSE, 0);
+	gmm_prim->gmmbssgp.bvci = bvci;
+	gmm_prim->gmmbssgp.nsei = nsei;
+	return gmm_prim;
+}
+
 
 /*** GMMSM ***/
 
@@ -666,6 +780,72 @@ static int gprs_gmm_prim_handle_gmmrr(struct osmo_gprs_gmm_prim *gmm_prim)
 	return rc;
 }
 
+static int gprs_gmm_prim_handle_gmmbssgp_ra_capability_update_ind(struct osmo_gprs_gmm_prim *gmm_prim)
+{
+	int rc;
+	rc = gprs_gmm_prim_handle_unsupported(gmm_prim);
+	rc = 1; /* prim ownership taken, already freed */
+	return rc;
+}
+
+static int gprs_gmm_prim_handle_gmmbssgp_radio_status_ind(struct osmo_gprs_gmm_prim *gmm_prim)
+{
+	int rc;
+	rc = gprs_gmm_prim_handle_unsupported(gmm_prim);
+	rc = 1; /* prim ownership taken, already freed */
+	return rc;
+}
+
+static int gprs_gmm_prim_handle_gmmbssgp_suspend_ind(struct osmo_gprs_gmm_prim *gmm_prim)
+{
+	int rc;
+	rc = gprs_gmm_prim_handle_unsupported(gmm_prim);
+	rc = 1; /* prim ownership taken, already freed */
+	return rc;
+}
+
+static int gprs_gmm_prim_handle_gmmbssgp_resume_ind(struct osmo_gprs_gmm_prim *gmm_prim)
+{
+	int rc;
+	rc = gprs_gmm_prim_handle_unsupported(gmm_prim);
+	rc = 1; /* prim ownership taken, already freed */
+	return rc;
+}
+
+static int gprs_gmm_prim_handle_gmmbssgp_ms_registration_enquiry_ind(struct osmo_gprs_gmm_prim *gmm_prim)
+{
+	int rc;
+	rc = gprs_gmm_prim_handle_unsupported(gmm_prim);
+	rc = 1; /* prim ownership taken, already freed */
+	return rc;
+}
+
+static int gprs_gmm_prim_handle_gmmbssgp(struct osmo_gprs_gmm_prim *gmm_prim)
+{
+	int rc = 0;
+	switch (OSMO_PRIM_HDR(&gmm_prim->oph)) {
+	case OSMO_PRIM(OSMO_GPRS_GMM_GMMBSSGP_RA_CAPABILITY_UPDATE, PRIM_OP_INDICATION):
+		rc = gprs_gmm_prim_handle_gmmbssgp_ra_capability_update_ind(gmm_prim);
+		break;
+	case OSMO_PRIM(OSMO_GPRS_GMM_GMMBSSGP_RADIO_STATUS, PRIM_OP_INDICATION):
+		rc = gprs_gmm_prim_handle_gmmbssgp_radio_status_ind(gmm_prim);
+		break;
+	case OSMO_PRIM(OSMO_GPRS_GMM_GMMBSSGP_SUSPEND, PRIM_OP_INDICATION):
+		rc = gprs_gmm_prim_handle_gmmbssgp_suspend_ind(gmm_prim);
+		break;
+	case OSMO_PRIM(OSMO_GPRS_GMM_GMMBSSGP_RESUME, PRIM_OP_INDICATION):
+		rc = gprs_gmm_prim_handle_gmmbssgp_resume_ind(gmm_prim);
+		break;
+	case OSMO_PRIM(OSMO_GPRS_GMM_GMMBSSGP_MS_REGISTRATION_ENQUIRY, PRIM_OP_INDICATION):
+		rc = gprs_gmm_prim_handle_gmmbssgp_ms_registration_enquiry_ind(gmm_prim);
+		break;
+	default:
+		rc = gprs_gmm_prim_handle_unsupported(gmm_prim);
+		rc = 1;
+	}
+	return rc;
+}
+
 /* GMM lower layers (LLC) push GMM primitive up to GMM layer: */
 int osmo_gprs_gmm_prim_lower_up(struct osmo_gprs_gmm_prim *gmm_prim)
 {
@@ -679,6 +859,9 @@ int osmo_gprs_gmm_prim_lower_up(struct osmo_gprs_gmm_prim *gmm_prim)
 	switch (gmm_prim->oph.sap) {
 	case OSMO_GPRS_GMM_SAP_GMMRR:
 		rc = gprs_gmm_prim_handle_gmmrr(gmm_prim);
+		break;
+	case OSMO_GPRS_GMM_SAP_GMMBSSGP:
+		rc = gprs_gmm_prim_handle_gmmbssgp(gmm_prim);
 		break;
 	default:
 		rc = gprs_gmm_prim_handle_unsupported(gmm_prim);
