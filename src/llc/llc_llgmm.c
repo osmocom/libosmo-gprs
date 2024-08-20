@@ -212,7 +212,7 @@ static int llc_prim_handle_llgmm_assign_req(struct osmo_gprs_llc_prim *llc_prim)
 			gprs_llc_llme_submit_prim_ll_assign_ind(old_tlli, new_tlli);
 	} else if (old_tlli != TLLI_UNASSIGNED && new_tlli == TLLI_UNASSIGNED) {
 		/* TLLI Unassignment 8.3.3) */
-		llme->tlli = llme->old_tlli = 0;
+		llme->tlli = llme->old_tlli = TLLI_UNASSIGNED;
 		llme->state = OSMO_GPRS_LLC_LLMS_ASSIGNED;
 		for (i = 0; i < ARRAY_SIZE(llme->lle); i++) {
 			struct gprs_llc_lle *l = &llme->lle[i];
