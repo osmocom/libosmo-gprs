@@ -154,6 +154,8 @@ const struct tlv_definition gprs_gmm_att_tlvdef = {
 		[GSM48_IE_GMM_PS_LCS_CAPA]	= { TLV_TYPE_TLV, 0 },
 		[GSM48_IE_GMM_GMM_MBMS_CTX_ST]	= { TLV_TYPE_TLV, 0 },
 		[GSM48_IE_GMM_TIMER_T3346]	= { TLV_TYPE_TLV, 0 },
+		[GSM48_IE_GMM_UE_NET_CAP]	= { TLV_TYPE_TLV, 0 },
+		[GSM48_IE_GMM_VD_PREF_UE_USAGE] = { TLV_TYPE_TLV, 0 },
 		[GSM48_IE_GMM_NET_FEAT_SUPPORT] = { TLV_TYPE_SINGLE_TV, 1 },
 	},
 };
