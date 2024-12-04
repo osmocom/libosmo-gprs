@@ -40,6 +40,7 @@ Architecture: any
 Multi-Arch: same
 Section: libdevel
 Depends: libosmo-csn1-0 (= ${binary:Version}),
+         libosmocore-dev,
 	 ${misc:Depends}
 Description: Development headers and libraries for the Osmocom CSN.1 codec
 
@@ -65,6 +66,7 @@ Architecture: any
 Multi-Arch: same
 Section: libdevel
 Depends: libosmo-gprs-gmm0 (= ${binary:Version}),
+         libosmocore-dev,
 	 ${misc:Depends}
 Description: Development headers and libraries for libosmo-gprs-gmm
 
@@ -90,6 +92,8 @@ Architecture: any
 Multi-Arch: same
 Section: libdevel
 Depends: libosmo-gprs-llc0 (= ${binary:Version}),
+         libosmocore-dev,
+         libtalloc-dev,
 	 ${misc:Depends}
 Description: Development headers and libraries for libosmo-gprs-llc
 
@@ -115,6 +119,7 @@ Architecture: any
 Multi-Arch: same
 Section: libdevel
 Depends: libosmo-gprs-rlcmac0 (= ${binary:Version}),
+         libosmocore-dev,
 	 ${misc:Depends}
 Description: Development headers and libraries for libosmo-gprs-rlcmac
 
@@ -140,6 +145,7 @@ Architecture: any
 Multi-Arch: same
 Section: libdevel
 Depends: libosmo-gprs-sndcp0 (= ${binary:Version}),
+         libosmocore-dev,
 	 ${misc:Depends}
 Description: Development headers and libraries for libosmo-gprs-sndcp
 
@@ -165,5 +171,6 @@ Architecture: any
 Multi-Arch: same
 Section: libdevel
 Depends: libosmo-gprs-sm0 (= ${binary:Version}),
+         libosmocore-dev,
 	 ${misc:Depends}
 Description: Development headers and libraries for libosmo-gprs-sm
