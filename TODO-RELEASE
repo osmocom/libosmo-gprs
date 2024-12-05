@@ -7,6 +7,5 @@
 # If any interfaces have been added since the last public release: c:r:a + 1.
 # If any interfaces have been removed or changed since the last public release: c:r:0.
 #library	what		description / commit summary line
-libosmocore   >1.8.0  gsm_fn2rfn(), gsm_rfn2fn()
 libosmocore >1.10.0  enum gsm48_gprs_ie_mm: GSM48_IE_GMM_UE_NET_CAP, GSM48_IE_GMM_VD_PREF_UE_USAGE
 libosmocore >1.10.0  remove "Remove after depending on libosmocore > 1.10.0" code in gmm_pdu.c

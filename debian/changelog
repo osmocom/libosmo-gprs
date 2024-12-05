@@ -1,4 +1,375 @@
-libosmo-gprs (0.1.0) UNRELEASED; urgency=low
+libosmo-gprs (0.2.0) unstable; urgency=medium
+
+  [ Vadim Yanitskiy ]
+  * debian/control: fix missing/misplaced commas in dependencies
+  * debian/compat: bump debhelper compatibility level: 9 -> 10
+  * update git URLs (git -> https; gitea)
+  * tests/rlcmac: fix incorrect RLCMACTest.{ok,err} paths in EXTRA_DIST
+  * tests/testsuite.at: remove $OSMO_QEMU, it's not used
+  * debian: clarify license/copyright for CSN.1 codec by ST-Ericsson
+  * configure.ac: do require unused dlopen
+  * configure: generate libosmo-gprs.spec from libosmo-gprs.spec.in
+  * contrib/libosmo-gprs.spec.in: properly define RPM packages
+  * csn1: #include <stddef.h> in csn1.h for offsetof()
+  * csn1: cosmetic: coding style improvements for #defines
+  * csn1: add CSN_DESCR_EXTERN for extern declarations
+  * rlcmac: fix using incomplete type 'struct value_string'
+  * Add .checkpatch.conf with project specific linter config
+  * libosmo-{csn1,gprs-rlcmac}.pc.in: add missing Requires
+  * rlcmac: make logging category configurable
+  * rlcmac: split gprs_rlcmac.c onto ts_44_{060,018}.c
+  * rlcmac: split ts_24_008.c out of ts_44_060.c
+  * rlcmac: add osmo_gprs_rlcmac_decode_si13ro()
+  * rlcmac/ts_44_018: add missing M_PADDING_BITS to SI_13_t
+  * Initial libosmo-gprs-llc library skeleton
+  * llc: check-in basic LLC definitions from osmo-sgsn.git
+  * llc: ensure all symbols have 'osmo_gprs_llc_' prefix
+  * llc: enum osmo_gprs_llc_sapi: fix spec reference
+  * llc: enum osmo_gprs_llc_primitive: drop Req/Ind/Rsp/Cnf
+  * llc: add missing LLGMM primitive types
+  * llc: add missing LLE <-> (RLC/MAC,BSSGP) primitives
+  * llc: add definitions from 3GPP TS 44.064 section 6.4
+  * llc: import FCS (CRC24) calculation API from osmo-sgsn.git
+  * llc: add -export-symbols-regex '^osmo_' to CFLAGS
+  * llc: implement LLC PDU codec based on code from osmo-sgsn.git
+  * llc: re-define value-string API as static inline functions
+  * llc: add struct value_string osmo_gprs_llc_sapi_names[]
+  * llc: osmo_gprs_llc_hdr_dump[_buf](): also print SAPI name
+  * tests: reorganize llc/rlcmac specific dirs and files
+  * llc: separate enum osmo_gprs_llc_primitive to llc_prim.h
+  * llc: rename enum osmo_gprs_llc_{primitive->prim_type}
+  * llc: add definitions of service primitive parameters
+  * llc: make logging category configurable
+  * .gitignore: add missing debian/libosmo-gprs-llc*
+  * llc: fix warning: 'struct msgb' declared inside parameter list
+  * llc: add value-string for enum osmo_gprs_llc_xid_type
+  * llc: add missing enum osmo_gprs_llc_xid_type values
+  * llc: implement Exchange Identification (XID) codec
+  * tests/llc/pdu_codec_test: use const char * const
+  * tests/rlcmac/ts_44_018_test: do not depend on libosmogsm
+  * contrib/jenkins.sh: build with --enable-werror
+  * Add -Werror=implicit-int -Werror=int-conversion -Werror=old-style-definition
+  * rlcmac: add decoder and test vectors for IA Rest Octets
+  * rlcmac: fix coding of EGPRS Packet Uplink Assignment in IA RestOctets
+  * rlcmac: rename s/IA_EGPRS_00_t/IA_EGPRS_PktUlAss_t/
+  * rlcmac: implement the missing IA_MultiBlock_PktDlAss_t
+  * rlcmac: remove unneeded includes
+  * rlcmac: use OSMO_ASSERT instead of plain assert()
+  * rlcmac: rename s/SI_13_t/SI13_RestOctets_t/
+  * tests/rlcmac: make linter happy: use const char * const
+  * rlcmac/sched: use TDMA Fn macros from libosmogsm
+  * rlcmac: ignore PACKET_DOWNLINK_DUMMY_CONTROL_BLOCK
+  * {rlcmac,llc,sndcp}: AM_LDFLAGS shall not contain *_LIBS
+  * tests: move '-I$(top_srcdir)/include/' to AM_CPPFLAGS
+  * tests/llc: local libs must be first in *_LDADD
+  * rlcmac: cosmetic: use ARRAY_SIZE() in dl_tbf_dl_slotmask()
+  * rlcmac: cosmetic: use ARRAY_SIZE() in handle_pkt_dl_ass()
+  * rlcmac: fix handling of TIMESLOT_ALLOCATION in handle_pkt_dl_ass()
+  * rlcmac: do not attempt to decode PTCCH/D blocks, discard them
+  * rlcmac: fix wrong MSGT_PACKET_{RESOURCE_REQUEST->DOWNLINK_ACK_NACK}
+  * rlcmac: fix st_new_on_enter(): actually release the TBF
+  * rlcmac: fix typo in TBF CFG logging messages
+  * rlcmac: cfg_ul_tbf_req: indicate USF for each active timeslot
+  * copyright: fix typo: sysmocom s/s.m.f.c./s.f.m.c./ GmbH
+  * rlcmac: add OSMO_GPRS_RLCMAC_L1CTL_PDCH_{ESTABLISH,RELEASE}.req
+  * doc: add PDCH timing diagram illustrating UL/DL delay
+  * README.md: upade the list of libraries
+  * rlcmac: l1ctl_prim: add 'start_rfn' field to cfg_{ul,dl}_tbf_req
+  * rlcmac: deal with RACH retransmissions (drop rach_req_ra)
+  * rlcmac: migrate from fn_cmp() to gsm0502_fncmp()
+  * sm_ms_fsm: fix double timer_cb assignment
+  * llc: fix unsigned rc in gprs_llc_lle_tx_xid_resp()
+  * llc: fix l3par check in gprs_llc_lle_generate_xid()
+  * build: include README.md into the release tarball
+  * rlcmac: add definition for OSMO_GPRS_RLCMAC_L1CTL_PDCH_DATA | Cnf
+  * rlcmac: refactor gprs_rlcmac_rlc_ul_window_move_window()
+
+  [ Pau Espin Pedrol ]
+  * llc: fix typo: OSMO_GPRS_LLC_SAPI_SNDCP{12->11}
+  * llc: libosmo-gprs-llc.pc.in: add 'Requires.private: talloc'
+  * llc: add libosmogsm dependency
+  * llc: add enum osmo_gprs_llc_{location,prim_sap}
+  * llc: split up enum osmo_gprs_llc_prim_type
+  * llc: rework logging, add LOGLLC macro
+  * llc: Proper separation of public & private APIs, Introduce llc_prim API
+  * llc: Initialize gprs_cipher
+  * osmo_gprs_llc_bssgp_prim: cell_id is always RAI + CI
+  * sndcp: Initial libosmo-gprs-sndcp support
+  * tests/llc: Test gprs_llc_is_retransmit()
+  * sndcp: Fix wrong field used printing nsapi
+  * sndcp: Fix wrong prim op passed in osmo_gprs_sndcp_prim_alloc_sn_xid_rsp()
+  * sndcp: Initial support for async SN-XID.ind and SN-XID.rsp
+  * llc: Log error loading gprs chiper plugins
+  * llc: Allow app provided callbacks to retain ownership of passed primitive
+  * sndcp: Fix missing dep link against libmath
+  * llc: Initial support for GRR-UNITDATA.ind/req
+  * llc: Fix spec references pointing to SNDCP instead of LLC
+  * rlcmac: Support extending log categories in the future
+  * rlcmac: Introduce primitives for SAPs towards higher layers
+  * rlcmac: Enqueue LLC PDUs based on RadioPriority and SAPI
+  * rlcmac: Rename gprs_rlcmac.h -> csn1_defs.h
+  * rlcmac: Rename ts_*.c -> csn1_ts_*.c
+  * rlcmac: Move spec related definitions for general use to types.h
+  * rlcmac: Refactor msg_type enums and value_string
+  * rlcmac: Fix prim memleak passing GRR-UNITDATA.req
+  * rlcmac: llc_queue: Make sure queue is cleared before freeing mem
+  * sndcp: Add missing osmocom/core/endian.h include
+  * rlcmac: Introduce lower primitive layer API
+  * rlcmac: Initial implementation of UL TBF assignment and scheduler
+  * rlcmac: Make sure entities are freed if lib is re-initialized
+  * rlcmac: Initial ul_tbf data support
+  * rlcmac: Implement GMMRR-ASSIGN.req
+  * rlcmac: Introduce DL TBF creation through PCH ImmAss
+  * rlcmac: Implement initial DL rx data path
+  * rlcmac: Introduce initial poll answer infrastructure
+  * rlcmac: Implement Tx of DL ACK/NACK
+  * rlcmac: llc_queue: Fix access to null msgb during dequeue
+  * rlcmac: tests: Validate Tx of second RLC/MAC block containing GMM Attach
+  * rlcmac: Implement Rx of UL ACK/NACK
+  * rlcmac: tbf_ul: Fix wrong function called looking up msg size
+  * rlcmac: tbf_*: Unlink the freeing tbf from its gre
+  * rlcmac: Implement T3164
+  * rlcmac: Implement T3166
+  * rlcmac: Handle SI13 from L1CTL
+  * rlcmac: tbf_ul: Allow sending UL data if in state FINISHED
+  * rlcmac: Implement N3104
+  * rlcmac: ul_tbf: Append TLLI when in contention resolution
+  * rlcmac: ul_tbf: Answer Pkt Ul Ack/Nack poll with Pkt Ctrl Ack
+  * rlcmac: tbf_dl: Fix msgb null ptr access if dl block contains several LLC frames
+  * rlcmac: Fix null ptr access in dl_tbf object
+  * rlcmac: Implement T3168 (Pkt Res Req timeout 2phase access)
+  * rlcmac: ul_tbf: Submit event FIST_UL_DATA_SENT before LAST_UL_DATA_SENT
+  * rlcmac: ul_tbf: Fail if data block CV=0 retransmitted > 4 times
+  * rlcmac: Use finished UL TBF to request a new one after Final UL ACK/NACK
+  * rlcmac: ul_tbf: Fix ul_state wrong check
+  * rlcmac: ul_tbf_fsm: rework Rx UL ACK/NACK fsm events
+  * rlcmac: Implement T3182
+  * tbf_dl: Fix state_fsm instance not freed
+  * rlcmac: Fill radio_priority in Dl Ack/Nack Channel Request Description
+  * rlcmac: Fix gprs_rlcmac_ul_tbf_in_contention_resolution() for 1phase access
+  * rlcmac: tbf_ul: Fix TI bit never set when encoding the block
+  * tbf_ul: Fix contention_resolution check for 2phase access
+  * rlcmac: dl_tbf: Improve logic requesting a new UL TBF
+  * rlcmac: tbf_ul_ass_fsm: Drop dummy event GPRS_RLCMAC_TBF_UL_ASS_EV_FOOBAR
+  * rlcmac: Fix several ptr bugs looking up ul tbf upon rx PktUlAss
+  * rlcmac: Ignore DATA.ind with len=0
+  * rlcmac: Lower logging rx prim from lower layers
+  * rlcmac: ul_tbf: Implement support for TBF Starting Time
+  * rlcmac: rlcmac_dec.c: Add missing headers
+  * rlcmac: Log tx of primitive to lower layers
+  * rlcmac: gprs_rlcmac_prim_call_down/up_cb(): Avoid propagating rc=1
+  * rlcmac: Move create_pkt_ctrl_ack() to tbf base class
+  * rlcmac: Log sched of PktCtrlAck requested by UL ASS poll
+  * rlcmac: Implement DL TBF CCCH & PACCH allocation with TBF Starting Time
+  * llc: Avoid propagating rc=1
+  * sndcp: Avoid propagating rc=1
+  * rlcmac: tbf_ul_ass_fsm: Fix missing break statement
+  * Create skeleton for libosmo-gprs-gmm
+  * rlcmac: Release pending polls in pdch_ul when freeing tbf
+  * gmm: Initial implementation of GPRS Attach
+  * gmm: Initial implementation of GPRS Detach
+  * rlcmac: Fix DL_ASS polls removed when UL TBF released
+  * rlcmac: gprs_rlcmac_tbf_free():Call proper free function for DL TBF
+  * rlcmac: Release UL_TBF L1CTL resources upon free
+  * gmm: Several fixes to GMMSM prim alloc functions
+  * gmm: Free ms_fsm when freeing gmme
+  * gmm: Free allocated GMMEs when freeing main context
+  * llc: Free allocated LLMEs when freeing main context
+  * Introduce libosmo-gprs-sm
+  * Fix typo LLGM -> LLGMM
+  * gmm: Implement T3310 (Tattach)
+  * gmm: Implement rx Attach Reject
+  * Rename internal g_ctx -> g_{layer_name}_ctx
+  * sm: Fix typo in LOGMS macro
+  * sndcp: Fix potential null ptr access if SNE not found
+  * tests/sndcp: Fix incorrect check comparing against wrong SAPI
+  * sndcp: Allocate snme->comp.{data,proto} during snme alloc
+  * llc: Implement some parts of LL-ESTABLISH.req/cnf
+  * sm: Fix swapped endianness in struct gprs_sm_pdp_addr
+  * sm: Start using SNSM SAP
+  * sndcp: Test MS vs NET paths separately and implement missing prims for MS
+  * sm: Parse PDP address in rx PDP Ctx Accept
+  * sm: Handle radio_prio,qos,llc_sapi in rx PDP Ctx Accept
+  * sm: Handle PCO in rx PDP Ctx Accept
+  * gmm: Fix typo triggering assert on T3310 timeout
+  * gmm: Allow cb callers to take ownsership of msgb primitive
+  * sm: Destroy PDP Context if activation fails
+  * sm: Fix potential null access due to missing check
+  * sm: Fill gmmsm.establish_req.attach_with_imsi
+  * gmm: Append 'P-TMSI type' IE to GPRS Attach Req when needed
+  * gmm: Provide allocated P-TMSI in GMMREG-ATTACH.cnf
+  * gmm, rlcmac: Properly handle P-TMSI vs TLLI
+  * gmm: Print IMSI and TLLI in LOGGMME macro
+  * gmm: Increase log level of Rx msg log lines
+  * gmm: Introduce SIM_AUTH primitive to resolve authentication
+  * llc: Log received wrong FCS field
+  * llc: Fix N(U) wrongly reset during LLGM-ASSIGN.req
+  * gmm: Switch state before announcing events to user
+  * gmm: Directly confirm GMMSM-Establish.req if already attached
+  * gmm: Fix typo in param name passed to logging macro
+  * gmm: Rework sess_id to identify one GMME
+  * gmm: Implement GMMSM-UNITDATA.ind
+  * sm: Fix encoding of dynamic IP address in PDPActCtxReq
+  * sm: Implement rx Act PDP Ctx Rej
+  * sm: Avoid freeing the SME object too quickly
+  * llc: use GRR instead of BSSGP to tx XID.req in MS mode
+  * sndcp: Allow cb users taking ownership of primitives
+  * sndcp: Initiate LL-XID.req only if we have something to send at L3
+  * sm: Fix pdp_act_cnf.accepted flag value swapped
+  * gmm: Fix false positive compilation error with gcc 13.1.1
+  * tests/gmm: Avoid printing rej_cause if GMMSM-Establish.cnf outcome is accepted
+  * gmm: Provide allocated PTMSI & TLLI to upper layers
+  * sm: Use & forward to upper layers the PTMSI & TLLI received from GMM
+  * grr,bssgp,llc,sndcp: Define qos_params
+  * sm: Fix APN IE content not transmitted in Act PDP Ctx Req
+  * gmm: Allow passing old RAI during attach
+  * sm: Allow passing old RAI during attach
+  * gmm: Provide RAI obtained from network
+  * sm: Provide RAI obtained from network
+  * rlcmac: Fix TFI not assigned during UL TBF CCCH ImmAss
+  * gmm: Forward forth and back the P-TMSI signature
+  * sm: Forward forth and back the P-TMSI signature
+  * gmmrr: Add new LLC_TRANSMITTED.ind
+  * gmm: Introduce APIs & unit test to enc/dec GPRS Timer IE
+  * gmm: Initial implementation of READY timer
+  * gmm: Initial implementation of T3312
+  * llc: Add APIs to submit LLGM-trigger/suspend/resume.req primitives
+  * gmm: Implement periodic RAU procedure
+  * rlcmac: Add APIs to decode P1/P2 Rest Octets
+  * Fix typo llgm -> llgmm everywhere
+  * llc: Implement LLGM-TRIGGER.req
+  * gmm: Implement GMMR-PAGE.ind
+  * gmm: Provide rlcmac with IMSI & PTMSI information
+  * rlcmac: Submit GMMRR-PAGE.ind upon rx of Paging Request Type 1/2
+  * gmm: Implement P-TMSI Reallocation Cmd/Compl
+  * gmm: Stop READY timer upon receiving force_stdby IE
+  * rlcmac: P1,P2 Rest Octets: Add missing final padding to definitions
+  * gmm: Implement submitting GMMSM-RELEASE.ind when MS becomes detached
+  * gmm: Implement rx GMM STATUS msg
+  * gmm: Initial implementation of rx GMM Information msg
+  * gmm: Rename s/ciph_auth/auth_ciph/
+  * gmm: Tx Auth & Ciph Failure
+  * gmm: Initial implementation of T3166, rx Auth & Ciph Reject
+  * gmm: Fix typo checking IE presence in Rx Attach Rej
+  * gmm: Implement rx RAU Reject
+  * rlcmac: Avoid generating UL data if no data to be sent available
+  * sm: Handle GMMSM-Release.ind
+  * gmm: Avoid submitting GMMSM-Release.ind if no session was requested
+  * rlcmac: Implement UL TBF Countdown procedure
+  * rlcmac: tbf_ul: Handle SBA from CCCH Imm Ass
+  * rlcmac: Submit UL block to lower layers before freeing TBF
+  * rlcmac: BS_CV_MAX=0 should be interpreted as =1 when calculating N3104_MAX
+  * rlcmac: tbf_fsl_fsm: Expect ev LAST_DL_DATA_RECVD in state FINISHED
+  * rlcmac: tbf_dl: Fix typo in event name
+  * rlcmac: Rework tbf destructor to signal free() to its gre object
+  * rlcmac: tbf_ul: Move to packet-idle state when T3164 triggers
+  * rlcmac: defer going to pkt_idle_timer after freeing TBF
+  * rlcmac: tbf_dl: Implement T3190
+  * rlcmac: tbf_dl: Implement T3192
+  * gmm: Accept event LOW_LVL_FAIL in RAU/SR_INITIATED states
+  * cosmetic: gmm: fix spec reference format
+  * cosmetic: gmm: Fix typo in comment
+  * rlcmac: Introduce L1CTL-CCCH_READY.ind primitive
+  * gmm: Make OSMO_GPRS_GMM_TLLI_UNASSIGNED def publicly available
+  * gmm: Store received PDP Ctx Status and List of Receive N-PDU Numbers
+  * gmm: Fix typos in test
+  * gmm: Document spec ref regarding Receive N-PDU Numbers IE in RAU Compl
+  * gmm: Introduce GMMSM-Modify.ind primitive
+  * sm: Handle GMMSM-MODIFY.ind primitive
+  * sndcp: Answer SNSM-DEACTIVATE.ind with .resp
+  * llc: Introduce LL-ASSIGN.ind
+  * sndcp: Handle LL-ASSIGN.ind
+  * rlcmac: tbf_ul: Free TBF if submitting RACH.req fails
+  * rlcmac: Fix null ptr dereference
+  * rlcmac: Fix LOGPTBFDL macro log category
+  * rlcmac: Log SSN and FINAL_ACK when preparing PKT DL ACK/NACK msg
+  * rlcmac: rlc_window_dl: Fix RBB generation
+  * rlcmac: Mark received BSNs falling out of the V(N)/RBB when V(R) is raised
+  * rlcmac: Log LLC PDUs enqueued in llc_queue
+  * rlcmac: ul_tbf: Move logic selecting proper queue to helper function
+  * rlcmac: Avoid discard packets when in Countdown procedure
+  * rlcmac: Apply tx_cs requested by the network through PKT UL ACK/NACK
+  * rlcmac: recalculate CV as needed when already in Countdown procedure
+  * llc: xid: Introduce some helper internal functions to make code easier to follow
+  * llc: Introduce function to log XID fields and use upon Rx/Tx
+  * llc: Apply N201-I & N201-U requested by the network
+  * llc: Submit LL-XID-IND to L3 if N201-U or N201-I changes
+  * sndcp: Update n201_u & n201_i indicatd by LLC layer
+  * llc: Set proper SAPI when transmitting UNITDATA.req to GRR/BSSGP
+  * sndcp: Initialize N201-U & N201-I to default settings
+  * cosmetic: sm: Fix wrong reference in comment
+  * sm: Forward RadioPrio & QoS in SNSM-Activate.ind
+  * sndcp: Use radio_prio assigned by SM when submitting LLC unitdata.req
+  * llc: Set proper Radio Priority when submitting GRR-UNITDATA.req
+  * sm: Introduce APIs to enc/dec QoS Profile
+  * sndcp: Forward QoS params from SM to LLC
+  * rlcmac: Use enum gprs_rlcmac_radio_priority internally everywhere
+  * rlcmac: Initial selection of packet-access-procedure mode based on originating cause
+  * llc: Fix potential null ptr dereference in LL-Xid.Ind
+  * gmm: Several fixes for radio_prio
+  * rlcmac: Fix OSMO_GPRS_RLCMAC_GMMRR_LLC_TRANSMITTED declared in wrong offset
+  * rlcmac: keep looking up GRE based on old TLLI
+  * llc: Log rx PDUs with invalid FCS
+  * llc: Silently discard UI Dummy commands
+  * rlcmac: rx pkt_uk_ack_nack: Use correct field containing UL TFI
+  * llc,sndcp: Add missing hex prefix to log line printing TLLI
+  * rlcmac: Fix Starting Time rfn->fn calculation
+  * rlcmac: ul_tbf: Factor out function configuring TBF to lower layers
+  * rlcmac: ul_tbf: Implement TBF_Starting time (phase1)
+  * tbf_ul_ass: Don't check USF during SingleBlock Allocation
+  * rlcmac: Move FN related helper functions to private header inside libosmo-gprs
+  * rlcmac: Several fixes and improvements to have 2phase access working
+  * tbf_ul_ass_fsm: Listen only on 1 TS for PKT UL ASS when assignment done from DL TBF
+  * rlcmac: Log RTS.ind
+  * rlcmac: tbf_dl: Log with FN request of UL TBF through PKT DL ACK/NACK
+  * rlcmac: Fix compilation error 'rlcmac_prim may be used uninitialized'
+  * rlcmac: tbf_ul: Fix wrong field assignment (no bug in practice)
+  * rlcmac: tbf_ul_ass_fsm: Fix state not reset after first UL-TBF re-assignment
+  * rlcmac: tbf_ul_ass_fsm: Fix 'sba' field wrongly reset to true
+  * rlcmac: tbf_ul_ass_fsm: Fix logic delay starting time
+  * tbf_ul_fsm: Avoid freeing tbf after 4 CV=0 retrans in acknowledged mode
+  * rlcmac: Avoid re-arming T3182 in TBF Acknowledged mode
+  * rlcmac: tests: Account for T3180 existance in test_ul_tbf_t3182_timeout
+  * rlcmac: tests: Account for T3180 existance in test_ul_tbf_t3166_timeout
+  * rlcmac: ul_tbf: Implement T3180
+  * cosmetic: tbf_ul_fsm: add missing state to tdef_state_timeout array
+  * rlcmac: Add new structure to allow passing FN+TN to TBF handling functions
+  * rlcmac: ul_tbf: Register UL ACK/NACK poll inside FSM
+  * Delay deleting UL TBF until last Pkt Ctrl Ack is fully transmitted
+  * rlcmac: Implement RLC_OCTET_COUNT in DL ACK/NACK
+  * rlcmac: tbf_ul: Fix wrong parenthesis around macro
+  * tests: rlcmac: Reproduce bug encoding 2 llc frames in 1 rlc block
+  * rlcmac: Fix Last RLC block (CV=0) not encoding >1 LLC frames
+  * tbf_ul: Clean and assert code path generating new UL data block
+  * gmm: Introduce interface GMMBSSGP
+  * gmm: Rename gmm_prim_test -> gmm_prim_ms_test
+  * tests/gmm: Introduce skeleton for gmm_prim_network tests
+  * llc: Mark old/current tlli as all 1's when unassigning LLME
+  * gmm: gprs_gmm_att_tlvdef: Sort based on enum gsm48_gprs_ie_mm order
+  * gmm: gprs_gmm_att_tlvdef: Add missing definitions from current enum gsm48_gprs_ie_mm
+  * gmm: gprs_gmm_att_tlvdef: Add newer definitions from current enum gsm48_gprs_ie_mm
+
+  [ Max ]
+  * Debian: fix broken SNDCP install
+
+  [ Oliver Smith ]
+  * Run struct_endianness.py
+  * debian: set compat level to 10
+  * contrib: remove rpm spec file
+  * debian/control: add missing deps to -dev pkgs
+  * libosmo-gprs-*.pc.in: add libtalloc-dev
+  * Make compatible with libosmocore >= 9.0.0
+
+  [ Eric Wild ]
+  * configure.ac: fix libtool issue  with clang and sanitizer
+
+  [ Harald Welte ]
+  * Add funding link to github mirror
+  * README.md: Improve formatting
+
+ -- Oliver Smith <osmith@sysmocom.de>  Thu, 05 Dec 2024 13:17:34 +0100
+
+libosmo-gprs (0.1.0) unstable; urgency=low
 
   Create new Debian package.
 

@@ -9,13 +9,13 @@ Build-Depends: debhelper (>= 10),
                automake,
                libtool,
                git,
-               libosmocore-dev (>= 1.7.0)
+               libosmocore-dev (>= 1.10.0)
 Standards-Version: 3.9.8
 Vcs-Git: https://gitea.osmocom.org/osmocom/libosmo-gprs
 Vcs-Browser: https://gitea.osmocom.org/osmocom/libosmo-gprs
 Homepage: https://projects.osmocom.org/projects/libosmo-gprs
 
-Package: libosmo-csn1-0
+Package: libosmo-csn1-1
 Section: libs
 Architecture: any
 Multi-Arch: same
@@ -31,7 +31,7 @@ Package: libosmo-csn1-dbg
 Architecture: any
 Section: debug
 Multi-Arch: same
-Depends: libosmo-csn1-0 (= ${binary:Version}),
+Depends: libosmo-csn1-1 (= ${binary:Version}),
 	 ${misc:Depends}
 Description: Debug symbols for the Osmocom CSN.1 codec library
 
@@ -39,12 +39,12 @@ Package: libosmo-csn1-dev
 Architecture: any
 Multi-Arch: same
 Section: libdevel
-Depends: libosmo-csn1-0 (= ${binary:Version}),
+Depends: libosmo-csn1-1 (= ${binary:Version}),
          libosmocore-dev,
 	 ${misc:Depends}
 Description: Development headers and libraries for the Osmocom CSN.1 codec
 
-Package: libosmo-gprs-gmm0
+Package: libosmo-gprs-gmm1
 Section: libs
 Architecture: any
 Multi-Arch: same
@@ -57,7 +57,7 @@ Package: libosmo-gprs-gmm-dbg
 Architecture: any
 Section: debug
 Multi-Arch: same
-Depends: libosmo-gprs-gmm0 (= ${binary:Version}),
+Depends: libosmo-gprs-gmm1 (= ${binary:Version}),
 	 ${misc:Depends}
 Description: Debug symbols for libosmo-gprs-gmm
 
@@ -65,13 +65,13 @@ Package: libosmo-gprs-gmm-dev
 Architecture: any
 Multi-Arch: same
 Section: libdevel
-Depends: libosmo-gprs-gmm0 (= ${binary:Version}),
+Depends: libosmo-gprs-gmm1 (= ${binary:Version}),
          libosmocore-dev,
          libtalloc-dev,
 	 ${misc:Depends}
 Description: Development headers and libraries for libosmo-gprs-gmm
 
-Package: libosmo-gprs-llc0
+Package: libosmo-gprs-llc1
 Section: libs
 Architecture: any
 Multi-Arch: same
@@ -84,7 +84,7 @@ Package: libosmo-gprs-llc-dbg
 Architecture: any
 Section: debug
 Multi-Arch: same
-Depends: libosmo-gprs-llc0 (= ${binary:Version}),
+Depends: libosmo-gprs-llc1 (= ${binary:Version}),
 	 ${misc:Depends}
 Description: Debug symbols for libosmo-gprs-llc
 
@@ -92,13 +92,13 @@ Package: libosmo-gprs-llc-dev
 Architecture: any
 Multi-Arch: same
 Section: libdevel
-Depends: libosmo-gprs-llc0 (= ${binary:Version}),
+Depends: libosmo-gprs-llc1 (= ${binary:Version}),
          libosmocore-dev,
          libtalloc-dev,
 	 ${misc:Depends}
 Description: Development headers and libraries for libosmo-gprs-llc
 
-Package: libosmo-gprs-rlcmac0
+Package: libosmo-gprs-rlcmac1
 Section: libs
 Architecture: any
 Multi-Arch: same
@@ -111,7 +111,7 @@ Package: libosmo-gprs-rlcmac-dbg
 Architecture: any
 Section: debug
 Multi-Arch: same
-Depends: libosmo-gprs-rlcmac0 (= ${binary:Version}),
+Depends: libosmo-gprs-rlcmac1 (= ${binary:Version}),
 	 ${misc:Depends}
 Description: Debug symbols for libosmo-gprs-rlcmac
 
@@ -119,13 +119,13 @@ Package: libosmo-gprs-rlcmac-dev
 Architecture: any
 Multi-Arch: same
 Section: libdevel
-Depends: libosmo-gprs-rlcmac0 (= ${binary:Version}),
+Depends: libosmo-gprs-rlcmac1 (= ${binary:Version}),
          libosmocore-dev,
          libtalloc-dev,
 	 ${misc:Depends}
 Description: Development headers and libraries for libosmo-gprs-rlcmac
 
-Package: libosmo-gprs-sndcp0
+Package: libosmo-gprs-sndcp1
 Section: libs
 Architecture: any
 Multi-Arch: same
@@ -138,7 +138,7 @@ Package: libosmo-gprs-sndcp-dbg
 Architecture: any
 Section: debug
 Multi-Arch: same
-Depends: libosmo-gprs-sndcp0 (= ${binary:Version}),
+Depends: libosmo-gprs-sndcp1 (= ${binary:Version}),
 	 ${misc:Depends}
 Description: Debug symbols for libosmo-gprs-sndcp
 
@@ -146,13 +146,13 @@ Package: libosmo-gprs-sndcp-dev
 Architecture: any
 Multi-Arch: same
 Section: libdevel
-Depends: libosmo-gprs-sndcp0 (= ${binary:Version}),
+Depends: libosmo-gprs-sndcp1 (= ${binary:Version}),
          libosmocore-dev,
          libtalloc-dev,
 	 ${misc:Depends}
 Description: Development headers and libraries for libosmo-gprs-sndcp
 
-Package: libosmo-gprs-sm0
+Package: libosmo-gprs-sm1
 Section: libs
 Architecture: any
 Multi-Arch: same
@@ -165,7 +165,7 @@ Package: libosmo-gprs-sm-dbg
 Architecture: any
 Section: debug
 Multi-Arch: same
-Depends: libosmo-gprs-sm0 (= ${binary:Version}),
+Depends: libosmo-gprs-sm1 (= ${binary:Version}),
 	 ${misc:Depends}
 Description: Debug symbols for libosmo-gprs-sm
 
@@ -173,7 +173,7 @@ Package: libosmo-gprs-sm-dev
 Architecture: any
 Multi-Arch: same
 Section: libdevel
-Depends: libosmo-gprs-sm0 (= ${binary:Version}),
+Depends: libosmo-gprs-sm1 (= ${binary:Version}),
          libosmocore-dev,
          libtalloc-dev,
 	 ${misc:Depends}
