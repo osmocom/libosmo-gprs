@@ -129,6 +129,20 @@ static const struct gprs_gmm_drx_param drx_param_def = {
 	.non_drx_timer = 0,
 };
 
+/* Remove after depending on libosmocore > 1.10.0 */
+#ifndef GSM48_IE_GMM_UE_NET_CAP
+#define GSM48_IE_GMM_UE_NET_CAP 0x58
+#endif
+#ifndef GSM48_IE_GMM_VD_PREF_UE_USAGE
+#define GSM48_IE_GMM_VD_PREF_UE_USAGE 0x5d
+#endif
+#ifndef GSM48_IE_GMM_ADD_IDENTITY
+#define GSM48_IE_GMM_ADD_IDENTITY 0x1a
+#endif
+#ifndef GSM48_IE_GMM_RAI2
+#define GSM48_IE_GMM_RAI2 0x1b
+#endif
+
 const struct tlv_definition gprs_gmm_att_tlvdef = {
 	.def = {
 		[GSM48_IE_GMM_CIPH_CKSN]	= { TLV_TYPE_SINGLE_TV, 1 },
