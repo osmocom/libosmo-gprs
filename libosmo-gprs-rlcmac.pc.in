@@ -7,5 +7,6 @@ Name: Osmocom [E]GPRS RLC/MAC Library
 Description: C Utility Library
 Version: @VERSION@
 Requires: libosmocore, libosmo-csn1
+Requires.private: talloc
 Libs: -L${libdir} -losmo-gprs-rlcmac
 Cflags: -I${includedir}/

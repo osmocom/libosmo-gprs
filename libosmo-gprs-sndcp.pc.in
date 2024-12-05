@@ -7,6 +7,7 @@ Name: Osmocom [E]GPRS SNDCP (Subnetwork Dependent Convergence Protocol) Library
 Description: C Utility Library
 Version: @VERSION@
 Requires: libosmocore libosmo-gprs-llc
+Requires.private: talloc
 Libs: -L${libdir} -losmo-gprs-sndcp
 Libs.private: -lm -ltalloc
 Cflags: -I${includedir}/

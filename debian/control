@@ -67,6 +67,7 @@ Multi-Arch: same
 Section: libdevel
 Depends: libosmo-gprs-gmm0 (= ${binary:Version}),
          libosmocore-dev,
+         libtalloc-dev,
 	 ${misc:Depends}
 Description: Development headers and libraries for libosmo-gprs-gmm
 
@@ -120,6 +121,7 @@ Multi-Arch: same
 Section: libdevel
 Depends: libosmo-gprs-rlcmac0 (= ${binary:Version}),
          libosmocore-dev,
+         libtalloc-dev,
 	 ${misc:Depends}
 Description: Development headers and libraries for libosmo-gprs-rlcmac
 
@@ -146,6 +148,7 @@ Multi-Arch: same
 Section: libdevel
 Depends: libosmo-gprs-sndcp0 (= ${binary:Version}),
          libosmocore-dev,
+         libtalloc-dev,
 	 ${misc:Depends}
 Description: Development headers and libraries for libosmo-gprs-sndcp
 
@@ -172,5 +175,6 @@ Multi-Arch: same
 Section: libdevel
 Depends: libosmo-gprs-sm0 (= ${binary:Version}),
          libosmocore-dev,
+         libtalloc-dev,
 	 ${misc:Depends}
 Description: Development headers and libraries for libosmo-gprs-sm
