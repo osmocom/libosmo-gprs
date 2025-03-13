@@ -433,7 +433,7 @@ gint16 osmo_csn1_stream_encode(csnStream_t* ar, const CSN_DESCR* pDescr, struct 
         *writeIndex += length_len;
         bit_offset += length_len;
         remaining_bits_len -= length_len;
-        arT.direction = 0;
+        arT.direction = CSN_DIRECTION_ENC;
         osmo_csn1_stream_init(&arT, bit_offset, remaining_bits_len);
         Status = serialize(&arT, vector, writeIndex, pvDATA(data, pDescr->offset));
 

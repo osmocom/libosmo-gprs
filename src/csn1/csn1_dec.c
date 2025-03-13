@@ -483,7 +483,7 @@ osmo_csn1_stream_decode(csnStream_t* ar, const CSN_DESCR* pDescr, struct bitvec 
         remaining_bits_len -= length_len;
 
         osmo_csn1_stream_init(&arT, bit_offset, length > 0 ? length : remaining_bits_len);
-        arT.direction = 1;
+        arT.direction = CSN_DIRECTION_DEC;
         LOGPC(DLCSN1, LOGL_DEBUG, "offset = %u | ", pDescr->offset);
 	Status = serialize(&arT, vector, readIndex, pvDATA(data, pDescr->offset));
 
