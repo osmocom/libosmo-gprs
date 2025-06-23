@@ -48,3 +48,4 @@ tags
 /deps
 
 contrib/libosmo-gprs.spec
+include/osmocom/**/version.h
