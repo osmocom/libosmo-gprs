@@ -1,3 +1,18 @@
+libosmo-gprs (0.2.1) unstable; urgency=medium
+
+  [ Oliver Smith ]
+  * gitignore: remove debian section
+  * Generate version.h files
+  * tests: fix for debian 13 armv7l
+
+  [ Vadim Yanitskiy ]
+  * rlcmac: fix EGPRS BEP Link Quality Measurements Type 2
+
+  [ Pau Espin Pedrol ]
+  * csn1: Use enum to select enc/dec direction
+
+ -- Oliver Smith <osmith@sysmocom.de>  Tue, 26 Aug 2025 16:07:28 +0200
+
 libosmo-gprs (0.2.0) unstable; urgency=medium
 
   [ Vadim Yanitskiy ]
