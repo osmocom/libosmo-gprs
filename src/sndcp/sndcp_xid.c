@@ -1345,7 +1345,6 @@ static int gprs_sndcp_decode_xid(int *version, struct llist_head *comp_fields,
 	uint8_t tag;
 	uint16_t tag_len;
 	const uint8_t *val;
-	int byte_counter = 0;
 	int rc;
 	int tlv_count = 0;
 
@@ -1390,11 +1389,8 @@ static int gprs_sndcp_decode_xid(int *version, struct llist_head *comp_fields,
 		    || (tag == SNDCP_XID_DATA_COMPRESSION)) {
 			rc = decode_xid_block(comp_fields, tag, tag_len, val,
 					      lt, lt_len);
-
-			if (rc < 0) {
+			if (rc < 0)
 				return -EINVAL;
-			}
-			byte_counter += rc;
 		}
 
 		/* Stop when no further TLV elements can be expected */
