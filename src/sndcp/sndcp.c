@@ -800,14 +800,16 @@ int gprs_sndcp_sne_handle_sn_xid_req(struct gprs_sndcp_entity *sne, const struct
 	sne->snme->comp.data = gprs_sndcp_comp_alloc(sne->snme);
 
 	/* Generate compression parameter bytestream */
-	sne->l3xid_req_len = gprs_sndcp_sne_gen_sndcp_xid(sne, l3params, sizeof(l3params), sndcp_prim);
-	if (sne->l3xid_req_len > 0) {
+	rc = gprs_sndcp_sne_gen_sndcp_xid(sne, l3params, sizeof(l3params), sndcp_prim);
+	if (rc > 0) {
+		sne->l3xid_req_len = rc;
 		talloc_free(sne->l3xid_req);
 		sne->l3xid_req = talloc_size(sne, sne->l3xid_req_len);
 		memcpy(sne->l3xid_req, l3params, sne->l3xid_req_len);
 	} else {
 		talloc_free(sne->l3xid_req);
 		sne->l3xid_req = NULL;
+		sne->l3xid_req_len = 0;
 	}
 	sne->xid_req_in_transit_orig_sn_xid_req = true;
 
